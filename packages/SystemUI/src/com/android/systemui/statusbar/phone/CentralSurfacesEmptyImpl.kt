@@ -157,4 +157,8 @@ abstract class CentralSurfacesEmptyImpl : CentralSurfaces {
     override fun getAnimatorControllerFromNotification(
         associatedView: ExpandableNotificationRow?
     ): ActivityTransitionAnimator.Controller? = null
+
+    override fun brightnessControl(event: MotionEvent?) {}
+
+    override fun onBrightnessChanged(upOrCancel: Boolean) {}
 }
