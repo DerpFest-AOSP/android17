@@ -301,4 +301,9 @@ public interface StatusBarManagerInternal {
      * Called when the configuration has been changed.
      */
     void onConfigurationChanged();
+
+    /**
+     * DerpFest extensions
+     */
+    void toggleCameraFlash();
 }

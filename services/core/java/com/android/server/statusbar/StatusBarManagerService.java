@@ -869,6 +869,12 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
                 }
             }
         }
+
+        public void toggleCameraFlash() {
+            try {
+                mBar.toggleCameraFlash();
+            } catch (RemoteException ex) { }
+        }
     };
 
     private final GlobalActionsProvider mGlobalActionsProvider = new GlobalActionsProvider() {
@@ -1111,6 +1117,16 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
      * Warning: Only pass {@code #DISABLE_*} flags into this function, do not use
      * {@code #DISABLE2_*} flags.
      */
+    @Override
+    public void toggleCameraFlash() {
+        if (mBar != null) {
+            try {
+                mBar.toggleCameraFlash();
+            } catch (RemoteException ex) {
+            }
+        }
+    }
+
     @Override
     public void disable(int what, IBinder token, String pkg) {
         disableForUser(what, token, pkg, mCurrentUserId);

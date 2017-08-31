@@ -163,4 +163,6 @@ abstract class CentralSurfacesEmptyImpl : CentralSurfaces {
     override fun onBrightnessChanged(upOrCancel: Boolean) {}
 
     override fun cancelBrightnessControl() {}
+
+    override fun toggleCameraFlash() {}
 }

@@ -267,4 +267,6 @@ public interface CentralSurfaces extends Dumpable, LifecycleOwner, CoreStartable
     void onBrightnessChanged(boolean upOrCancel);
 
     void cancelBrightnessControl();
+
+    void toggleCameraFlash();
 }

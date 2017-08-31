@@ -195,6 +195,7 @@ public class CommandQueue extends IStatusBar.Stub implements
     private static final int MSG_END_MOTION_CUES = 89 << MSG_SHIFT;
     private static final int MSG_ON_DISPLAY_INFO_CHANGED = 90 << MSG_SHIFT;
     private static final int MSG_ON_CONFIGURATION_CHANGED = 91 << MSG_SHIFT;
+    private static final int MSG_TOGGLE_CAMERA_FLASH = 92 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -623,6 +624,8 @@ public class CommandQueue extends IStatusBar.Stub implements
          * @see IStatusBar#onConfigurationChanged()
          */
         default void onConfigurationChanged() {}
+
+        default void toggleCameraFlash() { }
     }
 
     @VisibleForTesting
@@ -1614,6 +1617,16 @@ public class CommandQueue extends IStatusBar.Stub implements
         mHandler.obtainMessage(MSG_ON_CONFIGURATION_CHANGED).sendToTarget();
     }
 
+    @Override
+    public void toggleCameraFlash() {
+        synchronized (mLock) {
+            if (mHandler.hasMessages(MSG_TOGGLE_CAMERA_FLASH)) {
+                mHandler.removeMessages(MSG_TOGGLE_CAMERA_FLASH);
+            }
+            mHandler.sendEmptyMessage(MSG_TOGGLE_CAMERA_FLASH);
+        }
+    }
+
     private final class H extends Handler {
         private H(Looper l) {
             super(l);
@@ -1922,6 +1935,11 @@ public class CommandQueue extends IStatusBar.Stub implements
                     for (Callbacks callback : mCallbacks) {
                         callback.setUdfpsRefreshRateCallback(
                                 (IUdfpsRefreshRateRequestCallback) msg.obj);
+                    }
+                    break;
+                case MSG_TOGGLE_CAMERA_FLASH:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).toggleCameraFlash();
                     }
                     break;
                 case MSG_SHOW_CHARGING_ANIMATION:
