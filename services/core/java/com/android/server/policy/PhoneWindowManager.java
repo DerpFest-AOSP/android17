@@ -118,6 +118,7 @@ import static com.android.window.flags.Flags.commitKeyguardOcclusionBeforeWaking
 
 import static org.lineageos.internal.util.DeviceKeysConstants.*;
 
+import android.Manifest;
 import android.accessibilityservice.AccessibilityService;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
@@ -251,6 +252,7 @@ import com.android.internal.policy.PhoneWindow;
 import com.android.internal.statusbar.IStatusBarService;
 import com.android.internal.util.NamedLock;
 import com.android.internal.util.ScreenshotHelper;
+import com.android.internal.util.derp.derpUtils;
 import com.android.internal.widget.LockPatternUtils;
 import com.android.server.AccessibilityManagerInternal;
 import com.android.server.DockObserverInternal;
@@ -7356,6 +7358,22 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     @Override
     public boolean hasNavigationBar() {
         return mDefaultDisplayPolicy.hasNavigationBar();
+    }
+
+    @Override
+    public void sendCustomAction(Intent intent) {
+        String action = intent.getAction();
+        if (action != null) {
+            if (derpUtils.INTENT_SCREENSHOT.equals(action)) {
+                mContext.enforceCallingOrSelfPermission(Manifest.permission.ACCESS_SURFACE_FLINGER,
+                        TAG + "sendCustomAction permission denied");
+                takeScreenshot(TAKE_SCREENSHOT_FULLSCREEN, SCREENSHOT_KEY_OTHER);
+            } else if (derpUtils.INTENT_REGION_SCREENSHOT.equals(action)) {
+                mContext.enforceCallingOrSelfPermission(Manifest.permission.ACCESS_SURFACE_FLINGER,
+                        TAG + "sendCustomAction permission denied");
+                takeScreenshot(TAKE_SCREENSHOT_SELECTED_REGION, SCREENSHOT_KEY_OTHER);
+            }
+        }
     }
 
     @Override
