@@ -576,6 +576,7 @@ android_library {
         "smartspace-proto-lite-java",
         "vendor.lineage.powershare-V1-java",
         "VendorSupport-preference",
+        "FadingEdgeLayoutLib",
     ],
     enable_ksp: true,
     annotation_processor_flags: [
