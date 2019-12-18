@@ -36,6 +36,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.annotation.Nullable;
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.app.Dialog;
 import android.app.IActivityManager;
 import android.app.UiModeManager;
@@ -728,6 +729,14 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         }
     }
 
+    private boolean isInLockTaskMode() {
+        try {
+            return ActivityTaskManager.getService().isInLockTaskMode();
+        } catch (RemoteException e) {
+            return false;
+        }
+    }
+
     @NonNull
     private String[] getDefaultActions() {
         return mResources.getStringArray(R.array.config_globalActionsList);
@@ -740,7 +749,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     }
 
     private boolean shouldShowRestartSubmenu() {
-        return PowerMenuUtils.isAdvancedRestartPossible(mContext);
+        return !isInLockTaskMode() && PowerMenuUtils.isAdvancedRestartPossible(mContext);
     }
 
     @VisibleForTesting
@@ -821,7 +830,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                     addIfShouldShowAction(tempActions, shutdownAction);
                     break;
                 case AIRPLANE:
-                    addIfShouldShowAction(tempActions, mAirplaneModeOn);
+                    if (!isInLockTaskMode()) {
+                        addIfShouldShowAction(tempActions, mAirplaneModeOn);
+                    }
                     break;
                 case BUGREPORT:
                     if (shouldDisplayBugReport(currentUserInfo)) {
@@ -840,7 +851,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                     }
                     break;
                 case USERS:
-                    if (mUserManager.getUsers().size() > 1) {
+                    if (!isInLockTaskMode() && mUserManager.getUsers().size() > 1) {
                         addUserActions(mUsersItems, currentUserInfo);
                         addIfShouldShowAction(tempActions, new UsersAction());
                     }
@@ -849,7 +860,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                     addIfShouldShowAction(tempActions, getSettingsAction());
                     break;
                 case LOCKDOWN:
-                    if (shouldDisplayLockdown(currentUserInfo)) {
+                    if (!isInLockTaskMode() && shouldDisplayLockdown(currentUserInfo)) {
                         addIfShouldShowAction(tempActions, new LockDownAction());
                     }
                     break;
@@ -866,10 +877,13 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                     addIfShouldShowAction(tempActions, restartAction);
                     break;
                 case SCREENSHOT:
-                    UiModeManager uiModeManager =
-                            (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
-                    if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-                        addIfShouldShowAction(tempActions, new ScreenshotAction());
+                    if (!isInLockTaskMode()) {
+                        UiModeManager uiModeManager =
+                                (UiModeManager) mContext.getSystemService(Context.UI_MODE_SERVICE);
+                        if (uiModeManager.getCurrentModeType()
+                                != Configuration.UI_MODE_TYPE_TELEVISION) {
+                            addIfShouldShowAction(tempActions, new ScreenshotAction());
+                        }
                     }
                     break;
                 case LOGOUT:
