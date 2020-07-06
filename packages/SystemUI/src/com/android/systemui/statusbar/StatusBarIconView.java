@@ -39,6 +39,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.os.Trace;
 import android.os.UserHandle;
+import android.provider.Settings;
 import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
 import android.util.FloatProperty;
@@ -182,6 +183,7 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     private boolean mShowsConversation;
     private float mDozeAmount;
     private final NotificationDozeHelper mDozer;
+    private boolean mNewIconStyle;
 
     public StatusBarIconView(Context context, String slot, StatusBarNotification sbn) {
         this(context, slot, sbn, false);
@@ -400,6 +402,11 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
                 return false;
         }
     }
+
+    public void setIconStyle(boolean iconStyle) {
+        mNewIconStyle = iconStyle;
+    }
+
     /**
      * Returns whether the set succeeded.
      */
@@ -471,7 +478,20 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
         if (isNotification()) {
             notifContext = mNotification.getPackageContext(getContext());
         }
-        return getIcon(getContext(), notifContext != null ? notifContext : getContext(), icon);
+        if (notifContext == null) {
+            notifContext = getContext();
+        }
+        if (mNewIconStyle && isNotification() && icon != null
+                && icon.pkg != null && !icon.pkg.contains("systemui")) {
+            try {
+                StatusBarIcon appIcon = icon.clone();
+                appIcon.preloadedIcon = getContext().getPackageManager().getApplicationIcon(icon.pkg);
+                return getIcon(getContext(), notifContext, appIcon);
+            } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+                // Fall back to the notification small icon.
+            }
+        }
+        return getIcon(getContext(), notifContext, icon);
     }
 
     /**
