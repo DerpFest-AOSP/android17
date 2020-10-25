@@ -107,4 +107,8 @@
 
     <!-- QS layout editor -->
     <string name="qs_edit_media_player">Media player</string>
+
+    <!-- DerpFest Tile -->
+    <string name="quick_derpfest_label">DerpFest Customizations</string>
+    <string name="quick_derpfest_toast">LOL, you really thought that long click will take you somewhere!!!</string>
 </resources>
