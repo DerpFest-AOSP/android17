@@ -322,6 +322,8 @@ public class EdgeBackGestureHandler {
     private final GestureNavigationSettingsObserver mGestureNavigationSettingsObserver;
     private final TopUiController mTopUiController;
 
+    private boolean mIsBackGestureArrowEnabled;
+
     private final NavigationEdgeBackPlugin.BackCallback mBackCallback =
             new NavigationEdgeBackPlugin.BackCallback() {
                 @Override
@@ -583,6 +585,8 @@ public class EdgeBackGestureHandler {
         final boolean previousForcedVisible = mIsButtonForcedVisible;
         mIsButtonForcedVisible =
                 mGestureNavigationSettingsObserver.areNavigationButtonForcedVisible();
+        mIsBackGestureArrowEnabled = mGestureNavigationSettingsObserver.getBackArrowGesture();
+        updateBackArrowVisibility();
         // Update this before calling mButtonForcedVisibleCallback since NavigationBar will relayout
         // and query isHandlingGestures() as a part of the callback
         mIsBackGestureAllowed = !mIsButtonForcedVisible;
@@ -858,6 +862,7 @@ public class EdgeBackGestureHandler {
                             createDisplayBackGestureHandler(display));
                 }
                 updateLongSwipeWidth();
+                updateBackArrowVisibility();
 
                 // Begin listening to changes in blocked activities list
                 mBlockedActivitiesJob = mJavaAdapter.alwaysCollectFlow(
@@ -891,6 +896,17 @@ public class EdgeBackGestureHandler {
         for (DisplayBackGestureHandler displayBackGestureHandler :
                 mDisplayBackGestureHandlers.values()) {
             displayBackGestureHandler.setLongSwipeEnabled(mIsLongSwipeEnabled);
+        }
+    }
+
+    private void updateBackArrowVisibility() {
+        if (!mIsEnabled) {
+            return;
+        }
+
+        for (DisplayBackGestureHandler displayBackGestureHandler :
+                mDisplayBackGestureHandlers.values()) {
+            displayBackGestureHandler.setBackArrowVisibility(mIsBackGestureArrowEnabled);
         }
     }
 
@@ -1355,6 +1371,7 @@ public class EdgeBackGestureHandler {
 
         updateBackAnimationThresholds();
         updateLongSwipeWidth();
+        updateBackArrowVisibility();
     }
 
     private void updateBackAnimationThresholds() {
