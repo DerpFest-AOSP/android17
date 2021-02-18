@@ -1505,14 +1505,24 @@ public class RingtoneManager {
             // Skip if we've already defined it at least once, so we don't
             // overwrite the user changing to null
             final String setting = getDefaultRingtoneSetting(type);
+            final String defaultRingtone2 = Settings.System.getString(
+                    context.getContentResolver(), Settings.System.RINGTONE2);
             if (Settings.System.getInt(context.getContentResolver(), setting, 0) != 0) {
-                continue;
+                // Still allow installing the SIM2 ringtone default on a clean install.
+                if (type != TYPE_RINGTONE || !TextUtils.isEmpty(defaultRingtone2)) {
+                    continue;
+                }
             }
 
             // Try finding the scanned ringtone
             Uri ringtoneUri = computeDefaultRingtoneUri(context, type);
             if (ringtoneUri != null) {
                 RingtoneManager.setActualDefaultRingtoneUri(context, type, ringtoneUri);
+                // Only apply the SIM2 default when installing the ringtone type default.
+                if (type == TYPE_RINGTONE && TextUtils.isEmpty(defaultRingtone2)) {
+                    RingtoneManager.setActualDefaultRingtoneUriBySlot(
+                            context, TYPE_RINGTONE, ringtoneUri, 1);
+                }
                 Settings.System.putInt(context.getContentResolver(), setting, 1);
             }
         }
