@@ -800,9 +800,12 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         CurrentUserProvider currentUser = new CurrentUserProvider();
         final UserInfo currentUserInfo = currentUser.get();
 
-        // Make sure emergency affordance action is first
+        // Make sure emergency affordance action is first, if selected
         boolean handledEmergencyAffordance = false;
-        if (mEmergencyAffordanceManager.needsEmergencyAffordance()) {
+        boolean showEmergencyAffordance = Arrays.stream(mActions)
+                .anyMatch(GlobalActionType.EMERGENCY.getConfigKey()::equals);
+        if (showEmergencyAffordance
+                && mEmergencyAffordanceManager.needsEmergencyAffordance()) {
             addIfShouldShowAction(tempActions, new EmergencyAffordanceAction());
             handledEmergencyAffordance = true;
         }
