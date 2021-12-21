@@ -85,7 +85,8 @@ constructor(
             DeviceEntryIconView(
                     context,
                     null,
-                    logger = TouchHandlingViewLogger(logBuffer = logBuffer, TAG),
+                    0,
+                    TouchHandlingViewLogger(logBuffer = logBuffer, TAG),
                 )
                 .apply { id = deviceEntryIconViewId }
 
