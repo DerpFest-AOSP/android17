@@ -323,6 +323,7 @@ public class EdgeBackGestureHandler {
     private final TopUiController mTopUiController;
 
     private boolean mIsBackGestureArrowEnabled;
+    private boolean mIsEdgeHapticEnabled;
 
     private final NavigationEdgeBackPlugin.BackCallback mBackCallback =
             new NavigationEdgeBackPlugin.BackCallback() {
@@ -587,6 +588,8 @@ public class EdgeBackGestureHandler {
                 mGestureNavigationSettingsObserver.areNavigationButtonForcedVisible();
         mIsBackGestureArrowEnabled = mGestureNavigationSettingsObserver.getBackArrowGesture();
         updateBackArrowVisibility();
+        mIsEdgeHapticEnabled = mGestureNavigationSettingsObserver.getEdgeHapticEnabled();
+        updateEdgeHapticEnabled();
         // Update this before calling mButtonForcedVisibleCallback since NavigationBar will relayout
         // and query isHandlingGestures() as a part of the callback
         mIsBackGestureAllowed = !mIsButtonForcedVisible;
@@ -863,6 +866,7 @@ public class EdgeBackGestureHandler {
                 }
                 updateLongSwipeWidth();
                 updateBackArrowVisibility();
+                updateEdgeHapticEnabled();
 
                 // Begin listening to changes in blocked activities list
                 mBlockedActivitiesJob = mJavaAdapter.alwaysCollectFlow(
@@ -907,6 +911,17 @@ public class EdgeBackGestureHandler {
         for (DisplayBackGestureHandler displayBackGestureHandler :
                 mDisplayBackGestureHandlers.values()) {
             displayBackGestureHandler.setBackArrowVisibility(mIsBackGestureArrowEnabled);
+        }
+    }
+
+    private void updateEdgeHapticEnabled() {
+        if (!mIsEnabled) {
+            return;
+        }
+
+        for (DisplayBackGestureHandler displayBackGestureHandler :
+                mDisplayBackGestureHandlers.values()) {
+            displayBackGestureHandler.setEdgeHapticEnabled(mIsEdgeHapticEnabled);
         }
     }
 
@@ -1372,6 +1387,7 @@ public class EdgeBackGestureHandler {
         updateBackAnimationThresholds();
         updateLongSwipeWidth();
         updateBackArrowVisibility();
+        updateEdgeHapticEnabled();
     }
 
     private void updateBackAnimationThresholds() {
