@@ -105,10 +105,11 @@ constructor(
                     nowPluggedIn: Boolean,
                     charging: Boolean,
                 ) {
-                    // Suppresses the ripple when the state change comes from wireless charging or
-                    // its dock.
+                    // Suppresses the ripple when it's disabled, or when the state change comes
+                    // from wireless charging or its dock.
                     if (
-                        batteryController.isPluggedInWireless ||
+                        !rippleEnabled ||
+                            batteryController.isPluggedInWireless ||
                             batteryController.isChargingSourceDock
                     ) {
                         return
@@ -165,7 +166,7 @@ constructor(
     }
 
     fun startRipple() {
-        if (rippleView.rippleInProgress() || rippleView.parent != null) {
+        if (!rippleEnabled || rippleView.rippleInProgress() || rippleView.parent != null) {
             // Skip if ripple is still playing, or not playing but already added the parent
             // (which might happen just before the animation starts or right after
             // the animation ends.)
