@@ -79,6 +79,7 @@ import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.os.VibrationEffect;
 import android.provider.Settings;
 import android.sysprop.TelephonyProperties;
 import android.telecom.TelecomManager;
@@ -301,6 +302,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     private final boolean mHasTelephonyCalling;
     private final boolean mIsTv;
     private final boolean mHasVibrator;
+    @NonNull
+    private final VibratorHelper mVibratorHelper;
     private final boolean mShowSilentToggle;
     private final boolean mTranslucentPowerMenu;
     @NonNull
@@ -564,6 +567,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 mGlobalSettings.getUriFor(Settings.Global.GLOBAL_ACTIONS_TIMEOUT_MILLIS), true,
                 mGlobalActionsTimeoutObserver);
 
+        mVibratorHelper = vibrator;
         mHasVibrator = vibrator.hasVibrator();
 
         mShowSilentToggle = SHOW_SILENT_TOGGLE && !resources.getBoolean(
@@ -673,6 +677,20 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     public void dismissDialog() {
         mHandler.removeMessages(MESSAGE_DISMISS);
         mHandler.sendEmptyMessage(MESSAGE_DISMISS);
+    }
+
+
+    private void doHapticFeedback(boolean longPress) {
+        if (!mHasVibrator
+                || Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.HAPTIC_FEEDBACK_ENABLED, 1, UserHandle.USER_CURRENT) == 0
+                || Settings.System.getIntForUser(mContext.getContentResolver(),
+                        Settings.System.HAPTIC_ON_POWER_MENU, 1, UserHandle.USER_CURRENT) == 0) {
+            return;
+        }
+        mVibratorHelper.vibrate(VibrationEffect.createPredefined(
+                longPress ? VibrationEffect.EFFECT_HEAVY_CLICK
+                        : VibrationEffect.EFFECT_CLICK));
     }
 
     private void handleShow(@Nullable Expandable expandable, int displayId) {
@@ -1103,6 +1121,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             if (mDelegate != null) {
                 mDelegate.showPowerOptionsMenu();
             }
@@ -1144,6 +1163,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             // don't actually trigger the shutdown if we are running stability
             // tests via monkey
             if (ActivityManager.isUserAMonkey()) {
@@ -1219,6 +1239,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             mEmergencyAffordanceManager.performEmergencyCall();
         }
     }
@@ -1232,6 +1253,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             mMetricsLogger.action(MetricsEvent.ACTION_EMERGENCY_DIALER_FROM_POWER_MENU);
             mUiEventLogger.log(GlobalActionsEvent.GA_EMERGENCY_DIALER_PRESS);
             if (mTelecomManager != null) {
@@ -1260,6 +1282,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public boolean onLongPress() {
+            doHapticFeedback(true);
             // don't actually trigger the reboot if we are running stability
             // tests via monkey
             if (ActivityManager.isUserAMonkey()) {
@@ -1286,6 +1309,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             // don't actually trigger the reboot if we are running stability
             // tests via monkey
             if (ActivityManager.isUserAMonkey()) {
@@ -1308,6 +1332,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public boolean onLongPress() {
+            doHapticFeedback(true);
             if (!mUserManager.hasUserRestrictionForUser(UserManager.DISALLOW_SAFE_BOOT,
                     mUserTracker.getUserHandle())) {
                 rebootAction(true);
@@ -1318,7 +1343,10 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override public boolean showDuringKeyguard() { return true; }
         @Override public boolean showBeforeProvisioning() { return true; }
-        @Override public void onPress() { rebootAction(false); }
+        @Override public void onPress() {
+            doHapticFeedback(false);
+            rebootAction(false);
+        }
     }
 
     private abstract class RestartReasonAction extends SinglePressAction {
@@ -1326,7 +1354,10 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         @Override public boolean showDuringKeyguard() { return true; }
         @Override public boolean showBeforeProvisioning() { return true; }
         abstract String getReason();
-        @Override public void onPress() { rebootAction(false, getReason()); }
+        @Override public void onPress() {
+            doHapticFeedback(false);
+            rebootAction(false, getReason());
+        }
     }
 
     private final class RestartRecoveryAction extends RestartReasonAction {
@@ -1377,11 +1408,13 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             takeScreenshot(TAKE_SCREENSHOT_FULLSCREEN);
         }
 
         @Override
         public boolean onLongPress() {
+            doHapticFeedback(true);
             takeScreenshot(TAKE_SCREENSHOT_SELECTED_REGION);
             return true;
         }
@@ -1408,6 +1441,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             // don't actually trigger the bugreport if we are running stability
             // tests via monkey
             if (ActivityManager.isUserAMonkey()) {
@@ -1441,6 +1475,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public boolean onLongPress() {
+            doHapticFeedback(true);
             // don't actually trigger the bugreport if we are running stability
             // tests via monkey
             if (ActivityManager.isUserAMonkey()) {
@@ -1489,6 +1524,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             // Add a little delay before executing, to give the dialog a chance to go away before
             // switching user
             mHandler.postDelayed(mLogoutInteractor::logOut, mDialogPressDelay);
@@ -1610,6 +1646,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             /*
               No time and need to dismiss the dialog here, just kill systemui straight after telling to
               policy/GlobalActions that we hid the dialog within the kill action itself so its onStatusBarConnectedChanged
@@ -1626,6 +1663,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
             @Override
             public void onPress() {
+                doHapticFeedback(false);
                 Intent intent = new Intent(Settings.ACTION_SETTINGS);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 mContext.startActivity(intent);
@@ -1648,6 +1686,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 R.string.global_action_assist) {
             @Override
             public void onPress() {
+                doHapticFeedback(false);
                 Intent intent = new Intent(Intent.ACTION_ASSIST);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 mContext.startActivity(intent);
@@ -1670,6 +1709,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 R.string.global_action_voice_assist) {
             @Override
             public void onPress() {
+                doHapticFeedback(false);
                 Intent intent = new Intent(Intent.ACTION_VOICE_ASSIST);
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 mContext.startActivity(intent);
@@ -1696,6 +1736,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
 
         @Override
         public void onPress() {
+            doHapticFeedback(false);
             mLockPatternUtils.requireStrongAuth(STRONG_AUTH_REQUIRED_AFTER_USER_LOCKDOWN,
                     UserHandle.USER_ALL);
             mUiEventLogger.log(GlobalActionsEvent.GA_LOCKDOWN_PRESS);
@@ -1808,6 +1849,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                             (user.name != null ? user.name : "Primary")
                                     + (isCurrentUser ? " \u2714" : "")) {
                         public void onPress() {
+                            doHapticFeedback(false);
                             try {
                                 mIActivityManager.switchUser(user.id);
                             } catch (RemoteException re) {
@@ -2476,7 +2518,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
      * A toggle action knows whether it is on or off, and displays an icon and status message
      * accordingly.
      */
-    private abstract static class ToggleAction implements Action {
+    private abstract class ToggleAction implements Action {
 
         ToggleState mState = ToggleState.Off;
 
@@ -2573,6 +2615,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         }
 
         public final void onPress() {
+            doHapticFeedback(false);
             if (mState.inTransition()) {
                 Log.w(TAG, "shouldn't be able to toggle when in transition");
                 return;
