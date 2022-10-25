@@ -293,11 +293,13 @@ import android.os.Process;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
 import android.service.contentcapture.ActivityEvent;
 import android.service.dreams.DreamActivity;
 import android.service.voice.IVoiceInteractionSession;
+import android.util.BoostFramework;
 import android.util.EventLog;
 import android.util.Log;
 import android.util.MergedConfiguration;
@@ -373,7 +375,7 @@ import java.util.function.Predicate;
 /**
  * An entry in the history task, representing an activity.
  */
-final class ActivityRecord extends WindowToken {
+public final class ActivityRecord extends WindowToken {
     private static final String TAG = TAG_WITH_CLASS_NAME ? "ActivityRecord" : TAG_ATM;
     private static final String TAG_ADD_REMOVE = TAG + POSTFIX_ADD_REMOVE;
     private static final String TAG_APP = TAG + POSTFIX_APP;
@@ -436,7 +438,7 @@ final class ActivityRecord extends WindowToken {
     final int mUserId;
     // The package implementing intent's component
     // TODO: rename to mPackageName
-    final String packageName;
+    public final String packageName;
     // the intent component, or target of an alias.
     final ComponentName mActivityComponent;
     // Input application handle used by the input dispatcher.
@@ -465,6 +467,8 @@ final class ActivityRecord extends WindowToken {
     final boolean rootVoiceInteraction;  // was this the root activity of a voice interaction?
 
     private final int theme;        // resource identifier of activity's theme.
+
+    public int perfActivityBoostHandler = -1; //perflock handler when activity is created.
     private Task task;              // the task this is in.
     private long createTime = System.currentTimeMillis();
     long lastVisibleTime;         // last time this activity became visible
@@ -522,6 +526,8 @@ final class ActivityRecord extends WindowToken {
     // True if the visible state of this token was forced to true due to a transferred starting
     // window.
     private boolean mVisibleSetFromTransferredStartingWindow;
+    public boolean launching;      // is activity launch in progress?
+    public boolean translucentWindowLaunch; // a translucent window launch?
     boolean nowVisible;     // is this activity's window visible?
     boolean idle;           // has the activity gone idle?
     boolean hasBeenLaunched;// has this activity ever been launched?
@@ -611,6 +617,12 @@ final class ActivityRecord extends WindowToken {
 
     boolean pendingVoiceInteractionStart;   // Waiting for activity-invoked voice session
     IVoiceInteractionSession voiceSession;  // Voice interaction session for this activity
+
+    public BoostFramework mPerf = null;
+    public BoostFramework mPerf_iop = null;
+
+    private final boolean isLowRamDevice =
+            SystemProperties.getBoolean("ro.config.low_ram", false);
 
     boolean mVoiceInteraction;
 
@@ -1973,6 +1985,8 @@ final class ActivityRecord extends WindowToken {
         super.setClientVisible(true);
         idle = false;
         hasBeenLaunched = false;
+        launching = false;
+        translucentWindowLaunch = false;
         mTaskSupervisor = supervisor;
 
         info.taskAffinity = computeTaskAffinity(info.taskAffinity, info.applicationInfo.uid);
@@ -2073,6 +2087,8 @@ final class ActivityRecord extends WindowToken {
                             return appContext;
                         });
         mCallerState = new ActivityCallerState(mAtmService);
+        if (mPerf == null)
+            mPerf = new BoostFramework();
     }
 
     private boolean isAppActivityEmbeddingSplitsEnabled() {
@@ -2265,6 +2281,7 @@ final class ActivityRecord extends WindowToken {
                 windowDisableStarting);
         // If this activity is launched from system surface, ignore windowDisableStarting
         if (windowIsTranslucent || windowIsFloating) {
+	    translucentWindowLaunch = true;
             return false;
         }
         if (windowShowWallpaper
@@ -2411,10 +2428,6 @@ final class ActivityRecord extends WindowToken {
     private int getStartingWindowType(boolean newTask, boolean taskSwitch, boolean processRunning,
             boolean allowTaskSnapshot, boolean activityCreated, boolean activityAllDrawn,
             TaskSnapshot snapshot) {
-        boolean isAppLockerActivity = AxSandboxService.get().isAppLockerActivity(this.intent.getComponent());
-        if (AxSandboxService.get().isAppLocked(this) || isAppLockerActivity) {
-            return (isAppLockerActivity || processRunning) ? STARTING_WINDOW_TYPE_NONE : STARTING_WINDOW_TYPE_SPLASH_SCREEN;
-        }
         // A special case that a new activity is launching to an existing task which is moving to
         // front. If the launching activity is the one that started the task, it could be a
         // trampoline that will be always created and finished immediately. Then give a chance to
@@ -3495,9 +3508,6 @@ final class ActivityRecord extends WindowToken {
      */
     private void finishActivityResults(int resultCode, Intent resultData,
             NeededUriGrants resultGrants) {
-        if (AxSandboxService.get().checkUnlockApp(this, resultCode, resultData)) {
-            resultTo = null;
-        }
         // Send the result if needed
         if (resultTo != null) {
             if (DEBUG_RESULTS) {
@@ -3919,6 +3929,7 @@ final class ActivityRecord extends WindowToken {
         }
         makeFinishingLocked();
 
+        getRootTask().onARStopTriggered(this);
         final boolean activityRemoved = destroyImmediately("finish-imm:" + reason);
 
         // If the display does not have running activity, the configuration may need to be
@@ -4288,7 +4299,6 @@ final class ActivityRecord extends WindowToken {
      * finishing or has no saved state or crashed many times, it will also be removed from history.
      */
     void handleAppDied() {
-        AxSandboxService.get().onAppDied(packageName, mUserId);
         final boolean remove;
         if (Process.isSdkSandboxUid(getUid())) {
             // Sandbox activities are created for SDKs run in the sandbox process, when the sandbox
@@ -4654,9 +4664,6 @@ final class ActivityRecord extends WindowToken {
             }
             return true;
         } else if (fromActivity.mStartingData != null) {
-            if (AxSandboxService.get().isAppLockerActivity(this.intent.getComponent())) {
-                return false;
-            }
             if (fromActivity.mStartingData instanceof SnapshotStartingData
                     && (!isStartingOrientationCompatible(fromActivity)
                     || !(((SnapshotStartingData) fromActivity.mStartingData).isValid()))) {
@@ -6101,6 +6108,7 @@ final class ActivityRecord extends WindowToken {
                 Slog.v(TAG_VISIBILITY, "Start visible activity, " + this);
             }
             setState(STARTED, "makeActiveIfNeeded");
+            acquireActivityBoost();
 
             final StartActivityItem item = new StartActivityItem(token, takeSceneTransitionInfo());
             mAtmService.getLifecycleManager().scheduleTransactionItem(app.getThread(), item);
@@ -6264,6 +6272,14 @@ final class ActivityRecord extends WindowToken {
         }
         newIntents = null;
 
+        if (isActivityTypeHome()) {
+            try {
+                mTaskSupervisor.new PreferredAppsTask().execute();
+            } catch (Exception e) {
+                Slog.v (TAG, "Exception: " + e);
+            }
+        }
+
         mTaskSupervisor.updateHomeProcessIfNeeded(this);
 
         if (nowVisible) {
@@ -6368,13 +6384,12 @@ final class ActivityRecord extends WindowToken {
 
     void stopIfPossible() {
         if (DEBUG_SWITCH) Slog.d(TAG_SWITCH, "Stopping: " + this);
+        launching = false;
         if (finishing) {
             throw new IllegalStateException("Request to stop a finishing activity: " + this);
         }
         if (isNoHistory()) {
-            if (AxSandboxService.get().isAppLocked(this)) {
-                Slog.d(TAG_STATES, "AppLocker: Skip no-history finish for locked app " + this);
-            } else if (!task.shouldSleepActivities()) {
+            if (!task.shouldSleepActivities()) {
                 ProtoLog.d(WM_DEBUG_STATES, "no-history finish of %s", this);
                 if (finishIfPossible("stop-no-history", false /* oomAdj */)
                         != FINISH_RESULT_CANCELLED) {
@@ -6588,8 +6603,52 @@ final class ActivityRecord extends WindowToken {
         }
     }
 
+    protected void releaseActivityBoost() {
+        if (mPerf != null && perfActivityBoostHandler > 0) {
+            mPerf.perfLockReleaseHandler(perfActivityBoostHandler);
+            perfActivityBoostHandler = -1;
+        } else if (perfActivityBoostHandler > 0) {
+            Slog.w(TAG, "activity boost didn't release as expected");
+        }
+    }
+
+    protected void acquireActivityBoost() {
+        if (mPerf != null) {
+            if (mPerf.getPerfHalVersion() >= BoostFramework.PERF_HAL_V23) {
+                int pkgType = mPerf.perfGetFeedback(BoostFramework.VENDOR_FEEDBACK_WORKLOAD_TYPE,
+                        packageName);
+                int pid = -1;
+                WindowProcessController wpc = null;
+                if (app == null) {
+                    if (info != null && info.applicationInfo != null && mAtmService != null) {
+                        wpc = mAtmService.getProcessController(processName,
+                                info.applicationInfo.uid);
+                    }
+                } else {
+                    wpc = app;
+                }
+                if (wpc != null && wpc.hasThread()) {
+                    pid = wpc.getPid();
+                }
+                perfActivityBoostHandler =
+                        mPerf.perfHintAcqRel(perfActivityBoostHandler,
+                                BoostFramework.VENDOR_HINT_FIRST_LAUNCH_BOOST, packageName,
+                                -1, BoostFramework.Launch.ACTIVITY_LAUNCH_BOOST, 2, pkgType, pid);
+            } else {
+                if (perfActivityBoostHandler > 0) {
+                    Slog.i(TAG, "Activity boosted, release it firstly");
+                    mPerf.perfLockReleaseHandler(perfActivityBoostHandler);
+                }
+                perfActivityBoostHandler =
+                         mPerf.perfHint(BoostFramework.VENDOR_HINT_FIRST_LAUNCH_BOOST,
+                                 packageName, -1, BoostFramework.Launch.BOOST_V1);
+            }
+        }
+    }
+
     /** Called when the windows associated app window container are drawn. */
     private void onWindowsDrawn() {
+        releaseActivityBoost();
         final TransitionInfoSnapshot info = mTaskSupervisor
                 .getActivityMetricsLogger().notifyWindowsDrawn(this);
         final boolean validInfo = info != null;
@@ -6618,6 +6677,7 @@ final class ActivityRecord extends WindowToken {
         if (DEBUG_SWITCH) Log.v(TAG_SWITCH, "windowsVisibleLocked(): " + this);
         if (!nowVisible) {
             nowVisible = true;
+            launching = false;
             lastVisibleTime = SystemClock.uptimeMillis();
             mAtmService.scheduleAppGcsLocked();
             // The nowVisible may be false in onAnimationFinished because the transition animation
@@ -6634,6 +6694,7 @@ final class ActivityRecord extends WindowToken {
         if (DEBUG_VISIBILITY) Slog.v(TAG_WM, "Reporting gone in " + token);
         if (DEBUG_SWITCH) Log.v(TAG_SWITCH, "windowsGone(): " + this);
         nowVisible = false;
+        launching = false;
     }
 
     void updateReportedVisibilityLocked() {
@@ -7229,6 +7290,15 @@ final class ActivityRecord extends WindowToken {
             }
         }
         return candidate;
+    }
+
+    public int isAppInfoGame() {
+        int isGame = 0;
+        if (info.applicationInfo != null) {
+            isGame = (info.applicationInfo.category == ApplicationInfo.CATEGORY_GAME ||
+                      (info.applicationInfo.flags & ApplicationInfo.FLAG_IS_GAME) == ApplicationInfo.FLAG_IS_GAME) ? 1 : 0;
+        }
+        return isGame;
     }
 
     boolean isTransitionForward() {
@@ -8443,7 +8513,7 @@ final class ActivityRecord extends WindowToken {
                 ws.updateSurfacePositionNonOrganized();
             }
         }
-        ensureActivityConfiguration();
+        updateReportedConfigurationAndSend();
         return true;
     }
 
@@ -9014,12 +9084,6 @@ final class ActivityRecord extends WindowToken {
                 return false;
             }
         }
-
-        if (AxSandboxService.get().isAppLocked(this)
-            || AxSandboxService.get().isAppLockerActivity(this.intent.getComponent())) {
-            return false;
-        }
-
         return true;
     }
 
