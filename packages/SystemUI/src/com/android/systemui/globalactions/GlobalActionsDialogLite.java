@@ -72,6 +72,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
+import android.os.Process;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.SystemProperties;
@@ -900,6 +901,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 case DEVICECONTROLS:
                     addIfShouldShowAction(tempActions, new DeviceControlsAction());
                     break;
+                case RESTART_SYSTEMUI:
+                    addIfShouldShowAction(tempActions, new RestartSystemUIAction());
+                    break;
                 case EMERGENCY:
                     // Only add the standard EmergencyDialerAction if the
                     // EmergencyAffordanceAction was NOT already handled.
@@ -1582,6 +1586,28 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         @Override
         public boolean showBeforeProvisioning() {
             return true;
+        }
+    }
+
+    private final class RestartSystemUIAction extends SinglePressAction {
+        private RestartSystemUIAction() {
+            super(com.android.systemui.res.R.drawable.ic_restart_systemui,
+                    com.android.systemui.res.R.string.global_action_restart_systemui);
+        }
+
+        @Override
+        public boolean showDuringKeyguard() {
+            return true;
+        }
+
+        @Override
+        public boolean showBeforeProvisioning() {
+            return true;
+        }
+
+        @Override
+        public void onPress() {
+            Process.killProcess(Process.myPid());
         }
     }
 
