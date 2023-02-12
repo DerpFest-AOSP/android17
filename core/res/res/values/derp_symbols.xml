@@ -29,4 +29,7 @@
 
     <!-- Package name of the edge cutout overlay -->
     <java-symbol type="string" name="config_edge_cutout_overlay_package" />
+
+    <!-- Boost Framework -->
+    <java-symbol type="bool" name="config_supportsBoostFramework" />
 </resources>
