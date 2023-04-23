@@ -115,10 +115,13 @@ constructor(
                         return
                     }
 
+                    // Wired charging animation already provides a ripple; skip the duplicate.
+                    /*
                     if (!pluggedIn && nowPluggedIn) {
                         startRippleWithDebounce()
                     }
                     pluggedIn = nowPluggedIn
+                    */
                 }
             }
         batteryController.addCallback(batteryStateChangeCallback)
