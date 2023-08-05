@@ -77,4 +77,8 @@
     <java-symbol type="string" name="app_lock_credential_continue" />
     <java-symbol type="string" name="app_lock_credential_set_done" />
     <java-symbol type="string" name="app_lock_credential_cleared" />
+
+    <!-- Delay in ms before invoking single tap gesture
+         Should be set to dt2w max time / 2 when needed -->
+    <java-symbol type="integer" name="config_singleTapDelay" />
 </resources>
