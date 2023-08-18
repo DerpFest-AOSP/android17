@@ -17,8 +17,10 @@
 package com.android.systemui.qs.footer.ui.viewmodel
 
 import android.content.Context
+import android.os.UserHandle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.provider.Settings
 import android.util.Log
 import android.view.ContextThemeWrapper
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -48,6 +50,7 @@ import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackContentViewModel.
 import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackViewModel
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
+import com.android.systemui.statusbar.policy.KeyguardStateController
 import com.android.systemui.user.domain.interactor.SelectedUserInteractor
 import com.android.systemui.util.icuMessageFormat
 import javax.inject.Inject
@@ -133,6 +136,7 @@ class FooterActionsViewModel(
         private val textFeedbackInteractor: TextFeedbackInteractor,
         private val selectedUserInteractor: SelectedUserInteractor,
         @Named(PM_LITE_ENABLED) private val showPowerButton: Boolean,
+        private val keyguardStateController: KeyguardStateController
     ) {
         /** Create a [FooterActionsViewModel] bound to the lifecycle of [lifecycleOwner]. */
         fun create(lifecycleOwner: LifecycleOwner): FooterActionsViewModel {
@@ -161,6 +165,7 @@ class FooterActionsViewModel(
                 activityStarter,
                 showPowerButton,
                 selectedUserInteractor,
+                keyguardStateController,
             )
         }
 
@@ -187,6 +192,7 @@ class FooterActionsViewModel(
                 activityStarter,
                 showPowerButton,
                 selectedUserInteractor,
+                keyguardStateController,
             )
         }
     }
@@ -201,6 +207,7 @@ fun createFooterActionsViewModel(
     activityStarter: ActivityStarter,
     showPowerButton: Boolean,
     selectedUserInteractor: SelectedUserInteractor,
+    keyguardStateController: KeyguardStateController
 ): FooterActionsViewModel {
 
     val vibrator = appContext.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
@@ -259,6 +266,11 @@ fun createFooterActionsViewModel(
     }
 
     fun onPowerButtonClicked(expandable: Expandable) {
+        if (keyguardStateController.isShowing() && keyguardStateController.isMethodSecure() 
+                && Settings.System.getIntForUser(appContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_ENABLE_POWER_MENU, 1, UserHandle.USER_CURRENT) == 0) {
+            return
+        }
         if (falsingManager.isFalseTap(FalsingManager.LOW_PENALTY)) {
             return
         }
