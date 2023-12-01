@@ -13799,6 +13799,12 @@ public final class Settings {
         public static final String DOZE_ON_CHARGE = "doze_on_charge";
 
         /**
+         * Whether to show the Wi-Fi standard (Wi-Fi 4/5/6/7) icon in the status bar.
+         * @hide
+         */
+        public static final String SHOW_WIFI_STANDARD_ICON = "show_wifi_standard_icon";
+
+        /**
          * Our GameSpace can't write to device_config directly [GTS]
          * Use this as intermediate to pass device_config property
          * from our GameSpace to com.android.server.app.GameManagerService
