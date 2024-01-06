@@ -7413,6 +7413,18 @@ public final class Settings {
         public static final String STATUSBAR_COMBINED_NOTIF_COUNT = "statusbar_combined_notif_count";
 
         /**
+         * Per-app refresh rate config
+         * @hide
+         */
+        public static final String REFRESH_RATE_CONFIG_CUSTOM = "refresh_rate_config_custom";
+
+        /**
+         * Force highest refresh rate in all apps
+         * @hide
+         */
+        public static final String EXTREME_REFRESH_RATE = "extreme_refresh_rate";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
