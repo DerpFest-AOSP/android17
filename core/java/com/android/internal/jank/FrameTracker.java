@@ -545,12 +545,12 @@ public class FrameTracker implements SurfaceControl.OnJankDataListener {
             // Count missed frames using the legacy classification for WW data.
             boolean missedFrame = false;
             if ((info.jankTypeLegacy & JANK_APPLICATION) != 0) {
-                Log.w(TAG, "Missed App frame:" + info + ", CUJ=" + name);
+                Log.v(TAG, "Missed App frame:" + info + ", CUJ=" + name);
                 missedAppFramesCountLegacy++;
                 missedFrame = true;
             }
             if ((info.jankTypeLegacy & JANK_COMPOSER) != 0) {
-                Log.w(TAG, "Missed SF frame:" + info + ", CUJ=" + name);
+                Log.v(TAG, "Missed SF frame:" + info + ", CUJ=" + name);
                 missedSfFramesCountLegacy++;
                 missedFrame = true;
             }
