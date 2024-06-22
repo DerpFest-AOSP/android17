@@ -13485,6 +13485,12 @@ public final class Settings {
         public static final String DISPLAY_COLOR_SATURATION = "display_color_saturation";
 
         /**
+         * Control display engine mode.
+         * @hide
+         */
+        public static final String DISPLAY_ENGINE_MODE = "display_engine_mode";
+
+        /**
          * Control whether display white balance is currently enabled.
          * @hide
          */
