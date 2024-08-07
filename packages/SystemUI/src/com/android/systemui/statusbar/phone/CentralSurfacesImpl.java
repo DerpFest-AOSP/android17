@@ -119,6 +119,7 @@ import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dagger.qualifiers.UiBackground;
 import com.android.systemui.demomode.DemoMode;
 import com.android.systemui.demomode.DemoModeController;
+import com.android.systemui.derpfest.RebootSuggestion;
 import com.android.systemui.emergency.EmergencyGesture;
 import com.android.systemui.emergency.EmergencyGestureModule.EmergencyGestureIntentFactory;
 import com.android.systemui.fragments.ExtensionFragmentListener;
@@ -387,6 +388,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private final DemoModeController mDemoModeController;
     private final NotificationsController mNotificationsController;
     private final StatusBarHideIconsForBouncerManager mStatusBarHideIconsForBouncerManager;
+    private final RebootSuggestion mRebootSuggestion;
 
     /** Controller for the Shade. */
     private final ShadeSurface mShadeSurface;
@@ -744,6 +746,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManager = windowManager;
         mWindowManagerProvider = windowManagerProvider;
         mSessionTracker = sessionTracker;
+
+        mRebootSuggestion = new RebootSuggestion(mContext);
     }
 
     private void initBubbles(Bubbles bubbles) {
