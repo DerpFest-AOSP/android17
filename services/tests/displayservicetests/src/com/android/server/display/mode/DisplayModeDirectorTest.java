@@ -4366,6 +4366,11 @@ public class DisplayModeDirectorTest {
             return mock(ModeChangeObserver.class);
         }
 
+        @Override
+        public void registerRefreshRateListener(
+                org.derpfest.display.IRefreshRateListener.Stub listener) {
+        }
+
         protected Display createDisplay(int id) {
             return new Display(DisplayManagerGlobal.getInstance(), id, mDisplayInfo,
                     InstrumentationRegistry.getInstrumentation().getContext().getResources());
