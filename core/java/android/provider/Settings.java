@@ -7405,6 +7405,12 @@ public final class Settings {
         public static final String BOUNCER_USER_SWITCHER_ENABLED = "bouncer_user_switcher_enabled";
 
         /**
+         * Whether to show the carrier name on the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SHOW_CARRIER = "lockscreen_show_carrier";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
