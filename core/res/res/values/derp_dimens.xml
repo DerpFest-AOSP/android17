@@ -13,4 +13,9 @@
     <dimen name="pocket_view_title_cancel_size">20sp</dimen>
     <dimen name="pocket_view_title_cancel_margin_top">48dp</dimen>
     <dimen name="pocket_view_margin_horizontal">48dp</dimen>
+
+    <!-- Custom clocks -->
+    <dimen name="presentation_clock_text_size">50dp</dimen>
+    <dimen name="large_clock_text_size">150dp</dimen>
+    <dimen name="small_clock_text_size">86dp</dimen>
 </resources>
