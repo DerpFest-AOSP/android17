@@ -96,6 +96,8 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     public static final int STATE_DOT = 1;
     public static final int STATE_HIDDEN = 2;
 
+    private static final String SYSUI_PKG = "com.android.systemui";
+
     @Retention(RetentionPolicy.SOURCE)
     @IntDef({STATE_ICON, STATE_DOT, STATE_HIDDEN})
     public @interface VisibleState { }
@@ -404,7 +406,10 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     }
 
     public void setIconStyle(boolean iconStyle) {
+        if (mNewIconStyle == iconStyle) return;
         mNewIconStyle = iconStyle;
+        updateDrawable(true);
+        updateIconColor();
     }
 
     /**
@@ -482,7 +487,7 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
             notifContext = getContext();
         }
         if (mNewIconStyle && isNotification() && icon != null
-                && icon.pkg != null && !icon.pkg.contains("systemui")) {
+                && icon.pkg != null && !TextUtils.equals(icon.pkg, SYSUI_PKG)) {
             try {
                 StatusBarIcon appIcon = icon.clone();
                 appIcon.preloadedIcon = getContext().getPackageManager().getApplicationIcon(icon.pkg);
@@ -689,6 +694,10 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
      * transitioning this also immediately sets the color.
      */
     public void setStaticDrawableColor(int color) {
+        if (mNewIconStyle && isNotification() &&
+                (mIcon != null && !TextUtils.equals(mIcon.pkg, SYSUI_PKG))) {
+            color = NO_COLOR;
+        }
         mDrawableColor = color;
         setColorInternal(color);
         updateContrastedStaticColor();
@@ -703,6 +712,13 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     private void updateIconColor() {
         if (mShowsConversation) {
             setColorFilter(null);
+            return;
+        }
+
+        if (mNewIconStyle && isNotification()
+                && mIcon != null && !TextUtils.equals(mIcon.pkg, SYSUI_PKG)) {
+            setColorFilter(null);
+            setImageTintList(null);
             return;
         }
 
@@ -993,6 +1009,15 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     @Override
     public void onDarkChanged(ArrayList<Rect> areas, float darkIntensity, int tint) {
         int areaTint = getTint(areas, this, tint);
+
+        if (mNewIconStyle && isNotification()
+                && mIcon != null && !TextUtils.equals(mIcon.pkg, SYSUI_PKG)) {
+            setImageTintList(null);
+            setColorFilter(null);
+            setDecorColor(areaTint);
+            return;
+        }
+
         ColorStateList color = ColorStateList.valueOf(areaTint);
         setImageTintList(color);
         setDecorColor(areaTint);
