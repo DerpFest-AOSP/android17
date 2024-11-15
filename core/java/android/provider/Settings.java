@@ -14881,57 +14881,15 @@ public final class Settings {
          * @hide
          */
         @Readable
-        @FlaggedApi(com.android.text.flags.Flags.FLAG_SPLIT_SHOW_PASSWORDS_TO_TOUCH_AND_PHYSICAL)
-        public static final String TEXT_SHOW_PASSWORD_TOUCH = "show_password_touch";
-
-        /**
-         * Setting to showing password characters from physical inputs in text editors.
-         * 1 = On, 0 = Off
-         * @hide
-         */
-        @Readable
-        @FlaggedApi(com.android.text.flags.Flags.FLAG_SPLIT_SHOW_PASSWORDS_TO_TOUCH_AND_PHYSICAL)
-        public static final String TEXT_SHOW_PASSWORD_PHYSICAL = "show_password_physical";
-
-        /**
-         * Whether personal context is enabled.
-         * 1 = On, 0 = Off
-         * @hide
-         */
-        @Readable
-        @FlaggedApi(android.service.personalcontext.Flags.FLAG_ENABLE_PERSONAL_CONTEXT_SERVICE)
-        public static final String PERSONAL_CONTEXT_ENABLED = "personal_context_enabled";
-
-        /**
-         * Default value for whether or not per-app personal context capture is enabled. This value
-         * is used as the default for any application for which the setting is unset.
-         * 1 = On, 0 = Off
-         *
-         * @see android.service.personalcontext.PersonalContextManager#isPersonalContextModeEnabled
-         * @hide
-         */
-        @Readable
-        @FlaggedApi(android.service.personalcontext.Flags.FLAG_ENABLE_PERSONAL_CONTEXT_SERVICE)
-        public static final String PERSONAL_CONTEXT_MODE_ENABLED_DEFAULT =
-                "personal_context_mode_enabled_default";
-
-       /**
-         * Setting to determine if the wallet service is available.
-         * 1 = available, 0 = unavailable
-         * @hide
-         */
-        public static final String IS_WALLET_SERVICE_AVAILABLE = "is_wallet_service_available";
-
-        /**
-         * Whether to show led light animation on incoming call from favorite contact.
-         *
-         * <p>Type: int (0 for false, 1 for true)
-         *
-         * @hide
-         */
         @FlaggedApi("com.android.server.notification.favorites_incoming_call_lights")
         public static final String LIGHT_ANIMATION_FAVORITE_CALLS_ENABLED =
                 "light_animation_favorite_calls_enabled";
+
+        /**
+         * Boolean value whether activate keyguard affordance shortcuts on short press
+         * @hide
+         */
+        public static final String KEYGUARD_AFFORDANCE_SINGLE_TAP = "keyguard_affordance_single_tap";
     }
 
     /**
