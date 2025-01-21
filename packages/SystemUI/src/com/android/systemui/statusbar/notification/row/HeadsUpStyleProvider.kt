@@ -16,6 +16,7 @@
 
 package com.android.systemui.statusbar.notification.row
 
+import android.os.SystemProperties
 import android.view.Display
 import com.android.app.displaylib.PerDisplayRepository
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent
@@ -36,7 +37,7 @@ constructor(
 ) : HeadsUpStyleProvider {
 
     override fun shouldApplyCompactStyle(displayId: Int): Boolean {
-        return android.app.Flags.alwaysShowMinimalHun() || isInImmersiveMode(displayId)
+        return android.app.Flags.alwaysShowMinimalHun() || isInImmersiveMode(displayId) || alwaysShow()
     }
 
     private fun isInImmersiveMode(displayId: Int): Boolean {
@@ -44,4 +45,7 @@ constructor(
             displaySubcomponentRepo[displayId] ?: displaySubcomponentRepo[Display.DEFAULT_DISPLAY]!!
         return displaySubcomponent.statusBarModeRepo.isInFullscreenMode.value
     }
+
+    private fun alwaysShow() =
+        SystemProperties.getBoolean("persist.sys.compact_heads_up_notification.always_show", false)
 }
