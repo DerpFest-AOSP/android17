@@ -34,7 +34,7 @@ final class DisplayEngineController extends TintController {
     // r/g/b/sat/cont/val are scaled by 255; hue is in degrees.
     private static final int[] X_REALITY_MODE       = {252, 227, 228, 278, 260, 264, 0};
     private static final int[] VIVID_MODE           = {240, 240, 225, 281, 255, 262, 0};
-    private static final int[] TRILUMINOUS_PRO_MODE = {250, 235, 255, 260, 260, 280, 3};
+    private static final int[] TRILUMINOUS_PRO_MODE = {250, 235, 255, 260, 255, 280, 3};
     private static final int[] NATURAL_MODE         = {255, 246, 242, 266, 258, 255, 0};
     private static final int[] CINEMA_MODE          = {255, 240, 222, 248, 261, 252, 0};
     private static final int[] READING_MODE         = {255, 231, 205, 235, 255, 250, 0};
