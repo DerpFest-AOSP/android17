@@ -22,6 +22,7 @@ import android.view.VelocityTracker
 import android.view.animation.AccelerateInterpolator
 import androidx.annotation.FloatRange
 import androidx.annotation.VisibleForTesting
+import com.android.systemui.Flags
 import com.android.systemui.statusbar.VibratorHelper
 import com.google.android.msdl.data.model.MSDLToken
 import com.google.android.msdl.domain.InteractionProperties
@@ -30,6 +31,11 @@ import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.round
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Listener of slider events that triggers haptic feedback.
@@ -48,6 +54,8 @@ class SliderHapticFeedbackProvider(
     private val clock: com.android.systemui.util.time.SystemClock,
 ) : SliderStateListener {
 
+    private var dragVibrationJob: Job? = null
+
     private val velocityAccelerateInterpolator =
         AccelerateInterpolator(config.velocityInterpolatorFactor)
     private val positionAccelerateInterpolator =
@@ -61,6 +69,9 @@ class SliderHapticFeedbackProvider(
     private var hasVibratedAtLowerBookend = false
     private var hasVibratedAtUpperBookend = false
 
+    private val doubleClickEffect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+    private val textureClickEffect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_TEXTURE_TICK)
+
     /** Time threshold to wait before making new API call. */
     private val thresholdUntilNextDragCallMillis =
         lowTickDurationMs * config.numberOfLowTicks + config.deltaMillisForDragInterval
@@ -72,12 +83,16 @@ class SliderHapticFeedbackProvider(
      */
     private fun vibrateOnEdgeCollision(absoluteVelocity: Float) {
         val powerScale = scaleOnEdgeCollision(absoluteVelocity)
-        val properties =
-            InteractionProperties.DynamicVibrationScale(
-                powerScale,
-                vibrationAttributes = VIBRATION_ATTRIBUTES_PIPELINING,
-            )
-        msdlPlayer.playToken(MSDLToken.DRAG_THRESHOLD_INDICATOR_LIMIT, properties)
+        if (Flags.msdlFeedback()) {
+            val properties =
+                InteractionProperties.DynamicVibrationScale(
+                    powerScale,
+                    vibrationAttributes = VIBRATION_ATTRIBUTES_PIPELINING,
+                )
+            msdlPlayer.playToken(MSDLToken.DRAG_THRESHOLD_INDICATOR_LIMIT, properties)
+        } else {
+            vibratorHelper.vibrate(doubleClickEffect, VIBRATION_ATTRIBUTES_PIPELINING)
+        }
     }
 
     /**
@@ -156,21 +171,36 @@ class SliderHapticFeedbackProvider(
     }
 
     private fun performDiscreteSliderDragVibration(scale: Float) {
-        val properties =
-            InteractionProperties.DynamicVibrationScale(
-                scale,
-                vibrationAttributes = VIBRATION_ATTRIBUTES_PIPELINING,
-            )
-        msdlPlayer.playToken(MSDLToken.DRAG_INDICATOR_DISCRETE, properties)
+        if (Flags.msdlFeedback()) {
+            val properties =
+                InteractionProperties.DynamicVibrationScale(
+                    scale,
+                    vibrationAttributes = VIBRATION_ATTRIBUTES_PIPELINING,
+                )
+            msdlPlayer.playToken(MSDLToken.DRAG_INDICATOR_DISCRETE, properties)
+        } else {
+            vibratorHelper.vibrate(textureClickEffect, VIBRATION_ATTRIBUTES_PIPELINING)
+        }
     }
 
     private fun performContinuousSliderDragVibration(scale: Float) {
-        val properties =
-            InteractionProperties.DynamicVibrationScale(
-                scale,
-                vibrationAttributes = VIBRATION_ATTRIBUTES_PIPELINING,
-            )
-        msdlPlayer.playToken(MSDLToken.DRAG_INDICATOR_CONTINUOUS, properties)
+        if (Flags.msdlFeedback()) {
+            val properties =
+                InteractionProperties.DynamicVibrationScale(
+                    scale,
+                    vibrationAttributes = VIBRATION_ATTRIBUTES_PIPELINING,
+                )
+            msdlPlayer.playToken(MSDLToken.DRAG_INDICATOR_CONTINUOUS, properties)
+        } else {
+            dragVibrationJob?.cancel()
+            dragVibrationJob =
+                CoroutineScope(Dispatchers.Default).launch {
+                    repeat(config.numberOfLowTicks) {
+                        vibratorHelper.vibrate(textureClickEffect, VIBRATION_ATTRIBUTES_PIPELINING)
+                        delay(80)
+                    }
+                }
+        }
     }
 
     /**
