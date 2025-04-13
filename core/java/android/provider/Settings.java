@@ -13128,6 +13128,12 @@ public final class Settings {
         public static final String VOLUME_DIALOG_DISMISS_TIMEOUT = "volume_dialog_dismiss_timeout";
 
         /**
+         * Volume dialog haptic feedback
+         * @hide
+         */
+        public static final String VOLUME_DIALOG_HAPTIC_FEEDBACK = "volume_dialog_haptic_feedback";
+
+        /**
          * What behavior should be invoked when the volume hush gesture is triggered
          * Either DERP_VOLUME_HUSH_OFF or a comma separated list of modes. One or more of:
          * DERP_VOLUME_HUSH_NORMAL, DERP_VOLUME_HUSH_VIBRATE, DERP_VOLUME_HUSH_MUTE
