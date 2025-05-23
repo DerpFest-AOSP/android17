@@ -306,4 +306,7 @@
     <item type="id" name="screen_off_animation_guard_set" />
     <item type="id" name="screen_off_animation_guard_reported_wtf" />
     <item type="id" name="screen_off_animation_guard_screen_off_updates" />
+
+    <!-- Clock face -->
+    <item type="id" name="original_text_color" />
 </resources>
