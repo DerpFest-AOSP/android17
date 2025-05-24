@@ -224,6 +224,12 @@ constructor(
                     showAodPromoted = false,
                 )
             }
+            .map { notifs ->
+                notifs
+                    .filter { it.statusBarIcon != null }
+                    .distinctBy { it.statusBarIcon!!.toString() }
+                    .toSet()
+            }
             .flowOn(bgContext)
 }
 
@@ -245,6 +251,12 @@ constructor(
                     showDismissed = false,
                     showRepliedMessages = false,
                 )
+            }
+            .map { notifs ->
+                notifs
+                    .filter { it.statusBarIcon != null }
+                    .distinctBy { it.statusBarIcon!!.toString() }
+                    .toSet()
             }
             .flowOn(bgContext)
 
