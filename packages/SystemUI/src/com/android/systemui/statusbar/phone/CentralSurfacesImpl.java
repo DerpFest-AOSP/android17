@@ -82,6 +82,7 @@ import android.view.SurfaceControl;
 import android.view.ThreadedRenderer;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.WindowManagerGlobal;
 import android.view.accessibility.AccessibilityManager;
@@ -142,6 +143,7 @@ import com.android.systemui.keyguard.KeyguardViewMediator;
 import com.android.systemui.keyguard.ScreenLifecycle;
 import com.android.systemui.keyguard.WakefulnessLifecycle;
 import com.android.systemui.log.SessionTracker;
+import com.android.systemui.media.MediaViewController;
 import com.android.systemui.media.NotificationMediaManager;
 import com.android.systemui.navigationbar.NavigationBarController;
 import com.android.systemui.navigationbar.views.NavigationBarView;
@@ -429,6 +431,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private final UserTracker mUserTracker;
     private final TunerService mTunerService;
     private final ActivityStarter mActivityStarter;
+    private final MediaViewController mMediaViewController;
 
     private GameSpaceManager mGameSpaceManager;
 
@@ -656,7 +659,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             WindowManager windowManager,
             WindowManagerProvider windowManagerProvider,
             SessionTracker sessionTracker,
-            BurnInProtectionController burnInProtectionController
+            BurnInProtectionController burnInProtectionController,
+            MediaViewController mediaViewController
     ) {
         mContext = context;
         mNotificationsController = notificationsController;
@@ -784,6 +788,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManagerProvider = windowManagerProvider;
         mSessionTracker = sessionTracker;
         mBurnInProtectionController = burnInProtectionController;
+        mMediaViewController = mediaViewController;
 
         mRebootSuggestion = new RebootSuggestion(mContext);
     }
@@ -930,6 +935,13 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                 (requestTopUi, componentTag) -> mMainExecutor.execute(
                         () -> mTopUiController.setRequestTopUi(requestTopUi, componentTag)
                 )));
+        getNotifContainerParentView().addView(mMediaViewController.getMediaArtScrim(), 0);
+    }
+
+    private ViewGroup getNotifContainerParentView() {
+        ViewGroup rootView = (ViewGroup) getNotificationShadeWindowView().findViewById(R.id.scrim_behind).getParent();
+        ViewGroup targetView = rootView.findViewById(R.id.notification_container_parent);
+        return targetView;
     }
 
     @VisibleForTesting
