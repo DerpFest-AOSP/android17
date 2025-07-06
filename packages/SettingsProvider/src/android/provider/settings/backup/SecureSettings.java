@@ -358,6 +358,8 @@ public class SecureSettings {
         Settings.Secure.QS_DATA_USAGE_CYCLE_TYPE,
         Settings.Secure.DISPLAY_COLOR_BALANCE_RED,
         Settings.Secure.DISPLAY_COLOR_BALANCE_GREEN,
-        Settings.Secure.DISPLAY_COLOR_BALANCE_BLUE
+        Settings.Secure.DISPLAY_COLOR_BALANCE_BLUE,
+        Settings.Secure.DISPLAY_COLOR_TEMPERATURE,
+        Settings.Secure.DISPLAY_COLOR_SATURATION
     };
 }
