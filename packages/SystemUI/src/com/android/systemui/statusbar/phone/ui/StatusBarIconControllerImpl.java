@@ -392,7 +392,8 @@ public class StatusBarIconControllerImpl implements Tunable,
         setIcon(slotName, holder);
     }
 
-    private void setIcon(String slot, @NonNull StatusBarIconHolder holder) {
+    /** Sets or updates the icon holder for the given slot. */
+    public void setIcon(String slot, @NonNull StatusBarIconHolder holder) {
         boolean isNew = mStatusBarIconList.getIconHolder(slot, holder.getTag()) == null;
         mStatusBarIconList.setIcon(slot, holder);
 
@@ -464,7 +465,8 @@ public class StatusBarIconControllerImpl implements Tunable,
         }
     }
 
-    private void handleSet(String slotName, StatusBarIconHolder holder) {
+    /** Notifies icon groups that the holder for the given slot has been updated. */
+    public void handleSet(String slotName, StatusBarIconHolder holder) {
         int viewIndex = mStatusBarIconList.getViewIndex(slotName, holder.getTag());
         mIconGroups.forEach(l -> l.onSetIconHolder(viewIndex, holder));
     }

@@ -86,7 +86,8 @@ import javax.inject.Provider;
         StartBinderLoggerModule.class,
         SystemUIModule.class,
         SystemUICoreStartableModule.class,
-        WallpaperModule.class})
+        WallpaperModule.class,
+        DerpStartableModule.class})
 public interface SysUIComponent {
 
     /**

@@ -41,6 +41,7 @@ import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.StatusIconDisplayable;
 import com.android.systemui.statusbar.connectivity.ui.MobileContextProvider;
+import com.android.systemui.statusbar.phone.StatusBarIconControllerImplEx;
 import com.android.systemui.statusbar.phone.StatusBarIconHolder;
 import com.android.systemui.statusbar.phone.StatusBarLocation;
 import com.android.systemui.statusbar.pipeline.StatusBarPipelineFlags;
@@ -82,7 +83,8 @@ public class StatusBarIconControllerTest extends LeakCheckedTest {
         TestIconManager manager =
                 new TestIconManager(layout, mMobileUiAdapter, mMobileContextProvider,
                         mock(MobileUiAdapterKairos.class), mock(
-                        KairosNetwork.class), mock(CoroutineScope.class));
+                        KairosNetwork.class), mock(CoroutineScope.class),
+                        mock(StatusBarIconControllerImplEx.class));
         testCallOnAdd_forManager(manager);
     }
 
@@ -97,7 +99,8 @@ public class StatusBarIconControllerTest extends LeakCheckedTest {
                 mMobileContextProvider,
                 mock(DarkIconDispatcher.class),
                 mock(MobileUiAdapterKairos.class), mock(KairosNetwork.class),
-                mock(CoroutineScope.class));
+                mock(CoroutineScope.class),
+                mock(StatusBarIconControllerImplEx.class));
         testCallOnAdd_forManager(manager);
     }
 
@@ -150,7 +153,8 @@ public class StatusBarIconControllerTest extends LeakCheckedTest {
                 DarkIconDispatcher darkIconDispatcher,
                 MobileUiAdapterKairos mobileUiAdapterKairos,
                 KairosNetwork kairosNetwork,
-                CoroutineScope appScope) {
+                CoroutineScope appScope,
+                StatusBarIconControllerImplEx iconControllerEx) {
             super(group,
                     location,
                     wifiUiAdapter,
@@ -159,6 +163,7 @@ public class StatusBarIconControllerTest extends LeakCheckedTest {
                     contextProvider,
                     kairosNetwork,
                     appScope,
+                    iconControllerEx,
                     darkIconDispatcher);
         }
 
@@ -184,7 +189,8 @@ public class StatusBarIconControllerTest extends LeakCheckedTest {
                 MobileContextProvider contextProvider,
                 MobileUiAdapterKairos adapterKairos,
                 KairosNetwork kairosNetwork,
-                CoroutineScope appScope
+                CoroutineScope appScope,
+                StatusBarIconControllerImplEx iconControllerEx
         ) {
             super(group,
                     StatusBarLocation.HOME,
@@ -193,7 +199,8 @@ public class StatusBarIconControllerTest extends LeakCheckedTest {
                     () -> adapterKairos,
                     contextProvider,
                     kairosNetwork,
-                    appScope);
+                    appScope,
+                    iconControllerEx);
         }
 
         @Override

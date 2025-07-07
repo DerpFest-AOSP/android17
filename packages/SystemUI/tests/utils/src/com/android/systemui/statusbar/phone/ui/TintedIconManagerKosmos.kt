@@ -20,9 +20,11 @@ import com.android.systemui.kairos.kairos
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.applicationCoroutineScope
 import com.android.systemui.statusbar.connectivity.ui.mobileContextProvider
+import com.android.systemui.statusbar.phone.StatusBarIconControllerImplEx
 import com.android.systemui.statusbar.pipeline.mobile.ui.mobileUiAdapter
 import com.android.systemui.statusbar.pipeline.mobile.ui.mobileUiAdapterKairos
 import com.android.systemui.statusbar.pipeline.wifi.ui.wifiUiAdapter
+import org.mockito.kotlin.mock
 
 val Kosmos.tintedIconManagerFactory by
     Kosmos.Fixture {
@@ -33,5 +35,6 @@ val Kosmos.tintedIconManagerFactory by
             { mobileUiAdapterKairos },
             kairos,
             applicationCoroutineScope,
+            mock<StatusBarIconControllerImplEx>(),
         )
     }

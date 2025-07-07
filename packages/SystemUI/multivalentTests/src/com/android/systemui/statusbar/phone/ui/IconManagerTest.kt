@@ -28,6 +28,7 @@ import com.android.systemui.SysuiTestCase
 import com.android.systemui.kairos.KairosNetwork
 import com.android.systemui.statusbar.StatusBarIconView
 import com.android.systemui.statusbar.connectivity.ui.MobileContextProvider
+import com.android.systemui.statusbar.phone.StatusBarIconControllerImplEx
 import com.android.systemui.statusbar.phone.StatusBarLocation
 import com.android.systemui.statusbar.pipeline.mobile.ui.MobileUiAdapter
 import com.android.systemui.statusbar.pipeline.mobile.ui.MobileUiAdapterKairos
@@ -62,6 +63,7 @@ class IconManagerTest : SysuiTestCase() {
                 mock<MobileContextProvider>(defaultAnswer = RETURNS_DEEP_STUBS),
                 mock<KairosNetwork>(defaultAnswer = RETURNS_DEEP_STUBS),
                 mock<CoroutineScope>(defaultAnswer = RETURNS_DEEP_STUBS),
+                mock<StatusBarIconControllerImplEx>(defaultAnswer = RETURNS_DEEP_STUBS),
             )
     }
 

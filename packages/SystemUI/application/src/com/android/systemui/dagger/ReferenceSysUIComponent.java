@@ -47,7 +47,8 @@ import dagger.Subcomponent;
         PodModulePhone.class,
         SystemUICoreStartableModule.class,
         SysUIUnfoldModule.class,
-        WallpaperModule.class})
+        WallpaperModule.class,
+        DerpStartableModule.class})
 public interface ReferenceSysUIComponent extends SysUIComponent {
 
     /**
