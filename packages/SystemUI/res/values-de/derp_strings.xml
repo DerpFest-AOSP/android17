@@ -93,4 +93,7 @@
 
     <!-- QS layout editor -->
     <string name="qs_edit_media_player">Mediaplayer</string>
+
+    <!-- Name of the bluetooth battery level status bar setting. -->
+    <string name="status_bar_bluetooth_battery_level">Bluetooth-Akkustand</string>
 </resources>
