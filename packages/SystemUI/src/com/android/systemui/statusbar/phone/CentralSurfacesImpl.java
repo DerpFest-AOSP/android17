@@ -157,6 +157,7 @@ import com.android.systemui.plugins.PluginManager;
 import com.android.systemui.plugins.qs.QS;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.power.domain.interactor.PowerInteractor;
+import com.android.systemui.pulse.PulseViewController;
 import com.android.systemui.qs.composefragment.QSFragmentCompose;
 import com.android.systemui.res.R;
 import com.android.systemui.scene.domain.interactor.WindowRootViewVisibilityInteractor;
@@ -432,6 +433,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private final TunerService mTunerService;
     private final ActivityStarter mActivityStarter;
     private final MediaViewController mMediaViewController;
+    private final PulseViewController mPulseViewController;
 
     private GameSpaceManager mGameSpaceManager;
 
@@ -660,7 +662,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             WindowManagerProvider windowManagerProvider,
             SessionTracker sessionTracker,
             BurnInProtectionController burnInProtectionController,
-            MediaViewController mediaViewController
+            MediaViewController mediaViewController,
+            PulseViewController pulseViewController
     ) {
         mContext = context;
         mNotificationsController = notificationsController;
@@ -789,6 +792,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mSessionTracker = sessionTracker;
         mBurnInProtectionController = burnInProtectionController;
         mMediaViewController = mediaViewController;
+        mPulseViewController = pulseViewController;
 
         mRebootSuggestion = new RebootSuggestion(mContext);
     }
@@ -936,6 +940,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                         () -> mTopUiController.setRequestTopUi(requestTopUi, componentTag)
                 )));
         getNotifContainerParentView().addView(mMediaViewController.getMediaArtScrim(), 0);
+        getNotifContainerParentView().addView(mPulseViewController.getPulseView(), 1);
     }
 
     private ViewGroup getNotifContainerParentView() {
