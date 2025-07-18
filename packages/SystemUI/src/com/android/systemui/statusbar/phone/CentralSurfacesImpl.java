@@ -172,6 +172,7 @@ import com.android.systemui.plugins.PluginManager;
 import com.android.systemui.plugins.qs.QS;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.power.domain.interactor.PowerInteractor;
+import com.android.systemui.pulse.PulseViewController;
 import com.android.systemui.qs.QSFragmentLegacy;
 import com.android.systemui.qs.QSPanelController;
 import com.android.systemui.qs.composefragment.QSFragmentCompose;
@@ -499,6 +500,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private final TunerService mTunerService;
     private final ActivityStarter mActivityStarter;
     private final MediaViewController mMediaViewController;
+    private final PulseViewController mPulseViewController;
     private final EdgeLightViewController mEdgeLightViewController;
 
     private GameSpaceManager mGameSpaceManager;
@@ -781,6 +783,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             BurnInProtectionController burnInProtectionController,
             NotificationPanelViewController notificationPanelViewController,
             MediaViewController mediaViewController,
+            PulseViewController pulseViewController,
             EdgeLightViewController edgeLightViewController
     ) {
         mContext = context;
@@ -934,6 +937,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManager = windowManager;
         mWindowManagerProvider = windowManagerProvider;
         mMediaViewController = mediaViewController;
+        mPulseViewController = pulseViewController;
         mEdgeLightViewController = edgeLightViewController;
 
         mRebootSuggestion = new RebootSuggestion(mContext);
@@ -1246,9 +1250,14 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         ViewGroup overlay = getScrimOverlayContainer();
 
         detachFromParent(mMediaViewController.getMediaArtScrim());
+        detachFromParent(mPulseViewController.getPulseView());
         detachFromParent(mEdgeLightViewController.getEdgeLightView());
 
         overlay.addView(mMediaViewController.getMediaArtScrim(),
+                new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+        overlay.addView(mPulseViewController.getPulseView(),
                 new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
