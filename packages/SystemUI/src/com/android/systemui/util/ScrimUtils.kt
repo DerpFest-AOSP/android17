@@ -28,12 +28,13 @@ class ScrimUtils private constructor() {
         fun onKeyguardFadingAwayChanged(fadingAway: Boolean) {}
         fun onKeyguardGoingAwayChanged(goingAway: Boolean) {}
         fun onPrimaryBouncerShowingChanged(showing: Boolean) {}
-        fun onDozingChanged() {}
+        fun onDozingChanged(dozing: Boolean) {}
         fun onExpandedFractionChanged(expandedFraction: Float) {}
         fun onBarStateChanged(state: Int) {}
         fun onQsVisibilityChanged(visible: Boolean) {}
         fun onStartedWakingUp() {}
         fun onScreenTurnedOff() {}
+        fun onUserChanged() {}
         fun setPulsing(pulsing: Boolean) {}
         fun onNotificationPosted(sbn: StatusBarNotification) {}
     }
@@ -82,7 +83,7 @@ class ScrimUtils private constructor() {
     fun onDozingChanged(dozing: Boolean) {
         if (mIsDozing != dozing) {
             mIsDozing = dozing
-            listeners.notifyOnMain { it.onDozingChanged() }
+            listeners.notifyOnMain { it.onDozingChanged(dozing) }
         }
     }
 
@@ -119,6 +120,10 @@ class ScrimUtils private constructor() {
 
     fun onScreenTurnedOff() =
         notifyListeners(Consumer { it.onScreenTurnedOff() })
+
+    fun onUserChanged() {
+        listeners.notify { it.onUserChanged() }
+    }
 
     fun onNotificationPosted(sbn: StatusBarNotification) {
         listeners.notifyOnMain { it.onNotificationPosted(sbn) }

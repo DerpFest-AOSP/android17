@@ -142,6 +142,7 @@ import com.android.systemui.dagger.qualifiers.UiBackground;
 import com.android.systemui.demomode.DemoMode;
 import com.android.systemui.demomode.DemoModeController;
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent;
+import com.android.systemui.edgelight.EdgeLightViewController;
 import com.android.systemui.emergency.EmergencyGesture;
 import com.android.systemui.emergency.EmergencyGestureModule.EmergencyGestureIntentFactory;
 import com.android.systemui.flags.FeatureFlags;
@@ -501,6 +502,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private final TunerService mTunerService;
     private final ActivityStarter mActivityStarter;
     private final MediaViewController mMediaViewController;
+    private final EdgeLightViewController mEdgeLightViewController;
 
     private GameSpaceManager mGameSpaceManager;
     private DisplayManager mDisplayManager;
@@ -781,7 +783,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             WindowManagerProvider windowManagerProvider,
             BurnInProtectionController burnInProtectionController,
             NotificationPanelViewController notificationPanelViewController,
-            MediaViewController mediaViewController
+            MediaViewController mediaViewController,
+            EdgeLightViewController edgeLightViewController
     ) {
         mContext = context;
         mNotificationsController = notificationsController;
@@ -934,6 +937,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManager = windowManager;
         mWindowManagerProvider = windowManagerProvider;
         mMediaViewController = mediaViewController;
+        mEdgeLightViewController = edgeLightViewController;
 
         mRebootSuggestion = new RebootSuggestion(mContext);
 
@@ -1221,6 +1225,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                         () -> mTopUiController.setRequestTopUi(requestTopUi, componentTag)
                 )));
         getNotifContainerParentView().addView(mMediaViewController.getMediaArtScrim(), 0);
+        getNotifContainerParentView().addView(mEdgeLightViewController.getEdgeLightView(), 2);
     }
 
     private ViewGroup getNotifContainerParentView() {

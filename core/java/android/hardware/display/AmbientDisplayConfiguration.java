@@ -110,6 +110,7 @@ public class AmbientDisplayConfiguration {
                 || pulseOnLongPressEnabled(user)
                 || alwaysOnEnabled(user)
                 || isAmbientTickerEnabled(user)
+                || edgeLightEnabled(user)
                 || wakeLockScreenGestureEnabled(user)
                 || wakeDisplayGestureEnabled(user)
                 || pickupGestureEnabled(user)
@@ -162,6 +163,12 @@ public class AmbientDisplayConfiguration {
     /** @hide */
     public boolean dozePickupSensorAvailable() {
         return mContext.getResources().getBoolean(R.bool.config_dozePulsePickup);
+    }
+
+    /** @hide */
+    public boolean edgeLightEnabled(int user) {
+        return Settings.System.getIntForUser(mContext.getContentResolver(),
+            Settings.System.EDGE_LIGHT_ENABLED, 0, user) != 0;
     }
 
     /** @hide */

@@ -25,6 +25,7 @@ import com.android.systemui.controls.dagger.StartControlsStartableModule;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dagger.qualifiers.PerUser;
 import com.android.systemui.dump.DumpManager;
+import com.android.systemui.edgelight.EdgeLightViewController;
 import com.android.systemui.keyguard.KeyguardSliceProvider;
 import com.android.systemui.media.MediaViewController;
 import com.android.systemui.people.PeopleProvider;
@@ -212,4 +213,7 @@ public interface SysUIComponent {
 
     @SysUISingleton
     MediaViewController mediaViewController();
+
+    @SysUISingleton
+    EdgeLightViewController edgeLightViewController();
 }

@@ -7466,6 +7466,48 @@ public final class Settings {
         public static final String LOCKSCREEN_SHOW_CARRIER = "lockscreen_show_carrier";
 
         /**
+         * Whether edge light is enabled
+         * @hide
+         */
+        public static final String EDGE_LIGHT_ENABLED = "edge_light_enabled";
+
+        /**
+         * Color mode of edge light
+         * @hide
+         */
+        public static final String EDGE_LIGHT_COLOR_MODE = "edge_light_color_mode";
+
+        /**
+         * Custom color (hex value) for edge light
+         * @hide
+         */
+        public static final String EDGE_LIGHT_CUSTOM_COLOR = "edge_light_custom_color";
+
+        /**
+         * Pulse count for edge light
+         * @hide
+         */
+        public static final String EDGE_LIGHT_PULSE_COUNT = "edge_light_pulse_count";
+
+        /**
+         * Stroke width for edge light
+         * @hide
+         */
+        public static final String EDGE_LIGHT_STROKE_WIDTH = "edge_light_stroke_width";
+
+        /**
+         * Edge light style
+         * @hide
+         */
+        public static final String EDGE_LIGHT_STYLE = "edge_light_style";
+
+        /**
+         * Edge light animation effect type
+         * @hide
+         */
+        public static final String EDGE_LIGHT_ANIMATION_EFFECT = "edge_light_animation_effect";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
