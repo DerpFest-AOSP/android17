@@ -317,6 +317,7 @@ class StatusBarNotificationIconsInteractorTest : SysuiTestCase() {
             kosmos.testDispatcher,
             kosmos.notificationIconsInteractor,
             kosmos.notificationListenerSettingsRepository,
+            kosmos.systemSettingsRepository,
         )
 
     private val activeNotificationListRepository

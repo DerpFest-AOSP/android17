@@ -46,5 +46,7 @@ val Kosmos.statusBarRootFactory by
             homeStatusBarViewModelFactory = defaultDisplayHomeStatusBarViewModelFactory,
             statusBarRegionSamplingViewModelFactory = statusBarRegionSamplingViewModelFactory,
             headlineViewModelFactory = displayAwareHeadlineViewModelImplFactory,
+            keyguardStateController = mock(),
+            headsUpManager = mock(),
         )
     }

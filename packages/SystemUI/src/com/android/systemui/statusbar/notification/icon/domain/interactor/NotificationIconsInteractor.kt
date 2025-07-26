@@ -22,6 +22,7 @@ import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.deviceentry.domain.interactor.DeviceEntryBypassInteractor
 import com.android.systemui.kairos.util.Either
 import com.android.systemui.kairos.util.mergeSecond
+import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
 import com.android.systemui.statusbar.data.repository.NotificationListenerSettingsRepository
 import com.android.systemui.statusbar.notification.data.repository.ActiveNotificationListRepository
 import com.android.systemui.statusbar.notification.data.repository.ActiveNotificationsStore
@@ -43,6 +44,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 /** Domain logic related to notification icons. */
 class NotificationIconsInteractor
@@ -212,10 +214,16 @@ constructor(
     @Background bgContext: CoroutineContext,
     deviceEntryBypassInteractor: DeviceEntryBypassInteractor,
     iconsInteractor: NotificationIconsInteractor,
+    systemSettingsRepository: SystemSettingsRepository,
 ) {
     val aodNotifs: Flow<Set<ActiveNotificationIconModel>> =
-        deviceEntryBypassInteractor.isBypassEnabled
-            .flatMapLatest { isBypassEnabled ->
+        combine(
+            deviceEntryBypassInteractor.isBypassEnabled,
+            systemSettingsRepository.intSetting("statusbar_combined_notif_count", 0)
+        ) { isBypassEnabled, combinedCountEnabled ->
+            isBypassEnabled to (combinedCountEnabled == 1)
+        }
+            .flatMapLatest { (isBypassEnabled, isCombinedCountEnabled) ->
                 iconsInteractor.filteredNotifSet(
                     showAmbient = false,
                     showDismissed = false,
@@ -223,12 +231,15 @@ constructor(
                     showPulsing = !isBypassEnabled,
                     showAodPromoted = false,
                 )
-            }
-            .map { notifs ->
-                notifs
-                    .filter { it.statusBarIcon != null }
-                    .distinctBy { it.statusBarIcon!!.toString() }
-                    .toSet()
+                .map { notifs ->
+                    val filtered = notifs.filter { it.statusBarIcon != null }
+                    // Only deduplicate when combined counter is disabled
+                    if (isCombinedCountEnabled) {
+                        filtered.toSet()
+                    } else {
+                        filtered.distinctBy { it.statusBarIcon!!.toString() }.toSet()
+                    }
+                }
             }
             .flowOn(bgContext)
 }
@@ -240,27 +251,56 @@ constructor(
     @Background bgContext: CoroutineContext,
     iconsInteractor: NotificationIconsInteractor,
     settingsRepository: NotificationListenerSettingsRepository,
+    systemSettingsRepository: SystemSettingsRepository,
 ) {
+    /** Total count of all notifications (for combined counter). */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val statusBarNotifs: Flow<Set<ActiveNotificationIconModel>> =
+    val notificationCount: Flow<Int> =
         settingsRepository.showSilentStatusIcons
             .flatMapLatest { showSilentIcons ->
-                iconsInteractor.filteredNotifSet(
-                    showAmbient = false,
-                    showLowPriority = showSilentIcons,
-                    showDismissed = false,
-                    showRepliedMessages = false,
-                )
+                iconsInteractor
+                    .filteredNotifSet(
+                        showAmbient = false,
+                        showLowPriority = showSilentIcons,
+                        showDismissed = false,
+                        showRepliedMessages = false,
+                    )
+                    .map { notifs -> notifs.count { it.statusBarIcon != null } }
             }
-            .map { notifs ->
-                notifs
-                    .filter { it.statusBarIcon != null }
-                    .distinctBy { it.statusBarIcon!!.toString() }
-                    .toSet()
+            .onStart { emit(0) }
+            .flowOn(bgContext)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val statusBarNotifs: Flow<Set<ActiveNotificationIconModel>> =
+        combine(
+            settingsRepository.showSilentStatusIcons,
+            systemSettingsRepository.intSetting("statusbar_combined_notif_count", 0),
+        ) { showSilentIcons, combinedCountEnabled ->
+            showSilentIcons to (combinedCountEnabled == 1)
+        }
+            .flatMapLatest { (showSilentIcons, isCombinedCountEnabled) ->
+                // When combined counter is enabled, hide individual icons.
+                if (isCombinedCountEnabled) {
+                    flowOf(emptySet())
+                } else {
+                    iconsInteractor
+                        .filteredNotifSet(
+                            showAmbient = false,
+                            showLowPriority = showSilentIcons,
+                            showDismissed = false,
+                            showRepliedMessages = false,
+                        )
+                        .map { notifs ->
+                            notifs
+                                .filter { it.statusBarIcon != null }
+                                .distinctBy { it.statusBarIcon!!.toString() }
+                                .toSet()
+                        }
+                }
             }
             .flowOn(bgContext)
 
     /** Emits `true` whenever there is at least one status bar notification. */
     val hasStatusBarNotifications: Flow<Boolean> =
-        statusBarNotifs.map { it.isNotEmpty() }.flowOn(bgContext)
+        notificationCount.map { it > 0 }.flowOn(bgContext)
 }

@@ -151,4 +151,8 @@
 
     <!-- Screen record dialog -->
     <string name="screenrecord_keep_screen_awake_label">Keep the screen awake</string>
+
+    <!-- Notification counter -->
+    <string name="status_bar_notification_info_overflow" translatable="false">\u221E</string>
+    <string name="status_bar_combined_notification_count">Show combined notification count</string>
 </resources>

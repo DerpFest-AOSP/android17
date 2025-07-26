@@ -24,9 +24,11 @@ import com.android.systemui.common.ui.ConfigurationState
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent
 import com.android.systemui.lifecycle.repeatWhenAttached
 import com.android.systemui.statusbar.notification.collection.NotifPipeline
+import com.android.systemui.statusbar.notification.icon.domain.interactor.StatusBarNotificationIconsInteractor
 import com.android.systemui.statusbar.notification.icon.ui.viewbinder.NotificationIconContainerViewBinder.IconViewStore
 import com.android.systemui.statusbar.notification.icon.ui.viewmodel.NotificationIconContainerStatusBarViewModel
 import com.android.systemui.statusbar.phone.NotificationIconContainer
+import com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter
 import javax.inject.Inject
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.launch
@@ -41,7 +43,18 @@ constructor(
     private val defaultDisplayViewStore: StatusBarNotificationIconViewStore,
     private val connectedDisplaysViewStoreFactory:
         ConnectedDisplaysStatusBarNotificationIconViewStore.Factory,
+    private val iconsInteractor: StatusBarNotificationIconsInteractor,
 ) {
+
+    fun bindCombinedCounter(counter: CombinedNotificationCounter, displayId: Int): DisposableHandle {
+        return counter.repeatWhenAttached {
+            lifecycleScope.launch {
+                iconsInteractor.notificationCount.collect { count ->
+                    counter.updateNotificationCount(count)
+                }
+            }
+        }
+    }
 
     fun bindWhileAttached(view: NotificationIconContainer, displayId: Int): DisposableHandle {
         return traceSection("NICStatusBar#bindWhileAttached") {

@@ -99,10 +99,12 @@ import com.android.systemui.statusbar.core.StatusBarForDesktop
 import com.android.systemui.statusbar.events.domain.interactor.SystemStatusEventAnimationInteractor
 import com.android.systemui.statusbar.layout.ui.viewmodel.AppHandlesViewModel
 import com.android.systemui.statusbar.notification.icon.ui.viewbinder.ConnectedDisplaysStatusBarNotificationIconViewStore
+import com.android.systemui.statusbar.notification.headsup.HeadsUpManager
 import com.android.systemui.statusbar.notification.icon.ui.viewbinder.NotificationIconContainerStatusBarViewBinder
 import com.android.systemui.statusbar.notification.icon.ui.viewbinder.NotificationIconContainerViewBinder
 import com.android.systemui.statusbar.notification.shared.StatusBarHeadline
 import com.android.systemui.statusbar.phone.NotificationIconContainer
+import com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter
 import com.android.systemui.statusbar.phone.PhoneStatusBarView
 import com.android.systemui.statusbar.phone.StatusBarLocation
 import com.android.systemui.statusbar.phone.StatusIconContainer
@@ -119,6 +121,7 @@ import com.android.systemui.statusbar.pipeline.shared.ui.view.SystemStatusIconsL
 import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBarViewModel
 import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBarViewModel.HomeStatusBarViewModelFactory
 import com.android.systemui.statusbar.policy.Clock
+import com.android.systemui.statusbar.policy.KeyguardStateController
 import com.android.systemui.statusbar.systemstatusicons.SystemStatusIconsInCompose
 import com.android.systemui.statusbar.systemstatusicons.domain.interactor.SystemStatusIconBlocklistInteractor
 import com.android.systemui.statusbar.systemstatusicons.ui.compose.SystemStatusIcons
@@ -152,6 +155,8 @@ constructor(
     @DisplayAware private val headlineViewModelFactory: HeadlineViewModel.Factory,
     private val statusBarRegionSamplingViewModelFactory: StatusBarRegionSamplingViewModel.Factory,
     private val shadeWindowRootView: WindowRootView,
+    private val keyguardStateController: KeyguardStateController,
+    private val headsUpManager: HeadsUpManager,
 ) {
     fun create(root: ViewGroup, andThen: (ViewGroup) -> Unit): ComposeView {
         val composeView = ComposeView(root.context)
@@ -175,6 +180,8 @@ constructor(
                         eventAnimationInteractor = eventAnimationInteractor,
                         statusBarRegionSamplingViewModelFactory =
                             statusBarRegionSamplingViewModelFactory,
+                        keyguardStateController = keyguardStateController,
+                        headsUpManager = headsUpManager,
                         onViewCreated = andThen,
                         modifier = Modifier.sysUiResTagContainer(),
                     )
@@ -213,6 +220,8 @@ fun StatusBarRoot(
     darkIconDispatcher: DarkIconDispatcher,
     eventAnimationInteractor: SystemStatusEventAnimationInteractor,
     statusBarRegionSamplingViewModelFactory: StatusBarRegionSamplingViewModel.Factory,
+    keyguardStateController: KeyguardStateController? = null,
+    headsUpManager: HeadsUpManager? = null,
     onViewCreated: (ViewGroup) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -326,6 +335,20 @@ fun StatusBarRoot(
                     notificationIconContainer,
                     context.displayId,
                 )
+
+                // Setup combined notification counter with KeyguardStateController and HeadsUpManager
+                val combinedCounter =
+                    notificationIconArea.findViewById<CombinedNotificationCounter>(
+                        R.id.combined_notification_counter
+                    )
+                if (combinedCounter != null) {
+                    combinedCounter.setKeyguardStateController(keyguardStateController)
+                    combinedCounter.setHeadsUpManager(headsUpManager)
+                    // Register with DarkIconDispatcher for color updates
+                    darkIconDispatcher.addDarkReceiver(combinedCounter)
+                    // Bind to notification count flow
+                    notificationIconsBinder.bindCombinedCounter(combinedCounter, context.displayId)
+                }
 
                 if (StatusBarAlwaysUseRegionSampling.isAnyRegionSamplingEnabled) {
                     bindRegionSamplingViewModel(
