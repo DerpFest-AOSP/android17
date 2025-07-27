@@ -23,6 +23,7 @@ import com.android.systemui.statusbar.pipeline.mobile.data.model.NetworkNameMode
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.NetworkTypeIconModel
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
 import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 fun BuildScope.MobileIconInteractorKairosAdapter(
@@ -128,6 +129,10 @@ fun BuildScope.MobileIconInteractorKairosAdapter(
                         "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isRoamingForceHidden"
                     }
                 ),
+            isMobileHd = MutableStateFlow(false),
+            isMobileHdForceHidden = MutableStateFlow(false),
+            isVoWifi = MutableStateFlow(false),
+            isVoWifiForceHidden = MutableStateFlow(false),
             isForceHidden =
                 isForceHidden.toStateFlow(
                     name =
@@ -169,6 +174,10 @@ private class MobileIconInteractorKairosAdapter(
     override val isSingleCarrier: StateFlow<Boolean>,
     override val isRoaming: StateFlow<Boolean>,
     override val isRoamingForceHidden: StateFlow<Boolean>,
+    override val isMobileHd: StateFlow<Boolean>,
+    override val isMobileHdForceHidden: StateFlow<Boolean>,
+    override val isVoWifi: StateFlow<Boolean>,
+    override val isVoWifiForceHidden: StateFlow<Boolean>,
     override val isForceHidden: StateFlow<Boolean>,
     override val isAllowedDuringAirplaneMode: StateFlow<Boolean>,
     override val carrierNetworkChangeActive: StateFlow<Boolean>,
