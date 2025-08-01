@@ -190,6 +190,7 @@ import com.android.systemui.statusbar.phone.DozeParameters;
 import com.android.systemui.statusbar.phone.HeadsUpAppearanceController;
 import com.android.systemui.statusbar.phone.KeyguardBypassController;
 import com.android.systemui.statusbar.phone.KeyguardClockPositionAlgorithm;
+import com.android.systemui.statusbar.phone.KeyguardStatusBarView;
 import com.android.systemui.statusbar.phone.KeyguardStatusBarViewController;
 import com.android.systemui.statusbar.phone.LockscreenGestureLogger;
 import com.android.systemui.statusbar.phone.LockscreenGestureLogger.LockscreenUiEvent;
@@ -356,6 +357,7 @@ public final class NotificationPanelViewController implements
     private boolean mExpanding;
     private boolean mSplitShadeEnabled;
     private KeyguardStatusBarViewController mKeyguardStatusBarViewController;
+    private KeyguardStatusBarView mKeyguardStatusBar;
     private NotificationsQuickSettingsContainer mNotificationContainerParent;
     private final NotificationsQSContainerController mNotificationsQSContainerController;
     private boolean mAnimateNextPositionUpdate;
@@ -924,9 +926,12 @@ public final class NotificationPanelViewController implements
     @VisibleForTesting
     void onFinishInflate() {
         loadDimens();
+
+        mKeyguardStatusBar = mView.findViewById(R.id.keyguard_header);
+
         mKeyguardStatusBarViewController =
                 mKeyguardStatusBarViewComponentFactory.build(
-                                mView.findViewById(R.id.keyguard_header),
+                                mKeyguardStatusBar,
                                 mShadeViewStateProvider)
                         .getKeyguardStatusBarViewController();
         mKeyguardStatusBarViewController.init();
@@ -3642,6 +3647,9 @@ public final class NotificationPanelViewController implements
                     mKeyguardStatusBarViewController.updateViewState(
                             /* alpha= */ 1f,
                             keyguardShowing ? View.VISIBLE : View.INVISIBLE);
+                }
+                if (keyguardShowing) {
+                    mKeyguardStatusBar.toggleContents(true);
                 }
                 if (keyguardShowing && oldState != mBarState) {
                     mQsController.hideQsImmediately();
