@@ -80,7 +80,7 @@
 
     <!-- The default tiles to display in QuickSettings-->
     <string name="quick_settings_tiles_default" translatable="false">
-        internet,bt,dnd,cast,flashlight,airplane,rotation,wallet,alarm,controls,screenrecord,battery
+        internet,bt,dnd,cast,flashlight,airplane,nfc,rotation,wallet,alarm,controls,screenrecord,battery
     </string>
 
     <!-- The default tiles to display in QuickSettings after the internet tile split-->
