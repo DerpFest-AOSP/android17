@@ -176,6 +176,7 @@ import com.android.systemui.qs.panels.ui.compose.EditTileListState.Companion.INV
 import com.android.systemui.qs.panels.ui.compose.dragAndDropRemoveZone
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileList
 import com.android.systemui.qs.panels.ui.compose.dragAndDropTileSource
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveTileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveTileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileArrangementPadding
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
@@ -191,6 +192,7 @@ import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaul
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.CurrentTilesGridPadding
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.GridBackgroundCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.TilePlacementSpec
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberTileShapeMode
 import com.android.systemui.qs.panels.ui.compose.selection.InteractiveTileContainer
 import com.android.systemui.qs.panels.ui.compose.selection.MutableSelectionState
 import com.android.systemui.qs.panels.ui.compose.selection.QSDragAnchorsData
@@ -1087,6 +1089,7 @@ private fun LazyGridItemScope.TileGridCell(
             }
         },
         contentDescription = decorationClickLabel,
+        iconOnly = cell.isIcon,
     ) {
         // Rapidly composing elements with the draggable modifier can cause visual jank. This
         // usually happens when resizing a tile multiple times. We can fix this by applying the
@@ -1157,6 +1160,7 @@ private fun LazyGridItemScope.TileGridCell(
                 .tileBackground(
                     cornerRadius = InactiveTileCornerRadius,
                     alpha = { containerAlpha },
+                    iconOnly = cell.isIcon,
                     color = { colors.background },
                 )
                 .keyboardShortcuts(cell.tile.tileSpec, selectionState) {
@@ -1255,7 +1259,9 @@ private fun AvailableTileGridCell(
                         MaterialTheme.colorScheme.secondary,
                         CornerSize(InactiveTileCornerRadius),
                     )
-                    .tileBackground(cornerRadius = InactiveTileCornerRadius) { colors.background }
+                    .tileBackground(cornerRadius = InactiveTileCornerRadius, iconOnly = true) {
+                        colors.background
+                    }
                     .clickable(
                         enabled = !cell.isCurrent,
                         onClick = onClick,
@@ -1432,13 +1438,44 @@ private fun MeasureScope.iconHorizontalCenter(
     return (containerSize - toggleTargetSize.roundToPx()) / 2f - padding.toPx()
 }
 
+@Composable
+private fun editTileShape(shapeMode: Int, cornerRadius: Dp): RoundedCornerShape {
+    val radius =
+        when (shapeMode) {
+            1,
+            3 -> InactiveTileCornerRadius // Circle-ish / circle
+            2 -> ActiveTileCornerRadius // Rounded square
+            else -> cornerRadius
+        }
+    return RoundedCornerShape(radius)
+}
+
+@Composable
 private fun Modifier.tileBackground(
     cornerRadius: Dp,
     alpha: () -> Float = { 1f },
+    iconOnly: Boolean = false,
     color: () -> Color,
 ): Modifier {
-    // Clip tile contents from overflowing past the tile
-    return clip(RoundedCornerShape(cornerRadius)).drawBehind { drawRect(color(), alpha = alpha()) }
+    val shapeMode = rememberTileShapeMode()
+    return if (shapeMode == 3 && iconOnly) {
+        // Draw a centered circle that fits the tile's min dimension instead of clipping to a
+        // rounded rect
+        drawBehind {
+            val radius = minOf(size.width, size.height) / 2f
+            drawCircle(
+                color = color(),
+                radius = radius,
+                center = Offset(size.width / 2f, size.height / 2f),
+                alpha = alpha(),
+            )
+        }
+    } else {
+        // Clip tile contents from overflowing past the tile
+        clip(editTileShape(shapeMode, cornerRadius)).drawBehind {
+            drawRect(color(), alpha = alpha())
+        }
+    }
 }
 
 private fun Modifier.keyboardShortcuts(

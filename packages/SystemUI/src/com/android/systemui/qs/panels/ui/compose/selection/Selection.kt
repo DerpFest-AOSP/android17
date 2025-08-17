@@ -80,7 +80,9 @@ import com.android.systemui.common.ui.compose.gestures.dragSpy
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.qs.flags.QsEditModeFocusFixes
 import com.android.systemui.qs.flags.QsEditModeHoverFixes
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveTileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveTileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberTileShapeMode
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BADGE_ANGLE_RAD
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BadgeIconSize
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BadgeSize
@@ -120,6 +122,7 @@ fun InteractiveTileContainer(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
     contentDescription: String? = null,
+    iconOnly: Boolean = false,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val transition: Transition<Decoration> = updateTransition(tileState.decoration())
@@ -138,7 +141,7 @@ fun InteractiveTileContainer(
         modifier.resizable(tileState == Selected, resizingState).selectionBorder(
             selectionColor = MaterialTheme.colorScheme.primary,
             selectionBorderWidth = SelectedBorderWidth,
-            cornerRadius = InactiveTileCornerRadius,
+            iconOnly = iconOnly,
         ) {
             selectionBorderAlpha
         }
@@ -213,25 +216,49 @@ fun InteractiveTileContainer(
     }
 }
 
+@Composable
 private fun Modifier.selectionBorder(
     selectionColor: Color,
     selectionBorderWidth: Dp,
-    cornerRadius: Dp,
+    iconOnly: Boolean,
     selectionAlpha: () -> Float = { 0f },
 ): Modifier {
+    val shapeMode = rememberTileShapeMode()
+    val cornerRadius =
+        when (shapeMode) {
+            1,
+            3 -> InactiveTileCornerRadius // Circle-ish / circle
+            2 -> ActiveTileCornerRadius // Rounded square
+            else -> InactiveTileCornerRadius
+        }
+    val wantCircle = shapeMode == 3 && iconOnly
+
     return drawWithContent {
         drawContent()
 
         // Draw the border on the inside of the tile
         val borderWidth = selectionBorderWidth.toPx()
-        drawRoundRect(
-            SolidColor(selectionColor),
-            cornerRadius = CornerRadius(cornerRadius.toPx()),
-            topLeft = Offset(borderWidth / 2, borderWidth / 2),
-            size = Size(size.width - borderWidth, size.height - borderWidth),
-            style = Stroke(borderWidth),
-            alpha = selectionAlpha(),
-        )
+        val alpha = selectionAlpha()
+
+        if (wantCircle) {
+            val radius = (min(size.width, size.height) - borderWidth) / 2f
+            drawCircle(
+                brush = SolidColor(selectionColor),
+                radius = radius,
+                center = Offset(size.width / 2f, size.height / 2f),
+                style = Stroke(borderWidth),
+                alpha = alpha,
+            )
+        } else {
+            drawRoundRect(
+                SolidColor(selectionColor),
+                cornerRadius = CornerRadius(cornerRadius.toPx()),
+                topLeft = Offset(borderWidth / 2, borderWidth / 2),
+                size = Size(size.width - borderWidth, size.height - borderWidth),
+                style = Stroke(borderWidth),
+                alpha = alpha,
+            )
+        }
     }
 }
 
