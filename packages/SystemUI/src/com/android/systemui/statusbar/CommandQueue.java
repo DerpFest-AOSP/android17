@@ -196,6 +196,7 @@ public class CommandQueue extends IStatusBar.Stub implements
     private static final int MSG_ON_DISPLAY_INFO_CHANGED = 90 << MSG_SHIFT;
     private static final int MSG_ON_CONFIGURATION_CHANGED = 91 << MSG_SHIFT;
     private static final int MSG_TOGGLE_CAMERA_FLASH = 92 << MSG_SHIFT;
+    private static final int MSG_TOGGLE_SETTINGS_PANEL = 93 << MSG_SHIFT;
 
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
@@ -282,6 +283,7 @@ public class CommandQueue extends IStatusBar.Stub implements
          * Called to toggle Quick Settings panel.
          */
         default void toggleQuickSettingsPanel() { }
+        default void toggleSettingsPanel() { }
 
         /**
          * Sets the new IME window status.
@@ -819,6 +821,14 @@ public class CommandQueue extends IStatusBar.Stub implements
         synchronized (mLock) {
             mHandler.removeMessages(MSG_TOGGLE_QUICK_SETTINGS_PANEL);
             mHandler.obtainMessage(MSG_TOGGLE_QUICK_SETTINGS_PANEL, 0, 0).sendToTarget();
+        }
+    }
+
+    @Override
+    public void toggleSettingsPanel() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_TOGGLE_SETTINGS_PANEL);
+            mHandler.obtainMessage(MSG_TOGGLE_SETTINGS_PANEL, 0, 0).sendToTarget();
         }
     }
 
@@ -1696,6 +1706,11 @@ public class CommandQueue extends IStatusBar.Stub implements
                 case MSG_TOGGLE_QUICK_SETTINGS_PANEL:
                     for (Callbacks callback : mCallbacks) {
                         callback.toggleQuickSettingsPanel();
+                    }
+                    break;
+                case MSG_TOGGLE_SETTINGS_PANEL:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).toggleSettingsPanel();
                     }
                     break;
                 case MSG_SET_IME_WINDOW_STATUS:

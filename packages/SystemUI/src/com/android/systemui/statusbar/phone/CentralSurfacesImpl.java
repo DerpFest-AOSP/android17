@@ -1524,6 +1524,11 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         }
     }
 
+    @Override
+    public void toggleSettingsPanel() {
+        mCommandQueueCallbacks.toggleSettingsPanel();
+    }
+
     private void adjustBrightness(int x) {
         mBrightnessChanged = true;
         if (mBrightnessAtTouchStart < 0f) {

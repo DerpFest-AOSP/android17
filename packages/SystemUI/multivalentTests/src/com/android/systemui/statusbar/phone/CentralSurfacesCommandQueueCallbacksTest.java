@@ -53,6 +53,7 @@ import com.android.systemui.shade.CameraLauncher;
 import com.android.systemui.shade.QuickSettingsController;
 import com.android.systemui.shade.ShadeController;
 import com.android.systemui.shade.ShadeHeaderController;
+import com.android.systemui.shade.ShadeViewController;
 import com.android.systemui.shade.domain.interactor.PanelExpansionInteractor;
 import com.android.systemui.shade.domain.interactor.ShadeInteractor;
 import com.android.systemui.statusbar.CommandQueue;
@@ -82,6 +83,7 @@ public class CentralSurfacesCommandQueueCallbacksTest extends SysuiTestCase {
     @Mock private ScreenPinningRequest mScreenPinningRequest;
     @Mock private ShadeController mShadeController;
     @Mock private CommandQueue mCommandQueue;
+    @Mock private ShadeViewController mShadeViewController;
     @Mock private QuickSettingsController mQuickSettingsController;
     @Mock private PanelExpansionInteractor mPanelExpansionInteractor;
     @Mock private Lazy<ShadeInteractor> mShadeInteractorLazy;
@@ -123,6 +125,7 @@ public class CentralSurfacesCommandQueueCallbacksTest extends SysuiTestCase {
                 mScreenPinningRequest,
                 mShadeController,
                 mCommandQueue,
+                mShadeViewController,
                 mPanelExpansionInteractor,
                 mShadeInteractorLazy,
                 mShadeHeaderController,
