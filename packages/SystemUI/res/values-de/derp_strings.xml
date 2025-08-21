@@ -106,4 +106,10 @@
     <!-- Heads up snooze toast -->
     <string name="heads_up_snooze_message_one_minute"><xliff:g id="string">%s</xliff:g> - Benachrichtigungen werden für 1 Minute unterdrückt.</string>
     <string name="heads_up_snooze_message"><xliff:g id="string">%1$s</xliff:g> - Benachrichtigungen werden für <xliff:g id="number">%2$d</xliff:g> Minuten unterdrückt.</string>
+
+    <!-- Data usage info in QS footer -->
+    <string name="usage_data">heute verbraucht</string>
+    <string name="usage_data_weekly">diese Woche verbraucht</string>
+    <string name="usage_data_default_suffix">Daten</string>
+    <string name="usage_wifi_default_suffix">WLAN</string>
 </resources>

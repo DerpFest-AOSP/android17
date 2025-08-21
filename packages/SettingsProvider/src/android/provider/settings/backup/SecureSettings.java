@@ -355,5 +355,6 @@ public class SecureSettings {
         Settings.Secure.DOZE_DOUBLE_TAP_GESTURE_VIBRATE,
         Settings.Secure.DOZE_TAP_GESTURE_VIBRATE,
         Settings.Secure.DOZE_PICK_UP_GESTURE_VIBRATE,
+        Settings.Secure.QS_DATA_USAGE_CYCLE_TYPE,
     };
 }
