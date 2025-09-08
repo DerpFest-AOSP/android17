@@ -86,6 +86,8 @@ public class PropImitationHooks {
     private static final String PROP_SECURITY_PATCH = "persist.sys.pihooks.security_patch";
     private static final String PROP_FIRST_API_LEVEL = "persist.sys.pihooks.first_api_level";
 
+    private static final String SPOOF_PIHOOKS_PI = "persist.sys.pihooks.pi";
+
     private static final ComponentName GMS_ADD_ACCOUNT_ACTIVITY = ComponentName.unflattenFromString(
             "com.google.android.gms/.auth.uiflows.minutemaid.MinuteMaidActivity");
 
@@ -186,8 +188,12 @@ public class PropImitationHooks {
 
         switch (processName) {
             case PROCESS_GMS_UNSTABLE:
-                dlog("Setting certified props for: " + packageName + " process: " + processName);
-                setCertifiedPropsForGms(context);
+                if (!Process.isIsolated()) {
+                    dlog("Setting certified props for: " + packageName + " process: " + processName);
+                    setCertifiedPropsForGms(context);
+                } else {
+                    dlog("Not setting Play Integrity props in isolated process");
+                }
                 return;
         }
 
@@ -248,6 +254,13 @@ public class PropImitationHooks {
     }
 
     private static void setCertifiedPropsForGms(Context context) {
+        if (!SystemProperties.getBoolean(SPOOF_PIHOOKS_PI, true))
+            return;
+        // Guard: isolated processes cannot access content providers (Settings.*).
+        if (Process.isIsolated()) {
+            dlog("Skipping setPlayIntegrityProps in isolated process");
+            return;
+        }
 
         File dataFile = new File(Environment.getDataSystemDirectory(), DATA_FILE);
         String savedProps = readFromFile(dataFile);
