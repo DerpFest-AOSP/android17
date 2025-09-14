@@ -271,7 +271,7 @@ class SliderHapticFeedbackProvider(
         val velocityBasedScale = velocityInterpolated * config.additionalVelocityMaxBump
 
         // Total scale
-        val scale = positionBasedScale + velocityBasedScale
+        val scale = (positionBasedScale + velocityBasedScale).coerceIn(0f, 1f)
         return scale.pow(config.exponent).coerceIn(minimumValue = 0f, maximumValue = 1f)
     }
 
