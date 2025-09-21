@@ -17,6 +17,8 @@
 package com.android.systemui.statusbar.pipeline.battery.shared.ui
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.ColorUtils
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.LightTheme.Charging
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.LightTheme.Error
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.LightTheme.PowerSave
@@ -114,6 +116,43 @@ sealed interface BatteryColors {
         companion object {
             private val lowAlphaBg = Color.White.copy(alpha = 0.45f)
             private val highAlphaBg = Color.White.copy(alpha = 0.55f)
+        }
+    }
+
+    /** Accent color theme for light mode */
+    class AccentLightTheme(private val accentColor: Color) : LightTheme() {
+        override val attribution = accentColor
+        // Darker shade of accent for glyph (percentage inside icon) so it's readable on the fill
+        override val glyph = darkerAccentShade(accentColor)
+        override val fill = accentColor
+        override val backgroundOnly = accentColor.copy(alpha = 0.20f)
+        override val backgroundWithGlyph = accentColor.copy(alpha = 0.55f)
+    }
+
+    /** Accent color theme for dark mode */
+    class AccentDarkTheme(private val accentColor: Color) : DarkTheme() {
+        override val attribution = accentColor
+        // Darker shade of accent for glyph (percentage inside icon) so it's readable on the fill
+        override val glyph = darkerAccentShade(accentColor)
+        override val fill = accentColor
+        override val backgroundOnly = accentColor.copy(alpha = 0.45f)
+        override val backgroundWithGlyph = accentColor.copy(alpha = 0.55f)
+    }
+
+    companion object {
+        /**
+         * Darker shade of the accent for the percentage glyph inside the icon, so it stays
+         * readable when fill and glyph would otherwise be the same color.
+         */
+        private fun darkerAccentShade(accent: Color): Color {
+            val blendRatio = 0.45f // blend with black for better contrast on fill
+            return Color(ColorUtils.blendARGB(accent.toArgb(), Color.Black.toArgb(), blendRatio))
+        }
+
+        /** Create accent color themes from Android color int */
+        fun createAccentThemes(accentColorInt: Int): Pair<LightTheme, DarkTheme> {
+            val accentColor = Color(accentColorInt)
+            return Pair(AccentLightTheme(accentColor), AccentDarkTheme(accentColor))
         }
     }
 }

@@ -67,6 +67,7 @@ import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryFrame
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryGlyph
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.PathSpec
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryViewModel
+import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.ColorProfile
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
@@ -174,14 +175,24 @@ fun UnifiedBattery(
     viewModel: BatteryViewModel,
     isDarkProvider: () -> IsAreaDark,
     modifier: Modifier,
+    /** When false (e.g. quick settings), do not apply accent tint even if setting is on */
+    useAccentTintInContext: Boolean = true,
 ) {
     var bounds by remember { mutableStateOf(Rect()) }
 
+    val defaultColorProfile =
+        ColorProfile(
+            dark = BatteryColors.DarkTheme.Default,
+            light = BatteryColors.LightTheme.Default,
+        )
+    val effectiveColorProfile =
+        if (useAccentTintInContext) viewModel.colorProfile else defaultColorProfile
+
     val colorProvider = {
         if (isDarkProvider().isDarkTheme(bounds)) {
-            viewModel.colorProfile.dark
+            effectiveColorProfile.dark
         } else {
-            viewModel.colorProfile.light
+            effectiveColorProfile.light
         }
     }
 

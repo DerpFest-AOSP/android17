@@ -21,6 +21,7 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
+import android.provider.Settings
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.dagger.qualifiers.Background
@@ -85,6 +86,12 @@ interface BatteryRepository {
      * we should show the battery percentage in the home screen status bar
      */
     val showBatteryPercentMode: StateFlow<Int>
+
+    /**
+     * [Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT]. A user setting to indicate whether
+     * status bar icons should be tinted with the system accent color
+     */
+    val tintStatusBarIconsWithAccent: StateFlow<Boolean>
 
     companion object {
         const val ICON_STYLE_DEFAULT = 0
@@ -373,6 +380,16 @@ constructor(
                 scope = scope,
                 started = SharingStarted.Lazily,
                 initialValue = BatteryRepository.SHOW_PERCENT_HIDDEN,
+            )
+
+    override val tintStatusBarIconsWithAccent =
+        settingsRepository
+            .boolSetting(Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT, defaultValue = false)
+            .distinctUntilChanged()
+            .stateIn(
+                scope = scope,
+                started = SharingStarted.Lazily,
+                initialValue = false,
             )
 
     /** Get and re-fetch the estimate every 2 minutes while active */

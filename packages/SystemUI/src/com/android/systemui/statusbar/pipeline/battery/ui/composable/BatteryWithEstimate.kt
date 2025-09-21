@@ -40,6 +40,8 @@ fun BatteryWithEstimate(
     showEstimate: Boolean,
     modifier: Modifier = Modifier,
     showIcon: Boolean = true,
+    /** When false (e.g. quick settings), do not apply accent tint even if setting is on */
+    useAccentTintInContext: Boolean = true,
 ) {
     val viewModel =
         rememberViewModel(traceName = "BatteryWithEstimate") { viewModelFactory.create() }
@@ -59,6 +61,7 @@ fun BatteryWithEstimate(
                 viewModel = viewModel,
                 isDarkProvider = isDarkProvider,
                 modifier = Modifier.height(batteryHeight).align(Alignment.CenterVertically),
+                useAccentTintInContext = useAccentTintInContext,
             )
         }
         if (showEstimate) {

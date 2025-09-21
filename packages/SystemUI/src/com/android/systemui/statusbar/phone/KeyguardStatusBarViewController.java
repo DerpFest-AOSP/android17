@@ -499,6 +499,11 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
                 false,
                 mVolumeSettingObserver,
                 UserHandle.USER_ALL);
+        mContext.getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT),
+                false,
+                mAccentColorSettingObserver,
+                UserHandle.USER_ALL);
         updateUserSwitcher();
         onThemeChanged();
         if (!Flags.glanceableHubV2()) {
@@ -552,6 +557,7 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
         mKeyguardUpdateMonitor.removeCallback(mKeyguardUpdateMonitorCallback);
         mDisableStateTracker.stopTracking(mCommandQueue);
         mSecureSettings.unregisterContentObserverAsync(mVolumeSettingObserver);
+        mContext.getContentResolver().unregisterContentObserver(mAccentColorSettingObserver);
         if (mTintedIconManager != null) {
             mStatusBarIconController.removeIconGroup(mTintedIconManager);
         }
@@ -828,6 +834,14 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
         @Override
         public void onChange(boolean selfChange) {
             updateBlockedIcons();
+        }
+    };
+
+    private final ContentObserver mAccentColorSettingObserver = new ContentObserver(null) {
+        @Override
+        public void onChange(boolean selfChange) {
+            // Re-apply icon colors when accent color setting changes
+            onThemeChanged();
         }
     };
 

@@ -17,6 +17,11 @@
 package com.android.systemui.statusbar.pipeline.battery.domain.interactor
 
 import com.android.systemui.kosmos.Kosmos
+import com.android.systemui.kosmos.backgroundScope
 import com.android.systemui.statusbar.pipeline.battery.data.repository.batteryRepository
+import com.android.systemui.statusbar.policy.configurationController
 
-val Kosmos.batteryInteractor by Kosmos.Fixture { BatteryInteractor(batteryRepository) }
+val Kosmos.batteryInteractor by
+    Kosmos.Fixture {
+        BatteryInteractor(batteryRepository, backgroundScope, configurationController)
+    }
