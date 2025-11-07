@@ -23,6 +23,7 @@ import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.applicationCoroutineScope
 import com.android.systemui.kosmos.backgroundScope
 import com.android.systemui.plugins.activityStarter
+import com.android.systemui.shared.settings.data.repository.systemSettingsRepository
 import com.android.systemui.tuner.tunerService
 import com.android.systemui.util.time.fakeSystemClock
 
@@ -37,5 +38,6 @@ var Kosmos.clockInteractor: ClockInteractor by
             applicationScope = applicationCoroutineScope,
             backgroundScope = backgroundScope,
             tunerService = tunerService,
+            systemSettingsRepository = systemSettingsRepository,
         )
     }

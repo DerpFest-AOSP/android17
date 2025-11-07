@@ -287,5 +287,6 @@ public class SystemSettingsValidators {
         VALIDATORS.put(
                 System.ACCESSIBILITY_FORCE_INVERT_COLOR_OVERRIDE_PACKAGES_TO_DISABLE,
                 new PackageNameListValidator(","));
+        VALIDATORS.put(System.QS_SHOW_LUNAR_CALENDAR, BOOLEAN_VALIDATOR);
     }
 }

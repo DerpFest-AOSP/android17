@@ -81,17 +81,9 @@ constructor(
     val clockText: String by
         _clockText.hydratedStateOf(initialValue = clockInteractor.currentTime.value.toString())
 
-    val longerDateText: String by
-        combine(clockInteractor.longerDateFormat, clockInteractor.currentTime) { format, time ->
-                format.format(time)
-            }
-            .hydratedStateOf(initialValue = "")
+    val longerDateText: String by clockInteractor.longerDateText.hydratedStateOf(initialValue = "")
 
-    val shorterDateText: String by
-        combine(clockInteractor.shorterDateFormat, clockInteractor.currentTime) { format, time ->
-                format.format(time)
-            }
-            .hydratedStateOf(initialValue = "")
+    val shorterDateText: String by clockInteractor.shorterDateText.hydratedStateOf(initialValue = "")
 
     @AssistedFactory
     interface Factory {

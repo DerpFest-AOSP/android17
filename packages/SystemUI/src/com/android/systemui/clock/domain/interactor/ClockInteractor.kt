@@ -23,6 +23,7 @@ import android.icu.text.DateFormat
 import android.icu.text.DisplayContext
 import android.os.UserHandle
 import android.provider.AlarmClock
+import android.provider.Settings
 import androidx.annotation.VisibleForTesting
 import com.android.systemui.Flags
 import com.android.systemui.broadcast.BroadcastDispatcher
@@ -33,8 +34,10 @@ import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
+import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
 import com.android.systemui.tuner.TunerService
 import com.android.systemui.util.kotlin.emitOnStart
+import com.android.systemui.util.time.ChineseLunarCalendarUtil
 import com.android.systemui.util.time.SystemClock
 import com.android.systemui.utils.coroutines.flow.conflatedCallbackFlow
 import java.util.Date
@@ -48,6 +51,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
@@ -67,6 +71,7 @@ constructor(
     @Application private val applicationScope: CoroutineScope,
     @Background private val backgroundScope: CoroutineScope,
     private val tunerService: TunerService,
+    private val systemSettingsRepository: SystemSettingsRepository,
 ) {
     /** [Flow] that emits `Unit` whenever the time settings have changed. */
     val onTimeFormatChange: Flow<Unit> =
@@ -153,6 +158,33 @@ constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val shorterDateFormat: Flow<DateFormat> =
         onTimeFormatChange.mapLatest { getFormatFromPattern(shorterPattern) }
+
+    /**
+     * Whether the Chinese lunar date should be appended in shade headers. Used by scene-container
+     * single shade, dual shade overlay headers, and desktop status bar date text.
+     */
+    val showLunarCalendar: Flow<Boolean> =
+        systemSettingsRepository.boolSetting(Settings.System.QS_SHOW_LUNAR_CALENDAR, false)
+
+    /** Formatted date for expanded / wide shade headers. */
+    val longerDateText: Flow<String> = dateText(longerDateFormat)
+
+    /** Formatted date for compact headers (QQS, dual-shade chips, tight tile-shape layouts). */
+    val shorterDateText: Flow<String> = dateText(shorterDateFormat)
+
+    private fun dateText(formatFlow: Flow<DateFormat>): Flow<String> {
+        return combine(formatFlow, currentTime, showLunarCalendar) { format, time, showLunar ->
+            formatDateText(format.format(time), showLunar)
+        }
+    }
+
+    private fun formatDateText(baseText: String, showLunar: Boolean): String {
+        if (!showLunar) {
+            return baseText
+        }
+        val lunarText = ChineseLunarCalendarUtil.getLunarDateString()
+        return if (baseText.isEmpty()) lunarText else "$baseText $lunarText"
+    }
 
     /** Launch the clock activity. */
     fun launchClockActivity() {

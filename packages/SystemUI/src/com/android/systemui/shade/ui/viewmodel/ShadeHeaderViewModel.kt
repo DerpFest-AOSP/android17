@@ -57,7 +57,6 @@ import com.android.systemui.statusbar.ui.SystemBarUtilsState
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /** Models UI state for the shade header. */
@@ -146,17 +145,9 @@ constructor(
                 dualShadeEducationInteractor.education ==
                     DualShadeEducationModel.ForQuickSettingsShade
 
-    val longerDateText: String by
-        combine(clockInteractor.longerDateFormat, clockInteractor.currentTime) { format, time ->
-                format.format(time)
-            }
-            .hydratedStateOf(initialValue = "")
+    val longerDateText: String by clockInteractor.longerDateText.hydratedStateOf(initialValue = "")
 
-    val shorterDateText: String by
-        combine(clockInteractor.shorterDateFormat, clockInteractor.currentTime) { format, time ->
-                format.format(time)
-            }
-            .hydratedStateOf(initialValue = "")
+    val shorterDateText: String by clockInteractor.shorterDateText.hydratedStateOf(initialValue = "")
 
     val inactiveChipHighlight: ChipHighlightModel
         get() =
