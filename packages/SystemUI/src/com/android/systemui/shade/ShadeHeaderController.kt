@@ -124,7 +124,7 @@ constructor(
     private val nextAlarmController: NextAlarmController,
     private val activityStarter: ActivityStarter,
     private val statusOverlayHoverListenerFactory: StatusOverlayHoverListenerFactory,
-) : ViewController<View>(header), Dumpable {
+) : ViewController<View>(header), Dumpable, View.OnClickListener {
 
     private val statusBarContentInsetsProvider
         get() =
@@ -168,6 +168,7 @@ constructor(
     private val mShadeCarrierGroup: ShadeCarrierGroup = header.requireViewById(R.id.carrier_group)
     private val systemIconsHoverContainer: View =
         header.requireViewById(R.id.hover_system_icons_container)
+    private lateinit var batteryComposeView: ComposeView
 
     private var roundedCorners = 0
     private var cutout: DisplayCutout? = null
@@ -176,6 +177,7 @@ constructor(
 
     private val showBatteryEstimate = MutableStateFlow(false)
 
+    private var privacyChipVisible = false
     private var qsDisabled = false
     private var visible = false
         set(value) {
@@ -284,6 +286,8 @@ constructor(
                 val update =
                     combinedShadeHeadersConstraintManager.privacyChipVisibilityConstraints(visible)
                 header.updateAllConstraints(update)
+                privacyChipVisible = visible
+                setBatteryClickable(qsExpandedFraction == 1f || !visible)
             }
         }
 
@@ -361,12 +365,10 @@ constructor(
         SystemStatusIconsLayoutHelper.configurePaddingForNewStatusBarIcons(statusIcons)
 
         // Configure the compose battery view
-        val batteryComposeView = createBatteryComposeView()
+        batteryComposeView = createBatteryComposeView()
         mView.requireViewById<ViewGroup>(R.id.hover_system_icons_container).apply {
             addView(batteryComposeView, -1)
         }
-
-        batteryComposeView.setOnClickListener { launchBatteryActivity() }
 
         carrierIconSlots =
             listOf(
@@ -377,6 +379,24 @@ constructor(
             shadeCarrierGroupControllerBuilder.setShadeCarrierGroup(mShadeCarrierGroup).build()
 
         privacyIconsController.onParentVisible()
+
+        // click actions
+        clock.setOnClickListener(this)
+        date.setOnClickListener(this)
+        setBatteryClickable(true)
+    }
+
+    override fun onClick(v: View) {
+        if (v == clock) {
+            activityStarter.postStartActivityDismissingKeyguard(Intent(
+                    AlarmClock.ACTION_SHOW_ALARMS), 0)
+        } else if (v == date) {
+            val builder: Uri.Builder = CalendarContract.CONTENT_URI.buildUpon()
+            builder.appendPath("time")
+            builder.appendPath(System.currentTimeMillis().toString())
+            val todayIntent: Intent = Intent(Intent.ACTION_VIEW, builder.build())
+            activityStarter.postStartActivityDismissingKeyguard(todayIntent, 0)
+        }
     }
 
     private fun getBgColor() =
@@ -429,9 +449,6 @@ constructor(
             v.pivotX = newPivot
             v.pivotY = v.height.toFloat() / 2
         }
-        clock.setOnClickListener { launchClockActivity() }
-        date.setOnClickListener { launchDateActivity() }
-        batteryIcon.setOnClickListener { launchBatteryActivity() }
 
         dumpManager.registerDumpable(this)
         configurationController.addCallback(configurationControllerListener)
@@ -445,6 +462,8 @@ constructor(
 
     override fun onViewDetached() {
         clock.setOnClickListener(null)
+        date.setOnClickListener(null)
+        batteryComposeView.setOnClickListener(null)
         privacyIconsController.chipVisibilityListener = null
         dumpManager.unregisterDumpable(this::class.java.simpleName)
         configurationController.removeCallback(configurationControllerListener)
@@ -636,6 +655,7 @@ constructor(
             header.progress = qsExpandedFraction
             updateBatteryMode()
         }
+        setBatteryClickable(qsExpandedFraction == 1f || !privacyChipVisible)
     }
 
     private fun logInstantEvent(message: String) {
@@ -684,6 +704,13 @@ constructor(
             clockPaddingEnd,
             clock.paddingBottom,
         )
+    }
+
+    private fun setBatteryClickable(clickable: Boolean) {
+        batteryComposeView.setOnClickListener(
+            if (clickable) View.OnClickListener { launchBatteryActivity() } else null
+        )
+        batteryComposeView.isClickable = clickable
     }
 
     override fun dump(pw: PrintWriter, args: Array<out String>) {
