@@ -22,7 +22,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Space
 import androidx.core.view.isVisible
 import com.android.settingslib.graph.SignalDrawable
 import com.android.systemui.common.ui.binder.IconViewBinder
@@ -142,8 +141,7 @@ object MobileIconBinderKairos {
         val networkTypeView = view.requireViewById<ImageView>(R.id.mobile_type)
         val networkTypeContainer = view.requireViewById<FrameLayout>(R.id.mobile_type_container)
         val iconView = view.requireViewById<ImageView>(R.id.mobile_signal)
-        val roamingView = view.requireViewById<ImageView>(R.id.mobile_roaming)
-        val roamingSpace = view.requireViewById<Space>(R.id.mobile_roaming_space)
+        val endSideRoamingView = view.requireViewById<ImageView>(R.id.mobile_roaming_updated)
         val dotView = view.requireViewById<StatusBarIconView>(R.id.status_bar_dot)
 
         val isVisible = viewModel.isVisible.sample()
@@ -291,17 +289,16 @@ object MobileIconBinderKairos {
                     } else {
                         networkTypeView.imageTintList = tint
                     }
-                    roamingView.imageTintList = tint
+                    endSideRoamingView.imageTintList = tint
                     activityIn.imageTintList = tint
                     activityOut.imageTintList = tint
                     dotView.setDecorColor(colors.tint)
                 }
 
-            // Set the roaming indicator
+            // Set the roaming indicator (end side)
             viewModel.roaming.observe(name = nameTag { "MobileIconBinderKairos.roaming" }) {
                 isRoaming ->
-                roamingView.isVisible = isRoaming
-                roamingSpace.isVisible = isRoaming
+                endSideRoamingView.isVisible = isRoaming
             }
 
             // Set the activity indicators

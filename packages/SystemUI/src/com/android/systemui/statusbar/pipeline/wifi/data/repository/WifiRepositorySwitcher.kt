@@ -22,6 +22,7 @@ import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.demomode.DemoMode
 import com.android.systemui.demomode.DemoModeController
+import com.android.systemui.statusbar.pipeline.ims.data.model.ImsStateModel
 import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
 import com.android.systemui.statusbar.pipeline.shared.ui.model.WifiToggleState
 import com.android.systemui.statusbar.pipeline.wifi.data.repository.demo.DemoWifiRepository
@@ -128,6 +129,11 @@ constructor(
         activeRepo
             .flatMapLatest { it.wifiScanResults }
             .stateIn(scope, SharingStarted.WhileSubscribed(), realImpl.wifiScanResults.value)
+
+    override val imsStates: StateFlow<List<ImsStateModel>> =
+        activeRepo
+            .flatMapLatest { it.imsStates }
+            .stateIn(scope, SharingStarted.WhileSubscribed(), realImpl.imsStates.value)
 
     override val wifiToggleState: StateFlow<WifiToggleState> =
         activeRepo

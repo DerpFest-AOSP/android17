@@ -355,6 +355,7 @@ class MobileIconInteractorKairosImpl(
                 numberOfLevels,
                 showExclamationMark,
                 carrierNetworkChange,
+                showRoaming = false,
             )
         }
 

@@ -16,6 +16,7 @@
 
 package com.android.systemui.statusbar.pipeline.wifi.data.repository
 
+import com.android.systemui.statusbar.pipeline.ims.data.model.ImsStateModel
 import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
 import com.android.systemui.statusbar.pipeline.shared.ui.model.WifiToggleState
 import com.android.systemui.statusbar.pipeline.wifi.data.repository.prod.WifiRepositoryImpl.Companion.ACTIVITY_DEFAULT
@@ -43,6 +44,8 @@ class FakeWifiRepository : WifiRepository {
 
     override val wifiScanResults: MutableStateFlow<List<WifiScanEntry>> =
         MutableStateFlow(emptyList())
+
+    override val imsStates = MutableStateFlow<List<ImsStateModel>>(emptyList())
 
     override val wifiToggleState: MutableStateFlow<WifiToggleState> =
         MutableStateFlow(WifiToggleState.Normal)

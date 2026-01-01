@@ -37,6 +37,7 @@ internal class SignalIconModelParameterizedTest(private val testCase: TestCase) 
                 numberOfLevels = 4,
                 showExclamationMark = false,
                 carrierNetworkChange = false,
+                showRoaming = false,
             )
 
         val expected =
@@ -64,6 +65,7 @@ internal class SignalIconModelParameterizedTest(private val testCase: TestCase) 
                 numberOfLevels = numberOfLevels,
                 showExclamationMark = showExclamation,
                 carrierNetworkChange = carrierNetworkChange,
+                showRoaming = false,
             )
 
         override fun toString(): String =

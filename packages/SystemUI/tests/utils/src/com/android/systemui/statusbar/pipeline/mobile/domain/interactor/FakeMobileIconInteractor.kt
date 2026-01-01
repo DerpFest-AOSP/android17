@@ -75,8 +75,17 @@ class FakeMobileIconInteractor(override val tableLogBuffer: TableLogBuffer) : Mo
                 numberOfLevels = 4,
                 showExclamationMark = false,
                 carrierNetworkChange = false,
+                showRoaming = false,
             )
         )
+
+    override val isMobileHd = MutableStateFlow(false)
+
+    override val isMobileHdForceHidden = MutableStateFlow(false)
+
+    override val isVoWifi = MutableStateFlow(false)
+
+    override val isVoWifiForceHidden = MutableStateFlow(false)
 
     fun setIsDataEnabled(enabled: Boolean) {
         _isDataEnabled.value = enabled

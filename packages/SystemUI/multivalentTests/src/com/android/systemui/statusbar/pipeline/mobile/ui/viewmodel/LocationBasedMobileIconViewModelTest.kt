@@ -124,6 +124,8 @@ class LocationBasedMobileIconViewModelTest : SysuiTestCase() {
                 iconsInteractor.isDefaultConnectionFailed,
                 iconsInteractor.isForceHidden,
                 iconsInteractor.isRoamingForceHidden,
+                iconsInteractor.isMobileHdForceHidden,
+                iconsInteractor.isVoWifiForceHidden,
                 repository,
                 context,
                 MobileIconCarrierIdOverridesFake(),
@@ -184,6 +186,7 @@ class LocationBasedMobileIconViewModelTest : SysuiTestCase() {
                 NUM_LEVELS,
                 showExclamationMark = false,
                 carrierNetworkChange = false,
+                showRoaming = false,
             )
         }
     }
