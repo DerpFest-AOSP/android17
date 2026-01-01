@@ -23,7 +23,6 @@ import com.android.systemui.statusbar.pipeline.mobile.data.model.NetworkNameMode
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.NetworkTypeIconModel
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
 import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 fun BuildScope.MobileIconInteractorKairosAdapter(
@@ -129,10 +128,26 @@ fun BuildScope.MobileIconInteractorKairosAdapter(
                         "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isRoamingForceHidden"
                     }
                 ),
-            isMobileHd = MutableStateFlow(false),
-            isMobileHdForceHidden = MutableStateFlow(false),
-            isVoWifi = MutableStateFlow(false),
-            isVoWifiForceHidden = MutableStateFlow(false),
+            isMobileHd = isMobileHd.toStateFlow(
+                nameTag {
+                    "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isMobileHd"
+                }
+            ),
+            isMobileHdForceHidden = isMobileHdForceHidden.toStateFlow(
+                nameTag {
+                    "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isMobileHdForceHidden"
+                }
+            ),
+            isVoWifi = isVoWifi.toStateFlow(
+                nameTag {
+                    "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isVoWifi"
+                }
+            ),
+            isVoWifiForceHidden = isVoWifiForceHidden.toStateFlow(
+                nameTag {
+                    "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isVoWifiForceHidden"
+                }
+            ),
             isForceHidden =
                 isForceHidden.toStateFlow(
                     name =
