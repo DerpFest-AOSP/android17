@@ -4,6 +4,24 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
+
+    <!-- Auto reboot Suggestion/Reminder -->
+    <string name="notification_channel_reboot_suggestion">Neustart-Empfehlung</string>
+    <string name="notification_channel_reboot_suggestion_description">Benachrichtigungen für Neustart-Empfehlung</string>
+    <string name="reboot_suggestion_title">Neustart-Erinnerung</string>
+    <string name="reboot_suggestion_description">Ihr Gerät war über eine Woche lang ununterbrochen eingeschaltet. Ein Neustart wird empfohlen.</string>
+    <string name="reboot_suggestion_now">Neustart</string>
+
+    <!-- Face unlock -->
+    <string name="face_unlock_recognizing">Gesichtserkennung …</string>
+
+    <!-- Internet speed -->
     <string name="status_bar_settings_network_speed">Internetgeschwindigkeit</string>
     <string name="status_bar_network_speed">network_speed</string>
+
+    <!-- QuickSettings: InternetDialog: Summary for how many devices are connected to the hotspot [CHAR LIMIT=NONE] -->
+    <plurals name="quick_settings_internet_hotspot_summary_num_devices">
+        <item quantity="one">%d Gerät verbunden</item>
+        <item quantity="other">%d Geräte verbunden</item>
+    </plurals>
 </resources>

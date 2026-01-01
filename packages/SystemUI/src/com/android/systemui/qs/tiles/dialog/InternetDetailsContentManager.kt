@@ -1338,6 +1338,10 @@ constructor(
                 setProgressBarAnimating(isScan)
             }
 
+            override fun onHotspotChanged() {
+                // Nothing for now
+            }
+
             override fun onSatelliteModemStateChanged(state: Int) {
                 updateContent(shouldUpdateMobileNetwork = true)
             }
