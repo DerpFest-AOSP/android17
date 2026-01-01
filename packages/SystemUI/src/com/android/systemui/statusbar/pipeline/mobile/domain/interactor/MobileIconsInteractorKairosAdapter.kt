@@ -56,7 +56,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @SysUISingleton
 class MobileIconsInteractorKairosAdapter
@@ -226,7 +225,13 @@ constructor(
     override val isDeviceInEmergencyCallsOnlyMode: Flow<Boolean>
         get() = repo.isDeviceEmergencyCallCapable
 
-    override val isRoamingForceHidden: StateFlow<Boolean> = MutableStateFlow(false)
+    override val isRoamingForceHidden: Flow<Boolean> =
+        kairosInteractor.isRoamingForceHidden
+            .toColdConflatedFlow(
+                kairosNetwork,
+                nameTag("MobileIconsInteractorKairosAdapter.isRoamingForceHidden"),
+            )
+            .stateIn(scope, SharingStarted.WhileSubscribed(), false)
 
     override fun getMobileConnectionInteractorForSubId(subId: Int): MobileIconInteractor =
         object : MobileIconInteractor {
