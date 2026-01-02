@@ -572,6 +572,8 @@ android_library {
         "SurfaceEffectsComposeLib",
         "uilatencystats_flags_core_java_lib",
         "personalcontext_ace_visualizer",
+        "smartspace-proto-java",
+        "smartspace-proto-lite-java",
         "vendor.lineage.powershare-V1-java",
         "VendorSupport-preference",
     ],
