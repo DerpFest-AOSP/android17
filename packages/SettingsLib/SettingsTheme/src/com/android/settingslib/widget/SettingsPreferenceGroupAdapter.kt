@@ -61,6 +61,15 @@ open class SettingsPreferenceGroupAdapter @JvmOverloads constructor(
     private val mHandler = Handler(Looper.getMainLooper())
 
     private val syncRunnable = Runnable { updatePreferencesList() }
+    
+    private val excludedClasses = setOf(
+        "org.derpfest.ui.preference.DerpFestCardDarkModePreferenceBase",
+        "org.derpfest.ui.preference.DerpFestCardPreference",
+        "org.derpfest.ui.preference.DerpFestCardSwitchPreference",
+        "org.derpfest.ui.preference.DerpFestSystemThemePreferenceBase",
+        "org.derpfest.customizations.preference.SystemThemePreference",
+        "org.derpfest.customizations.preference.DarkModeCardPreference"
+    )
 
     init {
         val context = preferenceGroup.context
@@ -154,6 +163,12 @@ open class SettingsPreferenceGroupAdapter @JvmOverloads constructor(
         var itemSkipped = true
         for (i in 0..<itemCount) {
             val preference = getItem(i)!!
+            // If the preference is excluded from expressive theme, skip this index
+            val isExcludedFromExpressive = preference.javaClass.name in excludedClasses
+            if (isExcludedFromExpressive) {
+                itemPositionStates[i] = 0
+                continue
+            }
             // If the preference is a group divider, skip this index (resulting in new group)
             if (isGroupDivider(preference)) {
                 itemPositionStates[i] = 0
@@ -209,6 +224,15 @@ open class SettingsPreferenceGroupAdapter @JvmOverloads constructor(
     /** handle roundCorner background */
     private fun updateBackground(holder: PreferenceViewHolder, position: Int) {
         val v = holder.itemView
+        val pref = getItem(position)
+        val isExcludedFromExpressive = pref?.javaClass?.name in excludedClasses
+        
+        if (isExcludedFromExpressive) {
+            // Use legacy background for excluded classes
+            v.setBackgroundResource(mLegacyBackgroundRes)
+            return
+        }
+        
         val drawableStateLayout = holder.itemView as? DrawableStateLayout
         if (position < mItemPositionStates.size &&
                 drawableStateLayout != null && mItemPositionStates[position] != 0) {
