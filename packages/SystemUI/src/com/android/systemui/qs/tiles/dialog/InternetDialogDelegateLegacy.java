@@ -68,6 +68,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android.internal.logging.UiEvent;
 import com.android.internal.logging.UiEventLogger;
 import com.android.settingslib.satellite.SatelliteDialogUtils;
+import com.android.settingslib.Utils;
 import com.android.settingslib.wifi.WifiEnterpriseRestrictionUtils;
 import com.android.systemui.Prefs;
 import com.android.systemui.accessibility.floatingmenu.AnnotationLinkSpan;
@@ -162,6 +163,11 @@ public class InternetDialogDelegateLegacy implements
     private Switch mMobileDataToggle;
     private View mMobileToggleDivider;
     private View mMobileConnectedSpace;
+    private LinearLayout mFivegLayout;
+    private ImageView mFivegIcon;
+    private TextView mFivegTitleText;
+    private Switch mFivegToggle;
+    private View mFivegToggleDivider;
     private ImageView mHotspotIcon;
     private TextView mHotspotTitleText;
     private TextView mHotspotSummaryText;
@@ -203,6 +209,9 @@ public class InternetDialogDelegateLegacy implements
     LifecycleOwner mLifecycleOwner;
     @VisibleForTesting
     MutableLiveData<InternetContent> mDataInternetContent = new MutableLiveData<>();
+
+    // 5g toggle
+    private final boolean mShouldShowFivegToggle;
 
     @AssistedFactory
     public interface Factory {
@@ -261,6 +270,7 @@ public class InternetDialogDelegateLegacy implements
         mDialogTransitionAnimator = dialogTransitionAnimator;
         mAdapter = new InternetAdapter(
                 mInternetDetailsContentController, coroutineScope, false, userRepository);
+        mShouldShowFivegToggle = mInternetDetailsContentController.isFivegSupported();
     }
 
     @Override
@@ -336,6 +346,11 @@ public class InternetDialogDelegateLegacy implements
         mMobileToggleDivider = mDialogView.requireViewById(R.id.mobile_toggle_divider);
         mMobileDataToggle = mDialogView.requireViewById(R.id.mobile_toggle);
         mMobileConnectedSpace = mDialogView.requireViewById(R.id.mobile_connected_space);
+        mFivegLayout = mDialogView.requireViewById(R.id.fiveg_layout);
+        mFivegIcon = mDialogView.requireViewById(R.id.fiveg_icon);
+        mFivegTitleText = mDialogView.requireViewById(R.id.fiveg_title);
+        mFivegToggleDivider = mDialogView.requireViewById(R.id.fiveg_toggle_divider);
+        mFivegToggle = mDialogView.requireViewById(R.id.fiveg_toggle);
         mHotspotIcon = mDialogView.requireViewById(R.id.hotspot_icon);
         mHotspotTitleText = mDialogView.requireViewById(R.id.hotspot_title);
         mHotspotSummaryText = mDialogView.requireViewById(R.id.hotspot_summary);
@@ -390,6 +405,7 @@ public class InternetDialogDelegateLegacy implements
         mMobileNetworkLayout.setOnClickListener(null);
         mMobileNetworkLayout.setOnLongClickListener(null);
         mMobileDataToggle.setOnClickListener(null);
+        mFivegToggle.setOnCheckedChangeListener(null);
         mHotspotLayout.setOnClickListener(null);
         mHotspotToggle.setOnClickListener(null);
         mConnectedWifListLayout.setOnClickListener(null);
@@ -546,6 +562,9 @@ public class InternetDialogDelegateLegacy implements
                         dialog.getContext(), mDefaultDataSubId, isChecked, false);
             }
         });
+        mFivegToggle.setOnClickListener(v -> {
+            mInternetDetailsContentController.setFivegEnabled(mFivegToggle.isChecked());
+        });
         mHotspotLayout.setOnClickListener(mInternetDetailsContentController::launchHotspotSetting);
         mHotspotToggle.setOnClickListener(v -> {
             boolean isChecked = mHotspotToggle.isChecked();
@@ -698,6 +717,15 @@ public class InternetDialogDelegateLegacy implements
                         ? R.color.connected_network_primary_color
                         : R.color.disconnected_network_primary_color;
                 mMobileToggleDivider.setBackgroundColor(context.getColor(primaryColor));
+
+                mFivegLayout.setVisibility(mShouldShowFivegToggle ? View.VISIBLE : View.GONE);
+                mFivegToggle.setChecked(mInternetDetailsContentController.isFivegEnabled());
+                mFivegTitleText.setText(dialog.getContext().getText(R.string.enable_fiveg));
+                mFivegToggle.setVisibility(mCanConfigMobileData ? View.VISIBLE : View.INVISIBLE);
+                mFivegToggleDivider.setVisibility(
+                        mCanConfigMobileData ? View.VISIBLE : View.INVISIBLE);
+                mFivegToggleDivider.setBackgroundColor(dialog.getContext().getColor(primaryColor));
+
                 // Display the info for the non-DDS if it's actively being used
 
                 int nonDdsVisibility = autoSwitchNonDdsSubId
@@ -770,12 +798,19 @@ public class InternetDialogDelegateLegacy implements
                             isNetworkConnected ? mBackgroundOn : mBackgroundOff);
                     mMobileTitleText.setTextAppearance(isNetworkConnected
                             ?
-                            R.style.TextAppearance_InternetDialog_Active
-                            : R.style.TextAppearance_InternetDialog);
-                    mMobileSummaryText.setTextAppearance(secondaryRes);
-                }
+                        R.style.TextAppearance_InternetDialog_Active
+                        : R.style.TextAppearance_InternetDialog);
+                mMobileSummaryText.setTextAppearance(secondaryRes);
+            	mFivegIcon.getDrawable().setTint(
+                        isNetworkConnected ? dialog.getContext().getColor(R.color.connected_network_primary_color)
+                        : Utils.getColorAttrDefaultColor(dialog.getContext(), android.R.attr.textColorTertiary));
+                mFivegTitleText.setTextAppearance(isNetworkConnected
+                        ?
+                        R.style.TextAppearance_InternetDialog_Active
+                        : R.style.TextAppearance_InternetDialog);
+            }
 
-                if (mSecondaryMobileNetworkLayout != null) {
+            if (mSecondaryMobileNetworkLayout != null) {
                     mSecondaryMobileNetworkLayout.setVisibility(nonDdsVisibility);
                 }
 
