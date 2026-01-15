@@ -26,8 +26,8 @@ import android.telephony.TelephonyManager;
 import android.testing.TestableLooper;
 import android.view.View;
 import android.view.Window;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
@@ -107,9 +107,9 @@ public class InternetDialogDelegateLegacyTest extends SysuiTestCase {
     private LinearLayout mMobileDataLayout;
     private TextView mMobileTitleText;
     private TextView mMobileSummaryText;
-    private Switch mMobileToggleSwitch;
+    private CompoundButton mMobileToggleSwitch;
     private LinearLayout mWifiToggle;
-    private Switch mWifiToggleSwitch;
+    private CompoundButton mWifiToggleSwitch;
     private TextView mWifiToggleSummary;
     private LinearLayout mConnectedWifi;
     private RecyclerView mWifiList;
