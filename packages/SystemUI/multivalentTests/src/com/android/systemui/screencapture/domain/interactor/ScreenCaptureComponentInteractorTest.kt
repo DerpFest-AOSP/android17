@@ -60,6 +60,10 @@ class ScreenCaptureComponentInteractorTest : SysuiTestCase() {
                             audioSource = ScreenRecordingAudioSource.NONE,
                             displayId = Display.DEFAULT_DISPLAY,
                             shouldShowTaps = false,
+                            lowQuality = false,
+                            longerDuration = false,
+                            hevc = false,
+                            keepScreenAwake = false,
                         )
                     )
                 },
