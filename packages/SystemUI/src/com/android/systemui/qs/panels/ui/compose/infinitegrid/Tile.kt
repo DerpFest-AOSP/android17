@@ -699,7 +699,6 @@ fun rememberQsGradientEnabled(): Boolean {
 private object TileDefaults {
     /** An active tile uses the active color as background */
     @Composable
-    @ReadOnlyComposable
     fun activeTileColors(): TileColors {
         val gradient = tileGradientBrushOrNull()
         return TileColors(
@@ -715,7 +714,6 @@ private object TileDefaults {
 
     /** An active tile with dual target only show the active color on the icon */
     @Composable
-    @ReadOnlyComposable
     fun activeDualTargetTileColors(): TileColors {
         val gradient = tileGradientBrushOrNull()
         return TileColors(
@@ -765,7 +763,6 @@ private object TileDefaults {
     }
 
     @Composable
-    @ReadOnlyComposable
     fun getColorForState(uiState: TileUiState, iconOnly: Boolean): TileColors {
         return when (uiState.visualState) {
             STATE_ACTIVE -> {
@@ -850,7 +847,6 @@ private object TileDefaults {
     }
 
     @Composable
-    @ReadOnlyComposable
     private fun tileGradientBrushOrNull(): Brush? {
         val gradientEnabled = rememberQsGradientEnabled()
         if (!gradientEnabled) {

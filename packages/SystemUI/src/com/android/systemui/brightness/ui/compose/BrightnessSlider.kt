@@ -30,8 +30,10 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -72,18 +74,22 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -95,6 +101,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.compose.lifecycle.DisposableEffectWithLifecycle
@@ -178,7 +185,19 @@ fun BrightnessSlider(
         } else {
             null
         }
-    val colors = SystemUISliderColors.Defaults
+    val gradient = brightnessGradient()
+    val gradientBrush = gradient?.brush
+    val colors =
+        if (gradientBrush != null) {
+            SystemUISliderColors.Defaults.copy(
+                activeTrackColor = Color.Transparent,
+                inactiveTrackColor = Color.Transparent,
+                thumbColor = gradient.endColor,
+                disabledThumbColor = gradient.endColor.copy(alpha = 0.38f),
+            )
+        } else {
+            SystemUISliderColors.Defaults
+        }
 
     // The value state is recreated every time gammaValue changes, so we recreate this derivedState
     // We have to use value as that's the value that changes when the user is dragging (gammaValue
@@ -347,15 +366,49 @@ fun BrightnessSlider(
                         }
                         .height(dimensions.trackHeight)
                         .drawWithContent {
-                            drawContent()
-
                             val yOffset = size.height / 2 - iconSize.toSize().height / 2
+                            val trackCornerPx = trackCornerDp.toPx()
+                            val sliderFraction = sliderState.coercedValueAsFraction
+                            val gapPx = ThumbTrackGapSize.toPx()
                             val activeTrackStart = 0f
                             val activeTrackEnd =
-                                size.width * sliderState.coercedValueAsFraction -
-                                    ThumbTrackGapSize.toPx()
-                            val inactiveTrackStart = activeTrackEnd + ThumbTrackGapSize.toPx() * 2
+                                (size.width * sliderFraction - gapPx).coerceIn(0f, size.width)
+                            val inactiveTrackStart =
+                                (activeTrackEnd + gapPx * 2).coerceIn(0f, size.width)
                             val inactiveTrackEnd = size.width
+
+                            if (gradientBrush != null) {
+                                if (activeTrackEnd > activeTrackStart) {
+                                    clipRect(
+                                        left = activeTrackStart,
+                                        top = 0f,
+                                        right = activeTrackEnd,
+                                        bottom = size.height,
+                                    ) {
+                                        drawRoundRect(
+                                            brush = gradientBrush,
+                                            size = size,
+                                            cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                        )
+                                    }
+                                }
+                                if (inactiveTrackStart < inactiveTrackEnd) {
+                                    clipRect(
+                                        left = inactiveTrackStart,
+                                        top = 0f,
+                                        right = inactiveTrackEnd,
+                                        bottom = size.height,
+                                    ) {
+                                        drawRoundRect(
+                                            color = Color.Black.copy(alpha = 0.35f),
+                                            size = size,
+                                            cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                        )
+                                    }
+                                }
+                            }
+
+                            drawContent()
 
                             val activeTrackWidth = activeTrackEnd - activeTrackStart
                             val inactiveTrackWidth = inactiveTrackEnd - inactiveTrackStart
@@ -397,6 +450,7 @@ fun BrightnessSlider(
                 hapticsEnabled = hapticsEnabled,
                 onIconClick = onIconClick,
                 size = dimensions.trackHeight,
+                gradientBrush = if (autoMode) gradientBrush else null,
             )
         }
     }
@@ -519,6 +573,7 @@ private fun drawAutoBrightnessButton(
     hapticsEnabled: Boolean,
     onIconClick: suspend () -> Unit,
     size: Dp,
+    gradientBrush: Brush? = null,
 ) {
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
@@ -556,11 +611,15 @@ private fun drawAutoBrightnessButton(
             }
             coroutineScope.launch { onIconClick() }
         },
-        modifier = Modifier.size(size),
+        modifier =
+            Modifier.size(size)
+                .thenIf(gradientBrush != null) {
+                    Modifier.background(requireNotNull(gradientBrush), autoIconShape)
+                },
         shape = autoIconShape,
         colors =
             IconButtonDefaults.iconButtonColors(
-                containerColor = backgroundColor,
+                containerColor = if (gradientBrush != null) Color.Transparent else backgroundColor,
                 contentColor = iconTint,
             ),
     ) {
@@ -743,3 +802,94 @@ object BrightnessSliderMotionTestKeys {
     val ActiveIconAlpha = MotionTestValueKey<Float>("activeIconAlpha")
     val InactiveIconAlpha = MotionTestValueKey<Float>("inactiveIconAlpha")
 }
+
+@Composable
+private fun rememberQsBrightnessGradientEnabled(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readGradientEnabled(): Boolean {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED,
+                1,
+                UserHandle.USER_CURRENT,
+            ) == 1
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
+    var gradientEnabled by remember { mutableStateOf(readGradientEnabled()) }
+
+    DisposableEffect(contentResolver) {
+        val observer =
+            object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    context.mainExecutor.execute { gradientEnabled = readGradientEnabled() }
+                }
+            }
+
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+
+    return gradientEnabled
+}
+
+@Composable
+private fun brightnessGradient(): BrightnessGradient? {
+    val gradientEnabled = rememberQsBrightnessGradientEnabled()
+    if (!gradientEnabled) {
+        return null
+    }
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val isDark = isSystemInDarkTheme()
+    val (start, end) =
+        remember(isDark, resources, context.theme) {
+            val startId =
+                if (isDark) {
+                    R.color.derpfestui_color_gradient_start_dark
+                } else {
+                    R.color.derpfestui_color_gradient_start_light
+                }
+            val endId =
+                if (isDark) {
+                    R.color.derpfestui_color_gradient_end_dark
+                } else {
+                    R.color.derpfestui_color_gradient_end_light
+                }
+            Pair(
+                Color(resources.getColor(startId, context.theme)),
+                Color(resources.getColor(endId, context.theme)),
+            )
+        }
+    val colors =
+        remember(start, end) {
+            if (start == end) {
+                listOf(start.lighten(0.2f), start, start.darken(0.2f))
+            } else {
+                listOf(start, end)
+            }
+        }
+    val brush = remember(colors) { Brush.linearGradient(colors) }
+    return remember(brush, colors) { BrightnessGradient(brush = brush, endColor = colors.last()) }
+}
+
+private fun Color.lighten(amount: Float): Color = blendWith(Color.White, amount)
+
+private fun Color.darken(amount: Float): Color = blendWith(Color.Black, amount)
+
+private fun Color.blendWith(other: Color, ratio: Float): Color {
+    return Color(ColorUtils.blendARGB(this.toArgb(), other.toArgb(), ratio))
+}
+
+private data class BrightnessGradient(val brush: Brush, val endColor: Color)
