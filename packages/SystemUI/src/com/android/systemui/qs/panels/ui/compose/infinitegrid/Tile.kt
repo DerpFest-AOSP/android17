@@ -29,7 +29,9 @@ import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.service.quicksettings.Tile.STATE_UNAVAILABLE
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -69,6 +71,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
@@ -225,8 +228,14 @@ fun ContentScope.Tile(
         val animatedColor by animateColorAsState(colors.background, label = "QSTileBackgroundColor")
         val isDualTarget = uiState.handlesSecondaryClick
 
+        val backgroundBrush = colors.backgroundBrush
         val outerShape = if (wantCircle) RoundedCornerShape(0.dp) else tileShape
-        val outerColor: () -> Color = if (wantCircle) { { Color.Transparent } } else { { animatedColor } }
+        val outerColor: () -> Color =
+            when {
+                wantCircle -> { { Color.Transparent } }
+                backgroundBrush != null -> { { Color.Transparent } }
+                else -> { { animatedColor } }
+            }
         val focusBorderColor = MaterialTheme.colorScheme.secondary
 
         val surfaceRevealModifier: Modifier
@@ -251,6 +260,9 @@ fun ContentScope.Tile(
             modifier =
                 modifier
                     .then(surfaceRevealModifier)
+                    .thenIf(backgroundBrush != null) {
+                        Modifier.background(requireNotNull(backgroundBrush), outerShape)
+                    }
                     .thenIf(!wantCircle) { 
                         modifier.borderOnFocus(color = focusBorderColor, outerShape.topEnd) 
                     }
@@ -547,6 +559,8 @@ data class TileColors(
     val label: Color,
     val secondaryLabel: Color,
     val icon: Color,
+    val backgroundBrush: Brush? = null,
+    val iconBackgroundBrush: Brush? = null,
 )
 
 @Composable
@@ -589,32 +603,79 @@ fun rememberTileShapeMode(): Int {
     return shapeMode
 }
 
+@Composable
+fun rememberQsGradientEnabled(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readGradientEnabled(): Boolean {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.QS_TILE_GRADIENT_ENABLED, 1,
+                UserHandle.USER_CURRENT
+            ) == 1
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
+    var gradientEnabled by remember { mutableStateOf(readGradientEnabled()) }
+
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute {
+                    gradientEnabled = readGradientEnabled()
+                }
+            }
+        }
+
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_TILE_GRADIENT_ENABLED),
+            false, observer, UserHandle.USER_ALL
+        )
+
+        onDispose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }
+
+    return gradientEnabled
+}
+
 private object TileDefaults {
     val ActiveIconCornerRadius = 16.dp
 
     /** An active tile uses the active color as background */
     @Composable
     @ReadOnlyComposable
-    fun activeTileColors(): TileColors =
-        TileColors(
+    fun activeTileColors(): TileColors {
+        val gradient = tileGradientBrushOrNull()
+        return TileColors(
             background = MaterialTheme.colorScheme.primary,
             iconBackground = MaterialTheme.colorScheme.primary,
             label = MaterialTheme.colorScheme.onPrimary,
             secondaryLabel = MaterialTheme.colorScheme.onPrimary,
             icon = MaterialTheme.colorScheme.onPrimary,
+            backgroundBrush = gradient,
+            iconBackgroundBrush = gradient,
         )
+    }
 
     /** An active tile with dual target only show the active color on the icon */
     @Composable
     @ReadOnlyComposable
-    fun activeDualTargetTileColors(): TileColors =
-        TileColors(
+    fun activeDualTargetTileColors(): TileColors {
+        val gradient = tileGradientBrushOrNull()
+        return TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect1,
             iconBackground = MaterialTheme.colorScheme.primary,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onPrimary,
+            iconBackgroundBrush = gradient,
         )
+    }
 
     @Composable
     @ReadOnlyComposable
@@ -723,6 +784,33 @@ private object TileDefaults {
                 }
             mutableStateOf(RoundedCornerShape(corner))
         }
+    }
+
+    @Composable
+    @ReadOnlyComposable
+    private fun tileGradientBrushOrNull(): Brush? {
+        val gradientEnabled = rememberQsGradientEnabled()
+        if (!gradientEnabled) {
+            return null
+        }
+        val context = LocalContext.current
+        val resources = LocalResources.current
+        val isDark = isSystemInDarkTheme()
+        val startId =
+            if (isDark) {
+                R.color.derpfestui_color_gradient_start_dark
+            } else {
+                R.color.derpfestui_color_gradient_start_light
+            }
+        val endId =
+            if (isDark) {
+                R.color.derpfestui_color_gradient_end_dark
+            } else {
+                R.color.derpfestui_color_gradient_end_light
+            }
+        val start = Color(resources.getColor(startId, context.theme))
+        val end = Color(resources.getColor(endId, context.theme))
+        return Brush.linearGradient(listOf(start, end))
     }
 }
 

@@ -141,6 +141,7 @@ fun LargeTileContent(
         val longPressLabel = longPressLabelSettings().takeIf { onLongClick != null }
         val animatedBackgroundColor by
             animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
+        val iconBackgroundBrush = colors.iconBackgroundBrush
         val focusBorderColor = MaterialTheme.colorScheme.secondary
         Box(
             modifier =
@@ -148,7 +149,10 @@ fun LargeTileContent(
                     Modifier.borderOnFocus(color = focusBorderColor, iconShape.topEnd)
                         .clip(iconShape)
                         .verticalSquish(squishiness)
-                        .drawBehind { drawRect(animatedBackgroundColor) }
+                        .drawBehind {
+                            iconBackgroundBrush?.let { drawRect(brush = it) }
+                                ?: drawRect(animatedBackgroundColor)
+                        }
                         .combinedClickable(
                             onClick = toggleClick!!,
                             onLongClick = onLongClick,
