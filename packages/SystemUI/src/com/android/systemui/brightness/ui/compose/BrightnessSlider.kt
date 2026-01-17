@@ -43,6 +43,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -74,10 +75,13 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -85,6 +89,7 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -97,6 +102,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.compose.modifiers.padding
@@ -179,7 +185,9 @@ fun BrightnessSlider(
                 SeekableSliderTrackerConfig(),
             )
         }
-    val colors = colors()
+    val gradient = brightnessGradient()
+    val gradientBrush = gradient?.brush
+    val colors = colors(gradientBrush != null, gradient?.endColor)
 
     // The value state is recreated every time gammaValue changes, so we recreate this derivedState
     // We have to use value as that's the value that changes when the user is dragging (gammaValue
@@ -347,16 +355,53 @@ fun BrightnessSlider(
                             }
                             .height(TrackHeight)
                             .drawWithContent {
+                                val trackCornerPx = trackCornerDp.toPx()
+                                val sliderFraction = sliderState.coercedValueAsFraction
+                                val gapPx = ThumbTrackGapSize.toPx()
+                                val activeTrackStart = 0f
+                                val activeTrackEnd =
+                                    (size.width * sliderFraction - gapPx).coerceIn(0f, size.width)
+                                val activeFillEnd = activeTrackEnd
+                                val inactiveTrackStart =
+                                    (activeTrackEnd + gapPx * 2).coerceIn(0f, size.width)
+                                val inactiveTrackEnd = size.width
+
+                                if (gradientBrush != null) {
+                                    // Draw gradient on active portion only
+                                    if (activeFillEnd > activeTrackStart) {
+                                        clipRect(
+                                            left = activeTrackStart,
+                                            top = 0f,
+                                            right = activeFillEnd,
+                                            bottom = size.height,
+                                        ) {
+                                            drawRoundRect(
+                                                brush = gradientBrush,
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
+                                    }
+                                    // Draw dark overlay on inactive portion
+                                    if (inactiveTrackStart < inactiveTrackEnd) {
+                                        clipRect(
+                                            left = inactiveTrackStart,
+                                            top = 0f,
+                                            right = inactiveTrackEnd,
+                                            bottom = size.height,
+                                        ) {
+                                            drawRoundRect(
+                                                color = Color.Black.copy(alpha = 0.35f),
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
+                                    }
+                                }
+
                                 drawContent()
 
                                 val yOffset = size.height / 2 - IconSize.toSize().height / 2
-                                val activeTrackStart = 0f
-                                val activeTrackEnd =
-                                    size.width * sliderState.coercedValueAsFraction -
-                                        ThumbTrackGapSize.toPx()
-                                val inactiveTrackStart = activeTrackEnd + ThumbTrackGapSize.toPx() * 2
-                                val inactiveTrackEnd = size.width
-
                                 val activeTrackWidth = activeTrackEnd - activeTrackStart
                                 val inactiveTrackWidth = inactiveTrackEnd - inactiveTrackStart
 
@@ -503,6 +548,9 @@ private fun drawAutoBrightnessButton(
             MaterialTheme.colorScheme.onSurface
         }
     )
+    val gradient = brightnessGradient()
+    val gradientBrush = gradient?.brush
+    val autoBrightnessBrush = if (autoMode) gradientBrush else null
     val painterRes = if (autoMode) {
         R.drawable.ic_qs_brightness_auto_on
     } else {
@@ -518,7 +566,13 @@ private fun drawAutoBrightnessButton(
         modifier = Modifier
             .size(45.dp)
             .clip(autoIconShape)
-            .background(backgroundColor)
+            .then(
+                if (autoBrightnessBrush != null) {
+                    Modifier.background(autoBrightnessBrush)
+                } else {
+                    Modifier.background(backgroundColor)
+                }
+            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null, // Disable ripple effect
@@ -689,11 +743,133 @@ object BrightnessSliderMotionTestKeys {
 }
 
 @Composable
-private fun colors(): SliderColors {
-    return SliderDefaults.colors()
-        .copy(
-            inactiveTrackColor = LocalAndroidColorScheme.current.surfaceEffect1,
+private fun rememberQsBrightnessGradientEnabled(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readGradientEnabled(): Boolean {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED, 1,
+                UserHandle.USER_CURRENT
+            ) == 1
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
+    var gradientEnabled by remember { mutableStateOf(readGradientEnabled()) }
+
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute {
+                    gradientEnabled = readGradientEnabled()
+                }
+            }
+        }
+
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED),
+            false, observer, UserHandle.USER_ALL
+        )
+
+        onDispose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }
+
+    return gradientEnabled
+}
+
+@Composable
+private fun brightnessGradient(): BrightnessGradient? {
+    val gradientEnabled = rememberQsBrightnessGradientEnabled()
+    if (!gradientEnabled) {
+        return null
+    }
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val isDark = isSystemInDarkTheme()
+    
+    // Remember colors based on theme state - they will update when theme changes
+    val (start, end) = remember(isDark, resources, context.theme) {
+        val startId =
+            if (isDark) {
+                R.color.derpfestui_color_gradient_start_dark
+            } else {
+                R.color.derpfestui_color_gradient_start_light
+            }
+        val endId =
+            if (isDark) {
+                R.color.derpfestui_color_gradient_end_dark
+            } else {
+                R.color.derpfestui_color_gradient_end_light
+            }
+        Pair(
+            Color(resources.getColor(startId, context.theme)),
+            Color(resources.getColor(endId, context.theme))
+        )
+    }
+    
+    val colors = remember(start, end) {
+        if (start == end) {
+            // If colors are the same, create a subtle gradient by lightening/darkening
+            listOf(start.lighten(0.2f), start, start.darken(0.2f))
+        } else {
+            listOf(start, end)
+        }
+    }
+    
+    val brush = remember(colors) {
+        Brush.linearGradient(colors)
+    }
+    
+    return remember(brush, colors) {
+        BrightnessGradient(
+            brush = brush,
+            endColor = colors.last(),
+        )
+    }
+}
+
+private fun Color.lighten(amount: Float): Color = blendWith(Color.White, amount)
+
+private fun Color.darken(amount: Float): Color = blendWith(Color.Black, amount)
+
+private fun Color.blendWith(other: Color, ratio: Float): Color {
+    return Color(ColorUtils.blendARGB(this.toArgb(), other.toArgb(), ratio))
+}
+
+@Composable
+private fun colors(
+    gradientEnabled: Boolean,
+    gradientEndColor: Color?,
+): SliderColors {
+    return if (gradientEnabled) {
+        val thumbColor = gradientEndColor ?: MaterialTheme.colorScheme.onPrimary
+        val disabledThumb = thumbColor.copy(alpha = 0.38f)
+        SliderDefaults.colors(
+            activeTrackColor = Color.Transparent,
+            inactiveTrackColor = Color.Transparent,
             activeTickColor = MaterialTheme.colorScheme.onPrimary,
             inactiveTickColor = MaterialTheme.colorScheme.onSurface,
+            thumbColor = thumbColor,
+            disabledThumbColor = disabledThumb,
         )
+    } else {
+        // Match original appearance exactly when gradient is disabled
+        SliderDefaults.colors()
+            .copy(
+                inactiveTrackColor = LocalAndroidColorScheme.current.surfaceEffect1,
+                activeTickColor = MaterialTheme.colorScheme.onPrimary,
+                inactiveTickColor = MaterialTheme.colorScheme.onSurface,
+            )
+    }
 }
+
+private data class BrightnessGradient(
+    val brush: Brush,
+    val endColor: Color,
+)
+
