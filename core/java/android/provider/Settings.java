@@ -7012,6 +7012,13 @@ public final class Settings {
         public static final String HAPTIC_ON_POWER_MENU = "haptic_on_power_menu";
 
         /**
+         * Whether to enable gradient backgrounds for Quick Settings tiles.
+         * 1 to enable, 0 to disable. Default is 1.
+         * @hide
+         */
+        public static final String QS_TILE_GRADIENT_ENABLED = "qs_tile_gradient_enabled";
+
+        /**
          * Whether to disable Bluetooth battery level
          * @hide
          */

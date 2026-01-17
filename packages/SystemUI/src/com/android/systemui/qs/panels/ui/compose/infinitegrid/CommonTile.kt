@@ -141,13 +141,17 @@ fun LargeTileContent(
         val longPressLabel = longPressLabelSettings().takeIf { onLongClick != null }
         val animatedBackgroundColor by
             animateColorAsState(colors.iconBackground, label = "QSTileDualTargetBackgroundColor")
+        val iconBackgroundBrush = colors.iconBackgroundBrush
         val focusBorderColor = MaterialTheme.colorScheme.secondary
         Box(
             modifier =
                 Modifier.size(CommonTileDefaults.ToggleTargetSize).thenIf(isDualTarget) {
                     Modifier.borderOnFocus(color = focusBorderColor, iconShape.topEnd)
                         .clip(iconShape)
-                        .drawBehind { drawRect(animatedBackgroundColor) }
+                        .drawBehind {
+                            iconBackgroundBrush?.let { drawRect(brush = it) }
+                                ?: drawRect(animatedBackgroundColor)
+                        }
                         // apply the squish effect after the bg is drawn
                         .verticalSquish(squishiness)
                         .combinedClickable(

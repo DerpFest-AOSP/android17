@@ -134,7 +134,8 @@ public class SystemSettings {
                 Settings.System.MIN_REFRESH_RATE,
                 Settings.System.ACCESSIBILITY_FORCE_INVERT_COLOR_OVERRIDE_PACKAGES_TO_DISABLE,
                 Settings.System.QS_SHOW_LUNAR_CALENDAR,
-                Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR
+                Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR,
+                Settings.System.QS_TILE_GRADIENT_ENABLED
         ));
         return settings.toArray(new String[0]);
     }

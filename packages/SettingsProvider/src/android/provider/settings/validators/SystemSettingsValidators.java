@@ -289,5 +289,6 @@ public class SystemSettingsValidators {
                 new PackageNameListValidator(","));
         VALIDATORS.put(System.QS_SHOW_LUNAR_CALENDAR, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.LOCKSCREEN_SHOW_LUNAR_CALENDAR, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.QS_TILE_GRADIENT_ENABLED, BOOLEAN_VALIDATOR);
     }
 }

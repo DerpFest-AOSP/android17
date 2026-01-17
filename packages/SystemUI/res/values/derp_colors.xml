@@ -16,4 +16,10 @@
     <color name="neumorph_outline_end">#FFF0F0F0</color>
     <color name="clock_chip_overlay">#40000000</color>
     <color name="clock_chip_overlay_soft">#30000000</color>
+
+    <!-- QS tile gradient colors -->
+    <color name="derpfestui_color_gradient_start_light">@*android:color/bootleg_accent_gradient_end_color</color>
+    <color name="derpfestui_color_gradient_start_dark">@*android:color/bootleg_accent_gradient_end_color</color>
+    <color name="derpfestui_color_gradient_end_light">@*android:color/accent_device_default</color>
+    <color name="derpfestui_color_gradient_end_dark">@*android:color/accent_device_default</color>
 </resources>
