@@ -16,6 +16,8 @@ import com.android.systemui.qs.QsEventLogger
 import com.android.systemui.qs.logging.QSLogger
 import com.android.systemui.qs.tileimpl.QSTileImpl.DrawableIconWithRes
 import com.android.systemui.res.R
+import com.android.systemui.animation.DialogTransitionAnimator
+import com.android.systemui.qs.tiles.dialog.FlashlightDialogDelegate
 import com.android.systemui.statusbar.policy.FlashlightController
 import com.google.common.truth.Truth
 import org.junit.After
@@ -44,6 +46,10 @@ class FlashlightTileTest : SysuiTestCase() {
 
     @Mock private lateinit var flashlightController: FlashlightController
 
+    @Mock private lateinit var flashlightDialogDelegate: FlashlightDialogDelegate
+
+    @Mock private lateinit var dialogTransitionAnimator: DialogTransitionAnimator
+
     @Mock private lateinit var uiEventLogger: QsEventLogger
 
     private val falsingManager = FalsingManagerFake()
@@ -69,6 +75,8 @@ class FlashlightTileTest : SysuiTestCase() {
                 activityStarter,
                 qsLogger,
                 flashlightController,
+                { flashlightDialogDelegate },
+                dialogTransitionAnimator,
             )
     }
 

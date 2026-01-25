@@ -20,6 +20,8 @@ import android.content.pm.PackageManager
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.impl.CameraMetadataNative
+import android.os.Handler
+import android.os.Looper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.android.systemui.SysuiTestCase
@@ -77,8 +79,10 @@ class FlashlightControllerImplTest : SysuiTestCase() {
                 .thenReturn(true)
 
         controller = FlashlightControllerImpl(
+                mContext,
                 dumpManager,
                 cameraManager,
+                Handler(Looper.getMainLooper()),
                 backgroundExecutor,
                 fakeSettings,
                 broadcastSender,
@@ -143,6 +147,8 @@ class FlashlightControllerImplTest : SysuiTestCase() {
             override fun onFlashlightError() {}
 
             override fun onFlashlightAvailabilityChanged(available: Boolean) {}
+
+            override fun onFlashlightStrengthChanged(level: Int) {}
         }
         controller.addCallback(callback)
         controller.addCallback(object : FlashlightController.FlashlightListener {
@@ -151,6 +157,8 @@ class FlashlightControllerImplTest : SysuiTestCase() {
             override fun onFlashlightError() {}
 
             override fun onFlashlightAvailabilityChanged(available: Boolean) {}
+
+            override fun onFlashlightStrengthChanged(level: Int) {}
         })
         backgroundExecutor.runAllReady()
 
@@ -168,6 +176,8 @@ class FlashlightControllerImplTest : SysuiTestCase() {
         val camera = CameraCharacteristics(CameraMetadataNative().apply {
             set(CameraCharacteristics.FLASH_INFO_AVAILABLE, flash)
             set(CameraCharacteristics.LENS_FACING, facing)
+            set(CameraCharacteristics.FLASH_INFO_STRENGTH_DEFAULT_LEVEL, 1)
+            set(CameraCharacteristics.FLASH_INFO_STRENGTH_MAXIMUM_LEVEL, 1)
         })
         `when`(cameraManager.cameraIdList).thenReturn(arrayOf(cameraID))
         `when`(cameraManager.getCameraCharacteristics(cameraID)).thenReturn(camera)

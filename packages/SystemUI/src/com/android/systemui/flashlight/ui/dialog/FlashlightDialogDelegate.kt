@@ -40,7 +40,9 @@ import com.android.systemui.flashlight.flags.FlashlightStrength
 import com.android.systemui.flashlight.shared.logger.FlashlightLogger
 import com.android.systemui.flashlight.ui.composable.FlashlightSliderContainer
 import com.android.systemui.flashlight.ui.viewmodel.FlashlightSliderViewModel
+import com.android.systemui.flashlight.ui.viewmodel.FlashlightSliderViewModelLegacy
 import com.android.systemui.lifecycle.rememberViewModel
+import com.android.systemui.statusbar.policy.FlashlightController
 import com.android.systemui.res.R
 import com.android.systemui.shade.domain.interactor.ShadeDialogContextInteractor
 import com.android.systemui.statusbar.phone.ComponentSystemUIDialog
@@ -61,6 +63,8 @@ constructor(
     private val shadeDialogContextInteractor: ShadeDialogContextInteractor,
     private val dialogTransitionAnimator: DialogTransitionAnimator,
     private val viewModelFactory: FlashlightSliderViewModel.Factory,
+    private val legacyViewModelFactory: FlashlightSliderViewModelLegacy.Factory,
+    private val flashlightController: FlashlightController,
     private val logger: FlashlightLogger,
 ) : SystemUIDialog.Delegate {
     private var currentDialog: ComponentSystemUIDialog? = null
@@ -102,8 +106,18 @@ constructor(
 
     @Composable
     private fun FlashlightDialogContent(dialog: SystemUIDialog) {
+        // Use legacy ViewModel if old controller supports strength control
+        // This allows the new vertical slider to work with the old FlashlightController
+        val useLegacy =
+            flashlightController.isStrengthControlSupported() && flashlightController.isAvailable()
         val flashlightSliderViewModel =
-            rememberViewModel("FlashlightSliderViewModel") { viewModelFactory.create() }
+            if (useLegacy) {
+                rememberViewModel("FlashlightSliderViewModelLegacy") {
+                    legacyViewModelFactory.create()
+                }
+            } else {
+                rememberViewModel("FlashlightSliderViewModel") { viewModelFactory.create() }
+            }
         AlertDialogContent(
             modifier = Modifier.semantics { testTagsAsResourceId = true },
             title = {

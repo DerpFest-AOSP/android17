@@ -83,6 +83,34 @@ public class FakeFlashlightController extends BaseLeakChecker<FlashlightListener
     }
 
     @Override
+    public boolean isStrengthControlSupported() {
+        return false;
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return 0;
+    }
+
+    @Override
+    public int getDefaultLevel() {
+        return 0;
+    }
+
+    @Override
+    public int getCurrentLevel() {
+        return 0;
+    }
+
+    @Override
+    public float getCurrentPercent() {
+        return 0f;
+    }
+
+    @Override
+    public void setFlashlightStrengthLevel(int level) {}
+
+    @Override
     public void addCallback(FlashlightListener listener) {
         super.addCallback(listener);
         callbacks.add(listener);
