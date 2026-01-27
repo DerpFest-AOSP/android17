@@ -16,6 +16,7 @@
 
 package com.android.systemui.statusbar.pipeline.shared.domain.interactor
 
+import android.content.applicationContext
 import android.content.res.mainResources
 import android.provider.Settings
 import com.android.systemui.kosmos.Kosmos
@@ -25,7 +26,13 @@ import com.android.systemui.shared.settings.data.repository.fakeSecureSettingsRe
 import com.android.systemui.shared.settings.data.repository.secureSettingsRepository
 
 val Kosmos.homeStatusBarIconBlockListInteractor by
-    Kosmos.Fixture { HomeStatusBarIconBlockListInteractor(mainResources, secureSettingsRepository) }
+    Kosmos.Fixture {
+        HomeStatusBarIconBlockListInteractor(
+            applicationContext,
+            mainResources,
+            secureSettingsRepository,
+        )
+    }
 
 /**
  * [icons] can be a list of icons that should appear on the blocklist. Note that this should be
