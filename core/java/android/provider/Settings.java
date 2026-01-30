@@ -6961,6 +6961,13 @@ public final class Settings {
         public static final String QS_BRIGHTNESS_GRADIENT_ENABLED = "qs_brightness_gradient_enabled";
 
         /**
+         * Whether to enable gradient styling for the volume slider.
+         * 1 to enable, 0 to disable. Default is 1.
+         * @hide
+         */
+        public static final String QS_VOLUME_GRADIENT_ENABLED = "qs_volume_gradient_enabled";
+
+        /**
          * Whether to disable Bluetooth battery level
          * @hide
          */
