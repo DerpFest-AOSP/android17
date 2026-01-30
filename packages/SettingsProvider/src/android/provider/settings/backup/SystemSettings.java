@@ -136,7 +136,8 @@ public class SystemSettings {
                 Settings.System.QS_SHOW_LUNAR_CALENDAR,
                 Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR,
                 Settings.System.QS_TILE_GRADIENT_ENABLED,
-                Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED
+                Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED,
+                Settings.System.QS_VOLUME_GRADIENT_ENABLED
         ));
         return settings.toArray(new String[0]);
     }
