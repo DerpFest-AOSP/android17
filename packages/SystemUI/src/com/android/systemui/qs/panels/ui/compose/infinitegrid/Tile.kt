@@ -260,7 +260,7 @@ fun ContentScope.Tile(
             modifier =
                 modifier
                     .then(surfaceRevealModifier)
-                    .thenIf(backgroundBrush != null) {
+                    .thenIf(backgroundBrush != null && !wantCircle) {
                         Modifier.background(requireNotNull(backgroundBrush), outerShape)
                     }
                     .thenIf(!wantCircle) { 
