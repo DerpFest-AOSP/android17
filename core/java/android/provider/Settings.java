@@ -7512,6 +7512,12 @@ public final class Settings {
         public static final String EDGE_LIGHT_ANIMATION_EFFECT = "edge_light_animation_effect";
 
         /**
+         * Whether to show custom carrier text on the lockscreen
+         * @hide
+         */
+        public static final String LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT = "lockscreen_show_custom_carrier_text";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate
