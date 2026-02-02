@@ -283,6 +283,8 @@ public class SystemSettingsValidators {
                 new InclusiveFloatRangeValidator(
                         CV_PREFERRED_INTENSITY_MIN, CV_PREFERRED_INTENSITY_MAX));
         VALIDATORS.put(System.QS_SHOW_LUNAR_CALENDAR, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.BOUNCER_USER_SWITCHER_ENABLED,
+                new InclusiveIntegerRangeValidator(-1, 1));
         VALIDATORS.put(System.QS_SHOW_SETTINGS_ICON, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.QS_SHOW_POWER_MENU_ICON, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.QS_SHOW_EDIT_BUTTON, BOOLEAN_VALIDATOR);

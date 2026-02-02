@@ -7368,6 +7368,13 @@ public final class Settings {
         public static final String QS_SHOW_LUNAR_CALENDAR = "qs_show_lunar_calendar";
 
         /**
+         * Whether to show user switcher on the keyguard bouncer. 0 = disabled, 1 = enabled,
+         * -1 = use device config (config_enableBouncerUserSwitcher).
+         * @hide
+         */
+        public static final String BOUNCER_USER_SWITCHER_ENABLED = "bouncer_user_switcher_enabled";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate

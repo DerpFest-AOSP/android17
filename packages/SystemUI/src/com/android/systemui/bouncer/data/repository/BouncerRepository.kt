@@ -17,6 +17,8 @@
 package com.android.systemui.bouncer.data.repository
 
 import android.content.Context
+import android.os.UserHandle
+import android.provider.Settings
 import android.provider.Settings.Global.ONE_HANDED_KEYGUARD_SIDE
 import com.android.systemui.authentication.shared.model.BouncerInputSide
 import com.android.systemui.authentication.shared.model.toBouncerInputSide
@@ -42,9 +44,22 @@ constructor(
 
     /** Whether the user switcher should be displayed within the bouncer UI on large screens. */
     val isUserSwitcherEnabledInConfig: Boolean
-        get() =
-            applicationContext.resources.getBoolean(R.bool.config_enableBouncerUserSwitcher) &&
-                flags.isEnabled(Flags.FULL_SCREEN_USER_SWITCHER)
+        get() {
+            val settingOverride = Settings.System.getIntForUser(
+                applicationContext.contentResolver,
+                Settings.System.BOUNCER_USER_SWITCHER_ENABLED,
+                -1,
+                UserHandle.USER_CURRENT
+            )
+            val configEnabled =
+                applicationContext.resources.getBoolean(R.bool.config_enableBouncerUserSwitcher) &&
+                    flags.isEnabled(Flags.FULL_SCREEN_USER_SWITCHER)
+            return when (settingOverride) {
+                1 -> flags.isEnabled(Flags.FULL_SCREEN_USER_SWITCHER)
+                0 -> false
+                else -> configEnabled
+            }
+        }
 
     /** Whether the one handed bouncer is supported for this device. */
     val isOneHandedBouncerSupportedInConfig: Boolean

@@ -131,6 +131,7 @@ public class SystemSettings {
                 Settings.System.CV_DYNAMIC_ENABLED,
                 Settings.System.CV_PREFERRED_INTENSITY,
                 Settings.System.QS_SHOW_LUNAR_CALENDAR,
+                Settings.System.BOUNCER_USER_SWITCHER_ENABLED,
                 Settings.System.QS_TILE_GRADIENT_ENABLED,
                 Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED,
                 Settings.System.QS_VOLUME_GRADIENT_ENABLED,
