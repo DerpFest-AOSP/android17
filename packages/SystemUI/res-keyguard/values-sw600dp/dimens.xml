@@ -25,6 +25,23 @@
     <!-- Margin around the various security views -->
     <dimen name="keyguard_security_view_top_margin">12dp</dimen>
 
+    <!-- Minimum bottom margin under the security view (tablet) -->
+    <dimen name="keyguard_security_view_bottom_margin">60dp</dimen>
+
+    <!-- Bouncer user switcher - tablet layout (larger) -->
+    <dimen name="bouncer_user_switcher_header_margin_top">30dp</dimen>
+    <dimen name="bouncer_user_switcher_header_text_size">20sp</dimen>
+    <dimen name="bouncer_user_switcher_item_text_size">20sp</dimen>
+    <dimen name="bouncer_user_switcher_item_line_height">24sp</dimen>
+    <dimen name="bouncer_user_switcher_item_icon_size">28dp</dimen>
+    <dimen name="bouncer_user_switcher_item_padding_vertical">10dp</dimen>
+    <dimen name="bouncer_user_switcher_item_padding_horizontal">12dp</dimen>
+    <dimen name="bouncer_user_switcher_header_padding_start">0dp</dimen>
+    <dimen name="bouncer_user_switcher_header_padding_end">44dp</dimen>
+    <dimen name="bouncer_user_switcher_y_trans">80dp</dimen>
+    <dimen name="bouncer_user_switcher_icon_size">190dp</dimen>
+    <dimen name="bouncer_user_switcher_icon_size_plus_margin">222dp</dimen>
+
     <!-- Overload default clock widget parameters -->
     <dimen name="widget_big_font_size">100dp</dimen>
     <dimen name="widget_label_font_size">18sp</dimen>
