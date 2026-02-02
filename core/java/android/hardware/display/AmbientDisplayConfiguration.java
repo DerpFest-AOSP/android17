@@ -68,7 +68,10 @@ public class AmbientDisplayConfiguration {
             Settings.Secure.DOZE_WAKE_LOCK_SCREEN_GESTURE,
             Settings.Secure.DOZE_WAKE_DISPLAY_GESTURE,
             Settings.Secure.DOZE_TAP_SCREEN_GESTURE,
-            Settings.Secure.DOZE_ON_CHARGE
+            Settings.Secure.DOZE_ON_CHARGE,
+            Settings.Secure.DOZE_TILT_GESTURE,
+            Settings.Secure.DOZE_HANDWAVE_GESTURE,
+            Settings.Secure.DOZE_POCKET_GESTURE
     };
 
     /** Non-user configurable doze settings */
