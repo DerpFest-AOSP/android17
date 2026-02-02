@@ -292,5 +292,7 @@ public class SystemSettingsValidators {
         VALIDATORS.put(System.QS_TILE_GRADIENT_ENABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.QS_BRIGHTNESS_GRADIENT_ENABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(System.QS_VOLUME_GRADIENT_ENABLED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(System.BOUNCER_USER_SWITCHER_ENABLED,
+                new InclusiveIntegerRangeValidator(-1, 1));
     }
 }

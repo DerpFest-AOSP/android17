@@ -135,6 +135,7 @@ public class SystemSettings {
                 Settings.System.ACCESSIBILITY_FORCE_INVERT_COLOR_OVERRIDE_PACKAGES_TO_DISABLE,
                 Settings.System.QS_SHOW_LUNAR_CALENDAR,
                 Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR,
+                Settings.System.BOUNCER_USER_SWITCHER_ENABLED,
                 Settings.System.QS_TILE_GRADIENT_ENABLED,
                 Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED,
                 Settings.System.QS_VOLUME_GRADIENT_ENABLED
