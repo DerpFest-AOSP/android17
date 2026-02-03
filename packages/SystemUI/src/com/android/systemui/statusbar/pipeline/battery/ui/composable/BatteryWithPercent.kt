@@ -36,7 +36,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.android.systemui.statusbar.phone.domain.interactor.IsAreaDark
 import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
-import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryViewModel
 
 @Composable
@@ -59,11 +58,12 @@ fun BatteryWithPercent(
 
     var bounds by remember { mutableStateOf(Rect()) }
 
+    // Use same color profile as the battery icon so text is tinted with accent when enabled
     val colorProducer = {
         if (isDarkProvider().isDarkTheme(bounds)) {
-            BatteryColors.DarkTheme.Default.fill
+            viewModel.colorProfile.dark.fill
         } else {
-            BatteryColors.LightTheme.Default.fill
+            viewModel.colorProfile.light.fill
         }
     }
 
