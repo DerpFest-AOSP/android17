@@ -504,7 +504,9 @@ public class NotificationShadeWindowControllerImpl
                     "display_max_refresh_rate", (long) mLpChanged.preferredMaxDisplayRefreshRate);
         }
 
-        if (state.bouncerShowing) {
+        boolean ignoreSecure = Settings.Global.getInt(mContext.getContentResolver(),
+                Settings.Global.WINDOW_IGNORE_SECURE, 0) == 1;
+        if (state.bouncerShowing && !ignoreSecure) {
             mLpChanged.flags |= LayoutParams.FLAG_SECURE;
         } else {
             mLpChanged.flags &= ~LayoutParams.FLAG_SECURE;
