@@ -16,9 +16,12 @@
 
 package com.android.systemui.statusbar.pipeline.battery.shared.ui
 
+import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import android.util.Log
 import androidx.core.graphics.ColorUtils
+import com.android.systemui.res.R
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.LightTheme.Charging
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.LightTheme.Error
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.LightTheme.PowerSave
@@ -120,39 +123,89 @@ sealed interface BatteryColors {
     }
 
     /** Accent color theme for light mode */
-    class AccentLightTheme(private val accentColor: Color) : LightTheme() {
+    class AccentLightTheme(
+        private val accentColor: Color,
+        useHighEnd: Boolean
+    ) : LightTheme() {
         override val attribution = accentColor
-        // Darker shade of accent for glyph (percentage inside icon) so it's readable on the fill
-        override val glyph = darkerAccentShade(accentColor)
+        override val glyph = darkerAccentShade(accentColor, useHighEnd)
         override val fill = accentColor
         override val backgroundOnly = accentColor.copy(alpha = 0.20f)
-        override val backgroundWithGlyph = accentColor.copy(alpha = 0.55f)
+        override val backgroundWithGlyph = accentColor.copy(alpha = 0.70f)
     }
 
     /** Accent color theme for dark mode */
-    class AccentDarkTheme(private val accentColor: Color) : DarkTheme() {
+    class AccentDarkTheme(
+        private val accentColor: Color,
+        useHighEnd: Boolean
+    ) : DarkTheme() {
         override val attribution = accentColor
-        // Darker shade of accent for glyph (percentage inside icon) so it's readable on the fill
-        override val glyph = darkerAccentShade(accentColor)
+        override val glyph = darkerAccentShade(accentColor, useHighEnd)
         override val fill = accentColor
         override val backgroundOnly = accentColor.copy(alpha = 0.45f)
-        override val backgroundWithGlyph = accentColor.copy(alpha = 0.55f)
+        override val backgroundWithGlyph = accentColor.copy(alpha = 0.70f)
     }
 
     companion object {
         /**
-         * Darker shade of the accent for the percentage glyph inside the icon, so it stays
-         * readable when fill and glyph would otherwise be the same color.
+         * Calculates a readable text color to sit on top of the accent fill.
+         *
+         * @param accent The background fill color (Monet accent).
+         * @param highPrecision If true, uses an iterative loop to find the perfect tint.
+         * If false, uses a fast approximation (80% blend) to save CPU.
          */
-        private fun darkerAccentShade(accent: Color): Color {
-            val blendRatio = 0.45f // blend with black for better contrast on fill
-            return Color(ColorUtils.blendARGB(accent.toArgb(), Color.Black.toArgb(), blendRatio))
+        private fun darkerAccentShade(accent: Color, highPrecision: Boolean): Color {
+            val accentArgb = accent.toArgb()
+
+            // Calculate luminance (Is the background light or dark?)
+            val bgLum = ColorUtils.calculateLuminance(accentArgb)
+            val isBgLight = bgLum > 0.5
+            val targetColor = if (isBgLight) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+            val modeStr = if (highPrecision) "High-End Loop" else "Low-End Approx"
+
+            // fast, non-expensive approximation
+            if (!highPrecision) {
+                Log.d("StatusBarTint:", "Calculating tint ($modeStr) for bg=${Integer.toHexString(accentArgb)}")
+                return Color(ColorUtils.blendARGB(accentArgb, targetColor, 0.8f))
+            }
+
+            // more expensive, better calculation for high end devices
+            val minContrast = 6.5
+            var blendRatio = 0.0f
+
+            // if the contrast is fine already, skip calculation
+            if (ColorUtils.calculateContrast(accentArgb, accentArgb) >= minContrast) {
+                return accent
+            }
+
+            // expensive
+            Log.d("StatusBarTint:", "Calculating tint ($modeStr) for bg=${Integer.toHexString(accentArgb)}")
+            while (blendRatio <= 1.0f) {
+                val newColorArgb = ColorUtils.blendARGB(accentArgb, targetColor, blendRatio)
+                if (ColorUtils.calculateContrast(newColorArgb, accentArgb) >= minContrast) {
+                    Log.d("StatusBarTint:", "Found contrast match at ratio $blendRatio: ${Integer.toHexString(newColorArgb)}")
+                    return Color(newColorArgb)
+                }
+                blendRatio += 0.05f
+            }
+
+            return Color(targetColor)
         }
 
-        /** Create accent color themes from Android color int */
-        fun createAccentThemes(accentColorInt: Int): Pair<LightTheme, DarkTheme> {
+        /**
+         * Create accent color themes from Android color int.
+         * Requires Context to check device config.
+         */
+        fun createAccentThemes(context: Context, accentColorInt: Int): Pair<LightTheme, DarkTheme> {
             val accentColor = Color(accentColorInt)
-            return Pair(AccentLightTheme(accentColor), AccentDarkTheme(accentColor))
+
+            // Use the correct SystemUI resource class
+            val useHighEnd = context.resources.getBoolean(R.bool.config_useHighEndBatteryContrast)
+
+            return Pair(
+                AccentLightTheme(accentColor, useHighEnd), 
+                AccentDarkTheme(accentColor, useHighEnd)
+            )
         }
     }
 }

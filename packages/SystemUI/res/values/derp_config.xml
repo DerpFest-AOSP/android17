@@ -21,4 +21,7 @@
 
     <!-- The CPUs to display in CPUInfoService view -->
     <string name="config_displayCpus" translatable="false"></string>
+
+    <!-- Whether battery text contrast inside icon calculation should be expensive -->
+    <bool name="config_useHighEndBatteryContrast">true</bool>
 </resources>
