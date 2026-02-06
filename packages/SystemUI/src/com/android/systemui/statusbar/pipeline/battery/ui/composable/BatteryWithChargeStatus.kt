@@ -38,8 +38,10 @@ import androidx.compose.ui.unit.dp
 import com.android.systemui.common.ui.compose.load
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.statusbar.phone.domain.interactor.IsAreaDark
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryNextToPercentViewModel
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryViewModel
+import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.ColorProfile
 
 enum class ShowPercentMode {
     Always,
@@ -59,6 +61,8 @@ fun BatteryWithChargeStatus(
     isDarkProvider: () -> IsAreaDark,
     showPercentMode: ShowPercentMode,
     modifier: Modifier = Modifier,
+    /** When false (e.g. quick settings), do not apply accent tint even if setting is on */
+    useAccentTintInContext: Boolean = true,
 ) {
     val viewModel =
         rememberViewModel(traceName = "BatteryWithPercent") { viewModelFactory.create() }
@@ -84,12 +88,19 @@ fun BatteryWithChargeStatus(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val path = viewModel.batteryFrame
+        val defaultColorProfile =
+            ColorProfile(
+                dark = BatteryColors.DarkTheme.Default,
+                light = BatteryColors.LightTheme.Default,
+            )
+        val effectiveColorProfile =
+            if (useAccentTintInContext) viewModel.colorProfile else defaultColorProfile
 
         val colorProvider = {
             if (isDarkProvider().isDarkTheme(bounds)) {
-                viewModel.colorProfile.dark
+                effectiveColorProfile.dark
             } else {
-                viewModel.colorProfile.light
+                effectiveColorProfile.light
             }
         }
 
@@ -109,9 +120,9 @@ fun BatteryWithChargeStatus(
             // Use same color profile as the battery icon so text is tinted with accent when enabled
             val textColorProducer = {
                 if (isDarkProvider().isDarkTheme(bounds)) {
-                    viewModel.colorProfile.dark.fill
+                    effectiveColorProfile.dark.fill
                 } else {
-                    viewModel.colorProfile.light.fill
+                    effectiveColorProfile.light.fill
                 }
             }
             val textToShow =

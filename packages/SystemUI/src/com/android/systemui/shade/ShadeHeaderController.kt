@@ -466,6 +466,7 @@ constructor(
                             showPercentMode =
                                 if (showBatteryEstimate) ShowPercentMode.PreferEstimate
                                 else ShowPercentMode.Always,
+                            useAccentTintInContext = false, // QS header: no accent tint
                         )
                     }
                 }
@@ -487,6 +488,7 @@ constructor(
                             isDarkProvider = { IsAreaDark { dark } },
                             showPercent = viewModel.isBatteryPercentSettingEnabled,
                             showEstimate = showBatteryEstimate,
+                            useAccentTintInContext = false, // QS header: no accent tint
                         )
                     }
                 }
