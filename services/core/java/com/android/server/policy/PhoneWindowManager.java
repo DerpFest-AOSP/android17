@@ -5065,6 +5065,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             return 0;
         }
 
+        // Give device key handlers (e.g. touchscreen gesture handler) a chance first, so
+        // gesture keys are not dropped by pocket/visible-user or other policy below.
+        if (dispatchKeyToKeyHandlers(event)) {
+            return 0;
+        }
+
         final boolean interactive = (policyFlags & FLAG_INTERACTIVE) != 0;
 
         // Pre-basic policy based on interactive and pocket lock state.
