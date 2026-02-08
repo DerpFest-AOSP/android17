@@ -747,6 +747,10 @@ constructor(
             // Reset text color - Clock will handle it via DarkIconDispatcher
         }
 
+        // Chip styles that are outline-only (transparent fill). Use normal icon color
+        // so DarkIconDispatcher can adapt to light/dark status bar; others get white text.
+        val outlineChipStyles = setOf(2, 8)
+
         fun apply(clock: Clock, style: Int) {
             val clockBackgrounds = listOf(
                 R.drawable.sb_date_bg1,
@@ -762,30 +766,27 @@ constructor(
                 R.drawable.sb_date_bg11,
                 R.drawable.sb_date_bg12
             )
-            
+
             if (style < 1 || style > clockBackgrounds.size) {
                 return
             }
-            
+
             val chipTopBottomPadding = context.resources.getDimensionPixelSize(
                 R.dimen.status_bar_clock_chip_tb_padding)
             val chipLeftRightPadding = context.resources.getDimensionPixelSize(
                 R.dimen.status_bar_clock_chip_lr_padding)
-            
+
             clock.setBackgroundResource(clockBackgrounds[style - 1])
             clock.setPadding(
-                chipLeftRightPadding, 
-                chipTopBottomPadding, 
-                chipLeftRightPadding, 
+                chipLeftRightPadding,
+                chipTopBottomPadding,
+                chipLeftRightPadding,
                 chipTopBottomPadding
             )
             clock.setTextAlignment(View.TEXT_ALIGNMENT_CENTER)
-            // Set text color to white for visibility on filled chip backgrounds
-            // Styles 2 and 8 are outline-only (transparent background), so use normal color
-            if (style != 2 && style != 8) {
+            if (style !in outlineChipStyles) {
                 clock.setTextColor(Color.WHITE)
             }
-            // For outline styles (2, 8), let Clock's DarkIconDispatcher handle the color
         }
 
         // Always reset first so the previous active clock loses chip when position changes
