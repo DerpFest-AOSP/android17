@@ -574,7 +574,7 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
                 R.dimen.status_bar_clock_chip_lr_padding)
 
             clock.setBackgroundResource(clockBackgrounds[style - 1])
-            clock.setPadding(
+            clock.setPaddingRelative(
                 chipLeftRightPadding,
                 chipTopBottomPadding,
                 chipLeftRightPadding,
