@@ -70,6 +70,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -350,7 +351,10 @@ fun ContentScope.Tile(
                             .size(CommonTileDefaults.TileHeight)
                             .align(Alignment.Center)
                             .clip(CircleShape)
-                            .background(animatedColor)
+                            .drawBehind {
+                                backgroundBrush?.let { drawRect(brush = it) }
+                                    ?: drawRect(animatedColor)
+                            }
                             .indication(interaction, LocalIndication.current)
                             .tileCombinedClickable(
                                 onClick = { click?.invoke() ?: Unit },
