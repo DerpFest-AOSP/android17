@@ -50,6 +50,7 @@ import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.batteryViewM
 import com.android.systemui.statusbar.pipeline.shared.domain.interactor.homeStatusBarIconBlockListInteractor
 import com.android.systemui.statusbar.pipeline.shared.domain.interactor.homeStatusBarInteractor
 import com.android.systemui.statusbar.pipeline.shared.domain.interactor.statusBarVisibilityInteractor
+import com.android.systemui.plugins.fakeDarkIconDispatcher
 import com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinder
 import com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinderImpl
 import com.android.systemui.statusbar.policy.domain.interactor.deviceProvisioningInteractor
@@ -59,7 +60,7 @@ import com.android.systemui.statusbar.systemstatusicons.ui.viewmodel.systemStatu
 import com.android.systemui.user.domain.interactor.userLogoutInteractor
 
 var Kosmos.homeStatusBarViewBinder: HomeStatusBarViewBinder by
-    Kosmos.Fixture { HomeStatusBarViewBinderImpl() }
+    Kosmos.Fixture { HomeStatusBarViewBinderImpl(fakeDarkIconDispatcher) }
 
 var Kosmos.homeStatusBarViewModel: HomeStatusBarViewModel by
     Kosmos.Fixture { homeStatusBarViewModelFactory.invoke(testableContext.displayId) }

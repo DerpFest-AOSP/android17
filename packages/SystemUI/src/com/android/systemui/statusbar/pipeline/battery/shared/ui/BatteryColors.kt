@@ -148,48 +148,60 @@ sealed interface BatteryColors {
 
     companion object {
         /**
-         * Calculates a readable text color to sit on top of the accent fill.
+         * Calculates a readable text color (ARGB) to sit on top of the given background color.
+         * Uses luminance to pick black or white, then blends until WCAG contrast is met (or 80%
+         * blend when highPrecision is false).
+         *
+         * @param backgroundArgb The background color (e.g. accent or chip fill).
+         * @param highPrecision If true, uses an iterative loop for WCAG 4.5:1. If false, 80% blend.
+         * @return ARGB int suitable for [android.graphics.Paint.setColor] / [android.widget.TextView.setTextColor].
+         */
+        fun textColorOnBackground(context: Context, backgroundArgb: Int): Int {
+            val useHighEnd = context.resources.getBoolean(R.bool.config_useHighEndBatteryContrast)
+            return textColorOnBackgroundArgb(backgroundArgb, useHighEnd)
+        }
+
+        /**
+         * Core luminance-aware contrast logic. Returns ARGB int.
+         */
+        private fun textColorOnBackgroundArgb(backgroundArgb: Int, highPrecision: Boolean): Int {
+            val bgLum = ColorUtils.calculateLuminance(backgroundArgb)
+            val isBgLight = bgLum > 0.5
+            val targetColor = if (isBgLight) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+            val modeStr = if (highPrecision) "High-End Loop" else "Low-End Approx"
+
+            if (!highPrecision) {
+                Log.d("StatusBarTint:", "Calculating tint ($modeStr) for bg=${Integer.toHexString(backgroundArgb)}")
+                return ColorUtils.blendARGB(backgroundArgb, targetColor, 0.8f)
+            }
+
+            val minContrast = 6.5
+            var blendRatio = 0.0f
+            if (ColorUtils.calculateContrast(backgroundArgb, backgroundArgb) >= minContrast) {
+                return backgroundArgb
+            }
+
+            Log.d("StatusBarTint:", "Calculating tint ($modeStr) for bg=${Integer.toHexString(backgroundArgb)}")
+            while (blendRatio <= 1.0f) {
+                val newColorArgb = ColorUtils.blendARGB(backgroundArgb, targetColor, blendRatio)
+                if (ColorUtils.calculateContrast(newColorArgb, backgroundArgb) >= minContrast) {
+                    Log.d("StatusBarTint:", "Found contrast match at ratio $blendRatio: ${Integer.toHexString(newColorArgb)}")
+                    return newColorArgb
+                }
+                blendRatio += 0.05f
+            }
+            return targetColor
+        }
+
+        /**
+         * Calculates a readable text color to sit on top of the accent fill (Compose Color).
          *
          * @param accent The background fill color (Monet accent).
          * @param highPrecision If true, uses an iterative loop to find the perfect tint.
          * If false, uses a fast approximation (80% blend) to save CPU.
          */
         private fun darkerAccentShade(accent: Color, highPrecision: Boolean): Color {
-            val accentArgb = accent.toArgb()
-
-            // Calculate luminance (Is the background light or dark?)
-            val bgLum = ColorUtils.calculateLuminance(accentArgb)
-            val isBgLight = bgLum > 0.5
-            val targetColor = if (isBgLight) android.graphics.Color.BLACK else android.graphics.Color.WHITE
-            val modeStr = if (highPrecision) "High-End Loop" else "Low-End Approx"
-
-            // fast, non-expensive approximation
-            if (!highPrecision) {
-                Log.d("StatusBarTint:", "Calculating tint ($modeStr) for bg=${Integer.toHexString(accentArgb)}")
-                return Color(ColorUtils.blendARGB(accentArgb, targetColor, 0.8f))
-            }
-
-            // more expensive, better calculation for high end devices
-            val minContrast = 6.5
-            var blendRatio = 0.0f
-
-            // if the contrast is fine already, skip calculation
-            if (ColorUtils.calculateContrast(accentArgb, accentArgb) >= minContrast) {
-                return accent
-            }
-
-            // expensive
-            Log.d("StatusBarTint:", "Calculating tint ($modeStr) for bg=${Integer.toHexString(accentArgb)}")
-            while (blendRatio <= 1.0f) {
-                val newColorArgb = ColorUtils.blendARGB(accentArgb, targetColor, blendRatio)
-                if (ColorUtils.calculateContrast(newColorArgb, accentArgb) >= minContrast) {
-                    Log.d("StatusBarTint:", "Found contrast match at ratio $blendRatio: ${Integer.toHexString(newColorArgb)}")
-                    return Color(newColorArgb)
-                }
-                blendRatio += 0.05f
-            }
-
-            return Color(targetColor)
+            return Color(textColorOnBackgroundArgb(accent.toArgb(), highPrecision))
         }
 
         /**

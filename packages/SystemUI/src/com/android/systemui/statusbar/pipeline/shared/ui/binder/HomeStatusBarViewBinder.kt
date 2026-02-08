@@ -22,7 +22,6 @@ import android.app.WindowConfiguration
 import android.content.ContentResolver
 import android.content.Context
 import android.database.ContentObserver
-import android.graphics.Color
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -33,8 +32,10 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.app.animation.Interpolators
+import com.android.settingslib.Utils
 import com.android.systemui.clock.ClockModernization
 import com.android.systemui.derpfest.logo.LogoImage
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent.PerDisplaySingleton
 import com.android.systemui.lifecycle.repeatWhenAttached
 import com.android.systemui.res.R
@@ -52,6 +53,7 @@ import com.android.systemui.statusbar.pipeline.shared.ui.model.VisibilityModel
 import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBarViewModel
 import com.android.systemui.statusbar.phone.ui.StatusBarIconController
 import com.android.systemui.statusbar.policy.Clock
+import com.android.systemui.plugins.DarkIconDispatcher
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,7 +85,11 @@ interface HomeStatusBarViewBinder {
 }
 
 @PerDisplaySingleton
-class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinder {
+class HomeStatusBarViewBinderImpl
+@Inject
+constructor(
+    private val darkIconDispatcher: DarkIconDispatcher,
+) : HomeStatusBarViewBinder {
     private data class ClockState(
         val autoHide: Boolean,
         val denyListed: Boolean,
@@ -540,11 +546,14 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
             if (clock == null || padding == null) return
             clock.setBackgroundResource(0)
             clock.setPaddingRelative(padding.start, padding.top, padding.end, padding.bottom)
+            clock.setChipTextColorOverride(null)
+            clock.setStaticColor(false)
             // Reset text color - Clock will handle it via DarkIconDispatcher
         }
 
         // Chip styles that are outline-only (transparent fill). Use normal icon color
-        // so DarkIconDispatcher can adapt to light/dark status bar; others get white text.
+        // so DarkIconDispatcher can adapt to light/dark status bar; filled chips use
+        // luminance-aware contrast against the accent.
         val outlineChipStyles = setOf(2, 8)
 
         fun apply(clock: Clock, style: Int) {
@@ -564,6 +573,7 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
             )
 
             if (style < 1 || style > clockBackgrounds.size) {
+                clock.setChipTextColorOverride(null)
                 clock.setStaticColor(false)
                 return
             }
@@ -583,9 +593,16 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
             clock.setTextAlignment(View.TEXT_ALIGNMENT_CENTER)
             if (style !in outlineChipStyles) {
                 clock.setStaticColor(true)
-                clock.setTextColor(Color.WHITE)
+                val chipBgColor = Utils.getColorAccentDefaultColor(context)
+                val chipTextColor = BatteryColors.textColorOnBackground(context, chipBgColor)
+                clock.setTextColor(chipTextColor)
+                clock.setChipTextColorOverride(chipTextColor)
             } else {
+                clock.setChipTextColorOverride(null)
                 clock.setStaticColor(false)
+                // Outline styles: no override; request current tint from DarkIconDispatcher now
+                // so the clock gets the correct color without needing lock/unlock.
+                darkIconDispatcher.applyDark(clock)
             }
         }
 

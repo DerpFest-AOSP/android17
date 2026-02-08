@@ -16,6 +16,7 @@
 
 package com.android.systemui.statusbar.policy;
 
+import android.annotation.Nullable;
 import android.annotation.NonNull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -140,6 +141,12 @@ public class Clock extends TextView implements
      * Color to be set on this {@link TextView}, when wallpaperTextColor is <b>not</b> utilized.
      */
     private int mNonAdaptedColor;
+
+    /**
+     * When non-null, status bar clock chip uses this text color and {@link #onDarkChanged} must
+     * not overwrite it (e.g. after lock/unlock). Set by the chip binder; clear when chip is off.
+     */
+    private Integer mChipTextColorOverride = null;
 
     private final BroadcastDispatcher mBroadcastDispatcher;
 
@@ -359,8 +366,20 @@ public class Clock extends TextView implements
     public void onDarkChanged(ArrayList<Rect> areas, float darkIntensity, int tint) {
         mNonAdaptedColor = DarkIconDispatcher.getTint(areas, this, tint);
         lastDynamicColor = mNonAdaptedColor;
+        if (mChipTextColorOverride != null) {
+            setTextColor(mChipTextColorOverride);
+            return;
+        }
         if (useStaticColor) return;
         setTextColor(lastDynamicColor);
+    }
+
+    /**
+     * Sets a fixed text color for the status bar clock chip so that {@link #onDarkChanged} does
+     * not overwrite it (e.g. after lock/unlock). Pass {@code null} when the chip is removed.
+     */
+    public void setChipTextColorOverride(@Nullable Integer color) {
+        mChipTextColorOverride = color;
     }
 
     // Update text color based when shade scrim changes color.
