@@ -1,25 +1,26 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gradient light: two-layer gradient with distinct hues (accent1 → accent3) -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:top="0dp" android:bottom="0dp">
-        <shape>
+        <shape android:shape="rectangle">
             <gradient
                 android:angle="270.0"
-                android:endColor="@android:color/system_accent1_300"
-                android:startColor="@android:color/system_accent2_300" />
-            <corners android:radius="24.0dp" />
+                android:startColor="@android:color/system_accent1_300"
+                android:endColor="@android:color/system_accent3_300" />
+            <corners android:radius="24dp" />
         </shape>
     </item>
     <item
-        android:bottom="2.0dp"
-        android:end="2.0dp"
-        android:start="2.0dp"
-        android:top="2.0dp">
-        <shape>
+        android:bottom="3dp"
+        android:end="3dp"
+        android:start="3dp"
+        android:top="3dp">
+        <shape android:shape="rectangle">
             <gradient
                 android:angle="90.0"
-                android:endColor="@android:color/system_accent1_300"
-                android:startColor="@android:color/system_accent2_300" />
-            <corners android:radius="22.0dp" />
+                android:startColor="@android:color/system_accent1_300"
+                android:endColor="@android:color/system_accent3_300" />
+            <corners android:radius="21dp" />
         </shape>
     </item>
 </layer-list>
