@@ -63,7 +63,7 @@ fun QSTileRingerSlider(
 
     val animatedContainerRadius by animateDpAsState(targetValue = containerCornerRadius, label = "RingerContainerRadius")
     val animatedThumbRadius by animateDpAsState(targetValue = thumbCornerRadius, label = "RingerThumbRadius")
-    
+
     RingerSliderWidget(
         interactor = interactor,
         theme = QSTileRingerTheme(),
