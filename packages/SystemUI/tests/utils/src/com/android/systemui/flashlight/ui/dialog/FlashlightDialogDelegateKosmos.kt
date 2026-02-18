@@ -18,17 +18,13 @@ package com.android.systemui.flashlight.ui.dialog
 
 import com.android.systemui.animation.dialogTransitionAnimator
 import com.android.systemui.animation.mockDialogTransitionAnimator
-import com.android.internal.logging.uiEventLogger
 import com.android.systemui.flashlight.shared.logger.flashlightLogger
-import com.android.systemui.flashlight.ui.viewmodel.FlashlightSliderViewModelLegacy
+import com.android.systemui.flashlight.ui.viewmodel.flashlightSliderViewModelLegacyFactory
 import com.android.systemui.flashlight.ui.viewmodel.flashlightSlicerViewModelFactory
-import com.android.systemui.graphics.imageLoader
-import com.android.systemui.haptics.slider.sliderHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.mainCoroutineContext
 import com.android.systemui.shade.data.repository.shadeDialogContextInteractor
 import com.android.systemui.statusbar.phone.systemUIDialogFactory
-import com.android.systemui.statusbar.policy.flashlightController
 import org.mockito.kotlin.mock
 
 val Kosmos.flashlightDialogDelegate: FlashlightDialogDelegate by
@@ -40,7 +36,6 @@ val Kosmos.flashlightDialogDelegate: FlashlightDialogDelegate by
             dialogTransitionAnimator,
             flashlightSlicerViewModelFactory,
             flashlightSliderViewModelLegacyFactory,
-            flashlightController,
             flashlightLogger,
         )
     }
@@ -54,24 +49,8 @@ val Kosmos.flashlightDialogDelegateWithMockAnimator: FlashlightDialogDelegate by
             mockDialogTransitionAnimator,
             flashlightSlicerViewModelFactory,
             flashlightSliderViewModelLegacyFactory,
-            flashlightController,
             flashlightLogger,
         )
     }
 
 val Kosmos.mockFlashlightDialogDelegate: FlashlightDialogDelegate by Kosmos.Fixture { mock() }
-
-private val Kosmos.flashlightSliderViewModelLegacyFactory:
-    FlashlightSliderViewModelLegacy.Factory by
-    Kosmos.Fixture {
-        object : FlashlightSliderViewModelLegacy.Factory {
-            override fun create(): FlashlightSliderViewModelLegacy =
-                FlashlightSliderViewModelLegacy(
-                    sliderHapticsViewModelFactory,
-                    flashlightController,
-                    flashlightLogger,
-                    uiEventLogger,
-                    imageLoader,
-                )
-        }
-    }

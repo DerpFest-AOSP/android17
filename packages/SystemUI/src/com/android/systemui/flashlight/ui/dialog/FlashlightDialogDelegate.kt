@@ -42,7 +42,6 @@ import com.android.systemui.flashlight.ui.composable.FlashlightSliderContainer
 import com.android.systemui.flashlight.ui.viewmodel.FlashlightSliderViewModel
 import com.android.systemui.flashlight.ui.viewmodel.FlashlightSliderViewModelLegacy
 import com.android.systemui.lifecycle.rememberViewModel
-import com.android.systemui.statusbar.policy.FlashlightController
 import com.android.systemui.res.R
 import com.android.systemui.shade.domain.interactor.ShadeDialogContextInteractor
 import com.android.systemui.statusbar.phone.ComponentSystemUIDialog
@@ -64,10 +63,15 @@ constructor(
     private val dialogTransitionAnimator: DialogTransitionAnimator,
     private val viewModelFactory: FlashlightSliderViewModel.Factory,
     private val legacyViewModelFactory: FlashlightSliderViewModelLegacy.Factory,
-    private val flashlightController: FlashlightController,
     private val logger: FlashlightLogger,
 ) : SystemUIDialog.Delegate {
+    enum class SliderBackend {
+        REPOSITORY,
+        LEGACY,
+    }
+
     private var currentDialog: ComponentSystemUIDialog? = null
+    private var currentSliderBackend: SliderBackend = SliderBackend.REPOSITORY
 
     init {
         if (FlashlightStrength.isUnexpectedlyInLegacyMode()) {
@@ -88,7 +92,7 @@ constructor(
         }
         currentDialog =
             sysuiDialogFactory.create(context = shadeDialogContextInteractor.context) {
-                FlashlightDialogContent(it)
+                FlashlightDialogContent(it, currentSliderBackend)
             }
         currentDialog
             ?.lifecycle
@@ -105,18 +109,15 @@ constructor(
     }
 
     @Composable
-    private fun FlashlightDialogContent(dialog: SystemUIDialog) {
-        // Use legacy ViewModel if old controller supports strength control
-        // This allows the new vertical slider to work with the old FlashlightController
-        val useLegacy =
-            flashlightController.isStrengthControlSupported() && flashlightController.isAvailable()
+    private fun FlashlightDialogContent(dialog: SystemUIDialog, sliderBackend: SliderBackend) {
         val flashlightSliderViewModel =
-            if (useLegacy) {
-                rememberViewModel("FlashlightSliderViewModelLegacy") {
-                    legacyViewModelFactory.create()
-                }
-            } else {
-                rememberViewModel("FlashlightSliderViewModel") { viewModelFactory.create() }
+            when (sliderBackend) {
+                SliderBackend.LEGACY ->
+                    rememberViewModel("FlashlightSliderViewModelLegacy") {
+                        legacyViewModelFactory.create()
+                    }
+                SliderBackend.REPOSITORY ->
+                    rememberViewModel("FlashlightSliderViewModel") { viewModelFactory.create() }
             }
         AlertDialogContent(
             modifier = Modifier.semantics { testTagsAsResourceId = true },
@@ -152,7 +153,10 @@ constructor(
     }
 
     /** Runs on @Main CoroutineContext */
-    suspend fun showDialog(expandable: Expandable? = null): SystemUIDialog? {
+    suspend fun showDialog(
+        expandable: Expandable? = null,
+        sliderBackend: SliderBackend = SliderBackend.REPOSITORY,
+    ): SystemUIDialog? {
         if (FlashlightStrength.isUnexpectedlyInLegacyMode()) {
             logger.dialogW("UnexpectedlyInLegacyMode on show")
             return null
@@ -161,6 +165,7 @@ constructor(
         // Dialogs shown by the DialogTransitionAnimator must be created and shown on the main
         // thread, so we post it to the UI handler.
         withContext(mainCoroutineContext) {
+            currentSliderBackend = sliderBackend
             // Create the dialog if necessary
             currentDialog = createDialog() as ComponentSystemUIDialog
 
