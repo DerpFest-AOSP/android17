@@ -182,5 +182,8 @@
     <public name="system_error_800" />
     <public name="system_error_900" />
     <public name="system_error_1000" />
+    <!-- Transparent color variants -->
+    <public name="system_accent_transparent_background_dark" />
+    <public name="system_accent_transparent_background_light" />
   </public-group>
 </resources>

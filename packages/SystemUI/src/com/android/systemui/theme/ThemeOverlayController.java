@@ -58,6 +58,8 @@ import android.content.res.Resources;
 import android.content.theming.ThemeStyle;
 import android.database.ContentObserver;
 import android.graphics.Color;
+
+import androidx.core.graphics.ColorUtils;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.UserHandle;
@@ -787,6 +789,20 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                     p.second.getArgb(mLightColorScheme.getMaterialScheme()), null);
             overlay.setResourceValue(prefix + "_dark", TYPE_INT_COLOR_ARGB8,
                     p.second.getArgb(mDarkColorScheme.getMaterialScheme()), null);
+            // Update our transparent resource
+            if (p.first.equals("accent1_50")) {
+                overlay.setResourceValue("android:color/system_accent_transparent_background_light",
+                        TYPE_INT_COLOR_ARGB8,
+                        ColorUtils.setAlphaComponent(
+                                p.second.getArgb(mLightColorScheme.getMaterialScheme()), 0xB1),
+                        null);
+            } else if (p.first.equals("accent1_900")) {
+                overlay.setResourceValue("android:color/system_accent_transparent_background_dark",
+                        TYPE_INT_COLOR_ARGB8,
+                        ColorUtils.setAlphaComponent(
+                                p.second.getArgb(mDarkColorScheme.getMaterialScheme()), 0xAE),
+                        null);
+            }
         });
     }
 

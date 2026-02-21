@@ -182,4 +182,7 @@
   <color name="system_error_800">#601410</color>
   <color name="system_error_900">#410e0b</color>
   <color name="system_error_1000">#000000</color>
+  <!-- Transparent color variants -->
+  <color name="system_accent_transparent_background_light">#83f6e5</color>
+  <color name="system_accent_transparent_background_dark">#00271e</color>
 </resources>
