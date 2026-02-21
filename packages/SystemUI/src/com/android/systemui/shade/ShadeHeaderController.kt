@@ -371,6 +371,15 @@ constructor(
 
             override fun onUiModeChanged() {
                 updateColors()
+                loadConstraints()
+                header.minHeight =
+                    resources.getDimensionPixelSize(R.dimen.large_screen_shade_header_min_height)
+                lastInsets?.let { updateConstraintsForInsets(header, it) }
+                updateResources()
+                updateCarrierGroupPadding()
+                if (!ShadeWindowGoesAround.isEnabled) {
+                    clock.onDensityOrFontScaleChanged()
+                }
             }
         }
 
