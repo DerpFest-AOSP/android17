@@ -76,6 +76,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -125,6 +126,7 @@ import com.android.systemui.qs.panels.ui.viewmodel.TileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.toIconProvider
 import com.android.systemui.qs.panels.ui.viewmodel.toUiState
 import com.android.systemui.qs.pipeline.shared.TileSpec
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
 import com.android.systemui.qs.ui.compose.borderOnFocus
@@ -720,16 +722,30 @@ fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
 private object TileDefaults {
     val ActiveIconCornerRadius = 16.dp
 
+    /** Luminance-aware foreground so drawables/labels stay visible on gradient. */
+    @Composable
+    private fun activeTileForegroundColor(): Color {
+        val gradient = tileGradientBrushOrNull()
+        val gradientEnd = rememberQsGradientEndColor()
+        val context = LocalContext.current
+        return if (gradient != null && gradientEnd != null) {
+            Color(BatteryColors.textColorOnBackground(context, gradientEnd.toArgb()))
+        } else {
+            MaterialTheme.colorScheme.onPrimary
+        }
+    }
+
     /** An active tile uses the active color as background */
     @Composable
     fun activeTileColors(): TileColors {
         val gradient = tileGradientBrushOrNull()
+        val foreground = activeTileForegroundColor()
         return TileColors(
             background = MaterialTheme.colorScheme.primary,
             iconBackground = MaterialTheme.colorScheme.primary,
-            label = MaterialTheme.colorScheme.onPrimary,
-            secondaryLabel = MaterialTheme.colorScheme.onPrimary,
-            icon = MaterialTheme.colorScheme.onPrimary,
+            label = foreground,
+            secondaryLabel = foreground,
+            icon = foreground,
             backgroundBrush = gradient,
             iconBackgroundBrush = gradient,
         )
@@ -739,12 +755,13 @@ private object TileDefaults {
     @Composable
     fun activeDualTargetTileColors(): TileColors {
         val gradient = tileGradientBrushOrNull()
+        val iconForeground = activeTileForegroundColor()
         return TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect1,
             iconBackground = MaterialTheme.colorScheme.primary,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
-            icon = MaterialTheme.colorScheme.onPrimary,
+            icon = iconForeground,
             iconBackgroundBrush = gradient,
         )
     }
@@ -855,6 +872,22 @@ private object TileDefaults {
                 }
             mutableStateOf(RoundedCornerShape(corner))
         }
+    }
+
+    /** When gradient is enabled, returns the end color (for luminance-aware contrast). */
+    @Composable
+    private fun rememberQsGradientEndColor(): Color? {
+        if (!rememberQsGradientEnabled()) return null
+        val (customStart, customEnd) = rememberQsGradientCustomColors()
+        val context = LocalContext.current
+        val resources = LocalResources.current
+        val isDark = isSystemInDarkTheme()
+        val defaultEnd = remember(isDark, resources, context.theme) {
+            val id = if (isDark) R.color.derpfestui_color_gradient_end_dark
+                else R.color.derpfestui_color_gradient_end_light
+            Color(resources.getColor(id, context.theme))
+        }
+        return customEnd ?: defaultEnd
     }
 
     @Composable

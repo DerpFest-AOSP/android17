@@ -132,6 +132,7 @@ import com.android.systemui.haptics.slider.SliderHapticFeedbackConfig
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.ui.compose.borderOnFocus
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.res.R
 import com.android.systemui.utils.PolicyRestriction
 import lineageos.providers.LineageSettings
@@ -187,7 +188,7 @@ fun BrightnessSlider(
         }
     val gradient = brightnessGradient()
     val gradientBrush = gradient?.brush
-    val colors = colors(gradientBrush != null)
+    val colors = colors(gradientBrush != null, gradient?.endColor)
 
     // The value state is recreated every time gammaValue changes, so we recreate this derivedState
     // We have to use value as that's the value that changes when the user is dragging (gammaValue
@@ -541,16 +542,18 @@ private fun drawAutoBrightnessButton(
             LocalAndroidColorScheme.current.surfaceEffect1
         }
     )
-    val iconTint by animateColorAsState(
-        targetValue = if (autoMode) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
-    )
     val gradient = brightnessGradient()
     val gradientBrush = gradient?.brush
     val autoBrightnessBrush = if (autoMode) gradientBrush else null
+    val context = LocalContext.current
+    val iconTint by animateColorAsState(
+        targetValue = when {
+            autoMode && gradient?.endColor != null ->
+                Color(BatteryColors.textColorOnBackground(context, gradient.endColor.toArgb()))
+            autoMode -> MaterialTheme.colorScheme.onPrimary
+            else -> MaterialTheme.colorScheme.onSurface
+        }
+    )
     val painterRes = if (autoMode) {
         R.drawable.ic_qs_brightness_auto_on
     } else {
@@ -889,8 +892,8 @@ private fun brightnessGradient(): BrightnessGradient? {
         Brush.linearGradient(colors)
     }
 
-    return remember(brush) {
-        BrightnessGradient(brush = brush)
+    return remember(brush, endOpaque) {
+        BrightnessGradient(brush = brush, endColor = endOpaque)
     }
 }
 
@@ -905,14 +908,23 @@ private fun Color.blendWith(other: Color, ratio: Float): Color {
 @Composable
 private fun colors(
     gradientEnabled: Boolean,
+    gradientEndColor: Color?,
 ): SliderColors {
+    val context = LocalContext.current
     return if (gradientEnabled) {
-        // Only the track is gradient-tinted (drawn in drawWithContent). Thumb and tick use theme
-        // colors so they stay visible and only the track bar shows the gradient.
+        // Track is gradient-tinted in drawWithContent. Thumb and tick use luminance-aware
+        // contrast when gradient end color is available (same as QS tile icons).
+        val tickColor = if (gradientEndColor != null) {
+            Color(BatteryColors.textColorOnBackground(context, gradientEndColor.toArgb()))
+        } else {
+            MaterialTheme.colorScheme.onPrimary
+        }
         SliderDefaults.colors()
             .copy(
                 activeTrackColor = Color.Transparent,
                 inactiveTrackColor = Color.Transparent,
+                activeTickColor = tickColor,
+                inactiveTickColor = tickColor,
             )
     } else {
         // Match original appearance exactly when gradient is disabled
@@ -925,5 +937,5 @@ private fun colors(
     }
 }
 
-private data class BrightnessGradient(val brush: Brush)
+private data class BrightnessGradient(val brush: Brush, val endColor: Color)
 
