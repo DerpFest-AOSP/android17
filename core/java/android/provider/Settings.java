@@ -7465,6 +7465,8 @@ public final class Settings {
             PUBLIC_SETTINGS.add(SHOW_WEB_SUGGESTIONS);
             PUBLIC_SETTINGS.add(VIBRATE_WHEN_RINGING);
             PUBLIC_SETTINGS.add(APPLY_RAMPING_RINGER);
+            PUBLIC_SETTINGS.add(GRADIENT_START_COLOR);
+            PUBLIC_SETTINGS.add(GRADIENT_END_COLOR);
         }
 
         /**
