@@ -187,7 +187,7 @@ fun BrightnessSlider(
         }
     val gradient = brightnessGradient()
     val gradientBrush = gradient?.brush
-    val colors = colors(gradientBrush != null, gradient?.endColor)
+    val colors = colors(gradientBrush != null)
 
     // The value state is recreated every time gammaValue changes, so we recreate this derivedState
     // We have to use value as that's the value that changes when the user is dragging (gammaValue
@@ -782,54 +782,115 @@ private fun rememberQsBrightnessGradientEnabled(): Boolean {
     return gradientEnabled
 }
 
+/** Converts raw ARGB int from Settings to Compose Color. Forces full opacity when alpha is 0 (treats as 0x00RRGGBB). */
+private fun gradientSettingArgbToColor(argb: Int): Color {
+    val a = (argb shr 24) and 0xFF
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    val alpha = if (a == 0) 1f else a / 255f
+    return Color(red = r / 255f, green = g / 255f, blue = b / 255f, alpha = alpha)
+}
+
+/** User-chosen gradient start/end when gradient is enabled (ColorPickerSystemPreference). Null = use default. */
+@Composable
+private fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readStart(): Int {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.GRADIENT_START_COLOR, 0,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            0
+        }
+    }
+    fun readEnd(): Int {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.GRADIENT_END_COLOR, 0,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            0
+        }
+    }
+
+    var startArgb by remember { mutableIntStateOf(readStart()) }
+    var endArgb by remember { mutableIntStateOf(readEnd()) }
+
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute {
+                    startArgb = readStart()
+                    endArgb = readEnd()
+                }
+            }
+        }
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
+            false, observer, UserHandle.USER_ALL
+        )
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR),
+            false, observer, UserHandle.USER_ALL
+        )
+        onDispose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }
+
+    return Pair(
+        if (startArgb == 0) null else gradientSettingArgbToColor(startArgb),
+        if (endArgb == 0) null else gradientSettingArgbToColor(endArgb)
+    )
+}
+
 @Composable
 private fun brightnessGradient(): BrightnessGradient? {
     val gradientEnabled = rememberQsBrightnessGradientEnabled()
     if (!gradientEnabled) {
         return null
     }
+    val (customStart, customEnd) = rememberQsGradientCustomColors()
     val context = LocalContext.current
     val resources = LocalResources.current
     val isDark = isSystemInDarkTheme()
-    
-    // Remember colors based on theme state - they will update when theme changes
-    val (start, end) = remember(isDark, resources, context.theme) {
-        val startId =
-            if (isDark) {
-                R.color.derpfestui_color_gradient_start_dark
-            } else {
-                R.color.derpfestui_color_gradient_start_light
-            }
-        val endId =
-            if (isDark) {
-                R.color.derpfestui_color_gradient_end_dark
-            } else {
-                R.color.derpfestui_color_gradient_end_light
-            }
-        Pair(
-            Color(resources.getColor(startId, context.theme)),
-            Color(resources.getColor(endId, context.theme))
-        )
+
+    val defaultStart = remember(isDark, resources, context.theme) {
+        val id = if (isDark) R.color.derpfestui_color_gradient_start_dark
+            else R.color.derpfestui_color_gradient_start_light
+        Color(resources.getColor(id, context.theme))
     }
-    
-    val colors = remember(start, end) {
-        if (start == end) {
-            // If colors are the same, create a subtle gradient by lightening/darkening
-            listOf(start.lighten(0.2f), start, start.darken(0.2f))
+    val defaultEnd = remember(isDark, resources, context.theme) {
+        val id = if (isDark) R.color.derpfestui_color_gradient_end_dark
+            else R.color.derpfestui_color_gradient_end_light
+        Color(resources.getColor(id, context.theme))
+    }
+    val start = customStart ?: defaultStart
+    val end = customEnd ?: defaultEnd
+    // Use opaque colors so track and thumb are never semi-transparent (avoids wrong/invisible look)
+    val startOpaque = start.copy(alpha = 1f)
+    val endOpaque = end.copy(alpha = 1f)
+
+    val colors = remember(startOpaque, endOpaque) {
+        if (startOpaque == endOpaque) {
+            listOf(startOpaque.lighten(0.2f), startOpaque, startOpaque.darken(0.2f))
         } else {
-            listOf(start, end)
+            listOf(startOpaque, endOpaque)
         }
     }
-    
+
     val brush = remember(colors) {
         Brush.linearGradient(colors)
     }
-    
-    return remember(brush, colors) {
-        BrightnessGradient(
-            brush = brush,
-            endColor = colors.last(),
-        )
+
+    return remember(brush) {
+        BrightnessGradient(brush = brush)
     }
 }
 
@@ -844,19 +905,15 @@ private fun Color.blendWith(other: Color, ratio: Float): Color {
 @Composable
 private fun colors(
     gradientEnabled: Boolean,
-    gradientEndColor: Color?,
 ): SliderColors {
     return if (gradientEnabled) {
-        val thumbColor = gradientEndColor ?: MaterialTheme.colorScheme.onPrimary
-        val disabledThumb = thumbColor.copy(alpha = 0.38f)
-        SliderDefaults.colors(
-            activeTrackColor = Color.Transparent,
-            inactiveTrackColor = Color.Transparent,
-            activeTickColor = MaterialTheme.colorScheme.onPrimary,
-            inactiveTickColor = MaterialTheme.colorScheme.onSurface,
-            thumbColor = thumbColor,
-            disabledThumbColor = disabledThumb,
-        )
+        // Only the track is gradient-tinted (drawn in drawWithContent). Thumb and tick use theme
+        // colors so they stay visible and only the track bar shows the gradient.
+        SliderDefaults.colors()
+            .copy(
+                activeTrackColor = Color.Transparent,
+                inactiveTrackColor = Color.Transparent,
+            )
     } else {
         // Match original appearance exactly when gradient is disabled
         SliderDefaults.colors()
@@ -868,8 +925,5 @@ private fun colors(
     }
 }
 
-private data class BrightnessGradient(
-    val brush: Brush,
-    val endColor: Color,
-)
+private data class BrightnessGradient(val brush: Brush)
 

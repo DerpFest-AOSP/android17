@@ -530,46 +530,106 @@ private fun rememberQsVolumeGradientEnabled(): Boolean {
     return gradientEnabled
 }
 
+/** Converts raw ARGB int from Settings to Compose Color. Forces full opacity when alpha is 0 (treats as 0x00RRGGBB). */
+private fun gradientSettingArgbToColor(argb: Int): Color {
+    val a = (argb shr 24) and 0xFF
+    val r = (argb shr 16) and 0xFF
+    val g = (argb shr 8) and 0xFF
+    val b = argb and 0xFF
+    val alpha = if (a == 0) 1f else a / 255f
+    return Color(red = r / 255f, green = g / 255f, blue = b / 255f, alpha = alpha)
+}
+
+/** User-chosen gradient start/end when gradient is enabled (ColorPickerSystemPreference). Null = use default. */
+@Composable
+private fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readStart(): Int {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.GRADIENT_START_COLOR, 0,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            0
+        }
+    }
+    fun readEnd(): Int {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver, Settings.System.GRADIENT_END_COLOR, 0,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            0
+        }
+    }
+
+    var startArgb by remember { mutableStateOf(readStart()) }
+    var endArgb by remember { mutableStateOf(readEnd()) }
+
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute {
+                    startArgb = readStart()
+                    endArgb = readEnd()
+                }
+            }
+        }
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
+            false, observer, UserHandle.USER_ALL
+        )
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR),
+            false, observer, UserHandle.USER_ALL
+        )
+        onDispose {
+            contentResolver.unregisterContentObserver(observer)
+        }
+    }
+
+    return Pair(
+        if (startArgb == 0) null else gradientSettingArgbToColor(startArgb),
+        if (endArgb == 0) null else gradientSettingArgbToColor(endArgb)
+    )
+}
+
 @Composable
 private fun volumeGradient(): VolumeGradient? {
     val gradientEnabled = rememberQsVolumeGradientEnabled()
     if (!gradientEnabled) {
         return null
     }
+    val (customStart, customEnd) = rememberQsGradientCustomColors()
     val context = LocalContext.current
     val resources = LocalResources.current
     val isDark = isSystemInDarkTheme()
 
-    // Remember colors based on theme state - they will update when theme changes
-    val (start, end) = remember(isDark, resources, context.theme) {
-        val startId =
-            if (isDark) {
-                R.color.derpfestui_color_gradient_start_dark
-            } else {
-                R.color.derpfestui_color_gradient_start_light
-            }
-        val endId =
-            if (isDark) {
-                R.color.derpfestui_color_gradient_end_dark
-            } else {
-                R.color.derpfestui_color_gradient_end_light
-            }
-        Pair(
-            Color(resources.getColor(startId, context.theme)),
-            Color(resources.getColor(endId, context.theme))
-        )
+    val defaultStart = remember(isDark, resources, context.theme) {
+        val id = if (isDark) R.color.derpfestui_color_gradient_start_dark
+            else R.color.derpfestui_color_gradient_start_light
+        Color(resources.getColor(id, context.theme))
     }
+    val defaultEnd = remember(isDark, resources, context.theme) {
+        val id = if (isDark) R.color.derpfestui_color_gradient_end_dark
+            else R.color.derpfestui_color_gradient_end_light
+        Color(resources.getColor(id, context.theme))
+    }
+    val start = customStart ?: defaultStart
+    val end = customEnd ?: defaultEnd
 
     val colors = remember(start, end) {
         if (start == end) {
-            // If colors are the same, create a subtle gradient by lightening/darkening
             listOf(start.lighten(0.2f), start, start.darken(0.2f))
         } else {
             listOf(start, end)
         }
     }
 
-    // For vertical sliders, gradient goes from top to bottom
     val brush = remember(colors) {
         Brush.verticalGradient(colors)
     }
