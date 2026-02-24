@@ -179,6 +179,7 @@ public class NotificationListener extends NotificationListenerWithPlugins implem
                         + " reason " + reason);
             }
             mMainExecutor.execute(() -> {
+                ScrimUtils.get().onNotificationRemoved(sbn);
                 for (NotificationHandler handler : mNotificationHandlers) {
                     handler.onNotificationRemoved(sbn, rankingMap, reason);
                 }

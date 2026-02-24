@@ -49,5 +49,6 @@ val Kosmos.statusBarRootFactory by
             keyguardStateController = mock(),
             headsUpManager = mock(),
             mediaHierarchyManager = mock(),
+            axDynamicBarChipViewModel = mock(),
         )
     }

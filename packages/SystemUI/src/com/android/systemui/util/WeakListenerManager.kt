@@ -58,9 +58,10 @@ class WeakListenerManager<T> {
     fun notify(action: (T) -> Unit) {
         if (listeners.isEmpty()) return
         bgExecutor.execute {
-            val snapshot = listeners
-                .mapNotNull { it.get() }
-                .toMutableList()
+            val snapshot =
+                listeners
+                    .mapNotNull { it.get() }
+                    .toMutableList()
             cleanup()
             if (snapshot.isNotEmpty()) {
                 for (listener in snapshot) {
@@ -88,6 +89,10 @@ class WeakListenerManager<T> {
                 action(listener)
             }
         }
+    }
+
+    fun notifyConsumer(action: Consumer<T>) {
+        notify { action.accept(it) }
     }
 
     fun setLifecycleCallbacks(onActive: (() -> Unit)?, onInactive: (() -> Unit)?) {

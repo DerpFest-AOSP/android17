@@ -25,7 +25,7 @@ import com.android.systemui.statusbar.StatusBarState.KEYGUARD
 import com.android.systemui.statusbar.StatusBarState.SHADE_LOCKED
 import java.util.concurrent.atomic.AtomicBoolean
 
-/* Scrim - aka testing utils */
+/** Scrim / keyguard state hub for System UI listeners (notifications, layout, QS, etc.). */
 class ScrimUtils private constructor() {
 
     interface ScrimEventListener {
@@ -226,5 +226,9 @@ class ScrimUtils private constructor() {
     fun isKeyguardShowing(): Boolean = mKeyguardShowing == true
 
     fun isPanelFullyCollapsed(): Boolean =
-        !mQsVisible.get() && (mExpandedFraction ?: 0.0f) <= 0.0f
+        if (mStateIsKeyguard) {
+            !mQsVisible.get()
+        } else {
+            (mExpandedFraction ?: 0.0f) <= 0.0f
+        }
 }
