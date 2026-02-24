@@ -79,6 +79,8 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private static final int MAX_ICON_CACHE_SIZE = 20;
     private static final int STALE_PROGRESS_CHECK_INTERVAL_MS = 5000;
     private static final int PROGRESS_TIMEOUT_MS = 30000;
+    /** Min interval between state callbacks when only progress changed (Compose mode). Reduces QS lag. */
+    private static final int COMPOSE_STATE_CALLBACK_THROTTLE_MS = 500;
 
     public interface StateCallback {
         void onStateChanged(boolean isVisible, int progress, int maxProgress, 
@@ -144,6 +146,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     
     private boolean mUpdatePending = false;
     private long mLastUpdateTime = 0;
+    private long mLastStateCallbackTime = 0;
 
     private final GestureDetector mGestureDetector;
     private final Handler mMediaProgressHandler = new Handler(Looper.getMainLooper());
@@ -178,7 +181,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
     private final Runnable mMenuCollapseRunnable = () -> {
         mIsMenuVisible = false;
-        notifyStateCallback();
+        notifyStateCallback(false);
     };
 
     private final MediaSessionManagerHelper.MediaMetadataListener mMediaMetadataListener = 
@@ -266,7 +269,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
      */
     public void setStateCallback(StateCallback callback) {
         mStateCallback = callback;
-        notifyStateCallback();
+        notifyStateCallback(false);
     }
 
     public void expandCompactView() {
@@ -277,7 +280,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         mHandler.postDelayed(mCompactCollapseRunnable, 5000);
 
         if (mIsComposeMode) {
-            notifyStateCallback();
+            notifyStateCallback(false);
             return;
         }
 
@@ -345,11 +348,18 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     }
 
     /**
-     * Notifies the Compose callback of current state
+     * Notifies the Compose callback of current state.
+     * @param throttleIfRecent if true (progress-only path), skip if last callback was recent
      */
-    private void notifyStateCallback() {
+    private void notifyStateCallback(boolean throttleIfRecent) {
         if (mStateCallback == null) {
             return;
+        }
+        if (throttleIfRecent && mIsComposeMode) {
+            long now = System.currentTimeMillis();
+            if (now - mLastStateCallbackTime < COMPOSE_STATE_CALLBACK_THROTTLE_MS) {
+                return;
+            }
         }
 
         boolean isVisible = !mIsForceHidden && !mHeadsUpPinned && !mIsSystemChipVisible;
@@ -370,12 +380,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         } else {
             mStateCallback.onStateChanged(false, 0, 0, null, false, null, false, 0f, false);
         }
+        mLastStateCallbackTime = System.currentTimeMillis();
     }
 
     private void updateViews() {
         if (!mIsViewAttached) {
             if (mIsComposeMode) {
-                notifyStateCallback();
+                notifyStateCallback(false);
             }
             return;
         }
@@ -391,7 +402,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (mProgressRootView != null) mProgressRootView.setVisibility(View.GONE);
                 if (mCompactRootView != null) mCompactRootView.setVisibility(View.GONE);
             }
-            notifyStateCallback();
+            notifyStateCallback(false);
             return;
         }
 
@@ -406,7 +417,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (!mIsComposeMode && mCompactRootView != null) {
                     mCompactRootView.setVisibility(View.GONE);
                 }
-                notifyStateCallback();
+                notifyStateCallback(false);
                 return;
             }
             
@@ -439,7 +450,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 updateNotificationProgress();
             }
         }
-        notifyStateCallback();
+        notifyStateCallback(false);
     }
 
     private void updateMediaProgressOnly() {
@@ -473,7 +484,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         }
 
         if (mIsComposeMode) {
-            notifyStateCallback();
+            notifyStateCallback(true);
         }
     }
 
@@ -512,7 +523,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                     } else {
                         setDefaultMediaIcon();
                     }
-                    if (mIsComposeMode) notifyStateCallback();
+                    if (mIsComposeMode) notifyStateCallback(false);
                 });
             } else {
                 setDefaultMediaIcon();
@@ -582,7 +593,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                     } else {
                         setDefaultMediaIconCompact();
                     }
-                    if (mIsComposeMode) notifyStateCallback();
+                    if (mIsComposeMode) notifyStateCallback(false);
                 });
             } else {
                 setDefaultMediaIconCompact();
@@ -630,7 +641,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (!mIsComposeMode && mIconView != null && drawable != null) {
                     mIconView.setImageDrawable(drawable);
                 }
-                if (mIsComposeMode) notifyStateCallback();
+                if (mIsComposeMode) notifyStateCallback(false);
             });
         }
     }
@@ -669,7 +680,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (!mIsComposeMode && mCompactIconView != null && drawable != null) {
                     mCompactIconView.setImageDrawable(drawable);
                 }
-                if (mIsComposeMode) notifyStateCallback();
+                if (mIsComposeMode) notifyStateCallback(false);
             });
         }
     }
@@ -804,7 +815,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (mShowMediaProgress && mMediaSessionHelper.isMediaPlaying()) {
             if (mIsComposeMode) {
                 mIsMenuVisible = !mIsMenuVisible;
-                notifyStateCallback();
+                notifyStateCallback(false);
                 if (mIsMenuVisible) {
                     mHandler.removeCallbacks(mMenuCollapseRunnable);
                     mHandler.postDelayed(mMenuCollapseRunnable, 5000);
@@ -849,13 +860,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
     public void onMediaMenuDismiss() {
         mIsMenuVisible = false;
-        notifyStateCallback();
+        notifyStateCallback(false);
     }
 
     public void setSystemChipVisible(boolean visible) {
         if (mIsSystemChipVisible != visible) {
             mIsSystemChipVisible = visible;
-            notifyStateCallback();
+            notifyStateCallback(false);
             requestUiUpdate();
         }
     }
@@ -976,7 +987,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (mIsForceHidden != forceHidden) {
             Log.d(TAG, "setForceHidden " + forceHidden);
             mIsForceHidden = forceHidden;
-            notifyStateCallback();
+            notifyStateCallback(false);
             requestUiUpdate();
         }
     }
@@ -1023,7 +1034,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
      @Override
     public void onHeadsUpPinnedModeChanged(boolean inPinnedMode) {
         mHeadsUpPinned = inPinnedMode;
-        notifyStateCallback();
+        notifyStateCallback(false);
         requestUiUpdate();
     }
 
