@@ -156,6 +156,7 @@ public class NotificationListener extends NotificationListenerWithPlugins implem
         if (DEBUG) Log.d(TAG, "onNotificationRemoved: " + sbn + " reason: " + reason);
         if (sbn != null && !onPluginNotificationRemoved(sbn, rankingMap)) {
             mMainExecutor.execute(() -> {
+                ScrimUtils.get().onNotificationRemoved(sbn);
                 for (NotificationHandler handler : mNotificationHandlers) {
                     handler.onNotificationRemoved(sbn, rankingMap, reason);
                 }

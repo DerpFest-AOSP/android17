@@ -30,6 +30,7 @@ import com.android.systemui.keyguard.ui.view.layout.sections.DefaultIndicationAr
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultSettingsPopupMenuSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultShortcutsSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultStatusBarSection
+import com.android.systemui.keyguard.ui.view.layout.sections.AxDynamicBarKeyguardChipSection
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardClockStyleSection
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSectionsModule
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSliceViewSection
@@ -68,6 +69,7 @@ constructor(
     clockSection: ClockSection,
     smartspaceSection: SmartspaceSection,
     mediaSection: SplitShadeMediaSection,
+    axDynamicBarKeyguardChipSection: AxDynamicBarKeyguardChipSection,
     keyguardSliceViewSection: KeyguardSliceViewSection,
     keyguardClockStyleSection: KeyguardClockStyleSection,
 ) : KeyguardBlueprint {
@@ -78,6 +80,7 @@ constructor(
         listOfNotNull(
             accessibilityActionsSection,
             defaultIndicationAreaSection,
+            axDynamicBarKeyguardChipSection,
             defaultShortcutsSection,
             defaultAmbientIndicationAreaSection.getOrNull(),
             defaultSettingsPopupMenuSection,

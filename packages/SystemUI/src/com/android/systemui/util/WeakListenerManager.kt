@@ -16,6 +16,7 @@
 package com.android.systemui.util
 
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -31,6 +32,8 @@ class WeakListenerManager<T> {
     private var isActive = false
 
     private val bgExecutor: Executor = Executors.newSingleThreadExecutor()
+    private val bgThread = HandlerThread("ScrimUtils-bg").apply { start() }
+    private val bgHandler = Handler(bgThread.looper)
     private val mainHandler = Handler(Looper.getMainLooper())
 
     fun addListener(listener: T) {
@@ -55,9 +58,10 @@ class WeakListenerManager<T> {
     fun notify(action: (T) -> Unit) {
         if (listeners.isEmpty()) return
         bgExecutor.execute {
-            val snapshot = listeners
-                .mapNotNull { it.get() }
-                .toMutableList()
+            val snapshot =
+                listeners
+                    .mapNotNull { it.get() }
+                    .toMutableList()
             cleanup()
             if (snapshot.isNotEmpty()) {
                 for (listener in snapshot) {
@@ -69,6 +73,16 @@ class WeakListenerManager<T> {
 
     fun notifyOnMain(action: (T) -> Unit) {
         mainHandler.post {
+            val snapshot = listeners.mapNotNull { it.get() }.toList()
+            cleanup()
+            snapshot.forEach { listener ->
+                action(listener)
+            }
+        }
+    }
+
+    fun notifyOnBackground(action: (T) -> Unit) {
+        bgHandler.post {
             val snapshot = listeners.mapNotNull { it.get() }.toList()
             cleanup()
             snapshot.forEach { listener ->

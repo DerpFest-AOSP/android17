@@ -28,6 +28,7 @@ class MediaSessionManager private constructor() {
         fun onAlbumArtChanged(drawable: Drawable) {}
         fun onMediaColorsChanged(color: Int) {}
         fun onMetadataChanged(track: String, artist: String) {}
+        fun onAppIconChanged(drawable: Drawable) {}
     }
 
     private val listenerManager = WeakListenerManager<MediaDataListener>()
@@ -61,6 +62,10 @@ class MediaSessionManager private constructor() {
 
     fun onAlbumArtChanged(drawable: Drawable) {
         listenerManager.notify { it.onAlbumArtChanged(drawable) }
+    }
+
+    fun onAppIconChanged(drawable: Drawable) {
+        listenerManager.notify { it.onAppIconChanged(drawable) }
     }
 
     fun onMediaColorsChanged(color: Int) {
