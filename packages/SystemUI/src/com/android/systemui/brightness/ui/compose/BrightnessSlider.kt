@@ -188,7 +188,8 @@ fun BrightnessSlider(
         }
     val gradient = brightnessGradient()
     val gradientBrush = gradient?.brush
-    val colors = colors(gradientBrush != null, gradient?.endColor)
+    val useNewTint = rememberQsBrightnessUseNewTint()
+    val colors = colors(gradientBrush != null, gradient?.endColor, useNewTint)
 
     // The value state is recreated every time gammaValue changes, so we recreate this derivedState
     // We have to use value as that's the value that changes when the user is dragging (gammaValue
@@ -535,22 +536,25 @@ private fun drawAutoBrightnessButton(
         3 -> RoundedCornerShape(0.dp)
         else -> RoundedCornerShape(animatedCornerRadius)
     }
-    val backgroundColor by animateColorAsState(
-        targetValue = if (autoMode) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            LocalAndroidColorScheme.current.surfaceEffect1
-        }
-    )
+    val useNewTint = rememberQsBrightnessUseNewTint()
     val gradient = brightnessGradient()
     val gradientBrush = gradient?.brush
     val autoBrightnessBrush = if (autoMode) gradientBrush else null
+    val backgroundColor by animateColorAsState(
+        targetValue = when {
+            autoBrightnessBrush != null -> MaterialTheme.colorScheme.primary // unused when brush set
+            autoMode -> MaterialTheme.colorScheme.primary
+            useNewTint -> MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            else -> LocalAndroidColorScheme.current.surfaceEffect1
+        }
+    )
     val context = LocalContext.current
     val iconTint by animateColorAsState(
         targetValue = when {
             autoMode && gradient?.endColor != null ->
                 Color(BatteryColors.textColorOnBackground(context, gradient.endColor.toArgb()))
             autoMode -> MaterialTheme.colorScheme.onPrimary
+            useNewTint -> MaterialTheme.colorScheme.primary
             else -> MaterialTheme.colorScheme.onSurface
         }
     )
@@ -785,6 +789,39 @@ private fun rememberQsBrightnessGradientEnabled(): Boolean {
     return gradientEnabled
 }
 
+@Composable
+private fun rememberQsBrightnessUseNewTint(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+    fun read(): Int =
+        try {
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.QS_BRIGHTNESS_USE_NEW_TINT,
+                1,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            1
+        }
+    var value by remember { mutableIntStateOf(read()) }
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute { value = read() }
+            }
+        }
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_USE_NEW_TINT),
+            false,
+            observer,
+            UserHandle.USER_ALL
+        )
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+    return value == 1
+}
+
 /** Converts raw ARGB int from Settings to Compose Color. Forces full opacity when alpha is 0 (treats as 0x00RRGGBB). */
 private fun gradientSettingArgbToColor(argb: Int): Color {
     val a = (argb shr 24) and 0xFF
@@ -909,6 +946,7 @@ private fun Color.blendWith(other: Color, ratio: Float): Color {
 private fun colors(
     gradientEnabled: Boolean,
     gradientEndColor: Color?,
+    useNewTint: Boolean,
 ): SliderColors {
     val context = LocalContext.current
     return if (gradientEnabled) {
@@ -926,8 +964,19 @@ private fun colors(
                 activeTickColor = tickColor,
                 inactiveTickColor = tickColor,
             )
+    } else if (useNewTint) {
+        // Accent tint: primary for active track and thumb, primary at 20% for inactive (like QS tiles).
+        val primary = MaterialTheme.colorScheme.primary
+        SliderDefaults.colors()
+            .copy(
+                thumbColor = primary,
+                activeTrackColor = primary,
+                inactiveTrackColor = primary.copy(alpha = 0.2f),
+                activeTickColor = MaterialTheme.colorScheme.onPrimary,
+                inactiveTickColor = MaterialTheme.colorScheme.onSurface,
+            )
     } else {
-        // Match original appearance exactly when gradient is disabled
+        // Match original appearance exactly when gradient and new tint are disabled
         SliderDefaults.colors()
             .copy(
                 inactiveTrackColor = LocalAndroidColorScheme.current.surfaceEffect1,

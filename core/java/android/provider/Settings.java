@@ -6961,6 +6961,13 @@ public final class Settings {
         public static final String QS_BRIGHTNESS_GRADIENT_ENABLED = "qs_brightness_gradient_enabled";
 
         /**
+         * Whether to use accent tint for the Quick Settings brightness slider.
+         * 1 to enable, 0 for default theme. Default is 1.
+         * @hide
+         */
+        public static final String QS_BRIGHTNESS_USE_NEW_TINT = "qs_brightness_use_new_tint";
+
+        /**
          * Whether to enable gradient styling for the volume slider.
          * 1 to enable, 0 to disable. Default is 1.
          * @hide
@@ -7555,6 +7562,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(MOUSE_SCROLLING_SPEED);
             PRIVATE_SETTINGS.add(FORCE_FULLSCREEN_CUTOUT_APPS);
             PRIVATE_SETTINGS.add(QS_PANEL_BG_USE_NEW_TINT);
+            PRIVATE_SETTINGS.add(QS_BRIGHTNESS_USE_NEW_TINT);
         }
 
         /**
