@@ -255,6 +255,9 @@
     <color name="screenrecord_status_color">#E94235</color>
     <color name="screenrecord_icon_color">#D93025</color><!-- red 600 -->
 
+    <!-- QS tile background when new tint is on and tile is unavailable -->
+    <color name="qs_tile_background_color_disabled">#f2f2f2</color>
+
     <color name="privacy_chip_background">#3ddc84</color>
     <color name="privacy_chip_location_only_background">#3dbaf4</color>
 

@@ -82,6 +82,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -214,10 +215,16 @@ fun LargeTileLabels(
     val animatedLabelColor by animateColorAsState(colors.label, label = "QSTileLabelColor")
     val animatedSecondaryLabelColor by
         animateColorAsState(colors.secondaryLabel, label = "QSTileSecondaryLabelColor")
+    val labelStyle =
+        if (colors.useBolderLabel) {
+            MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+        } else {
+            MaterialTheme.typography.titleSmallEmphasized
+        }
     Column(verticalArrangement = Arrangement.Center, modifier = modifier.fillMaxHeight()) {
         TileLabel(
             text = label,
-            style = MaterialTheme.typography.titleSmallEmphasized,
+            style = labelStyle,
             color = { animatedLabelColor },
             isVisible = isVisible,
         )

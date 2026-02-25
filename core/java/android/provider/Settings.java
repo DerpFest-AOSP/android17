@@ -7215,6 +7215,13 @@ public final class Settings {
         public static final String QS_TILE_SHAPE = "qs_tile_shape";
 
         /**
+         * Whether to use accent-style tint for Quick Settings tiles (Compose path).
+         * 1 to enable (accent for active, bolder labels), 0 for default theme behavior.
+         * @hide
+         */
+        public static final String QS_PANEL_BG_USE_NEW_TINT = "qs_panel_bg_use_new_tint";
+
+        /**
          * Customize Brightness slider shape.
          * @hide
          */
@@ -7547,6 +7554,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(MOUSE_SCROLLING_ACCELERATION);
             PRIVATE_SETTINGS.add(MOUSE_SCROLLING_SPEED);
             PRIVATE_SETTINGS.add(FORCE_FULLSCREEN_CUTOUT_APPS);
+            PRIVATE_SETTINGS.add(QS_PANEL_BG_USE_NEW_TINT);
         }
 
         /**

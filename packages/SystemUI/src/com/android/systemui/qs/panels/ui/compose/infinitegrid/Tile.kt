@@ -569,6 +569,7 @@ data class TileColors(
     val icon: Color,
     val backgroundBrush: Brush? = null,
     val iconBackgroundBrush: Brush? = null,
+    val useBolderLabel: Boolean = false,
 )
 
 @Composable
@@ -719,79 +720,144 @@ fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
     )
 }
 
+/** Whether to use accent-style tint for QS tiles (1 = enabled, 0 = default). Recomposes when setting changes. */
+@Composable
+private fun rememberQsUseNewTint(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+    fun read(): Int =
+        try {
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.QS_PANEL_BG_USE_NEW_TINT,
+                1,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            1
+        }
+    var value by remember { mutableIntStateOf(read()) }
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute { value = read() }
+            }
+        }
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_PANEL_BG_USE_NEW_TINT),
+            false,
+            observer,
+            UserHandle.USER_ALL
+        )
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+    return value == 1
+}
+
 private object TileDefaults {
     val ActiveIconCornerRadius = 16.dp
 
-    /** Luminance-aware foreground so drawables/labels stay visible on gradient. */
+    /** Luminance-aware foreground so drawables/labels stay visible on gradient. When new tint is on and no gradient, use primary (accent). */
     @Composable
     private fun activeTileForegroundColor(): Color {
         val gradient = tileGradientBrushOrNull()
         val gradientEnd = rememberQsGradientEndColor()
+        val useNewTint = rememberQsUseNewTint()
         val context = LocalContext.current
-        return if (gradient != null && gradientEnd != null) {
-            Color(BatteryColors.textColorOnBackground(context, gradientEnd.toArgb()))
-        } else {
-            MaterialTheme.colorScheme.onPrimary
+        return when {
+            gradient != null && gradientEnd != null ->
+                Color(BatteryColors.textColorOnBackground(context, gradientEnd.toArgb()))
+            useNewTint -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.onPrimary
         }
     }
 
-    /** An active tile uses the active color as background */
+    /** An active tile uses the active color as background. When new tint is on and no gradient, use primary at 20% for background. */
     @Composable
     fun activeTileColors(): TileColors {
         val gradient = tileGradientBrushOrNull()
+        val useNewTint = rememberQsUseNewTint()
         val foreground = activeTileForegroundColor()
+        val primary = MaterialTheme.colorScheme.primary
+        val bg = when {
+            gradient != null -> primary
+            useNewTint -> primary.copy(alpha = 0.2f)
+            else -> primary
+        }
+        val iconBg = when {
+            gradient != null -> primary
+            useNewTint -> primary.copy(alpha = 0.2f)
+            else -> primary
+        }
         return TileColors(
-            background = MaterialTheme.colorScheme.primary,
-            iconBackground = MaterialTheme.colorScheme.primary,
+            background = bg,
+            iconBackground = iconBg,
             label = foreground,
             secondaryLabel = foreground,
             icon = foreground,
             backgroundBrush = gradient,
             iconBackgroundBrush = gradient,
+            useBolderLabel = useNewTint,
         )
     }
 
-    /** An active tile with dual target only show the active color on the icon */
+    /** An active tile with dual target only show the active color on the icon. When new tint and no gradient, icon uses primary at 20%. */
     @Composable
     fun activeDualTargetTileColors(): TileColors {
         val gradient = tileGradientBrushOrNull()
+        val useNewTint = rememberQsUseNewTint()
         val iconForeground = activeTileForegroundColor()
+        val primary = MaterialTheme.colorScheme.primary
+        val iconBg = when {
+            gradient != null -> primary
+            useNewTint -> primary.copy(alpha = 0.2f)
+            else -> primary
+        }
         return TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect1,
-            iconBackground = MaterialTheme.colorScheme.primary,
+            iconBackground = iconBg,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = iconForeground,
             iconBackgroundBrush = gradient,
+            useBolderLabel = useNewTint,
         )
     }
 
     @Composable
     @ReadOnlyComposable
-    fun inactiveDualTargetTileColors(): TileColors =
+    fun inactiveDualTargetTileColors(useNewTint: Boolean): TileColors =
         TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect1,
             iconBackground = LocalAndroidColorScheme.current.surfaceEffect2,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
+            useBolderLabel = useNewTint,
         )
 
     @Composable
     @ReadOnlyComposable
-    fun inactiveTileColors(): TileColors =
+    fun inactiveTileColors(useNewTint: Boolean): TileColors =
         TileColors(
             background = LocalAndroidColorScheme.current.surfaceEffect1,
             iconBackground = Color.Transparent,
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
+            useBolderLabel = useNewTint,
         )
 
     @Composable
     @ReadOnlyComposable
-    fun unavailableTileColors(): TileColors {
-        val surfaceColor = MaterialTheme.colorScheme.surface.copy(alpha = .18f)
+    fun unavailableTileColors(useNewTint: Boolean): TileColors {
+        val context = LocalContext.current
+        val resources = LocalResources.current
+        val surfaceColor = if (useNewTint) {
+            Color(resources.getColor(R.color.qs_tile_background_color_disabled, context.theme))
+        } else {
+            MaterialTheme.colorScheme.surface.copy(alpha = .18f)
+        }
         val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .38f)
         return TileColors(
             background = surfaceColor,
@@ -804,6 +870,7 @@ private object TileDefaults {
 
     @Composable
     fun getColorForState(uiState: TileUiState, iconOnly: Boolean): TileColors {
+        val useNewTint = rememberQsUseNewTint()
         return when (uiState.state) {
             STATE_ACTIVE -> {
                 if (uiState.handlesSecondaryClick && !iconOnly) {
@@ -815,13 +882,13 @@ private object TileDefaults {
 
             STATE_INACTIVE -> {
                 if (uiState.handlesSecondaryClick && !iconOnly) {
-                    inactiveDualTargetTileColors()
+                    inactiveDualTargetTileColors(useNewTint)
                 } else {
-                    inactiveTileColors()
+                    inactiveTileColors(useNewTint)
                 }
             }
 
-            else -> unavailableTileColors()
+            else -> unavailableTileColors(useNewTint)
         }
     }
 
