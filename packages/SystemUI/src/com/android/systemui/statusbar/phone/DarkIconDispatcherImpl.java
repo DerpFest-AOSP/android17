@@ -95,6 +95,9 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
             public void onChange(boolean selfChange) {
                 // Re-apply dark intensity when setting changes
                 applyDarkIntensity(mDarkIntensity);
+                // Notify theme change so battery and other components using themeChanged flow
+                // update immediately (same path as when wallpaper changes).
+                mConfigurationController.notifyThemeChanged();
             }
         };
         if (newStatusBarIcons()) {
@@ -122,7 +125,16 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
         
         // Apply initial tinting to ensure persistence after reboot
         // Use a post to ensure ContentResolver is fully initialized
-        new Handler().post(() -> applyDarkIntensity(0.0f));
+        Handler handler = new Handler();
+        handler.post(() -> {
+            applyDarkIntensity(0.0f);
+            // Notify theme change so battery and other components get correct tint on boot
+            // (themeChanged flow emits and color profile combine runs with current setting).
+            mConfigurationController.notifyThemeChanged();
+            // Post again so components that subscribe later (e.g. status bar battery view)
+            // also receive the theme notification.
+            handler.postDelayed(mConfigurationController::notifyThemeChanged, 300);
+        });
     }
 
     @Override
