@@ -851,10 +851,9 @@ private object TileDefaults {
     @Composable
     @ReadOnlyComposable
     fun unavailableTileColors(useNewTint: Boolean): TileColors {
-        val context = LocalContext.current
-        val resources = LocalResources.current
+        // When new tint is on, use same surface as inactive tiles so unavailable matches the panel.
         val surfaceColor = if (useNewTint) {
-            Color(resources.getColor(R.color.qs_tile_background_color_disabled, context.theme))
+            LocalAndroidColorScheme.current.surfaceEffect1
         } else {
             MaterialTheme.colorScheme.surface.copy(alpha = .18f)
         }
