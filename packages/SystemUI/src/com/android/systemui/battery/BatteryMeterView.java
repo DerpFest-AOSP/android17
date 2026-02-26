@@ -701,14 +701,23 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
             return;
         }
 
-        // Use default behavior (when NewStatusBarIcons is enabled, Compose battery is used instead)
-        if (DarkIconDispatcher.isInAreas(areas, this)) {
+        // Check if accent color tinting is enabled (e.g. for lockscreen status bar)
+        boolean useAccentColor = Settings.System.getIntForUser(
+                getContext().getContentResolver(),
+                Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT,
+                0,
+                UserHandle.USER_CURRENT) == 1;
+
+        if (useAccentColor) {
+            int accentColor = Utils.getColorAccentDefaultColor(getContext());
+            mUnifiedBatteryColors = BatteryColors.createAccentColors(accentColor);
+        } else if (DarkIconDispatcher.isInAreas(areas, this)) {
             if (darkIntensity < 0.5) {
                 mUnifiedBatteryColors = BatteryColors.DARK_THEME_COLORS;
             } else {
                 mUnifiedBatteryColors = BatteryColors.LIGHT_THEME_COLORS;
             }
-        } else  {
+        } else {
             // Same behavior as the legacy code when not isInArea
             mUnifiedBatteryColors = BatteryColors.DARK_THEME_COLORS;
         }
