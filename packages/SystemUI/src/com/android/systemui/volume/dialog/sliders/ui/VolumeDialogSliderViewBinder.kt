@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.DpSize
@@ -43,6 +44,7 @@ import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.domain.interactor.DesktopAudioTileDetailsFeatureInteractor
 import com.android.systemui.volume.dialog.sliders.dagger.VolumeDialogSliderScope
 import com.android.systemui.volume.dialog.sliders.ui.compose.SliderTrack
+import com.android.systemui.volume.dialog.sliders.ui.compose.rememberVolumeGradientThumbColor
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogOverscrollViewModel
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
 import com.android.systemui.volume.haptics.ui.VolumeHapticsConfigsProvider
@@ -90,13 +92,23 @@ private fun VolumeDialogSlider(
     isVolumeDialogVertical: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val colors =
+    val gradientThumbColor = rememberVolumeGradientThumbColor()
+    val baseColors =
         SliderDefaults.colors(
             activeTickColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             disabledActiveTickColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             disabledInactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         )
+    val colors =
+        if (gradientThumbColor != null) {
+            baseColors.copy(
+                thumbColor = gradientThumbColor,
+                disabledThumbColor = gradientThumbColor.copy(alpha = 0.38f),
+            )
+        } else {
+            baseColors
+        }
     val collectedSliderStateModel by viewModel.state.collectAsStateWithLifecycle(null)
     val sliderStateModel = collectedSliderStateModel ?: return
     val interactionSource = remember { MutableInteractionSource() }

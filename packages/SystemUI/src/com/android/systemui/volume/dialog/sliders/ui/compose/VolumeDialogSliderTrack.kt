@@ -85,22 +85,19 @@ fun SliderTrack(
     inactiveTrackEndIcon: (@Composable BoxScope.(iconsState: SliderIconsState) -> Unit)? = null,
 ) {
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
-    val gradient = if (isVertical) volumeGradient() else null
+    val gradient = volumeGradient()
     val gradientBrush = gradient?.brush
-    // Use transparent track colors when gradient is enabled so gradient shows through
-    // Also update thumb color to match gradient end color
-    val trackColors = if (gradientBrush != null && isVertical) {
-        val thumbColor = gradient.endColor
-        val disabledThumb = thumbColor.copy(alpha = 0.38f)
-        colors.copy(
-            activeTrackColor = Color.Transparent,
-            inactiveTrackColor = Color.Transparent,
-            thumbColor = thumbColor,
-            disabledThumbColor = disabledThumb,
-        )
-    } else {
-        colors
-    }
+    // Use transparent track colors when gradient is enabled so gradient shows through.
+    // Thumb color is set at binder level via rememberVolumeGradientThumbColor().
+    val trackColors =
+        if (gradientBrush != null) {
+            colors.copy(
+                activeTrackColor = Color.Transparent,
+                inactiveTrackColor = Color.Transparent,
+            )
+        } else {
+            colors
+        }
     val measurePolicy =
         remember(sliderState, isRtl, isVertical, thumbTrackGapSize) {
             TrackMeasurePolicy(
@@ -131,46 +128,95 @@ fun SliderTrack(
                             }
                         )
                         .drawWithContent {
-                            if (gradientBrush != null && isVertical) {
-                                // Vertical slider with reverseDirection: 0% at bottom, 100% at top.
-                                // Draw active gradient in the BOTTOM segment (from thumb to bottom)
-                                // so the fill grows bottom-to-top and matches thumb movement.
+                            if (gradient != null && gradientBrush != null) {
                                 val trackCornerPx = trackCornerSize.toPx()
-                                val sliderFraction = sliderState.coercedValueAsFraction
+                                val sliderFraction = sliderState.coercedValueAsFraction.coerceIn(0f, 1f)
                                 val gapPx = thumbTrackGapSize.toPx()
-                                val activeTrackStart =
-                                    (size.height * (1f - sliderFraction) + gapPx).coerceIn(0f, size.height)
-                                val activeFillEnd = size.height
 
-                                // Draw gradient on active portion (bottom segment, thumb to bottom)
-                                if (activeFillEnd > activeTrackStart) {
-                                    clipRect(
-                                        left = 0f,
-                                        top = activeTrackStart,
-                                        right = size.width,
-                                        bottom = activeFillEnd,
-                                    ) {
-                                        drawRoundRect(
-                                            brush = gradientBrush,
-                                            size = size,
-                                            cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
-                                        )
+                                if (isVertical) {
+                                    // Vertical: 0% at bottom, 100% at top. Active = thumb to bottom.
+                                    val activeTrackStart =
+                                        (size.height * (1f - sliderFraction) + gapPx).coerceIn(0f, size.height)
+                                    val activeFillEnd = size.height
+
+                                    if (activeFillEnd > activeTrackStart) {
+                                        clipRect(
+                                            left = 0f,
+                                            top = activeTrackStart,
+                                            right = size.width,
+                                            bottom = activeFillEnd,
+                                        ) {
+                                            drawRoundRect(
+                                                brush = gradientBrush,
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
                                     }
-                                }
-                                // Draw dark overlay on inactive portion (top segment)
-                                val inactiveBottom = (activeTrackStart - gapPx * 2).coerceAtLeast(0f)
-                                if (inactiveBottom > 0f) {
-                                    clipRect(
-                                        left = 0f,
-                                        top = 0f,
-                                        right = size.width,
-                                        bottom = inactiveBottom,
-                                    ) {
-                                        drawRoundRect(
-                                            color = Color.Black.copy(alpha = 0.35f),
-                                            size = size,
-                                            cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
-                                        )
+                                    val inactiveBottom = (activeTrackStart - gapPx * 2).coerceAtLeast(0f)
+                                    if (inactiveBottom > 0f) {
+                                        clipRect(
+                                            left = 0f,
+                                            top = 0f,
+                                            right = size.width,
+                                            bottom = inactiveBottom,
+                                        ) {
+                                            drawRoundRect(
+                                                color = Color.Black.copy(alpha = 0.35f),
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    // Horizontal: active = start to thumb. LTR: 0 to frac; RTL: (1-frac) to width.
+                                    val w = size.width
+                                    val h = size.height
+                                    val halfGap = (gapPx / 2f).coerceAtLeast(0f)
+                                    val (activeLeft, activeRight) =
+                                        if (isRtl) {
+                                            val splitX = w * (1f - sliderFraction)
+                                            val right = w
+                                            val left = (splitX + halfGap).coerceIn(0f, w)
+                                            left to right
+                                        } else {
+                                            val splitX = w * sliderFraction
+                                            val left = 0f
+                                            val right = (splitX - halfGap).coerceIn(0f, w)
+                                            left to right
+                                        }
+
+                                    if (activeRight > activeLeft) {
+                                        clipRect(
+                                            left = activeLeft,
+                                            top = 0f,
+                                            right = activeRight,
+                                            bottom = h,
+                                        ) {
+                                            drawRoundRect(
+                                                brush = Brush.horizontalGradient(gradient.colors),
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
+                                    }
+                                    // Inactive overlay
+                                    if (isRtl && activeLeft > 0f) {
+                                        clipRect(left = 0f, top = 0f, right = activeLeft, bottom = h) {
+                                            drawRoundRect(
+                                                color = Color.Black.copy(alpha = 0.35f),
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
+                                    } else if (!isRtl && activeRight < w) {
+                                        clipRect(left = activeRight, top = 0f, right = w, bottom = h) {
+                                            drawRoundRect(
+                                                color = Color.Black.copy(alpha = 0.35f),
+                                                size = size,
+                                                cornerRadius = CornerRadius(trackCornerPx, trackCornerPx),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -638,13 +684,22 @@ private fun volumeGradient(): VolumeGradient? {
         VolumeGradient(
             brush = brush,
             endColor = colors.last(),
+            colors = colors,
         )
     }
+}
+
+/** Returns the thumb color to use when volume gradient is enabled, or null to use default colors. */
+@Composable
+fun rememberVolumeGradientThumbColor(): Color? {
+    val gradient = volumeGradient() ?: return null
+    return gradient.endColor
 }
 
 private data class VolumeGradient(
     val brush: Brush,
     val endColor: Color,
+    val colors: List<Color>,
 )
 
 private fun Color.lighten(amount: Float): Color = blendWith(Color.White, amount)
