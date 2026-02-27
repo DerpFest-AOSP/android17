@@ -798,11 +798,11 @@ private fun rememberQsBrightnessUseNewTint(): Boolean {
             Settings.System.getIntForUser(
                 contentResolver,
                 Settings.System.QS_BRIGHTNESS_USE_NEW_TINT,
-                1,
+                0,
                 UserHandle.USER_CURRENT
             )
         } catch (_: Throwable) {
-            1
+            0
         }
     var value by remember { mutableIntStateOf(read()) }
     DisposableEffect(contentResolver) {
