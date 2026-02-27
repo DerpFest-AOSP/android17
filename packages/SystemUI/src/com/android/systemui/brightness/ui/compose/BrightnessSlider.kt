@@ -950,17 +950,20 @@ private fun colors(
 ): SliderColors {
     val context = LocalContext.current
     return if (gradientEnabled) {
-        // Track is gradient-tinted in drawWithContent. Thumb and tick use luminance-aware
-        // contrast when gradient end color is available (same as QS tile icons).
+        // Track is gradient-tinted in drawWithContent. Thumb uses gradient end color (same as
+        // volume slider). Tick uses luminance-aware contrast when gradient end is available.
         val tickColor = if (gradientEndColor != null) {
             Color(BatteryColors.textColorOnBackground(context, gradientEndColor.toArgb()))
         } else {
             MaterialTheme.colorScheme.onPrimary
         }
-        SliderDefaults.colors()
-            .copy(
+        val base = SliderDefaults.colors()
+        val thumbColor = gradientEndColor ?: base.thumbColor
+        base.copy(
                 activeTrackColor = Color.Transparent,
                 inactiveTrackColor = Color.Transparent,
+                thumbColor = thumbColor,
+                disabledThumbColor = thumbColor.copy(alpha = 0.38f),
                 activeTickColor = tickColor,
                 inactiveTickColor = tickColor,
             )
