@@ -22,6 +22,7 @@ import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.onThemeChanged
+import com.android.systemui.util.kotlin.emitOnStart
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -93,8 +94,9 @@ class BatteryInteractor @Inject constructor(
     /** @see [BatteryRepository.tintStatusBarIconsWithAccent] */
     val tintStatusBarIconsWithAccent: StateFlow<Boolean> = repo.tintStatusBarIconsWithAccent
 
-    /** Flow that emits whenever the theme changes */
-    val themeChanged: Flow<Unit> = configurationController.onThemeChanged
+    /** Flow that emits whenever the theme changes. Emits on first collect so battery color
+     * profile uses current tint setting immediately (e.g. after reboot). */
+    val themeChanged: Flow<Unit> = configurationController.onThemeChanged.emitOnStart()
 
     // Mode == 1
     val showPercentInsideIcon: StateFlow<Boolean> =
