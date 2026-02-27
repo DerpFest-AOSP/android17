@@ -709,8 +709,10 @@ public class CarrierTextManager {
         }
 
         void updateSettings() {
-            mShowCarrierText = Settings.System.getIntForUser(mContext.getContentResolver(),
-                Settings.System.LOCKSCREEN_SHOW_CARRIER, 1, UserHandle.USER_CURRENT) != 0;
+            int mode = Settings.System.getIntForUser(mContext.getContentResolver(),
+                    Settings.System.LOCKSCREEN_SHOW_CARRIER, 1, UserHandle.USER_CURRENT);
+            // 1 = lockscreen only, 3 = both
+            mShowCarrierText = (mode == 1 || mode == 3);
 
             String customText = Settings.System.getStringForUser(
                     mContext.getContentResolver(),

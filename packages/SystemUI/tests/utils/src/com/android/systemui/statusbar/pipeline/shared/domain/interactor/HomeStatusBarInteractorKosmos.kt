@@ -33,6 +33,7 @@ val Kosmos.homeStatusBarInteractor: HomeStatusBarInteractor by
             airplaneModeInteractor,
             carrierConfigInteractor,
             disableFlagsInteractor,
+            systemSettingsRepository,
         )
     }
 

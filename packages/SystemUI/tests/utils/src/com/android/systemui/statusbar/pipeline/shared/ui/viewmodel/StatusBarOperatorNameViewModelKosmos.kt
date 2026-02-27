@@ -20,4 +20,6 @@ import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.mobileIconsInteractor
 
 val Kosmos.statusBarOperatorNameViewModel by
-    Kosmos.Fixture { StatusBarOperatorNameViewModel(mobileIconsInteractor) }
+    Kosmos.Fixture {
+        StatusBarOperatorNameViewModel(mobileIconsInteractor, systemSettingsRepository)
+    }

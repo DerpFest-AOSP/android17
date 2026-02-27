@@ -16,7 +16,9 @@
 
 package com.android.systemui.statusbar.pipeline.shared.domain.interactor
 
+import android.provider.Settings
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent.PerDisplaySingleton
+import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
 import com.android.systemui.statusbar.disableflags.domain.interactor.DisableFlagsInteractor
 import com.android.systemui.statusbar.pipeline.airplane.domain.interactor.AirplaneModeInteractor
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.CarrierConfigInteractor
@@ -39,6 +41,7 @@ constructor(
     airplaneModeInteractor: AirplaneModeInteractor,
     carrierConfigInteractor: CarrierConfigInteractor,
     disableFlagsInteractor: DisableFlagsInteractor,
+    systemSettingsRepository: SystemSettingsRepository,
 ) {
     /**
      * The visibilities of various status bar child views, based only on the information we received
@@ -59,15 +62,21 @@ constructor(
             it?.showOperatorNameInStatusBar ?: flowOf(false)
         }
 
+    // 2 = status bar only, 3 = both
+    private val showCarrierInStatusBar: Flow<Boolean> =
+        systemSettingsRepository.intSetting(Settings.System.LOCKSCREEN_SHOW_CARRIER, 1).map { it == 2 || it == 3 }
+
     /**
      * True if the carrier config for the default data subscription has
-     * [SystemUiCarrierConfig.showOperatorNameInStatusBar] set and the device is not in airplane
-     * mode
+     * [SystemUiCarrierConfig.showOperatorNameInStatusBar] set, the device is not in airplane
+     * mode, and the user has enabled showing carrier in the status bar (Settings).
      */
     val shouldShowOperatorName: Flow<Boolean> =
-        combine(defaultDataSubConfigShowOperatorView, airplaneModeInteractor.isAirplaneMode) {
-            showOperatorName,
-            isAirplaneMode ->
-            showOperatorName && !isAirplaneMode
+        combine(
+            defaultDataSubConfigShowOperatorView,
+            airplaneModeInteractor.isAirplaneMode,
+            showCarrierInStatusBar,
+        ) { showOperatorName, isAirplaneMode, showCarrier ->
+            showOperatorName && !isAirplaneMode && showCarrier
         }
 }

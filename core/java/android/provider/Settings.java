@@ -7464,7 +7464,8 @@ public final class Settings {
         public static final String BOUNCER_USER_SWITCHER_ENABLED = "bouncer_user_switcher_enabled";
 
         /**
-         * Whether to show the carrier name on the lockscreen
+         * Where to show carrier text: 0 = never, 1 = lockscreen only, 2 = status bar only,
+         * 3 = both. For list preference.
          * @hide
          */
         public static final String LOCKSCREEN_SHOW_CARRIER = "lockscreen_show_carrier";

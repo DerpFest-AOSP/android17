@@ -16,7 +16,13 @@
 
 package com.android.systemui.statusbar;
 
+import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.TelephonyManager;
@@ -73,6 +79,8 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
         mJavaAdapter = javaAdapter;
     }
 
+    private ContentObserver mShowCarrierObserver;
+
     @Override
     protected void onViewAttached() {
         mDarkIconDispatcher.addDarkReceiver(mDarkReceiver);
@@ -82,6 +90,18 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
                         (isAirplaneMode) -> update());
         mTunerService.addTunable(mTunable, KEY_SHOW_OPERATOR_NAME);
         mKeyguardUpdateMonitor.registerCallback(mKeyguardUpdateMonitorCallback);
+
+        mShowCarrierObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+            @Override
+            public void onChange(boolean selfChange, Uri uri) {
+                if (Settings.System.getUriFor(Settings.System.LOCKSCREEN_SHOW_CARRIER).equals(uri)) {
+                    update();
+                }
+            }
+        };
+        mView.getContext().getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.LOCKSCREEN_SHOW_CARRIER),
+                false, mShowCarrierObserver, UserHandle.USER_ALL);
     }
 
     @Override
@@ -90,13 +110,23 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
         mAirplaneModeJob.cancel(null);
         mTunerService.removeTunable(mTunable);
         mKeyguardUpdateMonitor.removeCallback(mKeyguardUpdateMonitorCallback);
+        if (mShowCarrierObserver != null) {
+            mView.getContext().getContentResolver().unregisterContentObserver(mShowCarrierObserver);
+            mShowCarrierObserver = null;
+        }
     }
 
     private void update() {
         SubInfo defaultSubInfo = getDefaultSubInfo();
+        int carrierMode = Settings.System.getIntForUser(
+                mView.getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_SHOW_CARRIER, 1, UserHandle.USER_CURRENT);
+        // 2 = status bar only, 3 = both
+        boolean showCarrierInStatusBar = (carrierMode == 2 || carrierMode == 3);
         boolean showOperatorName =
-                mCarrierConfigTracker
-                        .getShowOperatorNameInStatusBarConfig(defaultSubInfo.getSubId())
+                showCarrierInStatusBar
+                        && mCarrierConfigTracker
+                                .getShowOperatorNameInStatusBarConfig(defaultSubInfo.getSubId())
                         && (mTunerService.getValue(
                                 KEY_SHOW_OPERATOR_NAME,
                                 mView.getResources()
