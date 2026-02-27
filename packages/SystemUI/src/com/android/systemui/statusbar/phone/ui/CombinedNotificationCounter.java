@@ -22,6 +22,7 @@ import android.widget.TextView;
 import com.android.settingslib.Utils;
 import com.android.systemui.res.R;
 import com.android.systemui.statusbar.StatusIconDisplayable;
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors;
 import com.android.systemui.statusbar.StatusBarIconView;
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager;
 import com.android.systemui.statusbar.notification.headsup.OnHeadsUpChangedListener;
@@ -355,7 +356,7 @@ public class CombinedNotificationCounter extends FrameLayout
     public void setStaticDrawableColor(int color) {
         mStaticDrawableColor = color;
         if (mCountText != null) {
-            mCountText.setTextColor(getContrastColor(color));
+            mCountText.setTextColor(BatteryColors.Companion.textColorOnBackground(mContext, color));
         }
     }
 
@@ -439,19 +440,10 @@ public class CombinedNotificationCounter extends FrameLayout
             background.setColor(circleColor);
         }
         
-        // Set text to contrasting color
+        // Set text to luminance-aware contrasting color (WCAG-style blend, same as battery/clock chip)
         if (mCountText != null) {
-            int textColor = getContrastColor(circleColor);
+            int textColor = BatteryColors.Companion.textColorOnBackground(mContext, circleColor);
             mCountText.setTextColor(textColor);
         }
-    }
-    
-    private int getContrastColor(int backgroundColor) {
-        // Simple contrast calculation
-        int red = Color.red(backgroundColor);
-        int green = Color.green(backgroundColor);
-        int blue = Color.blue(backgroundColor);
-        double luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
-        return luminance > 0.5 ? Color.BLACK : Color.WHITE;
     }
 } 

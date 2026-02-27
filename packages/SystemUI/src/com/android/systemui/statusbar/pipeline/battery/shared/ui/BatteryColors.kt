@@ -156,6 +156,7 @@ sealed interface BatteryColors {
          * @param highPrecision If true, uses an iterative loop for WCAG 4.5:1. If false, 80% blend.
          * @return ARGB int suitable for [android.graphics.Paint.setColor] / [android.widget.TextView.setTextColor].
          */
+        @JvmStatic
         fun textColorOnBackground(context: Context, backgroundArgb: Int): Int {
             val useHighEnd = context.resources.getBoolean(R.bool.config_useHighEndBatteryContrast)
             return textColorOnBackgroundArgb(backgroundArgb, useHighEnd)
