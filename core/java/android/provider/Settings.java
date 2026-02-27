@@ -7512,7 +7512,7 @@ public final class Settings {
         public static final String EDGE_LIGHT_ANIMATION_EFFECT = "edge_light_animation_effect";
 
         /**
-         * Whether to show custom carrier text on the lockscreen
+         * Custom carrier text to show on the lockscreen when non-empty (replaces actual carrier).
          * @hide
          */
         public static final String LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT = "lockscreen_show_custom_carrier_text";
@@ -7646,6 +7646,8 @@ public final class Settings {
             PRIVATE_SETTINGS.add(POWER_SOUNDS_ENABLED);
             PRIVATE_SETTINGS.add(DOCK_SOUNDS_ENABLED);
             PRIVATE_SETTINGS.add(LOCKSCREEN_SOUNDS_ENABLED);
+            PRIVATE_SETTINGS.add(LOCKSCREEN_SHOW_CARRIER);
+            PRIVATE_SETTINGS.add(LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT);
             PRIVATE_SETTINGS.add(LOCKSCREEN_DISABLED);
             PRIVATE_SETTINGS.add(LOW_BATTERY_SOUND);
             PRIVATE_SETTINGS.add(DESK_DOCK_SOUND);

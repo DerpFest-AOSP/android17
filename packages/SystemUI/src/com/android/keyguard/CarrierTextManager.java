@@ -712,12 +712,12 @@ public class CarrierTextManager {
             mShowCarrierText = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_SHOW_CARRIER, 1, UserHandle.USER_CURRENT) != 0;
 
-            mShowCustomCarrierText = Settings.System.getStringForUser(
-                mContext.getContentResolver(),
-                Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT,
-                UserHandle.USER_CURRENT
-           );
-           mCustomCarrierText = !TextUtils.isEmpty(mShowCustomCarrierText);
+            String customText = Settings.System.getStringForUser(
+                    mContext.getContentResolver(),
+                    Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT,
+                    UserHandle.USER_CURRENT);
+            mShowCustomCarrierText = customText != null ? customText : "";
+            mCustomCarrierText = !TextUtils.isEmpty(mShowCustomCarrierText);
         }
 
         @Override
