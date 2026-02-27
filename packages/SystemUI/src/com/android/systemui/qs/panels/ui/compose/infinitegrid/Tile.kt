@@ -495,7 +495,14 @@ fun LargeStaticTile(
     Box(
         modifier
             .clip(TileDefaults.animateTileShapeAsState(state = uiState.state, shapeMode = shapeMode).value)
-            .background(colors.background)
+            .drawBehind {
+                val brush = colors.backgroundBrush
+                if (brush != null) {
+                    drawRect(brush = brush)
+                } else {
+                    drawRect(color = colors.background)
+                }
+            }
             .height(TileHeight)
             .largeTilePadding()
     ) {
