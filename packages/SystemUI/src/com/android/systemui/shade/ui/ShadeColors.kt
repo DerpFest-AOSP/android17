@@ -88,8 +88,11 @@ object ShadeColors {
         return if (useBlackTheme && isNightMode) {
             Color.BLACK
         } else {
-            ColorUtils.blendARGB(context.getColor(R.color.shade_panel_fallback_fg),
-                context.getColor(R.color.shade_panel_fallback_bg), 0.7f)
+            ColorUtils.blendARGB(
+                context.getColor(R.color.shade_panel_fallback_fg),
+                context.getColor(R.color.shade_panel_fallback_bg),
+                0.3f
+            )
         }
     }
 
