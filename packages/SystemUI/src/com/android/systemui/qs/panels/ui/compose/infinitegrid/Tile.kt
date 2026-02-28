@@ -727,6 +727,34 @@ fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
     )
 }
 
+/**
+ * When QS tile gradient is enabled, returns (brush, endColor) for use by the ringer slider thumb.
+ * Returns null when gradient is disabled.
+ */
+@Composable
+fun rememberQsTileGradientForRinger(): Pair<Brush?, Color?>? {
+    if (!rememberQsGradientEnabled()) return null
+    val (customStart, customEnd) = rememberQsGradientCustomColors()
+    val context = LocalContext.current
+    val resources = LocalResources.current
+    val isDark = isSystemInDarkTheme()
+    val defaultStart = remember(isDark, resources, context.theme) {
+        val id =
+            if (isDark) R.color.derpfestui_color_gradient_start_dark
+            else R.color.derpfestui_color_gradient_start_light
+        Color(resources.getColor(id, context.theme))
+    }
+    val defaultEnd = remember(isDark, resources, context.theme) {
+        val id =
+            if (isDark) R.color.derpfestui_color_gradient_end_dark
+            else R.color.derpfestui_color_gradient_end_light
+        Color(resources.getColor(id, context.theme))
+    }
+    val start = customStart ?: defaultStart
+    val end = customEnd ?: defaultEnd
+    return Pair(Brush.linearGradient(listOf(start, end)), end)
+}
+
 /** Whether to use accent-style tint for QS tiles (1 = enabled, 0 = default). Recomposes when setting changes. */
 @Composable
 private fun rememberQsUseNewTint(): Boolean {

@@ -25,13 +25,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.android.systemui.common.ringer.RingerSliderWidget
 import com.android.systemui.common.ringer.RingerModeInteractorImpl
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQsTileGradientForRinger
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberTileShapeMode
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 
 @Composable
 fun QSTileRingerSlider(
@@ -64,6 +68,16 @@ fun QSTileRingerSlider(
     val animatedContainerRadius by animateDpAsState(targetValue = containerCornerRadius, label = "RingerContainerRadius")
     val animatedThumbRadius by animateDpAsState(targetValue = thumbCornerRadius, label = "RingerThumbRadius")
 
+    val gradient = rememberQsTileGradientForRinger()
+    val gradientBrush = gradient?.first
+    val gradientEnd = gradient?.second
+    val activeIconTintWhenGradient =
+        remember(gradientEnd, context) {
+            gradientEnd?.let {
+                Color(BatteryColors.textColorOnBackground(context, it.toArgb()))
+            }
+        }
+
     RingerSliderWidget(
         interactor = interactor,
         theme = QSTileRingerTheme(),
@@ -75,6 +89,9 @@ fun QSTileRingerSlider(
         thumbShape = RoundedCornerShape(animatedThumbRadius),
         onLongClick = {
             interactor.toggleDnd()
-        }
+        },
+        activeThumbBrush = gradientBrush,
+        gradientEndColor = gradientEnd,
+        activeIconTintWhenGradient = activeIconTintWhenGradient,
     )
 }

@@ -45,7 +45,13 @@ fun RingerSliderWidget(
     border: Modifier = Modifier,
     containerShape: Shape = RoundedCornerShape(24.dp),
     thumbShape: Shape = RoundedCornerShape(16.dp),
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    /** When set (e.g. from QS tile gradient), the active thumb uses this brush and [gradientEndColor] / [activeIconTintWhenGradient]. */
+    activeThumbBrush: Brush? = null,
+    /** Border and fallback icon tint when [activeThumbBrush] is set. */
+    gradientEndColor: Color? = null,
+    /** Icon tint when gradient is active (e.g. luminance-aware contrast). If null, [theme.activeIcon] is used. */
+    activeIconTintWhenGradient: Color? = null,
 ) {
     val availableModes = interactor.getAvailableRingerModes()
     val numModes = interactor.getNumberOfModes()
@@ -163,29 +169,32 @@ fun RingerSliderWidget(
                 step * animatedPosition
             }
 
+            val useGradient = !isDozing && !isDndEnabled && activeThumbBrush != null && gradientEndColor != null
+            val thumbBackgroundModifier =
+                when {
+                    isDozing -> Modifier.background(Color.Transparent, thumbShape)
+                    isDndEnabled -> Modifier.background(theme.dndBg, thumbShape)
+                    useGradient -> Modifier.background(activeThumbBrush!!, thumbShape)
+                    else -> Modifier.background(theme.activeBg, thumbShape)
+                }
+            val thumbBorderModifier =
+                when {
+                    isDozing ->
+                        Modifier.border(theme.dozeStroke, Color.White, thumbShape)
+                    isDndEnabled ->
+                        Modifier.border(2.dp, theme.dndBg, thumbShape)
+                    useGradient ->
+                        Modifier.border(2.dp, gradientEndColor!!, thumbShape)
+                    else ->
+                        Modifier.border(2.dp, theme.activeBg, thumbShape)
+                }
             Box(
                 modifier = Modifier
                     .offset(x = thumbOffset)
                     .size(dimens.thumbSize)
                     .padding(dimens.thumbPadding)
-                    .background(
-                        when {
-                            isDozing -> Color.Transparent
-                            isDndEnabled -> theme.dndBg
-                            else -> theme.activeBg
-                        },
-                        thumbShape
-                    )
-                    .then(
-                        when {
-                            isDozing ->
-                            Modifier.border(theme.dozeStroke, Color.White, thumbShape)
-                            isDndEnabled ->
-                                Modifier.border(2.dp, theme.dndBg, thumbShape)
-                            else ->
-                                Modifier.border(2.dp, theme.activeBg, thumbShape)
-                        }
-                    ),
+                    .then(thumbBackgroundModifier)
+                    .then(thumbBorderModifier),
                 contentAlignment = Alignment.Center
             ) {
                 val iconIndex = animatedPosition.roundToInt().coerceIn(0, numModes - 1)
@@ -198,6 +207,7 @@ fun RingerSliderWidget(
                     tint = when {
                         isDozing -> Color.White
                         isDndEnabled -> theme.dndIcon
+                        useGradient -> (activeIconTintWhenGradient ?: theme.activeIcon)
                         else -> theme.activeIcon
                     },
                     modifier = Modifier.size(dimens.iconSize)
