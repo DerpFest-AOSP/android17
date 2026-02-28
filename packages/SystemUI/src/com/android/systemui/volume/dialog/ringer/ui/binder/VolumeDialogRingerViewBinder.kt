@@ -18,8 +18,13 @@ package com.android.systemui.volume.dialog.ringer.ui.binder
 
 import android.animation.ArgbEvaluator
 import android.content.res.Configuration
+import android.database.ContentObserver
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.InsetDrawable
+import android.os.Handler
+import android.os.Looper
+import android.os.UserHandle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageButton
@@ -47,10 +52,12 @@ import com.android.systemui.volume.dialog.ringer.ui.viewmodel.VolumeDialogRinger
 import com.android.systemui.volume.dialog.ui.binder.ViewBinder
 import com.android.systemui.volume.dialog.ui.utils.suspendAnimate
 import com.android.systemui.volume.dialog.ui.viewmodel.VolumeDialogViewModel
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import javax.inject.Inject
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.mapLatest
@@ -124,6 +131,48 @@ constructor(
             dialogViewModel.addTouchableBounds(ringerBackgroundView)
         }
 
+        var gradientColorsForRinger: Pair<Int, Int>? = getGradientColorsForRinger(view.context)
+        var selectedRingerButtonRef: ImageButton? = null
+        launchTraced("VDRVB#gradientObserver") {
+            val contentResolver = view.context.contentResolver
+            val observer =
+                object : ContentObserver(Handler(Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) {
+                        gradientColorsForRinger = getGradientColorsForRinger(view.context)
+                        view.post {
+                            selectedRingerButtonRef?.let {
+                                applySelectedButtonAppearance(
+                                    it, gradientColorsForRinger, view.context
+                                )
+                            }
+                        }
+                    }
+                }
+            contentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_VOLUME_GRADIENT_ENABLED),
+                false,
+                observer,
+                UserHandle.USER_ALL,
+            )
+            contentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
+                false,
+                observer,
+                UserHandle.USER_ALL,
+            )
+            contentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR),
+                false,
+                observer,
+                UserHandle.USER_ALL,
+            )
+            try {
+                awaitCancellation()
+            } finally {
+                contentResolver.unregisterContentObserver(observer)
+            }
+        }
+
         viewModel.ringerViewModel
             .mapLatest { ringerState ->
                 when (ringerState) {
@@ -151,6 +200,8 @@ constructor(
                                     uiModel,
                                     selectedButtonUiModel,
                                     unselectedButtonUiModel,
+                                    gradientColorsForRinger,
+                                    { selectedRingerButtonRef = it },
                                 )
                                 ringerDrawerTransitionListener.setProgressChangeEnabled(true)
                                 drawerContainer.closeDrawer(
@@ -169,6 +220,8 @@ constructor(
                                         uiModel,
                                         selectedButtonUiModel,
                                         unselectedButtonUiModel,
+                                        gradientColorsForRinger,
+                                        { selectedRingerButtonRef = it },
                                         onProgressChanged = { progress, isReverse ->
                                             // Let's make button progress when switching matches
                                             // motionLayout transition progress. When full
@@ -209,6 +262,8 @@ constructor(
                                     uiModel,
                                     selectedButtonUiModel,
                                     unselectedButtonUiModel,
+                                    gradientColorsForRinger,
+                                    { selectedRingerButtonRef = it },
                                 )
                                 // Open drawer
                                 if (
@@ -250,6 +305,8 @@ constructor(
         uiModel: RingerViewModel,
         selectedButtonUiModel: RingerButtonUiModel,
         unselectedButtonUiModel: RingerButtonUiModel,
+        gradientColorsForRinger: Pair<Int, Int>? = null,
+        onSelectedButtonBound: (ImageButton?) -> Unit = {},
         onProgressChanged: (Float, Boolean) -> Unit = { _, _ -> },
         onAnimationEnd: Runnable? = null,
     ) {
@@ -297,11 +354,24 @@ constructor(
                 }
                 launchTraced("VDRVB#bindButtons") {
                     delay(CLOSE_DRAWER_DELAY)
-                    bindButtons(viewModel, uiModel, onAnimationEnd, isAnimated = true)
+                    bindButtons(
+                        viewModel,
+                        uiModel,
+                        onAnimationEnd,
+                        isAnimated = true,
+                        gradientColorsForRinger,
+                        onSelectedButtonBound,
+                    )
                 }
             }
         } else {
-            bindButtons(viewModel, uiModel, onAnimationEnd)
+            bindButtons(
+                viewModel,
+                uiModel,
+                onAnimationEnd,
+                gradientColorsForRinger = gradientColorsForRinger,
+                onSelectedButtonBound = onSelectedButtonBound,
+            )
         }
     }
 
@@ -310,7 +380,10 @@ constructor(
         uiModel: RingerViewModel,
         onAnimationEnd: Runnable? = null,
         isAnimated: Boolean = false,
+        gradientColorsForRinger: Pair<Int, Int>? = null,
+        onSelectedButtonBound: (ImageButton?) -> Unit = {},
     ) {
+        onSelectedButtonBound(null)
         val count = uiModel.availableButtons.size
         uiModel.availableButtons.fastForEachIndexed { index, ringerButton ->
             val view = getChildAt(count - index) as ImageButton
@@ -322,6 +395,8 @@ constructor(
                     isOpen,
                     isSelected = true,
                     isAnimated = isAnimated,
+                    gradientColorsForRinger = gradientColorsForRinger,
+                    onSelectedButtonBound = { onSelectedButtonBound(view) },
                 )
             } else {
                 view.bindDrawerButton(ringerButton, viewModel, isOpen, isAnimated = isAnimated)
@@ -336,6 +411,8 @@ constructor(
         isOpen: Boolean,
         isSelected: Boolean = false,
         isAnimated: Boolean = false,
+        gradientColorsForRinger: Pair<Int, Int>? = null,
+        onSelectedButtonBound: (() -> Unit)? = null,
     ) {
         // id = buttonViewModel.viewId
         setSelected(isSelected)
@@ -351,9 +428,17 @@ constructor(
                 ringerContentDesc
             }
         if (isSelected && !isAnimated) {
-            setBackgroundResource(R.drawable.volume_drawer_selection_bg)
-            setColorFilter(context.getColor(internalR.color.materialColorOnPrimary))
-            background = background.mutate()
+            onSelectedButtonBound?.invoke()
+            if (gradientColorsForRinger != null) {
+                applyGradientSelectionBackground(this, gradientColorsForRinger, context)
+                val iconTint =
+                    BatteryColors.textColorOnBackground(context, gradientColorsForRinger.second)
+                setColorFilter(iconTint)
+            } else {
+                setBackgroundResource(R.drawable.volume_drawer_selection_bg)
+                setColorFilter(context.getColor(internalR.color.materialColorOnPrimary))
+                background = background.mutate()
+            }
         } else if (!isAnimated) {
             setBackgroundResource(R.drawable.volume_ringer_item_bg)
             setColorFilter(context.getColor(internalR.color.materialColorOnSurface))
@@ -441,6 +526,92 @@ constructor(
         val radius = fullRadius - progress * diff
         (background as GradientDrawable).cornerRadius = radius
         background.invalidateSelf()
+    }
+
+    /** When volume gradient is enabled, returns (startArgb, endArgb); otherwise null. */
+    private fun getGradientColorsForRinger(context: android.content.Context): Pair<Int, Int>? {
+        return try {
+            if (
+                Settings.System.getIntForUser(
+                    context.contentResolver,
+                    Settings.System.QS_VOLUME_GRADIENT_ENABLED,
+                    1,
+                    UserHandle.USER_CURRENT,
+                ) != 1
+            ) {
+                return null
+            }
+            val isDark =
+                (context.resources.configuration.uiMode and
+                    Configuration.UI_MODE_NIGHT_MASK) ==
+                    Configuration.UI_MODE_NIGHT_YES
+            val startArgb =
+                Settings.System.getIntForUser(
+                    context.contentResolver,
+                    Settings.System.GRADIENT_START_COLOR,
+                    0,
+                    UserHandle.USER_CURRENT,
+                )
+            val endArgb =
+                Settings.System.getIntForUser(
+                    context.contentResolver,
+                    Settings.System.GRADIENT_END_COLOR,
+                    0,
+                    UserHandle.USER_CURRENT,
+                )
+            val start =
+                if (startArgb != 0) startArgb
+                else context.getColor(
+                    if (isDark) R.color.derpfestui_color_gradient_start_dark
+                    else R.color.derpfestui_color_gradient_start_light
+                )
+            val end =
+                if (endArgb != 0) endArgb
+                else context.getColor(
+                    if (isDark) R.color.derpfestui_color_gradient_end_dark
+                    else R.color.derpfestui_color_gradient_end_light
+                )
+            Pair(start, end)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    /** Sets the selected ringer button background to a gradient (start -> end), matching auto brightness button. */
+    private fun applyGradientSelectionBackground(
+        button: ImageButton,
+        gradientColors: Pair<Int, Int>,
+        context: android.content.Context,
+    ) {
+        val (start, end) = gradientColors
+        val radiusPx =
+            context.resources.getDimensionPixelSize(
+                R.dimen.volume_dialog_ringer_selected_button_background_radius
+            ).toFloat()
+        val gradientDrawable =
+            GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(start, end)
+            ).apply {
+                setCornerRadius(radiusPx)
+            }
+        val insetPx = (4 * context.resources.displayMetrics.density).toInt()
+        button.background = InsetDrawable(gradientDrawable, insetPx, insetPx, insetPx, insetPx)
+    }
+
+    private fun applySelectedButtonAppearance(
+        button: ImageButton,
+        gradientColors: Pair<Int, Int>?,
+        context: android.content.Context,
+    ) {
+        if (gradientColors != null) {
+            applyGradientSelectionBackground(button, gradientColors, context)
+            button.setColorFilter(BatteryColors.textColorOnBackground(context, gradientColors.second))
+        } else {
+            button.setBackgroundResource(R.drawable.volume_drawer_selection_bg)
+            button.background = button.background.mutate()
+            button.setColorFilter(context.getColor(internalR.color.materialColorOnPrimary))
+        }
     }
 }
 

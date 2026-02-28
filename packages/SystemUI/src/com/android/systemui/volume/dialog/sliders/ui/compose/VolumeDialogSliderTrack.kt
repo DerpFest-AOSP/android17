@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
 import androidx.core.graphics.ColorUtils
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import kotlin.math.min
 
 @Composable
@@ -231,6 +232,7 @@ fun SliderTrack(
                 isEnabled = isEnabled,
                 colors = colors,
                 trackMeasurePolicy = measurePolicy,
+                gradientEndColor = gradient?.endColor,
             )
             TrackIcon(
                 icon = activeTrackEndIcon,
@@ -238,6 +240,7 @@ fun SliderTrack(
                 isEnabled = isEnabled,
                 colors = colors,
                 trackMeasurePolicy = measurePolicy,
+                gradientEndColor = gradient?.endColor,
             )
             TrackIcon(
                 icon = inactiveTrackStartIcon,
@@ -245,6 +248,7 @@ fun SliderTrack(
                 isEnabled = isEnabled,
                 colors = colors,
                 trackMeasurePolicy = measurePolicy,
+                gradientEndColor = null,
             )
             TrackIcon(
                 icon = inactiveTrackEndIcon,
@@ -252,6 +256,7 @@ fun SliderTrack(
                 isEnabled = isEnabled,
                 colors = colors,
                 trackMeasurePolicy = measurePolicy,
+                gradientEndColor = null,
             )
         },
         modifier = modifier,
@@ -265,6 +270,7 @@ private fun TrackIcon(
     contents: Contents,
     trackMeasurePolicy: TrackMeasurePolicy,
     colors: SliderColors,
+    gradientEndColor: Color? = null,
     modifier: Modifier = Modifier,
 ) {
     icon ?: return
@@ -273,6 +279,7 @@ private fun TrackIcon(
     TrackMeasurePolicy. It ensures that active icons are always above the active track and the
     same for inactive
     */
+    val context = LocalContext.current
     val iconColor =
         when (contents) {
             is Contents.Inactive ->
@@ -282,7 +289,9 @@ private fun TrackIcon(
                     colors.disabledInactiveTickColor
                 }
             is Contents.Active ->
-                if (isEnabled) {
+                if (gradientEndColor != null && isEnabled) {
+                    Color(BatteryColors.textColorOnBackground(context, gradientEndColor.toArgb()))
+                } else if (isEnabled) {
                     colors.activeTickColor
                 } else {
                     colors.disabledActiveTickColor
