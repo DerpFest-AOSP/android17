@@ -5,6 +5,8 @@
 
 package com.android.systemui.qs.ui.compose
 
+import android.content.Context
+import android.content.res.Configuration
 import android.database.ContentObserver
 import android.os.UserHandle
 import android.provider.Settings
@@ -127,6 +129,68 @@ fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
     )
 }
 
+/**
+ * View-side volume gradient colors. Null when [Settings.System.QS_VOLUME_GRADIENT_ENABLED] is off.
+ */
+fun resolveVolumeSliderGradientArgb(context: Context): Pair<Int, Int>? {
+    return try {
+        if (
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.QS_VOLUME_GRADIENT_ENABLED,
+                1,
+                UserHandle.USER_CURRENT,
+            ) != 1
+        ) {
+            return null
+        }
+        val isDark =
+            (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+                Configuration.UI_MODE_NIGHT_YES
+        val startArgb =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.GRADIENT_START_COLOR,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        val endArgb =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.GRADIENT_END_COLOR,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        val start =
+            if (startArgb != 0) {
+                forceOpaqueArgb(startArgb)
+            } else {
+                context.getColor(
+                    if (isDark) {
+                        R.color.derpfestui_color_gradient_start_dark
+                    } else {
+                        R.color.derpfestui_color_gradient_start_light
+                    }
+                )
+            }
+        val end =
+            if (endArgb != 0) {
+                forceOpaqueArgb(endArgb)
+            } else {
+                context.getColor(
+                    if (isDark) {
+                        R.color.derpfestui_color_gradient_end_dark
+                    } else {
+                        R.color.derpfestui_color_gradient_end_light
+                    }
+                )
+            }
+        Pair(start, end)
+    } catch (_: Throwable) {
+        null
+    }
+}
+
 /** Treats 0x00RRGGBB as opaque so color-picker values without alpha still paint fully. */
 private fun gradientSettingArgbToColor(argb: Int): Color {
     val a = (argb shr 24) and 0xFF
@@ -135,4 +199,9 @@ private fun gradientSettingArgbToColor(argb: Int): Color {
     val b = argb and 0xFF
     val alpha = if (a == 0) 1f else a / 255f
     return Color(red = r / 255f, green = g / 255f, blue = b / 255f, alpha = alpha)
+}
+
+private fun forceOpaqueArgb(argb: Int): Int {
+    val a = (argb shr 24) and 0xFF
+    return if (a == 0) argb or 0xFF000000.toInt() else argb
 }
