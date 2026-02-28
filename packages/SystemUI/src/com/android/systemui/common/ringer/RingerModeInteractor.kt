@@ -98,11 +98,9 @@ class RingerModeInteractorImpl(
         }
         
         val filter = IntentFilter(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED)
-        context.registerReceiver(receiver, filter)
-        
-        awaitClose {
-            context.unregisterReceiver(receiver)
-        }
+        val appContext = context.applicationContext ?: context
+        appContext.registerReceiver(receiver, filter)
+        awaitClose { appContext.unregisterReceiver(receiver) }
     }.distinctUntilChanged()
 
     override fun getCurrentMode(): Int = audioManager.ringerModeInternal
