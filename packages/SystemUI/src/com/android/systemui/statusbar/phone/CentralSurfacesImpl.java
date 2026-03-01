@@ -208,18 +208,15 @@ import com.android.systemui.statusbar.KeyguardIndicationController;
 import com.android.systemui.statusbar.LiftReveal;
 import com.android.systemui.statusbar.LightRevealScrim;
 import com.android.systemui.statusbar.LockscreenShadeTransitionController;
-import com.android.systemui.statusbar.NotificationListener;
 import com.android.systemui.statusbar.NotificationLockscreenUserManager;
 import com.android.systemui.statusbar.NotificationPresenter;
 import com.android.systemui.statusbar.NotificationRemoteInputManager;
 import com.android.systemui.statusbar.NotificationShadeDepthController;
 import com.android.systemui.statusbar.NotificationShadeWindowController;
-import com.android.systemui.statusbar.OnGoingActionProgressController;
 import com.android.systemui.statusbar.PowerButtonReveal;
 import com.android.systemui.statusbar.PulseExpansionHandler;
 import com.android.systemui.statusbar.StatusBarState;
 import com.android.systemui.statusbar.SysuiStatusBarStateController;
-import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays;
 import com.android.systemui.statusbar.core.StatusBarInitializer;
 import com.android.systemui.statusbar.core.StatusBarRootModernization;
@@ -432,11 +429,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     DozeServiceHost mDozeServiceHost;
     private final LightRevealScrim mLightRevealScrim;
     private PowerButtonReveal mPowerButtonReveal;
-
-    private OnGoingActionProgressController mOnGoingActionProgressController = null;
-    private final VibratorHelper mVibratorHelper;
-
-    @Inject public NotificationListener mNotificationListener;
 
     /**
      * Whether we should delay the AOD->Lockscreen animation.
@@ -789,8 +781,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             WindowManagerProvider windowManagerProvider,
             BurnInProtectionController burnInProtectionController,
             NotificationPanelViewController notificationPanelViewController,
-            MediaViewController mediaViewController,
-            VibratorHelper vibrator
+            MediaViewController mediaViewController
     ) {
         mContext = context;
         mNotificationsController = notificationsController;
@@ -943,7 +934,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManager = windowManager;
         mWindowManagerProvider = windowManagerProvider;
         mMediaViewController = mediaViewController;
-        mVibratorHelper = vibrator;
 
         mRebootSuggestion = new RebootSuggestion(mContext);
 
@@ -1378,13 +1368,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                         checkBarModes();
                         mBurnInProtectionController.setPhoneStatusBarView(mPhoneStatusBarViewController.getPhoneStatusBarView());
                         mPhoneStatusBarViewController.setBrightnessControlEnabled(mBrightnessControl);
-                        if (!StatusBarRootModernization.isEnabled()) {
-                            mOnGoingActionProgressController =
-                                 new OnGoingActionProgressController(
-                                         mContext,
-                                         statusBarViewController.getOngoingActionProgressGroup(), mNotificationListener,
-                                         mKeyguardStateController, mHeadsUpManager, mVibratorHelper);
-                        }
                     });
         }
 
