@@ -429,7 +429,7 @@ constructor(
             } else {
                 ringerContentDesc
             }
-        if (isSelected && !isAnimated) {
+        if (isSelected) {
             onSelectedButtonBound?.invoke()
             if (gradientColorsForRinger != null) {
                 applyGradientSelectionBackground(this, gradientColorsForRinger, context)
@@ -499,9 +499,11 @@ constructor(
         colorAnimation.minimumVisibleChange = BUTTON_MIN_VISIBLE_CHANGE
         coroutineScope {
             launchTraced("VDRVB#colorAnimation") {
-                // Solid color: color?.colors; gradient: getColors() (API 24+)
+                // Solid color: color?.colors; gradient: use end color so transition matches icon
+                // (icon was tinted with textColorOnBackground on gradient end)
                 val startBgColor =
                     shape.color?.colors?.getOrNull(0)
+                        ?: shape.colors?.getOrNull(1)
                         ?: shape.colors?.getOrNull(0)
                         ?: ringerButtonUiModel.backgroundColor
                 // When gradient was applied, icon uses setColorFilter so imageTintList is null
