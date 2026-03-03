@@ -495,17 +495,21 @@ constructor(
         colorAnimation.minimumVisibleChange = BUTTON_MIN_VISIBLE_CHANGE
         coroutineScope {
             launchTraced("VDRVB#colorAnimation") {
+                val startIconColor = imageTintList?.colors?.firstOrNull()
+                    ?: ringerButtonUiModel.tintColor
+                val startBgColor = backgroundShape().color?.colors?.getOrNull(0)
+                    ?: ringerButtonUiModel.backgroundColor
                 colorAnimation.suspendAnimate { value ->
                     val currentIconColor =
                         rgbEvaluator.evaluate(
                             value.coerceIn(0F, 1F),
-                            imageTintList?.colors?.first(),
+                            startIconColor,
                             ringerButtonUiModel.tintColor,
                         ) as Int
                     val currentBgColor =
                         rgbEvaluator.evaluate(
                             value.coerceIn(0F, 1F),
-                            backgroundShape().color?.colors?.get(0),
+                            startBgColor,
                             ringerButtonUiModel.backgroundColor,
                         ) as Int
 
