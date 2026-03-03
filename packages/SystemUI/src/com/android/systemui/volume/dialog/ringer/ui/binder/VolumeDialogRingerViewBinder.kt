@@ -331,6 +331,7 @@ constructor(
                     launchTraced("VDRVB#selectedButtonAnimation") {
                         selectedButton.animateTo(
                             selectedButtonUiModel,
+                            gradientColorsForRinger,
                             if (uiModel.currentButtonIndex == count - 1) {
                                 onProgressChanged
                             } else {
@@ -344,6 +345,7 @@ constructor(
                     launchTraced("VDRVB#unselectedButtonAnimation") {
                         unselectedButton.animateTo(
                             unselectedButtonUiModel,
+                            gradientColorsForRinger,
                             if (previousIndex == count - 1) {
                                 onProgressChanged
                             } else {
@@ -483,6 +485,7 @@ constructor(
 
     private suspend fun ImageButton.animateTo(
         ringerButtonUiModel: RingerButtonUiModel,
+        gradientColorsForRinger: Pair<Int, Int>? = null,
         onProgressChanged: (Float, Boolean) -> Unit = { _, _ -> },
     ) {
         val roundnessAnimation =
@@ -490,15 +493,26 @@ constructor(
         val colorAnimation = SpringAnimation(FloatValueHolder(0F), 1F).setSpring(colorSpringForce)
         val radius = backgroundShape().cornerRadius
         val cornerRadiusDiff = ringerButtonUiModel.cornerRadius - backgroundShape().cornerRadius
+        val shape = backgroundShape()
 
         roundnessAnimation.minimumVisibleChange = BUTTON_MIN_VISIBLE_CHANGE
         colorAnimation.minimumVisibleChange = BUTTON_MIN_VISIBLE_CHANGE
         coroutineScope {
             launchTraced("VDRVB#colorAnimation") {
-                val startIconColor = imageTintList?.colors?.firstOrNull()
-                    ?: ringerButtonUiModel.tintColor
-                val startBgColor = backgroundShape().color?.colors?.getOrNull(0)
-                    ?: ringerButtonUiModel.backgroundColor
+                // Solid color: color?.colors; gradient: getColors() (API 24+)
+                val startBgColor =
+                    shape.color?.colors?.getOrNull(0)
+                        ?: shape.colors?.getOrNull(0)
+                        ?: ringerButtonUiModel.backgroundColor
+                // When gradient was applied, icon uses setColorFilter so imageTintList is null
+                val startIconColor =
+                    imageTintList?.colors?.firstOrNull()
+                        ?: if (shape.colors != null && gradientColorsForRinger != null) {
+                            BatteryColors.textColorOnBackground(context, gradientColorsForRinger.second)
+                        } else {
+                            null
+                        }
+                        ?: ringerButtonUiModel.tintColor
                 colorAnimation.suspendAnimate { value ->
                     val currentIconColor =
                         rgbEvaluator.evaluate(
