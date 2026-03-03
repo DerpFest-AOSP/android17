@@ -16,13 +16,17 @@
 
 package com.android.systemui.common.ui.compose
 
+import androidx.compose.foundation.Image
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import com.android.compose.ui.graphics.painter.rememberDrawablePainter
 import com.android.systemui.common.shared.model.Icon
 
@@ -36,13 +40,22 @@ import com.android.systemui.common.shared.model.Icon
  */
 @Composable
 fun Icon(icon: Icon, modifier: Modifier = Modifier, tint: Color = LocalContentColor.current) {
+    val context = LocalContext.current
     val contentDescription = icon.contentDescription?.load()
     when (icon) {
         is Icon.Loaded -> {
             Icon(rememberDrawablePainter(icon.drawable), contentDescription, modifier, tint)
         }
         is Icon.Resource -> {
-            Icon(painterResource(icon.resId), contentDescription, modifier, tint)
+            val drawable = remember(icon.resId) { ContextCompat.getDrawable(context, icon.resId) }
+            if (drawable != null) {
+                Image(
+                    painter = rememberDrawablePainter(drawable),
+                    contentDescription = contentDescription,
+                    colorFilter = ColorFilter.tint(tint),
+                    modifier = modifier,
+                )
+            }
         }
     }
 }
@@ -58,24 +71,29 @@ fun Icon(icon: Icon, modifier: Modifier = Modifier, tint: Color = LocalContentCo
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Icon(icon: Icon, tint: (() -> Color)?, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val localContentColor = LocalContentColor.current
     val contentDescription = icon.contentDescription?.load()
+    val tintColor = tint ?: { localContentColor }
     when (icon) {
         is Icon.Loaded -> {
             Icon(
                 rememberDrawablePainter(icon.drawable),
-                tint ?: { localContentColor },
+                tintColor,
                 contentDescription,
                 modifier,
             )
         }
         is Icon.Resource -> {
-            Icon(
-                painterResource(icon.resId),
-                tint ?: { localContentColor },
-                contentDescription,
-                modifier,
-            )
+            val drawable = remember(icon.resId) { ContextCompat.getDrawable(context, icon.resId) }
+            if (drawable != null) {
+                Image(
+                    painter = rememberDrawablePainter(drawable),
+                    contentDescription = contentDescription,
+                    colorFilter = ColorFilter.tint(tintColor()),
+                    modifier = modifier,
+                )
+            }
         }
     }
 }
