@@ -89,4 +89,8 @@
 
     <!-- Whether additional doze settings are available -->
     <bool name="config_doze_additional_settings_available">true</bool>
+
+    <!-- List of system apps that are allowed to be locked with app lock.
+         Use with extreme caution. -->
+    <string-array name="config_appLockAllowedSystemApps" translatable="false" />
 </resources>

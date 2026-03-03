@@ -76,4 +76,8 @@
 
     <!-- Whether additional doze settings are available -->
     <java-symbol type="bool" name="config_doze_additional_settings_available" />
+
+    <!-- App lock -->
+    <java-symbol type="string" name="unlock_application" />
+    <java-symbol type="array" name="config_appLockAllowedSystemApps" />	
 </resources>
