@@ -129,6 +129,9 @@ public final class ColorDisplayService extends SystemService {
     private static final int MSG_APPLY_DISPLAY_COLOR_TEMPERATURE = 8;
     private static final int MSG_APPLY_USER_SATURATION = 9;
     private static final int MSG_APPLY_UPDATE_DISPLAY_ENGINE = 10;
+    private static final int MSG_APPLY_DISPLAY_HUE = 11;
+    private static final int MSG_APPLY_DISPLAY_CONTRAST = 12;
+    private static final int MSG_APPLY_DISPLAY_PICTURE_BRIGHTNESS = 13;
 
     /**
      * Return value if a setting has not been set.
@@ -188,6 +191,12 @@ public final class ColorDisplayService extends SystemService {
             new GlobalSaturationTintController();
     private final TintController mUserSaturationTintController =
             new UserSaturationTintController();
+    private final DisplayHueTintController mDisplayHueTintController =
+            new DisplayHueTintController();
+    private final DisplayContrastTintController mDisplayContrastTintController =
+            new DisplayContrastTintController();
+    private final DisplayPictureBrightnessTintController mDisplayPictureBrightnessTintController =
+            new DisplayPictureBrightnessTintController();
     private final ReduceBrightColorsTintController mReduceBrightColorsTintController;
     private final DisplayEngineController mDisplayEngineController =
             new DisplayEngineController();
@@ -498,6 +507,16 @@ public final class ColorDisplayService extends SystemService {
                             case Secure.DISPLAY_COLOR_SATURATION:
                                 mHandler.sendEmptyMessage(MSG_APPLY_USER_SATURATION);
                                 break;
+                            case Secure.DISPLAY_COLOR_HUE:
+                                mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_HUE);
+                                break;
+                            case Secure.DISPLAY_COLOR_CONTRAST:
+                                mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_CONTRAST);
+                                break;
+                            case Secure.DISPLAY_COLOR_BRIGHTNESS:
+                                mHandler.sendEmptyMessage(
+                                        MSG_APPLY_DISPLAY_PICTURE_BRIGHTNESS);
+                                break;
                             case Secure.DISPLAY_COLOR_TEMPERATURE:
                                 mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_COLOR_TEMPERATURE);
                                 break;
@@ -549,6 +568,12 @@ public final class ColorDisplayService extends SystemService {
         cr.registerContentObserver(Secure.getUriFor(Secure.DISPLAY_COLOR_TEMPERATURE),
                 false /* notifyForDescendants */, mContentObserver, mCurrentUser);
         cr.registerContentObserver(Secure.getUriFor(Secure.DISPLAY_COLOR_SATURATION),
+                false /* notifyForDescendants */, mContentObserver, mCurrentUser);
+        cr.registerContentObserver(Secure.getUriFor(Secure.DISPLAY_COLOR_HUE),
+                false /* notifyForDescendants */, mContentObserver, mCurrentUser);
+        cr.registerContentObserver(Secure.getUriFor(Secure.DISPLAY_COLOR_CONTRAST),
+                false /* notifyForDescendants */, mContentObserver, mCurrentUser);
+        cr.registerContentObserver(Secure.getUriFor(Secure.DISPLAY_COLOR_BRIGHTNESS),
                 false /* notifyForDescendants */, mContentObserver, mCurrentUser);
         cr.registerContentObserver(Secure.getUriFor(Secure.DISPLAY_WHITE_BALANCE_ENABLED),
                 false /* notifyForDescendants */, mContentObserver, mCurrentUser);
@@ -625,6 +650,18 @@ public final class ColorDisplayService extends SystemService {
             mHandler.sendEmptyMessage(MSG_APPLY_USER_SATURATION);
         }
 
+        if (mDisplayHueTintController.isAvailable(getContext())) {
+            mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_HUE);
+        }
+
+        if (mDisplayContrastTintController.isAvailable(getContext())) {
+            mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_CONTRAST);
+        }
+
+        if (mDisplayPictureBrightnessTintController.isAvailable(getContext())) {
+            mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_PICTURE_BRIGHTNESS);
+        }
+
         if (mDisplayEngineController.isAvailable(getContext())) {
             mHandler.sendEmptyMessage(MSG_APPLY_UPDATE_DISPLAY_ENGINE);
         }
@@ -684,6 +721,18 @@ public final class ColorDisplayService extends SystemService {
             mGlobalSaturationTintController.setActivated(null);
         }
 
+        if (mDisplayHueTintController.isAvailable(getContext())) {
+            mDisplayHueTintController.setActivated(null);
+        }
+
+        if (mDisplayContrastTintController.isAvailable(getContext())) {
+            mDisplayContrastTintController.setActivated(null);
+        }
+
+        if (mDisplayPictureBrightnessTintController.isAvailable(getContext())) {
+            mDisplayPictureBrightnessTintController.setActivated(null);
+        }
+
         if (mReduceBrightColorsTintController.isAvailable(getContext())) {
             mReduceBrightColorsTintController.setActivated(null);
         }
@@ -696,6 +745,9 @@ public final class ColorDisplayService extends SystemService {
         mGlobalSaturationTintController.cancelAnimator();
         mReduceBrightColorsTintController.cancelAnimator();
         mDisplayWhiteBalanceTintController.cancelAnimator();
+        mDisplayHueTintController.cancelAnimator();
+        mDisplayContrastTintController.cancelAnimator();
+        mDisplayPictureBrightnessTintController.cancelAnimator();
     }
 
     private boolean resetReduceBrightColors() {
@@ -1406,6 +1458,60 @@ public final class ColorDisplayService extends SystemService {
                 Secure.DISPLAY_COLOR_SATURATION, 100, mCurrentUser);
     }
 
+    private boolean setColorHueInternal(int value) {
+        if (mCurrentUser == UserHandle.USER_NULL) {
+            return false;
+        }
+        final boolean putSuccess = Secure.putIntForUser(getContext().getContentResolver(),
+                Secure.DISPLAY_COLOR_HUE, value, mCurrentUser);
+        if (putSuccess) {
+            mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_HUE);
+        }
+        return putSuccess;
+    }
+
+    private int getColorHueInternal() {
+        return Secure.getIntForUser(getContext().getContentResolver(),
+                Secure.DISPLAY_COLOR_HUE, DisplayHueTintController.DEFAULT_HUE,
+                mCurrentUser);
+    }
+
+    private boolean setColorContrastInternal(int value) {
+        if (mCurrentUser == UserHandle.USER_NULL) {
+            return false;
+        }
+        final boolean putSuccess = Secure.putIntForUser(getContext().getContentResolver(),
+                Secure.DISPLAY_COLOR_CONTRAST, value, mCurrentUser);
+        if (putSuccess) {
+            mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_CONTRAST);
+        }
+        return putSuccess;
+    }
+
+    private int getColorContrastInternal() {
+        return Secure.getIntForUser(getContext().getContentResolver(),
+                Secure.DISPLAY_COLOR_CONTRAST,
+                DisplayContrastTintController.DEFAULT_CONTRAST, mCurrentUser);
+    }
+
+    private boolean setColorBrightnessInternal(int value) {
+        if (mCurrentUser == UserHandle.USER_NULL) {
+            return false;
+        }
+        final boolean putSuccess = Secure.putIntForUser(getContext().getContentResolver(),
+                Secure.DISPLAY_COLOR_BRIGHTNESS, value, mCurrentUser);
+        if (putSuccess) {
+            mHandler.sendEmptyMessage(MSG_APPLY_DISPLAY_PICTURE_BRIGHTNESS);
+        }
+        return putSuccess;
+    }
+
+    private int getColorBrightnessInternal() {
+        return Secure.getIntForUser(getContext().getContentResolver(),
+                Secure.DISPLAY_COLOR_BRIGHTNESS,
+                DisplayPictureBrightnessTintController.DEFAULT_BRIGHTNESS, mCurrentUser);
+    }
+
     private void dumpInternal(PrintWriter pw) {
         pw.println("COLOR DISPLAY MANAGER dumpsys (color_display)");
 
@@ -1420,6 +1526,21 @@ public final class ColorDisplayService extends SystemService {
         pw.println("Global saturation:");
         if (mGlobalSaturationTintController.isAvailable(getContext())) {
             pw.println("    Activated: " + mGlobalSaturationTintController.isActivated());
+        } else {
+            pw.println("    Not available");
+        }
+
+        pw.println("Advanced picture adjustment:");
+        if (mDisplayHueTintController.isAvailable(getContext())
+                && mDisplayContrastTintController.isAvailable(getContext())
+                && mDisplayPictureBrightnessTintController.isAvailable(getContext())) {
+            pw.println("    Hue activated: " + mDisplayHueTintController.isActivated());
+            pw.println("    Contrast activated: " + mDisplayContrastTintController.isActivated());
+            pw.println("    Brightness activated: "
+                    + mDisplayPictureBrightnessTintController.isActivated());
+            pw.println("    Hue: " + getColorHueInternal());
+            pw.println("    Contrast: " + getColorContrastInternal());
+            pw.println("    Brightness: " + getColorBrightnessInternal());
         } else {
             pw.println("    Not available");
         }
@@ -2091,6 +2212,18 @@ public final class ColorDisplayService extends SystemService {
                     mUserSaturationTintController.setMatrix(getUserSaturationLevelInternal());
                     applyTint(mUserSaturationTintController, true);
                     break;
+                case MSG_APPLY_DISPLAY_HUE:
+                    mDisplayHueTintController.setMatrix(getColorHueInternal());
+                    applyTint(mDisplayHueTintController, true);
+                    break;
+                case MSG_APPLY_DISPLAY_CONTRAST:
+                    mDisplayContrastTintController.setMatrix(getColorContrastInternal());
+                    applyTint(mDisplayContrastTintController, true);
+                    break;
+                case MSG_APPLY_DISPLAY_PICTURE_BRIGHTNESS:
+                    mDisplayPictureBrightnessTintController.setMatrix(getColorBrightnessInternal());
+                    applyTint(mDisplayPictureBrightnessTintController, true);
+                    break;
                 case MSG_APPLY_UPDATE_DISPLAY_ENGINE:
                     mDisplayEngineController.updateBalance(getContext(), mCurrentUser);
                     applyTint(mDisplayEngineController, true);
@@ -2423,6 +2556,72 @@ public final class ColorDisplayService extends SystemService {
             final long token = Binder.clearCallingIdentity();
             try {
                 return getUserSaturationLevelInternal();
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @android.annotation.EnforcePermission(android.Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS)
+        @Override
+        public boolean setColorHue(int value) {
+            setColorHue_enforcePermission();
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return setColorHueInternal(value);
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @Override
+        public int getColorHue() {
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return getColorHueInternal();
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @android.annotation.EnforcePermission(android.Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS)
+        @Override
+        public boolean setColorContrast(int value) {
+            setColorContrast_enforcePermission();
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return setColorContrastInternal(value);
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @Override
+        public int getColorContrast() {
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return getColorContrastInternal();
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @android.annotation.EnforcePermission(android.Manifest.permission.CONTROL_DISPLAY_COLOR_TRANSFORMS)
+        @Override
+        public boolean setColorBrightness(int value) {
+            setColorBrightness_enforcePermission();
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return setColorBrightnessInternal(value);
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        @Override
+        public int getColorBrightness() {
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return getColorBrightnessInternal();
             } finally {
                 Binder.restoreCallingIdentity(token);
             }
