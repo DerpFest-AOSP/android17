@@ -83,6 +83,7 @@ import com.android.systemui.statusbar.core.RudimentaryBattery
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays
 import com.android.systemui.statusbar.NotificationListener
 import com.android.systemui.statusbar.OngoingActionProgress
+import com.android.systemui.statusbar.VibratorHelper
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager
 import com.android.systemui.statusbar.core.StatusBarForDesktop
 import com.android.systemui.statusbar.events.domain.interactor.SystemStatusEventAnimationInteractor
@@ -150,6 +151,7 @@ constructor(
     private val notificationListener: NotificationListener,
     private val keyguardStateController: KeyguardStateController,
     private val headsUpManager: HeadsUpManager,
+    private val vibrator: VibratorHelper,
 ) {
     fun create(root: ViewGroup, andThen: (ViewGroup) -> Unit): ComposeView {
         val composeView = ComposeView(root.context)
@@ -178,6 +180,7 @@ constructor(
                         notificationListener = notificationListener,
                         keyguardStateController = keyguardStateController,
                         headsUpManager = headsUpManager,
+                        vibrator = vibrator,
                         modifier = Modifier.sysUiResTagContainer(),
                     )
                 }
@@ -220,6 +223,7 @@ fun StatusBarRoot(
     notificationListener: NotificationListener,
     keyguardStateController: KeyguardStateController,
     headsUpManager: HeadsUpManager,
+    vibrator: VibratorHelper,
     modifier: Modifier = Modifier,
 ) {
     val displayId = parent.context.displayId
@@ -282,6 +286,7 @@ fun StatusBarRoot(
                         notificationListener = notificationListener,
                         keyguardStateController = keyguardStateController,
                         headsUpManager = headsUpManager,
+                        vibrator = vibrator,
                         context = context,
                     )
                 }
@@ -451,6 +456,7 @@ private fun addStartSideComposable(
     notificationListener: NotificationListener,
     keyguardStateController: KeyguardStateController,
     headsUpManager: HeadsUpManager,
+    vibrator: VibratorHelper,
     context: Context,
 ) {
     val startSideExceptHeadsUp =
@@ -537,7 +543,8 @@ private fun addStartSideComposable(
                         context,
                         notificationListener,
                         keyguardStateController,
-                        headsUpManager
+                        headsUpManager,
+                        vibrator
                     )
                 }
                 

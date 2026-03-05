@@ -128,6 +128,7 @@ import com.android.systemui.keyguard.KeyguardViewMediator;
 import com.android.systemui.keyguard.ScreenLifecycle;
 import com.android.systemui.keyguard.WakefulnessLifecycle;
 import com.android.systemui.kosmos.KosmosJavaAdapter;
+import com.android.systemui.media.MediaViewController;
 import com.android.systemui.media.NotificationMediaManager;
 import com.android.systemui.navigationbar.NavigationBarController;
 import com.android.systemui.notetask.NoteTaskController;
@@ -168,6 +169,7 @@ import com.android.systemui.statusbar.NotificationRemoteInputManager;
 import com.android.systemui.statusbar.NotificationShadeDepthController;
 import com.android.systemui.statusbar.NotificationShadeWindowController;
 import com.android.systemui.statusbar.OperatorNameViewController;
+import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.PulseExpansionHandler;
 import com.android.systemui.statusbar.StatusBarState;
 import com.android.systemui.statusbar.StatusBarStateControllerImpl;
@@ -195,6 +197,7 @@ import com.android.systemui.statusbar.phone.fragment.CollapsedStatusBarFragment;
 import com.android.systemui.statusbar.phone.fragment.dagger.HomeStatusBarComponent;
 import com.android.systemui.statusbar.pipeline.shared.ui.composable.StatusBarRootFactory;
 import com.android.systemui.statusbar.policy.BatteryController;
+import com.android.systemui.statusbar.policy.BurnInProtectionController;
 import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
 import com.android.systemui.statusbar.policy.ExtensionController;
@@ -380,6 +383,9 @@ public class CentralSurfacesImplTest extends SysuiTestCase {
     @Mock private QuickAccessWalletController mQuickAccessWalletController;
     @Mock private WindowManager mWindowManager;
     @Mock private WindowManagerProvider mWindowManagerProvider;
+    @Mock private BurnInProtectionController mBurnInProtectionController;
+    @Mock private MediaViewController mMediaViewController;
+    @Mock private VibratorHelper mVibratorHelper;
     private ShadeController mShadeController;
     private final FakeSystemClock mFakeSystemClock = new FakeSystemClock();
     private final FakeGlobalSettings mFakeGlobalSettings = new FakeGlobalSettings();
@@ -656,7 +662,10 @@ public class CentralSurfacesImplTest extends SysuiTestCase {
                 mQuickAccessWalletController,
                 mWindowManager,
                 mWindowManagerProvider,
-                mNotificationPanelViewController
+                mBurnInProtectionController,
+                mNotificationPanelViewController,
+                mMediaViewController,
+                mVibratorHelper
         );
         mScreenLifecycle.addObserver(mCentralSurfaces.mScreenObserver);
         mCentralSurfaces.initShadeVisibilityListener();

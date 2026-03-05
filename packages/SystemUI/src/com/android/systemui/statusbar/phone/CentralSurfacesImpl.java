@@ -219,6 +219,7 @@ import com.android.systemui.statusbar.PowerButtonReveal;
 import com.android.systemui.statusbar.PulseExpansionHandler;
 import com.android.systemui.statusbar.StatusBarState;
 import com.android.systemui.statusbar.SysuiStatusBarStateController;
+import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays;
 import com.android.systemui.statusbar.core.StatusBarInitializer;
 import com.android.systemui.statusbar.core.StatusBarRootModernization;
@@ -433,6 +434,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private PowerButtonReveal mPowerButtonReveal;
 
     private OnGoingActionProgressController mOnGoingActionProgressController = null;
+    private final VibratorHelper mVibratorHelper;
 
     @Inject public NotificationListener mNotificationListener;
 
@@ -787,7 +789,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             WindowManagerProvider windowManagerProvider,
             BurnInProtectionController burnInProtectionController,
             NotificationPanelViewController notificationPanelViewController,
-            MediaViewController mediaViewController
+            MediaViewController mediaViewController,
+            VibratorHelper vibrator
     ) {
         mContext = context;
         mNotificationsController = notificationsController;
@@ -940,6 +943,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mWindowManager = windowManager;
         mWindowManagerProvider = windowManagerProvider;
         mMediaViewController = mediaViewController;
+        mVibratorHelper = vibrator;
 
         mRebootSuggestion = new RebootSuggestion(mContext);
 
@@ -1379,7 +1383,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                                  new OnGoingActionProgressController(
                                          mContext,
                                          statusBarViewController.getOngoingActionProgressGroup(), mNotificationListener,
-                                         mKeyguardStateController, mHeadsUpManager);
+                                         mKeyguardStateController, mHeadsUpManager, mVibratorHelper);
                         }
                     });
         }

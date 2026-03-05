@@ -7078,6 +7078,16 @@ public final class Settings {
         /**
          * @hide
          */
+        public static final String ONGOING_MEDIA_PROGRESS = "ongoing_media_progress";
+
+        /**
+         * @hide
+         */
+        public static final String ONGOING_COMPACT_MODE = "ongoing_compact_mode";
+
+        /**
+         * @hide
+         */
         private static final String COMPACT_MODE = "compact_mode";
 
         /**

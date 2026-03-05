@@ -20,7 +20,6 @@ import android.app.Notification;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.database.ContentObserver;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.AdaptiveIconDrawable;
@@ -30,11 +29,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.UserHandle;
+import android.os.VibrationEffect;
 import android.provider.Settings;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -53,10 +52,9 @@ import com.android.systemui.statusbar.notification.headsup.OnHeadsUpChangedListe
 import com.android.systemui.res.R;
 import com.android.systemui.util.IconFetcher;
 import com.android.systemui.statusbar.OnGoingActionProgressGroup;
+import com.android.systemui.statusbar.VibratorHelper;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.util.MediaSessionManagerHelper;
-
-import com.android.internal.util.android.VibrationUtils;
 
 import java.util.HashMap;
 import java.util.concurrent.Executor;
@@ -67,25 +65,23 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         KeyguardStateController.Callback, OnHeadsUpChangedListener {
     private static final String TAG = "OngoingActionProgressController";
     private static final String ONGOING_ACTION_CHIP_ENABLED = "ongoing_action_chip";
-    private static final String SHOW_MEDIA_PROGRESS = "show_media_progress";
-    private static final String PROGRESS_BAR_OPACITY = "progress_bar_opacity";
-    private static final String COMPACT_MODE_ENABLED = "compact_progress_mode";
+    private static final String ONGOING_MEDIA_PROGRESS = "ongoing_media_progress";
+    private static final String ONGOING_COMPACT_MODE_ENABLED = "ongoing_compact_mode";
     private static final int SWIPE_THRESHOLD = 100;
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-    private static final int DEFAULT_OPACITY = 255;
-    private static final int DEFAULT_OPACITY_PERCENTAGE = 100;
     private static final int MEDIA_UPDATE_INTERVAL_MS = 1000;
     private static final int DEBOUNCE_DELAY_MS = 150;
     private static final int MAX_ICON_CACHE_SIZE = 20;
     private static final int STALE_PROGRESS_CHECK_INTERVAL_MS = 5000;
     private static final int PROGRESS_TIMEOUT_MS = 30000;
-    /** Min interval between state callbacks when only progress changed (Compose mode). Reduces QS lag. */
-    private static final int COMPOSE_STATE_CALLBACK_THROTTLE_MS = 500;
+
+    private static final VibrationEffect VIBRATION_EFFECT =
+            VibrationEffect.get(VibrationEffect.EFFECT_CLICK);
 
     public interface StateCallback {
-        void onStateChanged(boolean isVisible, int progress, int maxProgress, 
+        void onStateChanged(boolean isVisible, int progress, int maxProgress,
                           Drawable icon, boolean isIconAdaptive, String packageName,
-                          boolean isCompactMode, float opacity, boolean showMediaControls);
+                          boolean isCompactMode, boolean showMediaControls);
     }
 
     private final Context mContext;
@@ -95,6 +91,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private final KeyguardStateController mKeyguardStateController;
     private final NotificationListener mNotificationListener;
     private final HeadsUpManager mHeadsUpManager;
+    private final VibratorHelper mVibrator;
     private final IconFetcher mIconFetcher;
     private final MediaSessionManagerHelper mMediaSessionHelper;
     private final Executor mBackgroundExecutor;
@@ -132,7 +129,6 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     private int mCurrentProgressMax = 0;
     private Drawable mCurrentIcon = null;
     private boolean mCurrentIconIsAdaptive = false;
-    private int mProgressBarOpacity = DEFAULT_OPACITY;
     private boolean mIsMenuVisible = false;
     private boolean mIsSystemChipVisible = false;
 
@@ -146,7 +142,6 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     
     private boolean mUpdatePending = false;
     private long mLastUpdateTime = 0;
-    private long mLastStateCallbackTime = 0;
 
     private final GestureDetector mGestureDetector;
     private final Handler mMediaProgressHandler = new Handler(Looper.getMainLooper());
@@ -181,7 +176,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
     private final Runnable mMenuCollapseRunnable = () -> {
         mIsMenuVisible = false;
-        notifyStateCallback(false);
+        notifyStateCallback();
     };
 
     private final MediaSessionManagerHelper.MediaMetadataListener mMediaMetadataListener = 
@@ -202,7 +197,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     public OnGoingActionProgressController(
             Context context, OnGoingActionProgressGroup progressGroup,
             NotificationListener notificationListener, KeyguardStateController keyguardStateController,
-            HeadsUpManager headsUpManager) {
+            HeadsUpManager headsUpManager, VibratorHelper vibrator) {
 
         mIsComposeMode = (progressGroup.rootView == null && progressGroup.compactRootView == null);
 
@@ -210,7 +205,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
             Log.wtf(TAG, "progressGroup is null");
             throw new IllegalArgumentException("progressGroup cannot be null");
         }
-        
+
         mNotificationListener = notificationListener;
         if (mNotificationListener == null) {
             Log.wtf(TAG, "mNotificationListener is null");
@@ -224,6 +219,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         mHandler = new Handler(Looper.getMainLooper());
         mSettingsObserver = new SettingsObserver(mHandler);
         mBackgroundExecutor = Executors.newSingleThreadExecutor();
+        mVibrator = vibrator;
 
         mProgressBar = progressGroup.progressBarView;
         mCircularProgressBar = progressGroup.circularProgressBarView;
@@ -269,7 +265,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
      */
     public void setStateCallback(StateCallback callback) {
         mStateCallback = callback;
-        notifyStateCallback(false);
+        notifyStateCallback();
     }
 
     public void expandCompactView() {
@@ -280,13 +276,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         mHandler.postDelayed(mCompactCollapseRunnable, 5000);
 
         if (mIsComposeMode) {
-            notifyStateCallback(false);
+            notifyStateCallback();
             return;
         }
 
         if (mCompactRootView != null) mCompactRootView.setVisibility(View.GONE);
         if (mProgressRootView != null) mProgressRootView.setVisibility(View.VISIBLE);
-        
+
         requestUiUpdate();
     }
 
@@ -302,7 +298,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
             if (mShowMediaProgress && mMediaSessionHelper.isMediaPlaying()) {
                 toggleMediaPlaybackState();
             }
-            VibrationUtils.triggerVibration(mContext, 4);
+            mVibrator.vibrate(VIBRATION_EFFECT);
             return true;
         }
 
@@ -311,7 +307,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
             if (mShowMediaProgress && mMediaSessionHelper.isMediaPlaying()) {
                 openMediaApp();
             }
-            VibrationUtils.triggerVibration(mContext, 5);
+            mVibrator.vibrate(VIBRATION_EFFECT);
         }
 
         @Override
@@ -348,18 +344,11 @@ public class OnGoingActionProgressController implements NotificationListener.Not
     }
 
     /**
-     * Notifies the Compose callback of current state.
-     * @param throttleIfRecent if true (progress-only path), skip if last callback was recent
+     * Notifies the Compose callback of current state
      */
-    private void notifyStateCallback(boolean throttleIfRecent) {
+    private void notifyStateCallback() {
         if (mStateCallback == null) {
             return;
-        }
-        if (throttleIfRecent && mIsComposeMode) {
-            long now = System.currentTimeMillis();
-            if (now - mLastStateCallbackTime < COMPOSE_STATE_CALLBACK_THROTTLE_MS) {
-                return;
-            }
         }
 
         boolean isVisible = !mIsForceHidden && !mHeadsUpPinned && !mIsSystemChipVisible;
@@ -370,31 +359,23 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         isVisible = isVisible && (isMediaPlaying || hasNotificationProgress);
 
         if (isVisible) {
-            float opacity = mProgressBarOpacity / 255f;
             boolean isCompact = mIsCompactModeEnabled && !mIsExpanded;
             mStateCallback.onStateChanged(
-                true, mCurrentProgress, mCurrentProgressMax, 
+                true, mCurrentProgress, mCurrentProgressMax,
                 mCurrentIcon, mCurrentIconIsAdaptive, mTrackedPackageName,
-                isCompact, opacity, mIsMenuVisible
+                isCompact, mIsMenuVisible
             );
         } else {
-            mStateCallback.onStateChanged(false, 0, 0, null, false, null, false, 0f, false);
+            mStateCallback.onStateChanged(false, 0, 0, null, false, null, false, false);
         }
-        mLastStateCallbackTime = System.currentTimeMillis();
     }
 
     private void updateViews() {
         if (!mIsViewAttached) {
             if (mIsComposeMode) {
-                notifyStateCallback(false);
+                notifyStateCallback();
             }
             return;
-        }
-
-        if (!mIsComposeMode && mProgressRootView != null && mCompactRootView != null) {
-            float opacity = mProgressBarOpacity / 255f;
-            mProgressRootView.setAlpha(opacity);
-            mCompactRootView.setAlpha(opacity);
         }
 
         if (mIsForceHidden || mHeadsUpPinned) {
@@ -402,7 +383,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (mProgressRootView != null) mProgressRootView.setVisibility(View.GONE);
                 if (mCompactRootView != null) mCompactRootView.setVisibility(View.GONE);
             }
-            notifyStateCallback(false);
+            notifyStateCallback();
             return;
         }
 
@@ -417,10 +398,10 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (!mIsComposeMode && mCompactRootView != null) {
                     mCompactRootView.setVisibility(View.GONE);
                 }
-                notifyStateCallback(false);
+                notifyStateCallback();
                 return;
             }
-            
+
             if (!mIsComposeMode && mCompactRootView != null) {
                 mCompactRootView.setVisibility(View.VISIBLE);
             }
@@ -450,7 +431,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 updateNotificationProgress();
             }
         }
-        notifyStateCallback(false);
+        notifyStateCallback();
     }
 
     private void updateMediaProgressOnly() {
@@ -484,7 +465,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         }
 
         if (mIsComposeMode) {
-            notifyStateCallback(true);
+            notifyStateCallback();
         }
     }
 
@@ -523,7 +504,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                     } else {
                         setDefaultMediaIcon();
                     }
-                    if (mIsComposeMode) notifyStateCallback(false);
+                    if (mIsComposeMode) notifyStateCallback();
                 });
             } else {
                 setDefaultMediaIcon();
@@ -593,7 +574,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                     } else {
                         setDefaultMediaIconCompact();
                     }
-                    if (mIsComposeMode) notifyStateCallback(false);
+                    if (mIsComposeMode) notifyStateCallback();
                 });
             } else {
                 setDefaultMediaIconCompact();
@@ -641,11 +622,11 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (!mIsComposeMode && mIconView != null && drawable != null) {
                     mIconView.setImageDrawable(drawable);
                 }
-                if (mIsComposeMode) notifyStateCallback(false);
+                if (mIsComposeMode) notifyStateCallback();
             });
         }
     }
-    
+
     private void updateNotificationProgressCompact() {
         if (!mIsViewAttached && !mIsComposeMode) return;
         
@@ -680,7 +661,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
                 if (!mIsComposeMode && mCompactIconView != null && drawable != null) {
                     mCompactIconView.setImageDrawable(drawable);
                 }
-                if (mIsComposeMode) notifyStateCallback(false);
+                if (mIsComposeMode) notifyStateCallback();
             });
         }
     }
@@ -815,7 +796,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (mShowMediaProgress && mMediaSessionHelper.isMediaPlaying()) {
             if (mIsComposeMode) {
                 mIsMenuVisible = !mIsMenuVisible;
-                notifyStateCallback(false);
+                notifyStateCallback();
                 if (mIsMenuVisible) {
                     mHandler.removeCallbacks(mMenuCollapseRunnable);
                     mHandler.postDelayed(mMenuCollapseRunnable, 5000);
@@ -826,7 +807,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         } else {
             openTrackedApp();
         }
-        VibrationUtils.triggerVibration(mContext, 3);
+        mVibrator.vibrate(VIBRATION_EFFECT);
     }
 
     public void onLongPress() {
@@ -835,13 +816,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         } else {
             openTrackedApp();
         }
-        VibrationUtils.triggerVibration(mContext, 5);
+        mVibrator.vibrate(VIBRATION_EFFECT);
     }
 
     public void onDoubleTap() {
         if (mShowMediaProgress && mMediaSessionHelper.isMediaPlaying()) {
             toggleMediaPlaybackState();
-            VibrationUtils.triggerVibration(mContext, 4);
+            mVibrator.vibrate(VIBRATION_EFFECT);
         }
     }
 
@@ -860,13 +841,13 @@ public class OnGoingActionProgressController implements NotificationListener.Not
 
     public void onMediaMenuDismiss() {
         mIsMenuVisible = false;
-        notifyStateCallback(false);
+        notifyStateCallback();
     }
 
     public void setSystemChipVisible(boolean visible) {
         if (mIsSystemChipVisible != visible) {
             mIsSystemChipVisible = visible;
-            notifyStateCallback(false);
+            notifyStateCallback();
             requestUiUpdate();
         }
     }
@@ -987,7 +968,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (mIsForceHidden != forceHidden) {
             Log.d(TAG, "setForceHidden " + forceHidden);
             mIsForceHidden = forceHidden;
-            notifyStateCallback(false);
+            notifyStateCallback();
             requestUiUpdate();
         }
     }
@@ -1034,7 +1015,7 @@ public class OnGoingActionProgressController implements NotificationListener.Not
      @Override
     public void onHeadsUpPinnedModeChanged(boolean inPinnedMode) {
         mHeadsUpPinned = inPinnedMode;
-        notifyStateCallback(false);
+        notifyStateCallback();
         requestUiUpdate();
     }
 
@@ -1058,21 +1039,18 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange, uri);
             if (uri.equals(Settings.System.getUriFor(ONGOING_ACTION_CHIP_ENABLED)) ||
-                    uri.equals(Settings.System.getUriFor(SHOW_MEDIA_PROGRESS)) ||
-                    uri.equals(Settings.System.getUriFor(PROGRESS_BAR_OPACITY)) ||
-                    uri.equals(Settings.System.getUriFor(COMPACT_MODE_ENABLED))) {
+                    uri.equals(Settings.System.getUriFor(ONGOING_MEDIA_PROGRESS)) ||
+                    uri.equals(Settings.System.getUriFor(ONGOING_COMPACT_MODE_ENABLED))) {
                 updateSettings();
             }
         }
 
         public void register() {
-            mContentResolver.registerContentObserver(Settings.System.getUriFor(ONGOING_ACTION_CHIP_ENABLED), 
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(ONGOING_ACTION_CHIP_ENABLED),
                     false, this, UserHandle.USER_ALL);
-            mContentResolver.registerContentObserver(Settings.System.getUriFor(SHOW_MEDIA_PROGRESS), 
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(ONGOING_MEDIA_PROGRESS),
                     false, this, UserHandle.USER_ALL);
-            mContentResolver.registerContentObserver(Settings.System.getUriFor(PROGRESS_BAR_OPACITY), 
-                    false, this, UserHandle.USER_ALL);
-            mContentResolver.registerContentObserver(Settings.System.getUriFor(COMPACT_MODE_ENABLED), 
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(ONGOING_COMPACT_MODE_ENABLED),
                     false, this, UserHandle.USER_ALL);
             updateSettings();
         }
@@ -1086,26 +1064,19 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         boolean wasEnabled = mIsEnabled;
         boolean wasShowingMedia = mShowMediaProgress;
         boolean wasCompactMode = mIsCompactModeEnabled;
-        
-        mIsEnabled = Settings.System.getIntForUser(mContentResolver, 
-                ONGOING_ACTION_CHIP_ENABLED, 1, UserHandle.USER_CURRENT) == 1;
-        mShowMediaProgress = Settings.System.getIntForUser(mContentResolver, 
-                SHOW_MEDIA_PROGRESS, 0, UserHandle.USER_CURRENT) == 1;
-        mIsCompactModeEnabled = Settings.System.getIntForUser(mContentResolver, 
-                COMPACT_MODE_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
-        
-        int opacityPercentage = Settings.System.getIntForUser(mContentResolver, 
-                PROGRESS_BAR_OPACITY, DEFAULT_OPACITY_PERCENTAGE, UserHandle.USER_CURRENT);
-        
-        opacityPercentage = Math.max(0, Math.min(100, opacityPercentage));
-        
-        mProgressBarOpacity = (int)(opacityPercentage * 2.55f);
-        
+
+        mIsEnabled = Settings.System.getIntForUser(mContentResolver,
+                ONGOING_ACTION_CHIP_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+        mShowMediaProgress = Settings.System.getIntForUser(mContentResolver,
+                ONGOING_MEDIA_PROGRESS, 0, UserHandle.USER_CURRENT) == 1;
+        mIsCompactModeEnabled = Settings.System.getIntForUser(mContentResolver,
+                ONGOING_COMPACT_MODE_ENABLED, 0, UserHandle.USER_CURRENT) == 1;
+
         if (wasEnabled != mIsEnabled || wasShowingMedia != mShowMediaProgress || wasCompactMode != mIsCompactModeEnabled) {
             mNeedsFullUiUpdate = true;
             mIsExpanded = false;
         }
-        
+
         requestUiUpdate();
     }
 
@@ -1146,11 +1117,5 @@ public class OnGoingActionProgressController implements NotificationListener.Not
         if (mBackgroundExecutor instanceof ExecutorService) {
             ((ExecutorService) mBackgroundExecutor).shutdown();
         }
-    }
-
-    private static int getThemeColor(Context context, int attrResId) {
-        TypedValue typedValue = new TypedValue();
-        context.getTheme().resolveAttribute(attrResId, typedValue, true);
-        return typedValue.data;
     }
 }

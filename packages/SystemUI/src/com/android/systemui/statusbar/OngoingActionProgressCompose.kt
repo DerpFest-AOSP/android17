@@ -46,7 +46,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -62,6 +61,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.core.graphics.drawable.toBitmap
+import com.android.systemui.statusbar.VibratorHelper
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager
 import com.android.systemui.statusbar.policy.KeyguardStateController
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -120,7 +120,6 @@ fun OngoingActionProgress(
                 Box(
                     modifier = Modifier
                         .size(26.dp)
-                        .alpha(state.opacity)
                         .then(gestureModifier),
                     contentAlignment = Alignment.Center
                 ) {
@@ -168,7 +167,6 @@ fun OngoingActionProgress(
                         .width(86.dp)
                         .height(26.dp)
                         .padding(horizontal = 6.dp, vertical = 4.dp)
-                        .alpha(state.opacity)
                         .then(gestureModifier),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -269,7 +267,6 @@ data class ProgressState(
     val packageName: String? = null,
     val isIconAdaptive: Boolean = false,
     val isCompactMode: Boolean = false,
-    val opacity: Float = 1f,
     val showMediaControls: Boolean = false
 )
 
@@ -281,7 +278,8 @@ class OnGoingActionProgressComposeController(
     context: Context,
     notificationListener: NotificationListener,
     keyguardStateController: KeyguardStateController,
-    headsUpManager: HeadsUpManager
+    headsUpManager: HeadsUpManager,
+    vibrator: VibratorHelper
 ) {
     private val _state = MutableStateFlow(ProgressState())
     val state: StateFlow<ProgressState> = _state
@@ -303,10 +301,11 @@ class OnGoingActionProgressComposeController(
                 dummyGroup,
                 notificationListener,
                 keyguardStateController,
-                headsUpManager
+                headsUpManager,
+                vibrator
             )
-            
-            javaController.setStateCallback { isVisible, progress, maxProgress, icon, isAdaptive, packageName, isCompact, opacity, showMenu ->
+
+            javaController.setStateCallback { isVisible, progress, maxProgress, icon, isAdaptive, packageName, isCompact, showMenu ->
                 val iconKey = Pair(packageName, isCompact)
                 val iconBitmap = if (icon == null) {
                     cachedIconKey = null
@@ -347,7 +346,6 @@ class OnGoingActionProgressComposeController(
                     packageName = packageName,
                     isIconAdaptive = isAdaptive,
                     isCompactMode = isCompact,
-                    opacity = opacity,
                     showMediaControls = showMenu
                 )
             }
