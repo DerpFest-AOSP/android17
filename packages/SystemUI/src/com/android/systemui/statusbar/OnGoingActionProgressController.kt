@@ -926,7 +926,6 @@ class OnGoingActionProgressController(
         private const val PAUSED_STALE_GRACE_MS = 20000L
         private const val ALBUM_ART_RETRY_COUNT = 5
         private const val ALBUM_ART_RETRY_INTERVAL_MS = 300L
-        private const val POSITION_RESET_THRESHOLD_MS = 1_500L
 
         private val HAPTIC_CLICK =
             VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
