@@ -7101,6 +7101,11 @@ public final class Settings {
         public static final String PROGRESS_BAR_OPACITY = "progress_bar_opacity";
 
         /**
+         * @hide
+         */
+        public static final String ONGOING_CHIP_COLOR_MODE = "ongoing_chip_color_mode";
+
+        /**
          * Whether to control brightness from status bar
          * 0 = 0ff, 1 = on
          * @hide
