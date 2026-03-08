@@ -207,10 +207,15 @@ fun OngoingActionProgress(
 
                 else -> {
                     val pv = progressFraction(state)
+                    val bgColor = state.chipBgColor
+                    val chipBg = if (bgColor != null) Color(bgColor) else colorResource(android.R.color.system_accent1_500)
                     Row(
                         modifier = Modifier
                             .width(86.dp).height(26.dp)
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                            .padding(start = 4.dp)
+                            .clip(chipShape)
+                            .background(chipBg)
+                            .padding(horizontal = 5.dp, vertical = 3.dp)
                             .then(gestureModifier),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
