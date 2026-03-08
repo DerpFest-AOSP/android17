@@ -16,6 +16,7 @@
 
 package com.android.systemui.flashlight.ui.composable
 
+import android.graphics.drawable.AnimatedVectorDrawable
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -69,7 +70,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
@@ -305,13 +308,35 @@ private fun AnimatedVectorFlashlightDrawable(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
-    val image = AnimatedImageVector.animatedVectorResource(R.drawable.qs_flashlight_icon_on)
-    Icon(
-        modifier = modifier.semantics { hideFromAccessibility() },
-        painter = rememberAnimatedVectorPainter(image, atEnd),
-        contentDescription = null,
-        tint = color,
-    )
+    val context = LocalContext.current
+    // Icon pack overlays may replace the drawable with a static vector; detect so we don't
+    // call animatedVectorResource (which would throw e.g. Resource ID #0x0).
+    val useStaticIcon =
+        remember(context) {
+            try {
+                val drawable =
+                    context.resources.getDrawable(R.drawable.qs_flashlight_icon_on, null)
+                drawable !is AnimatedVectorDrawable
+            } catch (e: Exception) {
+                true
+            }
+        }
+    if (useStaticIcon) {
+        Icon(
+            modifier = modifier.semantics { hideFromAccessibility() },
+            painter = painterResource(R.drawable.qs_flashlight_icon_on),
+            contentDescription = null,
+            tint = color,
+        )
+    } else {
+        val image = AnimatedImageVector.animatedVectorResource(R.drawable.qs_flashlight_icon_on)
+        Icon(
+            modifier = modifier.semantics { hideFromAccessibility() },
+            painter = rememberAnimatedVectorPainter(image, atEnd),
+            contentDescription = null,
+            tint = color,
+        )
+    }
 }
 
 @Composable
