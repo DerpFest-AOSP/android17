@@ -57,6 +57,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
@@ -162,69 +163,74 @@ fun OngoingActionProgress(
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
 
-        when {
-            state.isCompactMode -> {
-                val pv = progressFraction(state)
-                Box(
-                    modifier = Modifier
-                        .size(26.dp)
-                        .padding(start = 2.dp)
-                        .then(gestureModifier),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(Modifier.fillMaxSize()) {
-                        val strokePx = 3.dp.toPx()
-                        val diam = size.minDimension - strokePx
-                        val r = diam / 2
-                        val tl = center - Offset(r, r)
-                        val sz = Size(diam, diam)
-                        drawArc(Color(0x33FFFFFF), 0f, 360f, false, tl, sz,
-                            style = Stroke(strokePx))
-                        drawArc(accent, -90f, 360f * pv, false, tl, sz,
-                            style = Stroke(strokePx, cap = StrokeCap.Round))
-                    }
-                    state.icon?.let { drawable ->
-                        Image(
-                            painter = drawable.toPainter(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(14.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                        )
+        Box(modifier = Modifier.alpha(state.opacity)) {
+            when {
+                state.isCompactMode -> {
+                    val pv = progressFraction(state)
+                    Box(
+                        modifier = Modifier
+                            .size(26.dp)
+                            .padding(start = 2.dp)
+                            .then(gestureModifier),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Canvas(Modifier.fillMaxSize()) {
+                            val strokePx = 3.dp.toPx()
+                            val diam = size.minDimension - strokePx
+                            val r = diam / 2
+                            val tl = center - Offset(r, r)
+                            val sz = Size(diam, diam)
+                            drawArc(Color(0x33FFFFFF), 0f, 360f, false, tl, sz,
+                                style = Stroke(strokePx))
+                            drawArc(accent, -90f, 360f * pv, false, tl, sz,
+                                style = Stroke(strokePx, cap = StrokeCap.Round))
+                        }
+                        state.icon?.let { drawable ->
+                            Image(
+                                painter = drawable.toPainter(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                            )
+                        }
                     }
                 }
-            }
 
-            state.trackTitle != null -> {
-                MusicChip(state = state, chipShape = chipShape,
-                    gestureModifier = gestureModifier)
-            }
+                state.trackTitle != null -> {
+                    MusicChip(
+                        state = state,
+                        chipShape = chipShape,
+                        gestureModifier = gestureModifier
+                    )
+                }
 
-            else -> {
-                val pv = progressFraction(state)
-                Row(
-                    modifier = Modifier
-                        .width(86.dp).height(26.dp)
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
-                        .then(gestureModifier),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    state.icon?.let { drawable ->
-                        Image(
-                            painter = drawable.toPainter(),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clip(RoundedCornerShape(16.dp))
-                                .padding(start = 1.dp)
-                        )
-                        Spacer(Modifier.width(5.dp))
-                    }
-                    Box(
-                        Modifier.weight(1f).height(6.dp).padding(end = 3.dp)
-                            .clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF))
+                else -> {
+                    val pv = progressFraction(state)
+                    Row(
+                        modifier = Modifier
+                            .width(86.dp).height(26.dp)
+                            .padding(horizontal = 6.dp, vertical = 4.dp)
+                            .then(gestureModifier),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(Modifier.fillMaxHeight().fillMaxWidth(pv).background(accent))
+                        state.icon?.let { drawable ->
+                            Image(
+                                painter = drawable.toPainter(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .padding(start = 1.dp)
+                            )
+                            Spacer(Modifier.width(5.dp))
+                        }
+                        Box(
+                            Modifier.weight(1f).height(6.dp).padding(end = 3.dp)
+                                .clip(RoundedCornerShape(3.dp)).background(Color(0x33FFFFFF))
+                        ) {
+                            Box(Modifier.fillMaxHeight().fillMaxWidth(pv).background(accent))
+                        }
                     }
                 }
             }
@@ -752,6 +758,7 @@ class OnGoingActionProgressComposeController(
                     trackTitle = state.trackTitle,
                     artistName = state.artistName,
                     chipBgColor = state.chipBgColor,
+                    opacity = state.opacity,
                 )
             }
         }

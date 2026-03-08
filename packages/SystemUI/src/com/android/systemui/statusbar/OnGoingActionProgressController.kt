@@ -109,6 +109,7 @@ class OnGoingActionProgressController(
 
     private var isViewAttached = false
     private var isExpanded = false
+    private var chipOpacity = 1f
 
     private var pauseStale = false
     private var pausedStaleJob: Job? = null
@@ -134,7 +135,8 @@ class OnGoingActionProgressController(
                 if (uri == Settings.System.getUriFor(ONGOING_ACTION_CHIP_ENABLED) ||
                     uri == Settings.System.getUriFor(ONGOING_MEDIA_PROGRESS) ||
                     uri == Settings.System.getUriFor(ONGOING_COMPACT_MODE_ENABLED) ||
-                    uri == Settings.System.getUriFor(ONGOING_CHIP_COLOR_MODE)) {
+                    uri == Settings.System.getUriFor(ONGOING_CHIP_COLOR_MODE) ||
+                    uri == Settings.System.getUriFor(PROGRESS_BAR_OPACITY)) {
                     updateSettings()
                 }
             }
@@ -160,6 +162,12 @@ class OnGoingActionProgressController(
                 )
                 contentResolver.registerContentObserver(
                     Settings.System.getUriFor(ONGOING_CHIP_COLOR_MODE),
+                    false,
+                    this,
+                    UserHandle.USER_ALL
+                )
+                contentResolver.registerContentObserver(
+                    Settings.System.getUriFor(PROGRESS_BAR_OPACITY),
                     false,
                     this,
                     UserHandle.USER_ALL
@@ -364,6 +372,7 @@ class OnGoingActionProgressController(
                     trackTitle = null,
                     artistName = null,
                     chipBgColor = null,
+                    opacity = chipOpacity,
                 )
             )
             return
@@ -398,6 +407,7 @@ class OnGoingActionProgressController(
                 trackTitle = trackTitle,
                 artistName = artistName,
                 chipBgColor = currentChipBgColor,
+                opacity = chipOpacity,
             )
         )
     }
@@ -875,6 +885,14 @@ class OnGoingActionProgressController(
             UserHandle.USER_CURRENT
         )
 
+        val opacityPercent = Settings.System.getIntForUser(
+            contentResolver,
+            PROGRESS_BAR_OPACITY,
+            DEFAULT_OPACITY_PERCENT,
+            UserHandle.USER_CURRENT
+        ).coerceIn(0, 100)
+        chipOpacity = opacityPercent / 100f
+
         if (wasChipColorMode != chipColorMode) {
             invalidateChipBgColor()
             if (chipColorMode == CHIP_COLOR_MODE_ALBUM_ART && currentAlbumArt != null) {
@@ -922,6 +940,8 @@ class OnGoingActionProgressController(
         private const val ONGOING_MEDIA_PROGRESS = Settings.System.ONGOING_MEDIA_PROGRESS
         private const val ONGOING_COMPACT_MODE_ENABLED = Settings.System.ONGOING_COMPACT_MODE
         private const val ONGOING_CHIP_COLOR_MODE = Settings.System.ONGOING_CHIP_COLOR_MODE
+        private const val PROGRESS_BAR_OPACITY = Settings.System.PROGRESS_BAR_OPACITY
+        private const val DEFAULT_OPACITY_PERCENT = 100
 
         private const val MEDIA_UPDATE_INTERVAL_MS = 1000L
         private const val DEBOUNCE_DELAY_MS = 150L
@@ -958,4 +978,5 @@ data class ProgressState(
     val trackTitle: String? = null,
     val artistName: String? = null,
     val chipBgColor: Int? = null,
+    val opacity: Float = 1f,
 )
