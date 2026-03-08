@@ -24,6 +24,7 @@ import android.os.VibrationEffect
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import android.util.LruCache
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.Immutable
@@ -70,7 +71,7 @@ class OnGoingActionProgressController(
 
     private val mediaSessionHelper = MediaSessionManagerHelper.getInstance(context)
 
-    private val iconCache = HashMap<String, Drawable>()
+    private val iconCache = LruCache<String, Drawable>(MAX_ICON_CACHE_SIZE)
     private val inFlightIconLoads = ConcurrentHashMap<String, Job>()
     private val pendingIconCallbacks = ConcurrentHashMap<String, MutableList<(Drawable?) -> Unit>>()
     private val notificationLock = Mutex()
@@ -535,7 +536,7 @@ class OnGoingActionProgressController(
             val sizePx = (24f * context.resources.displayMetrics.density).toInt()
             drawable.setBounds(0, 0, sizePx, sizePx)
 
-            iconCache[packageName] = drawable
+            iconCache.put(packageName, drawable)
             pendingIconCallbacks.remove(packageName)?.forEach { it(drawable) }
         }
 
@@ -902,7 +903,7 @@ class OnGoingActionProgressController(
         menuCollapseJob?.cancel()
         pausedStaleJob?.cancel()
 
-        iconCache.clear()
+        iconCache.evictAll()
         inFlightIconLoads.values.forEach { it.cancel() }
         inFlightIconLoads.clear()
         pendingIconCallbacks.clear()
@@ -928,6 +929,7 @@ class OnGoingActionProgressController(
         private const val COMPACT_COLLAPSE_TIMEOUT_MS = 10000L
         private const val MENU_COLLAPSE_TIMEOUT_MS = 5000L
         private const val PAUSED_STALE_GRACE_MS = 20000L
+        private const val MAX_ICON_CACHE_SIZE = 20
 
         const val CHIP_COLOR_MODE_DEFAULT = 0
         const val CHIP_COLOR_MODE_ICON = 1
