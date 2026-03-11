@@ -315,8 +315,8 @@ class OnGoingActionProgressController(
             }
         }
 
-    private fun extractAndApplyChipBgColorFromIcon(icon: Drawable) {
-        if (!isMediaSessionActiveForChip()) return
+    private fun extractAndApplyChipBgColorFromIcon(icon: Drawable, forNotificationChip: Boolean = false) {
+        if (!forNotificationChip && !isMediaSessionActiveForChip()) return
         if (icon === lastColorExtractedIcon && chipIconColor != null) return
 
         mainScope.launch {
@@ -388,6 +388,12 @@ class OnGoingActionProgressController(
             } else if (chipColorMode == CHIP_COLOR_MODE_ALBUM_ART &&
                     chipAlbumColor != null) {
                 currentChipBgColor = chipAlbumColor
+            }
+        } else if (hasNotificationProgress) {
+            if (chipColorMode == CHIP_COLOR_MODE_ICON && chipIconColor != null) {
+                currentChipBgColor = chipIconColor
+            } else {
+                currentChipBgColor = null
             }
         }
 
@@ -510,7 +516,11 @@ class OnGoingActionProgressController(
         val pkg = trackedPackageName ?: return
         loadIcon(pkg) { drawable ->
             currentIcon = drawable
-            updateProgressState()
+            if (chipColorMode == CHIP_COLOR_MODE_ICON && drawable != null) {
+                extractAndApplyChipBgColorFromIcon(drawable, forNotificationChip = true)
+            } else {
+                updateProgressState()
+            }
         }
     }
 
