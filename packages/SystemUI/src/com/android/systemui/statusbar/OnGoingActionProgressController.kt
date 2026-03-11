@@ -896,6 +896,10 @@ class OnGoingActionProgressController(
         ).coerceIn(0, 100)
         chipOpacity = opacityPercent / 100f
 
+        if (!isCompactModeEnabled) {
+            isExpanded = false
+        }
+
         if (wasChipColorMode != chipColorMode) {
             if (chipColorMode == CHIP_COLOR_MODE_ALBUM_ART && currentAlbumArt != null) {
                 currentAlbumArt?.let { extractAndApplyChipBgColorFromAlbumArt(it) }
