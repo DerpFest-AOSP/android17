@@ -18345,7 +18345,10 @@ public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {
 
         final CallerIdentity caller = getCallerIdentity();
         Preconditions.checkCallAuthorization(hasFullCrossUsersPermission(caller, userHandle));
-        Preconditions.checkCallAuthorization(canManageUsers(caller));
+        Preconditions.checkCallAuthorization(
+                canManageUsers(caller)
+                        || hasCallingOrSelfPermission(MANAGE_PROFILE_AND_DEVICE_OWNERS)
+                        || canQueryAdminPolicy(caller));
         Preconditions.checkCallAuthorization(isManagedProfile(userHandle),
                 "You can not get organization name outside a managed profile, userId = %d",
                 userHandle);
