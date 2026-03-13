@@ -910,6 +910,10 @@ class OnGoingActionProgressController(
             isExpanded = false
         }
 
+        if (showMediaProgress && !wasShowingMedia) {
+            mediaSessionHelper.refreshActiveSessions()
+        }
+
         if (wasChipColorMode != chipColorMode) {
             if (chipColorMode == CHIP_COLOR_MODE_ALBUM_ART && currentAlbumArt != null) {
                 currentAlbumArt?.let { extractAndApplyChipBgColorFromAlbumArt(it) }
