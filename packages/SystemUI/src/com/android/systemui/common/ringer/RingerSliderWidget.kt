@@ -32,6 +32,8 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.pointer.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 
@@ -74,11 +76,16 @@ fun RingerSliderWidget(
         label = "ringer_position"
     )
 
-    LaunchedEffect(targetPosition) {
-        if (!isDragging) dragOffset = targetPosition
-    }
-
+    val hapticFeedback = LocalHapticFeedback.current
+    var lastHapticStep by remember { mutableStateOf(targetPosition.roundToInt()) }
     val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(targetPosition) {
+        if (!isDragging) {
+            dragOffset = targetPosition
+            lastHapticStep = targetPosition.roundToInt()
+        }
+    }
 
     Box(
         modifier = modifier
@@ -105,6 +112,7 @@ fun RingerSliderWidget(
             val snappedIndex = (tapOffset.x / sectionWidth).toInt().coerceIn(0, numModes - 1)
             dragOffset = snappedIndex.toFloat()
             interactor.setRingerMode(availableModes[snappedIndex].mode)
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         },
         onLongPress = {
             onLongClick?.invoke()
@@ -117,7 +125,10 @@ fun RingerSliderWidget(
                     onDragEnd = {
                         isDragging = false
                         if (isDndEnabled) return@detectDragGestures
-                        interactor.setRingerMode(interactor.snapMode(dragOffset))
+                        val snapped = interactor.snapMode(dragOffset)
+                        interactor.setRingerMode(snapped)
+                        lastHapticStep = dragOffset.roundToInt().coerceIn(0, (numModes - 1).coerceAtLeast(0))
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     },
                     onDragCancel = {
                         isDragging = false
@@ -132,6 +143,11 @@ fun RingerSliderWidget(
                     val pixelPerUnit = trackWidth / maxOffset
                     dragOffset = (dragOffset + (dragAmount.x / pixelPerUnit))
                         .coerceIn(0f, maxOffset)
+                    val newStep = dragOffset.roundToInt().coerceIn(0, (numModes - 1).coerceAtLeast(0))
+                    if (newStep != lastHapticStep) {
+                        lastHapticStep = newStep
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    }
                 }
             },
         contentAlignment = Alignment.CenterStart
