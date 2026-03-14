@@ -144,7 +144,7 @@ fun RingerSliderWidget(
             val currentIndex = animatedPosition.roundToInt()
             availableModes.forEachIndexed { index, _ ->
                 val dotAlpha by animateFloatAsState(
-                    targetValue = if (currentIndex == index) 0f else 0.4f,
+                    targetValue = if (isDndEnabled) 0f else if (currentIndex == index) 0f else 0.4f,
                     animationSpec = tween(durationMillis = 200),
                     label = "dot_alpha"
                 )
