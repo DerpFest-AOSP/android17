@@ -190,6 +190,11 @@ public class CombinedNotificationCounter extends FrameLayout
     }
     
     private void updateCountFromContainer(com.android.systemui.statusbar.phone.NotificationIconContainer container) {
+        // When combined counter is enabled, the flow (bindCombinedCounter) is the source of truth;
+        // the container may still have stale icon views and would overwrite the correct count.
+        if (mShowCombinedCount) {
+            return;
+        }
         int count = container.getChildCount();
         updateNotificationCount(count);
     }
@@ -219,6 +224,17 @@ public class CombinedNotificationCounter extends FrameLayout
         }
     }
     
+    @Override
+    public void setVisibility(int visibility) {
+        super.setVisibility(visibility);
+        // When we're hidden (e.g. by HideWhenSquashedFrameLayout due to lack of space),
+        // show the notification icons so the user still sees something.
+        if (visibility != View.VISIBLE && mNotificationContainer != null
+                && mShowCombinedCount && mTotalCount > 0) {
+            mNotificationContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
     private void updateViews() {
         // Force hidden state (keyguard showing or heads-up pinned)
         if (mIsForceHidden || mHeadsUpPinned) {
@@ -226,7 +242,18 @@ public class CombinedNotificationCounter extends FrameLayout
             if (mNotificationContainer != null) {
                 mNotificationContainer.setVisibility(View.VISIBLE);
             }
+            // Hide wrapper too so it takes no space and doesn't overlap carrier label on keyguard
+            ViewParent parent = getParent();
+            if (parent instanceof HideWhenSquashedFrameLayout) {
+                ((HideWhenSquashedFrameLayout) parent).setForceHidden(true);
+            }
             return;
+        }
+        
+        // No longer force-hidden: tell wrapper to show again
+        ViewParent parent = getParent();
+        if (parent instanceof HideWhenSquashedFrameLayout) {
+            ((HideWhenSquashedFrameLayout) parent).setForceHidden(false);
         }
         
         // Update counter visibility and text
@@ -249,6 +276,11 @@ public class CombinedNotificationCounter extends FrameLayout
     public void setForceHidden(boolean forceHidden) {
         if (mIsForceHidden != forceHidden) {
             mIsForceHidden = forceHidden;
+            // Hide wrapper immediately so it doesn't overlap carrier on keyguard (don't wait for debounced updateViews)
+            ViewParent parent = getParent();
+            if (parent instanceof HideWhenSquashedFrameLayout) {
+                ((HideWhenSquashedFrameLayout) parent).setForceHidden(forceHidden);
+            }
             requestUiUpdate();
         }
     }

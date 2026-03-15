@@ -20,15 +20,17 @@
     android:orientation="horizontal"
     android:paddingStart="4sp">
 
-    <!-- Combined notification counter chip - BEFORE notification icons so it appears first -->
-    <com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter
-        android:id="@+id/combined_notification_counter"
+    <!-- Wrapper hides counter when there isn't enough space (e.g. ongoing progress chip active) -->
+    <com.android.systemui.statusbar.phone.ui.HideWhenSquashedFrameLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent">
-        
-        <include layout="@layout/combined_notification_counter" />
-        
-    </com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter>
+        <com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter
+            android:id="@+id/combined_notification_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+            <include layout="@layout/combined_notification_counter" />
+        </com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter>
+    </com.android.systemui.statusbar.phone.ui.HideWhenSquashedFrameLayout>
 
     <com.android.systemui.statusbar.phone.NotificationIconContainer
         android:id="@+id/notificationIcons"
