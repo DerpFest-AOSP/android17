@@ -767,8 +767,7 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             if (GLOBAL_ACTION_KEY_POWER.equals(actionKey)) {
                 addIfShouldShowAction(tempActions, shutdownAction);
             } else if (GLOBAL_ACTION_KEY_AIRPLANE.equals(actionKey)) {
-                addIfShouldShowAction(tempActions, mAirplaneModeOn);
-                if (!isInLockTaskMode()){
+                if (!isInLockTaskMode()) {
                     addIfShouldShowAction(tempActions, mAirplaneModeOn);
                 }
             } else if (GLOBAL_ACTION_KEY_BUGREPORT.equals(actionKey)) {
