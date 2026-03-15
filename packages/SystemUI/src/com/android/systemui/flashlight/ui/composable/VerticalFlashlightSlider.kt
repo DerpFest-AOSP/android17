@@ -18,11 +18,9 @@ package com.android.systemui.flashlight.ui.composable
 
 import android.graphics.drawable.AnimatedVectorDrawable
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -40,6 +38,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FlashlightOff
+import androidx.compose.material.icons.rounded.FlashlightOn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -309,8 +310,9 @@ private fun AnimatedVectorFlashlightDrawable(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    // Icon pack overlays may replace the drawable with a static vector; detect so we don't
-    // call animatedVectorResource (which would throw e.g. Resource ID #0x0).
+    // Icon pack overlays may replace the drawable with a static vector; use themed on/off
+    // drawables instead of Material icons. Also avoids animatedVectorResource failures when
+    // the overlay is not an animated vector.
     val useStaticIcon =
         remember(context) {
             try {
@@ -321,21 +323,26 @@ private fun AnimatedVectorFlashlightDrawable(
                 true
             }
         }
-    if (useStaticIcon) {
-        Icon(
-            modifier = modifier.semantics { hideFromAccessibility() },
-            painter = painterResource(R.drawable.qs_flashlight_icon_on),
-            contentDescription = null,
-            tint = color,
-        )
-    } else {
-        val image = AnimatedImageVector.animatedVectorResource(R.drawable.qs_flashlight_icon_on)
-        Icon(
-            modifier = modifier.semantics { hideFromAccessibility() },
-            painter = rememberAnimatedVectorPainter(image, atEnd),
-            contentDescription = null,
-            tint = color,
-        )
+    Crossfade(targetState = atEnd, label = "FlashlightIcon") { on ->
+        if (useStaticIcon) {
+            Icon(
+                modifier = modifier.semantics { hideFromAccessibility() },
+                painter =
+                    painterResource(
+                        if (on) R.drawable.qs_flashlight_icon_on
+                        else R.drawable.qs_flashlight_icon_off
+                    ),
+                contentDescription = null,
+                tint = color,
+            )
+        } else {
+            Icon(
+                modifier = modifier.semantics { hideFromAccessibility() },
+                imageVector = if (on) Icons.Rounded.FlashlightOn else Icons.Rounded.FlashlightOff,
+                contentDescription = null,
+                tint = color,
+            )
+        }
     }
 }
 
