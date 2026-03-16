@@ -270,6 +270,10 @@ public class CombinedNotificationCounter extends FrameLayout
             if (mNotificationContainer != null) {
                 mNotificationContainer.setVisibility(View.VISIBLE);
             }
+            // So wrapper re-measures and takes 0 width (no gap between clock and icons)
+            if (parent instanceof View) {
+                ((View) parent).requestLayout();
+            }
         }
     }
     

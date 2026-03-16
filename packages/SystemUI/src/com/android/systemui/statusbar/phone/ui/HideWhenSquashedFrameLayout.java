@@ -54,6 +54,12 @@ public class HideWhenSquashedFrameLayout extends FrameLayout {
 
         View child = getChildAt(0);
 
+        // When child is GONE (e.g. combined counter disabled or 0 notifications), take zero width to avoid gap
+        if (child.getVisibility() == GONE) {
+            setMeasuredDimension(0, resolveSize(0, heightMeasureSpec));
+            return;
+        }
+
         // Measure child with unrestricted width to get its desired width
         int unrestrictedWidthSpec = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED);
         child.measure(unrestrictedWidthSpec, heightMeasureSpec);
