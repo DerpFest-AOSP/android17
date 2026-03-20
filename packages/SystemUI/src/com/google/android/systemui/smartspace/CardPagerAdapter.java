@@ -675,14 +675,9 @@ public final class CardPagerAdapter extends PagerAdapter implements CardAdapter 
             notifyDataSetChanged();
         }
         hasAodLockscreenTransition = targetList != lockscreenTargets;
-        // Hide view when empty on lockscreen (either when default date/weather is disabled,
-        // or when all cards have been filtered out due to date/weather decoupling)
-        if (!BcSmartspaceDataPlugin.UI_SURFACE_HOME_SCREEN.equals(uiSurface)) {
-            boolean shouldHide = smartspaceTargets.isEmpty() &&
-                    (configProvider.isDefaultDateWeatherDisabled() || 
-                     "lockscreen".equals(uiSurface));
+        if (configProvider.isDefaultDateWeatherDisabled() && !BcSmartspaceDataPlugin.UI_SURFACE_HOME_SCREEN.equals(uiSurface)) {
             BcSmartspaceTemplateDataUtils.updateVisibility(
-                    root, shouldHide ? View.GONE : View.VISIBLE);
+                    root, smartspaceTargets.isEmpty() ? View.GONE : View.VISIBLE);
         }
     }
 }
