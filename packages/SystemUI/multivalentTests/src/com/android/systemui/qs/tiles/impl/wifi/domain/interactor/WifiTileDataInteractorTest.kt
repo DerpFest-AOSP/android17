@@ -95,7 +95,12 @@ class WifiTileDataInteractorTest(flags: FlagsParameterization) : SysuiTestCase()
         wifiRepository = FakeWifiRepository()
 
         val wifiInteractor =
-            WifiInteractorImpl(connectivityRepository, wifiRepository, testScope.backgroundScope)
+            WifiInteractorImpl(
+                connectivityRepository,
+                wifiRepository,
+                com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
+                testScope.backgroundScope,
+            )
 
         mobileIconsInteractor =
             MobileIconsInteractorImpl(
@@ -109,6 +114,7 @@ class WifiTileDataInteractorTest(flags: FlagsParameterization) : SysuiTestCase()
                 FakeFeatureFlagsClassic().also {
                     it.set(Flags.FILTER_PROVISIONING_NETWORK_SUBSCRIPTIONS, true)
                 },
+                com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
             )
 
         underTest = WifiTileDataInteractor(context, FakeAirplaneModeRepository(), wifiInteractor)

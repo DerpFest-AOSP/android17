@@ -15,8 +15,11 @@
  */
 package com.android.systemui.statusbar.pipeline.ims.data.model
 
-import android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NONE
+import android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM
 import android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN
+import android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_LTE
+import android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NONE
+import android.telephony.ims.stub.ImsRegistrationImplBase.REGISTRATION_TECH_NR
 import android.telephony.ims.feature.MmTelFeature
 
 data class ImsStateModel(
@@ -35,4 +38,32 @@ data class ImsStateModel(
     fun isVoWifiAvailable(): Boolean =
         isHdVoiceCapable() && registrationTech == REGISTRATION_TECH_IWLAN
 
+    /**
+     * Per-subscription booleans for dedicated VoLTE / VoNR / VoWiFi status bar icons, after the same
+     * prioritization as Nokia-style indicators (VoWiFi suppresses cellular IMS badges; VoNR
+     * suppresses VoLTE).
+     */
+    fun dedicatedImsSlotAvailability(): DedicatedImsSlotAvailability {
+        if (!isHdVoiceCapable()) {
+            return DedicatedImsSlotAvailability(false, false, false)
+        }
+        var voWifi =
+            registrationTech == REGISTRATION_TECH_IWLAN ||
+                registrationTech == REGISTRATION_TECH_CROSS_SIM
+        var voNr = registrationTech == REGISTRATION_TECH_NR
+        var voLte = registrationTech == REGISTRATION_TECH_LTE
+        if (voWifi) {
+            voNr = false
+            voLte = false
+        } else if (voNr) {
+            voLte = false
+        }
+        return DedicatedImsSlotAvailability(voLte = voLte, voNr = voNr, voWifi = voWifi)
+    }
 }
+
+data class DedicatedImsSlotAvailability(
+    val voLte: Boolean,
+    val voNr: Boolean,
+    val voWifi: Boolean,
+)

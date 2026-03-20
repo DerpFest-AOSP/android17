@@ -45,6 +45,7 @@ import com.android.systemui.statusbar.pipeline.mobile.data.model.NetworkNameMode
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.FakeMobileConnectionRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.FakeMobileConnectionRepository.Companion.DEFAULT_NETWORK_NAME
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.FakeMobileConnectionsRepository
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconInteractorImpl
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconsInteractorImpl
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
@@ -82,6 +83,8 @@ import org.mockito.MockitoAnnotations
 @RunWith(AndroidJUnit4::class)
 class MobileIconViewModelTest : SysuiTestCase() {
     private val kosmos = testKosmos()
+
+    private val fakeDedicatedImsStyle = FakeDedicatedImsStyleRepository()
 
     private var connectivityRepository = FakeConnectivityRepository()
 
@@ -135,6 +138,7 @@ class MobileIconViewModelTest : SysuiTestCase() {
                 testScope.backgroundScope,
                 context,
                 flags,
+                fakeDedicatedImsStyle,
             )
 
         interactor =
@@ -153,6 +157,7 @@ class MobileIconViewModelTest : SysuiTestCase() {
                 iconsInteractor.isMobileHdForceHidden,
                 iconsInteractor.isVoWifiForceHidden,
                 repository,
+                fakeDedicatedImsStyle,
                 context,
                 MobileIconCarrierIdOverridesFake(),
             )

@@ -76,6 +76,7 @@ class MobileIconInteractorTest : MobileIconInteractorTestBase() {
             mobileIconsInteractor.isMobileHdForceHidden,
             mobileIconsInteractor.isVoWifiForceHidden,
             connectionRepository,
+            com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
             context,
             overrides,
         )

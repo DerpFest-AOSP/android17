@@ -33,6 +33,8 @@ import com.android.systemui.statusbar.pipeline.icons.shared.BindableIconsRegistr
 import com.android.systemui.statusbar.pipeline.icons.shared.BindableIconsRegistryImpl
 import com.android.systemui.statusbar.pipeline.ims.data.repository.CommonImsRepository
 import com.android.systemui.statusbar.pipeline.ims.data.repository.CommonImsRepositoryImpl
+import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepository
+import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepositoryImpl
 import com.android.systemui.statusbar.pipeline.mobile.StatusBarMobileIconKairos
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.CarrierConfigCoreStartable
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.CarrierConfigRepository
@@ -168,6 +170,11 @@ abstract class StatusBarPipelineModule {
 
     @Binds
     abstract fun bindCommonImsRepository(impl: CommonImsRepositoryImpl): CommonImsRepository
+
+    @Binds
+    abstract fun bindDedicatedImsStyleRepository(
+        impl: DedicatedImsStyleRepositoryImpl
+    ): DedicatedImsStyleRepository
 
     companion object {
 

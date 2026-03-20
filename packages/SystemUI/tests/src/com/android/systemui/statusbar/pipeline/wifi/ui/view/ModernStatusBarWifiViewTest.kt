@@ -35,6 +35,7 @@ import com.android.systemui.statusbar.StatusBarIconView.STATE_HIDDEN
 import com.android.systemui.statusbar.StatusBarIconView.STATE_ICON
 import com.android.systemui.statusbar.core.NewStatusBarIcons
 import com.android.systemui.statusbar.phone.StatusBarLocation
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.shared.ConnectivityConstants
 import com.android.systemui.statusbar.pipeline.shared.data.repository.FakeConnectivityRepository
 import com.android.systemui.statusbar.pipeline.shared.data.repository.connectivityRepository
@@ -85,7 +86,13 @@ class ModernStatusBarWifiViewTest : SysuiTestCase() {
         wifiRepository = FakeWifiRepository()
         wifiRepository.setIsWifiEnabled(true)
         scope = CoroutineScope(Dispatchers.Unconfined)
-        interactor = WifiInteractorImpl(connectivityRepository, wifiRepository, scope)
+        interactor =
+            WifiInteractorImpl(
+                connectivityRepository,
+                wifiRepository,
+                FakeDedicatedImsStyleRepository(),
+                scope,
+            )
         val viewModelCommon =
             WifiViewModel(
                 connectivityConstants,

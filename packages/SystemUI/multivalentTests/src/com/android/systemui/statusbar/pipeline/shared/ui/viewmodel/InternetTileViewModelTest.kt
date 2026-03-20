@@ -87,7 +87,12 @@ class InternetTileViewModelTest : SysuiTestCase() {
     private val userSetupRepo = FakeUserSetupRepository()
     private val testScope = TestScope()
     private val wifiInteractor =
-        WifiInteractorImpl(connectivityRepository, wifiRepository, testScope.backgroundScope)
+        WifiInteractorImpl(
+            connectivityRepository,
+            wifiRepository,
+            com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
+            testScope.backgroundScope,
+        )
 
     private val tableLogBuffer = logcatTableLogBuffer(kosmos, "InternetTileViewModelTest")
     private val carrierConfigTracker: CarrierConfigTracker = mock()
@@ -133,6 +138,7 @@ class InternetTileViewModelTest : SysuiTestCase() {
                 testScope.backgroundScope,
                 context,
                 flags,
+                com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
             )
 
         underTest =

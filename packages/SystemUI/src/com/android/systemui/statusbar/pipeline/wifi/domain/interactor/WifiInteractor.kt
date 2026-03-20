@@ -22,6 +22,8 @@ import com.android.systemui.statusbar.pipeline.shared.data.model.ConnectivitySlo
 import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
 import com.android.systemui.statusbar.pipeline.shared.data.repository.ConnectivityRepository
 import com.android.systemui.statusbar.pipeline.shared.ui.model.WifiToggleState
+import com.android.systemui.statusbar.pipeline.ims.data.model.ImsStateModel
+import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.wifi.data.repository.WifiRepository
 import com.android.systemui.statusbar.pipeline.wifi.shared.model.VoWifiState
 import com.android.systemui.statusbar.pipeline.wifi.shared.model.WifiNetworkModel
@@ -82,6 +84,7 @@ class WifiInteractorImpl
 constructor(
     connectivityRepository: ConnectivityRepository,
     wifiRepository: WifiRepository,
+    dedicatedImsStyleRepository: DedicatedImsStyleRepository,
     @Application scope: CoroutineScope,
 ) : WifiInteractor {
 
@@ -128,20 +131,17 @@ constructor(
     override val wifiToggleState: StateFlow<WifiToggleState> = wifiRepository.wifiToggleState
 
     override val voWifiState: StateFlow<VoWifiState> =
-        wifiRepository.imsStates.map { states ->
-            val voWifiEnabled = states.filter { it.isVoWifiAvailable() }
-            if (voWifiEnabled.isNotEmpty()) {
-                // Get the VoWifi enabled slots
-                val slots = voWifiEnabled.map { it.slotIndex }
-                // Get the active subscription count from any one of the states
-                // (All states are being collected at the same time so doesn't matter)
-                val activeSubCount = voWifiEnabled.first().activeSubCount
-                VoWifiState.Enabled(slots, activeSubCount)
-            } else {
-                VoWifiState.Disabled
+        combine(
+                wifiRepository.imsStates,
+                dedicatedImsStyleRepository.isDedicatedImsIconStyle,
+            ) { states, dedicated ->
+                if (dedicated) {
+                    VoWifiState.Disabled
+                } else {
+                    voWifiStateFromImsStates(states)
+                }
             }
-        }
-        .stateIn(scope, SharingStarted.WhileSubscribed(), VoWifiState.Disabled)
+            .stateIn(scope, SharingStarted.WhileSubscribed(), VoWifiState.Disabled)
 
     override val isVoWifiForceHidden: Flow<Boolean> =
         connectivityRepository.forceHiddenSlots.map { it.contains(ConnectivitySlot.VOWIFI) }
@@ -150,4 +150,15 @@ constructor(
         currentNetwork: WifiNetworkModel.Active,
         availableNetworks: List<WifiScanEntry>,
     ): Boolean = availableNetworks.firstOrNull { it.ssid != currentNetwork.ssid } != null
+
+    private fun voWifiStateFromImsStates(states: List<ImsStateModel>): VoWifiState {
+        val voWifiEnabled = states.filter { it.isVoWifiAvailable() }
+        return if (voWifiEnabled.isNotEmpty()) {
+            val slots = voWifiEnabled.map { it.slotIndex }
+            val activeSubCount = voWifiEnabled.first().activeSubCount
+            VoWifiState.Enabled(slots, activeSubCount)
+        } else {
+            VoWifiState.Disabled
+        }
+    }
 }

@@ -25,6 +25,7 @@ import com.android.systemui.flags.featureFlagsClassic
 import com.android.systemui.kairos.ActivatedKairosFixture
 import com.android.systemui.kairos.KairosTestScope
 import com.android.systemui.kairos.runKairosTest
+import com.android.systemui.kairos.stateOf
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.useUnconfinedTestDispatcher
 import com.android.systemui.log.table.logcatTableLogBuffer
@@ -82,7 +83,11 @@ class LocationBasedMobileIconViewModelKairosTest : SysuiTestCase() {
                 iconsInteractor.defaultMobileIconGroup,
                 iconsInteractor.isDefaultConnectionFailed,
                 iconsInteractor.isForceHidden,
+                iconsInteractor.isRoamingForceHidden,
+                iconsInteractor.isMobileHdForceHidden,
+                iconsInteractor.isVoWifiForceHidden,
                 repository,
+                isDedicatedImsIconStyle = stateOf(false),
                 context,
                 MobileIconCarrierIdOverridesFake(),
             )
