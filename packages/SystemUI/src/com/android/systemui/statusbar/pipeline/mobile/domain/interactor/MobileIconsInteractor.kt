@@ -33,6 +33,7 @@ import com.android.systemui.statusbar.core.StatusBarRootModernization
 import com.android.systemui.statusbar.pipeline.dagger.MobileSummaryLog
 import com.android.systemui.statusbar.pipeline.mobile.data.model.SubscriptionModel
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepository
+import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionsRepository
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
 import com.android.systemui.statusbar.pipeline.shared.data.model.ConnectivitySlot
@@ -162,6 +163,7 @@ constructor(
     @Background private val scope: CoroutineScope,
     private val context: Context,
     private val featureFlagsClassic: FeatureFlagsClassic,
+    private val dedicatedImsStyleRepository: DedicatedImsStyleRepository,
 ) : MobileIconsInteractor {
 
     // Weak reference lookup for created interactors
@@ -472,6 +474,7 @@ constructor(
                 isMobileHdForceHidden,
                 isVoWifiForceHidden,
                 mobileConnectionsRepo.getRepoForSubId(subId),
+                dedicatedImsStyleRepository,
                 context,
             )
             .also { reuseCache[subId] = WeakReference(it) }

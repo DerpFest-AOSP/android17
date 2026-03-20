@@ -600,6 +600,7 @@ constructor(
             isExclusivelyNonTerrestrial = isOnlyNonTerrestrialNetwork,
             groupUuid = groupUuid,
             carrierName = carrierName.toString(),
+            simSlotIndex = simSlotIndex,
             profileClass = profileClass,
         )
 

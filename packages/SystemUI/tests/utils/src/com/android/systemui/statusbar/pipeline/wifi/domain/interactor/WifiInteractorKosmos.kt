@@ -18,6 +18,7 @@ package com.android.systemui.statusbar.pipeline.wifi.domain.interactor
 
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.applicationCoroutineScope
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.shared.data.repository.connectivityRepository
 import com.android.systemui.statusbar.pipeline.wifi.data.repository.wifiRepository
 
@@ -26,6 +27,7 @@ val Kosmos.wifiInteractor: WifiInteractor by
         WifiInteractorImpl(
             connectivityRepository,
             wifiRepository,
+            FakeDedicatedImsStyleRepository(),
             applicationCoroutineScope,
         )
     }

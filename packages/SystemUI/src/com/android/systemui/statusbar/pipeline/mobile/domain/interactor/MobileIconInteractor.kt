@@ -30,6 +30,7 @@ import com.android.systemui.log.table.logDiffsForTable
 import com.android.systemui.statusbar.pipeline.mobile.data.model.DataConnectionState.Connected
 import com.android.systemui.statusbar.pipeline.mobile.data.model.NetworkNameModel
 import com.android.systemui.statusbar.pipeline.mobile.data.model.ResolvedNetworkType
+import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepository
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.NetworkTypeIconModel
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.NetworkTypeIconModel.DefaultIcon
@@ -173,6 +174,7 @@ class MobileIconInteractorImpl(
     override val isMobileHdForceHidden: Flow<Boolean>,
     override val isVoWifiForceHidden: Flow<Boolean>,
     connectionRepository: MobileConnectionRepository,
+    dedicatedImsStyleRepository: DedicatedImsStyleRepository,
     private val context: Context,
     val carrierIdOverrides: MobileIconCarrierIdOverrides = MobileIconCarrierIdOverridesImpl(),
 ) : MobileIconInteractor {
@@ -467,12 +469,20 @@ class MobileIconInteractorImpl(
     }
 
     override val isMobileHd: StateFlow<Boolean> =
-        connectionRepository.imsState
-            .map { it.isHdVoiceCapable() }
+        combine(
+                connectionRepository.imsState.map { it.isHdVoiceCapable() },
+                dedicatedImsStyleRepository.isDedicatedImsIconStyle,
+            ) { hdCapable, dedicated ->
+                !dedicated && hdCapable
+            }
             .stateIn(scope, SharingStarted.WhileSubscribed(), false)
 
     override val isVoWifi: StateFlow<Boolean> =
-        connectionRepository.imsState
-            .map { it.isVoWifiAvailable() }
+        combine(
+                connectionRepository.imsState.map { it.isVoWifiAvailable() },
+                dedicatedImsStyleRepository.isDedicatedImsIconStyle,
+            ) { voWifi, dedicated ->
+                !dedicated && voWifi
+            }
             .stateIn(scope, SharingStarted.WhileSubscribed(), false)
 }

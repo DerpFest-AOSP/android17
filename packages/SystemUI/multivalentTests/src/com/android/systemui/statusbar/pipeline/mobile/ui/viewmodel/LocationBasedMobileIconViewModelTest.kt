@@ -116,6 +116,7 @@ class LocationBasedMobileIconViewModelTest : SysuiTestCase() {
                 testScope.backgroundScope,
                 context,
                 flags,
+                com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
             )
 
         interactor =
@@ -134,6 +135,7 @@ class LocationBasedMobileIconViewModelTest : SysuiTestCase() {
                 iconsInteractor.isMobileHdForceHidden,
                 iconsInteractor.isVoWifiForceHidden,
                 repository,
+                com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
                 context,
                 MobileIconCarrierIdOverridesFake(),
             )

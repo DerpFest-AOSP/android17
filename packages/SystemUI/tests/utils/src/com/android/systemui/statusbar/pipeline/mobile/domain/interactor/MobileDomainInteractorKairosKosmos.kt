@@ -22,6 +22,7 @@ import com.android.systemui.kairos.ActivatedKairosFixture
 import com.android.systemui.kairos.ExperimentalKairosApi
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.log.table.logcatTableLogBuffer
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.mobileConnectionsRepositoryKairos
 import com.android.systemui.statusbar.pipeline.shared.data.repository.connectivityRepository
 import com.android.systemui.statusbar.policy.data.repository.userSetupRepository
@@ -37,5 +38,6 @@ val Kosmos.mobileIconsInteractorKairos by ActivatedKairosFixture {
         userSetupRepository,
         applicationContext,
         featureFlagsClassic,
+        FakeDedicatedImsStyleRepository(),
     )
 }

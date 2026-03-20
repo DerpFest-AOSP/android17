@@ -13229,6 +13229,15 @@ public final class Settings {
         public static final String STATUS_BAR_SHOW_VIBRATE_ICON = "status_bar_show_vibrate_icon";
 
         /**
+         * How IMS voice indicators are shown in the status bar: {@code 0} = integrated (HD next to
+         * signal, VoWiFi on Wi-Fi row), {@code 1} = dedicated status bar icons (VoLTE / VoNR /
+         * VoWiFi slots).
+         *
+         * @hide
+         */
+        public static final String STATUS_BAR_IMS_INDICATOR_STYLE = "status_bar_ims_indicator_style";
+
+        /**
          * Specifies whether the web action API is enabled.
          *
          * @hide

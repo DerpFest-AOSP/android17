@@ -136,15 +136,39 @@
         android:key="roaming"
         android:title="@string/status_bar_roaming" />
 
-    <com.android.systemui.tuner.StatusBarSwitch
-        android:icon="@drawable/ic_statusbar_hd_calling"
-        android:key="hd_calling"
-        android:title="@string/status_bar_hd_calling" />
+    <androidx.preference.PreferenceCategory
+        android:key="ims_status_bar_category"
+        android:title="@string/status_bar_ims_indicator_category_title">
 
-    <com.android.systemui.tuner.StatusBarSwitch
-        android:icon="@drawable/ic_statusbar_vowifi"
-        android:key="vowifi"
-        android:title="@string/status_bar_vowifi" />
+        <androidx.preference.ListPreference
+            android:key="status_bar_ims_indicator_style"
+            android:title="@string/status_bar_ims_indicator_style_title"
+            android:dialogTitle="@string/status_bar_ims_indicator_style_title"
+            android:summary="%s"
+            android:icon="@drawable/ic_statusbar_hd_calling"
+            android:entries="@array/status_bar_ims_indicator_style_entries"
+            android:entryValues="@array/status_bar_ims_indicator_style_values" />
+
+        <com.android.systemui.tuner.StatusBarSwitch
+            android:icon="@drawable/ic_statusbar_hd_calling"
+            android:key="hd_calling"
+            android:title="@string/status_bar_hd_calling" />
+
+        <com.android.systemui.tuner.StatusBarSwitch
+            android:icon="@drawable/ic_statusbar_vowifi"
+            android:key="vowifi"
+            android:title="@string/status_bar_vowifi" />
+
+        <com.android.systemui.tuner.StatusBarSwitch
+            android:icon="@drawable/ic_statusbar_volte_tuner"
+            android:key="volte"
+            android:title="@string/status_bar_volte_icon_title" />
+
+        <com.android.systemui.tuner.StatusBarSwitch
+            android:icon="@drawable/ic_statusbar_vonr_tuner"
+            android:key="vonr"
+            android:title="@string/status_bar_vonr_icon_title" />
+    </androidx.preference.PreferenceCategory>
 
     <!-- other weird signal stuff -->
 

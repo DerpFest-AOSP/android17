@@ -64,7 +64,12 @@ class DeviceBasedSatelliteViewModelTest : SysuiTestCase() {
     private val connectivityRepository = kosmos.connectivityRepository.fake
     private val wifiRepository = FakeWifiRepository()
     private val wifiInteractor =
-        WifiInteractorImpl(connectivityRepository, wifiRepository, testScope.backgroundScope)
+        WifiInteractorImpl(
+            connectivityRepository,
+            wifiRepository,
+            com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
+            testScope.backgroundScope,
+        )
 
     @Before
     fun setUp() {

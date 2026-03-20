@@ -95,6 +95,7 @@ class MobileDataTileDataInteractorTest(flags: FlagsParameterization) : SysuiTest
             testScope.backgroundScope,
             context,
             featureFlags,
+            com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
         )
 
     private var underTest: MobileDataTileDataInteractor =

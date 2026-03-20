@@ -49,6 +49,7 @@ import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConn
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepositoryKairos
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionsRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionsRepositoryKairos
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.mobileMappingsProxy
 import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
 import com.android.systemui.statusbar.pipeline.shared.data.repository.connectivityRepository
@@ -75,6 +76,7 @@ class MobileIconsInteractorKairosAdapterTest : MobileIconsInteractorTestBase() {
                     userSetupRepo = userSetupRepo,
                     context = context,
                     featureFlagsClassic = featureFlagsClassic,
+                    dedicatedImsStyleRepository = FakeDedicatedImsStyleRepository(),
                 )
                 .also { activateKairosActivatable(it) }
         return MobileIconsInteractorKairosAdapter(

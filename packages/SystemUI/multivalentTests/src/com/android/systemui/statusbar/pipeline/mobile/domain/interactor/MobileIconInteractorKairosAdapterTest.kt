@@ -28,6 +28,7 @@ import com.android.systemui.kairos.State
 import com.android.systemui.kairos.asIncremental
 import com.android.systemui.kairos.buildSpec
 import com.android.systemui.kairos.combine
+import com.android.systemui.kairos.stateOf
 import com.android.systemui.kairos.launchKairosNetwork
 import com.android.systemui.statusbar.pipeline.mobile.data.model.SubscriptionModel
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconsInteractorKairosAdapterTest.Companion.wrapRepo
@@ -69,7 +70,11 @@ class MobileIconInteractorKairosAdapterTest : MobileIconInteractorTestBase() {
                                         isDefaultConnectionFailed =
                                             wrapped.isDefaultConnectionFailed,
                                         isForceHidden = wrapped.isForceHidden,
+                                        isRoamingForceHidden = wrapped.isRoamingForceHidden,
+                                        isMobileHdForceHidden = wrapped.isMobileHdForceHidden,
+                                        isVoWifiForceHidden = wrapped.isVoWifiForceHidden,
                                         connectionRepository = wrapRepo(connectionRepository),
+                                        isDedicatedImsIconStyle = stateOf(false),
                                         context = context,
                                         carrierIdOverrides = overrides,
                                     )
@@ -112,6 +117,9 @@ class MobileIconInteractorKairosAdapterTest : MobileIconInteractorTestBase() {
             isDefaultConnectionFailed = interactor.isDefaultConnectionFailed.toState(),
             isUserSetUp = interactor.isUserSetUp.toState(),
             isForceHidden = interactor.isForceHidden.toState(false),
+            isRoamingForceHidden = interactor.isRoamingForceHidden.toState(false),
+            isMobileHdForceHidden = interactor.isMobileHdForceHidden.toState(false),
+            isVoWifiForceHidden = interactor.isVoWifiForceHidden.toState(false),
             isDeviceInEmergencyCallsOnlyMode =
                 interactor.isDeviceInEmergencyCallsOnlyMode.toState(false),
         )
@@ -136,6 +144,9 @@ class MobileIconInteractorKairosAdapterTest : MobileIconInteractorTestBase() {
         override val isDefaultConnectionFailed: State<Boolean>,
         override val isUserSetUp: State<Boolean>,
         override val isForceHidden: State<Boolean>,
+        override val isRoamingForceHidden: State<Boolean>,
+        override val isMobileHdForceHidden: State<Boolean>,
+        override val isVoWifiForceHidden: State<Boolean>,
         override val isDeviceInEmergencyCallsOnlyMode: State<Boolean>,
     ) : MobileIconsInteractorKairos
 }

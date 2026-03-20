@@ -82,7 +82,12 @@ class InternetTileNewImplTest : SysuiTestCase() {
     private var mobileIconsInteractor = FakeMobileIconsInteractor(FakeMobileMappingsProxy(), mock())
     private var wifiRepository = FakeWifiRepository()
     private var wifiInteractor =
-        WifiInteractorImpl(connectivityRepository, wifiRepository, testScope.backgroundScope)
+        WifiInteractorImpl(
+            connectivityRepository,
+            wifiRepository,
+            com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository(),
+            testScope.backgroundScope,
+        )
     private lateinit var viewModel: InternetTileViewModel
 
     private lateinit var looper: TestableLooper

@@ -35,6 +35,7 @@ import com.android.systemui.kairos.ActivatedKairosFixture
 import com.android.systemui.kairos.ExperimentalKairosApi
 import com.android.systemui.kairos.KairosTestScope
 import com.android.systemui.kairos.kairos
+import com.android.systemui.kairos.stateOf
 import com.android.systemui.kairos.map
 import com.android.systemui.kairos.runKairosTest
 import com.android.systemui.kosmos.Kosmos
@@ -94,7 +95,11 @@ class MobileIconViewModelKairosTest : SysuiTestCase() {
             mobileIconsInteractorKairos.defaultMobileIconGroup,
             mobileIconsInteractorKairos.isDefaultConnectionFailed,
             mobileIconsInteractorKairos.isForceHidden,
+            mobileIconsInteractorKairos.isRoamingForceHidden,
+            mobileIconsInteractorKairos.isMobileHdForceHidden,
+            mobileIconsInteractorKairos.isVoWifiForceHidden,
             repository,
+            isDedicatedImsIconStyle = stateOf(false),
             context,
             MobileIconCarrierIdOverridesFake(),
         )

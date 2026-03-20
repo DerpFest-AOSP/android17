@@ -51,6 +51,24 @@
     <!-- Name of the VoWiFi status bar icon. -->
     <string name="status_bar_vowifi">Wi-Fi calling (VoWiFi)</string>
 
+    <!-- IMS / voice indicator tuner category -->
+    <string name="status_bar_ims_indicator_category_title">Voice network indicators</string>
+    <string name="status_bar_ims_indicator_style_title">Indicator style</string>
+    <string name="status_bar_ims_style_integrated">Integrated (HD by signal, VoWiFi on Wi‑Fi)</string>
+    <string name="status_bar_ims_style_dedicated">Dedicated icons (VoLTE / VoNR / VoWiFi)</string>
+    <string name="status_bar_volte_icon_title">VoLTE</string>
+    <string name="status_bar_vonr_icon_title">VoNR</string>
+    <string name="status_bar_vowifi_icon_title">VoWiFi</string>
+
+    <string-array name="status_bar_ims_indicator_style_entries">
+        <item>@string/status_bar_ims_style_integrated</item>
+        <item>@string/status_bar_ims_style_dedicated</item>
+    </string-array>
+    <string-array name="status_bar_ims_indicator_style_values" translatable="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+
     <!-- WiFi standard numbering on statusbar -->
     <string name="status_bar_wifi_standard">Wi-Fi standard number</string>
 

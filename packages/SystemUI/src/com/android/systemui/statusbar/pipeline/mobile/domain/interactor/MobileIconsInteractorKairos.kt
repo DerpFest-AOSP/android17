@@ -50,6 +50,7 @@ import com.android.systemui.statusbar.pipeline.dagger.MobileSummaryLog
 import com.android.systemui.statusbar.pipeline.mobile.StatusBarMobileIconKairos
 import com.android.systemui.statusbar.pipeline.mobile.data.model.SubscriptionModel
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepositoryKairos
+import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionsRepositoryKairos
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
 import com.android.systemui.statusbar.pipeline.shared.data.model.ConnectivitySlot
@@ -153,7 +154,14 @@ constructor(
     userSetupRepo: UserSetupRepository,
     private val context: Context,
     private val featureFlagsClassic: FeatureFlagsClassic,
+    dedicatedImsStyleRepository: DedicatedImsStyleRepository,
 ) : MobileIconsInteractorKairos, KairosBuilder by kairosBuilder() {
+
+    private val isDedicatedImsIconStyle: State<Boolean> = buildState {
+        dedicatedImsStyleRepository.isDedicatedImsIconStyle.toState(
+            nameTag("MobileIconsInteractorKairosImpl.isDedicatedImsIconStyle")
+        )
+    }
 
     override val mobileIsDefault: State<Boolean> =
         combine(
@@ -477,6 +485,7 @@ constructor(
             isMobileHdForceHidden,
             isVoWifiForceHidden,
             repo,
+            isDedicatedImsIconStyle,
             context,
         )
     }

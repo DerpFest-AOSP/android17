@@ -41,6 +41,7 @@ import com.android.systemui.statusbar.pipeline.airplane.data.repository.FakeAirp
 import com.android.systemui.statusbar.pipeline.airplane.domain.interactor.AirplaneModeInteractor
 import com.android.systemui.statusbar.pipeline.airplane.ui.viewmodel.AirplaneModeViewModel
 import com.android.systemui.statusbar.pipeline.airplane.ui.viewmodel.AirplaneModeViewModelImpl
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.fakeMobileConnectionsRepository
 import com.android.systemui.statusbar.pipeline.shared.ConnectivityConstants
 import com.android.systemui.statusbar.pipeline.shared.data.repository.FakeConnectivityRepository
@@ -94,7 +95,13 @@ class ModernStatusBarWifiViewTest : SysuiTestCase() {
         wifiRepository = FakeWifiRepository()
         wifiRepository.setIsWifiEnabled(true)
         scope = CoroutineScope(Dispatchers.Unconfined)
-        interactor = WifiInteractorImpl(connectivityRepository, wifiRepository, scope)
+        interactor =
+            WifiInteractorImpl(
+                connectivityRepository,
+                wifiRepository,
+                FakeDedicatedImsStyleRepository(),
+                scope,
+            )
         airplaneModeViewModel =
             AirplaneModeViewModelImpl(
                 AirplaneModeInteractor(

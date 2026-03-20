@@ -28,6 +28,7 @@ import com.android.systemui.statusbar.connectivity.WifiIcons.WIFI_FULL_ICONS
 import com.android.systemui.statusbar.connectivity.WifiIcons.WIFI_NO_INTERNET_ICONS
 import com.android.systemui.statusbar.connectivity.WifiIcons.WIFI_NO_NETWORK
 import com.android.systemui.statusbar.pipeline.airplane.data.repository.FakeAirplaneModeRepository
+import com.android.systemui.statusbar.pipeline.ims.FakeDedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.airplane.domain.interactor.AirplaneModeInteractor
 import com.android.systemui.statusbar.pipeline.airplane.ui.viewmodel.AirplaneModeViewModel
 import com.android.systemui.statusbar.pipeline.airplane.ui.viewmodel.AirplaneModeViewModelImpl
@@ -87,7 +88,13 @@ internal class WifiViewModelIconParameterizedTest(private val testCase: TestCase
         wifiRepository = FakeWifiRepository()
         wifiRepository.setIsWifiEnabled(true)
         scope = CoroutineScope(IMMEDIATE)
-        interactor = WifiInteractorImpl(connectivityRepository, wifiRepository, scope)
+        interactor =
+            WifiInteractorImpl(
+                connectivityRepository,
+                wifiRepository,
+                FakeDedicatedImsStyleRepository(),
+                scope,
+            )
         airplaneModeViewModel =
             AirplaneModeViewModelImpl(
                 AirplaneModeInteractor(
