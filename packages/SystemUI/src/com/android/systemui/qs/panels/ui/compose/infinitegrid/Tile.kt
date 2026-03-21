@@ -871,6 +871,20 @@ fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
 }
 
 /**
+ * Must match [com.android.systemui.qs.composefragment.QSFragmentCompose] `PlatformTheme`:
+ * when [Flags.notificationShadeBlur] is false, QS uses a dark [MaterialTheme] regardless of system
+ * light/dark. Gradient defaults and luminance contrast must use the same dark/light choice or
+ * active tile labels/icons pick the wrong contrast.
+ */
+@Composable
+private fun qsComposeMaterialIsDark(): Boolean =
+    if (Flags.notificationShadeBlur()) {
+        isSystemInDarkTheme()
+    } else {
+        true
+    }
+
+/**
  * When QS tile gradient is enabled, returns (brush, endColor) for use by the ringer slider thumb.
  * Returns null when gradient is disabled.
  */
@@ -880,7 +894,7 @@ fun rememberQsTileGradientForRinger(): Pair<Brush?, Color?>? {
     val (customStart, customEnd) = rememberQsGradientCustomColors()
     val context = LocalContext.current
     val resources = LocalResources.current
-    val isDark = isSystemInDarkTheme()
+    val isDark = qsComposeMaterialIsDark()
     val defaultStart = remember(isDark, resources, context.theme) {
         val id =
             if (isDark) R.color.derpfestui_color_gradient_start_dark
@@ -1125,7 +1139,7 @@ private object TileDefaults {
         val (customStart, customEnd) = rememberQsGradientCustomColors()
         val context = LocalContext.current
         val resources = LocalResources.current
-        val isDark = isSystemInDarkTheme()
+        val isDark = qsComposeMaterialIsDark()
         val defaultEnd = remember(isDark, resources, context.theme) {
             val id = if (isDark) R.color.derpfestui_color_gradient_end_dark
                 else R.color.derpfestui_color_gradient_end_light
@@ -1143,7 +1157,7 @@ private object TileDefaults {
         val (customStart, customEnd) = rememberQsGradientCustomColors()
         val context = LocalContext.current
         val resources = LocalResources.current
-        val isDark = isSystemInDarkTheme()
+        val isDark = qsComposeMaterialIsDark()
         val defaultStart = remember(isDark, resources, context.theme) {
             val id = if (isDark) R.color.derpfestui_color_gradient_start_dark
                 else R.color.derpfestui_color_gradient_start_light
