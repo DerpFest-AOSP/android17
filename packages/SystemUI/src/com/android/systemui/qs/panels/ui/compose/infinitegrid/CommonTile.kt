@@ -445,7 +445,14 @@ fun ClassicCircleTileContent(
             modifier = Modifier
                 .size(CommonTileDefaults.ClassicCircleSize)
                 .clip(RoundedCornerShape(50))
-                .drawBehind { drawRect(animatedBgColor) },
+                .drawBehind {
+                    val brush = colors.backgroundBrush
+                    if (brush != null) {
+                        drawRect(brush = brush)
+                    } else {
+                        drawRect(animatedBgColor)
+                    }
+                },
         ) {
             SmallTileContent(
                 iconProvider = iconProvider,
