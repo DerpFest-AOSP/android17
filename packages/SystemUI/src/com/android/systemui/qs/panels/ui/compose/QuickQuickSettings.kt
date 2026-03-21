@@ -35,9 +35,11 @@ import com.android.systemui.qs.composefragment.ui.GridAnchor
 import com.android.systemui.qs.flags.QSMaterialExpressiveTiles
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSPanelStyle
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSTileIconShapeKey
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSTileLabelHide
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.Tile
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSTileIconShapeKey
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSTileLabelHide
 import com.android.systemui.qs.panels.ui.viewmodel.BounceableTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.QuickQuickSettingsViewModel
@@ -53,6 +55,7 @@ fun ContentScope.QuickQuickSettings(
     val panelStyle = rememberQSPanelStyle()
     val isClassicStyle = panelStyle == 1
     val hideTileLabels = rememberQSTileLabelHide()
+    val qsTileIconShapeKey = rememberQSTileIconShapeKey()
     val classicColumns = integerResource(R.integer.quick_settings_num_columns_classic)
     val columnsFlow by viewModel.qqsColumns.collectAsStateWithLifecycle(
         initialValue = integerResource(R.integer.quick_settings_infinite_grid_num_columns)
@@ -72,6 +75,7 @@ fun ContentScope.QuickQuickSettings(
     CompositionLocalProvider(
         LocalQSPanelStyle provides panelStyle,
         LocalQSTileLabelHide provides hideTileLabels,
+        LocalQSTileIconShapeKey provides qsTileIconShapeKey,
     ) {
     Box(modifier = modifier) {
         GridAnchor()

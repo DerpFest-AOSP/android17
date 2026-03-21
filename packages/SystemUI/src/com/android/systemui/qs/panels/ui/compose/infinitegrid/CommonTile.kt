@@ -440,11 +440,13 @@ fun ClassicCircleTileContent(
         modifier = modifier.fillMaxWidth(),
     ) {
         val animatedBgColor by animateColorAsState(colors.background, label = "CircleBgColor")
+        val tileIconShapeKey = LocalQSTileIconShapeKey.current
+        val tileIconShape = remember(tileIconShapeKey) { QSTileIconShapes.shapeForKey(tileIconShapeKey) }
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(CommonTileDefaults.ClassicCircleSize)
-                .clip(RoundedCornerShape(50))
+                .clip(tileIconShape)
                 .drawBehind {
                     val brush = colors.backgroundBrush
                     if (brush != null) {

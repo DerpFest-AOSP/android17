@@ -144,11 +144,21 @@ val LocalQSPanelStyle = compositionLocalOf { 0 }
 
 val LocalQSTileLabelHide = compositionLocalOf { false }
 
+/** Resolved shape key for classic QS tiles; see [QSTileIconShapes]. */
+val LocalQSTileIconShapeKey = compositionLocalOf { QSTileIconShapes.DEFAULT_KEY }
+
 @Composable
 fun rememberQSPanelStyle(): Int = rememberSecureIntSetting("qs_panel_style")
 
 @Composable
 fun rememberQSTileLabelHide(): Boolean = rememberSecureIntSetting("qs_tile_label_hide") == 1
+
+@Composable
+fun rememberQSTileIconShapeKey(): String {
+    val raw =
+        rememberSecureStringSetting(QSTileIconShapes.SETTINGS_KEY, defaultValue = null)
+    return remember(raw) { QSTileIconShapes.normalizeKey(raw) }
+}
 
 @Composable
 private fun rememberSecureIntSetting(key: String, defaultValue: Int = 0): Int {
@@ -172,6 +182,45 @@ private fun rememberSecureIntSetting(key: String, defaultValue: Int = 0): Int {
                             defaultValue,
                             UserHandle.USER_CURRENT,
                         )
+                }
+            }
+        context.contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(key),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+        try {
+            awaitCancellation()
+        } finally {
+            context.contentResolver.unregisterContentObserver(observer)
+        }
+    }
+    return value
+}
+
+@Composable
+private fun rememberSecureStringSetting(key: String, defaultValue: String?): String? {
+    val context = LocalContext.current
+    val value by produceState(
+        initialValue =
+            Settings.Secure.getStringForUser(
+                context.contentResolver,
+                key,
+                UserHandle.USER_CURRENT,
+            )
+                ?: defaultValue,
+    ) {
+        val observer =
+            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    value =
+                        Settings.Secure.getStringForUser(
+                            context.contentResolver,
+                            key,
+                            UserHandle.USER_CURRENT,
+                        )
+                            ?: defaultValue
                 }
             }
         context.contentResolver.registerContentObserver(

@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
  * Observes [Settings.Secure] key [QS_PANEL_STYLE_KEY] (0 = card tiles, 1 = classic circular).
+ * Classic tile icon mask keys: [com.android.systemui.qs.panels.ui.compose.infinitegrid.QSTileIconShapes].
  * Optional: UI can also read the same setting via [rememberQSPanelStyle] in Compose.
  */
 @SysUISingleton
