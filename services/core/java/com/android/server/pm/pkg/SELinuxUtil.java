@@ -24,10 +24,16 @@ import com.android.internal.pm.pkg.SEInfoUtil;
  */
 public final class SELinuxUtil {
 
-    /** Append to existing seinfo label for instant apps @hide */
+    /**
+     * Append to existing seinfo label for instant apps.
+     * @hide
+     */
     private static final String INSTANT_APP_STR = SEInfoUtil.INSTANT_APP_STR;
 
-    /** Append to existing seinfo when modifications are complete @hide */
+    /**
+     * Append to existing seinfo when modifications are complete.
+     * @hide
+     */
     public static final String COMPLETE_STR = SEInfoUtil.COMPLETE_STR;
 
     /** @hide */

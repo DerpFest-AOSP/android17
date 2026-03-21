@@ -204,7 +204,7 @@ object BiometricViewSizeBinder {
                         // Handle guidelines
                         val bottomInset =
                             windowManager.maximumWindowMetrics.windowInsets
-                                .getInsets(WindowInsets.Type.navigationBars())
+                                .getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars())
                                 .bottom
                         currentState.guidelineBounds.let { bounds ->
                             nextConstraintSet.setGuidelineEnd(R.id.bottomGuideline, bottomInset)
@@ -597,7 +597,7 @@ object BiometricViewSizeBinder {
                     viewModel.guidelineBounds.collect { bounds ->
                         val bottomInset =
                             windowManager.maximumWindowMetrics.windowInsets
-                                .getInsets(WindowInsets.Type.navigationBars())
+                                .getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars())
                                 .bottom
                         mediumConstraintSet.setGuidelineEnd(R.id.bottomGuideline, bottomInset)
 

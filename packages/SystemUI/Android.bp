@@ -518,6 +518,7 @@ android_library {
     static_libs: [
         "//frameworks/libs/systemui:compilelib",
         "com.android.systemui.pods-api-aosp-handheld",
+        "ax_compose",
         "SystemUI-res",
         "WifiTrackerLib",
         "WindowManager-Shell",

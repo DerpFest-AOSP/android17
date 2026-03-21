@@ -22,6 +22,7 @@ import com.android.systemui.LatencyTester
 import com.android.systemui.SliceBroadcastRelayHandler
 import com.android.systemui.accessibility.Magnification
 import com.android.systemui.axdynamicbar.domain.AxDynamicBarChipsRefiner
+import com.axion.applocker.AxAppLockerHelper
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarManager
 import com.android.systemui.back.domain.interactor.BackActionInteractor
 import com.android.systemui.biometrics.BiometricNotificationService
@@ -342,4 +343,9 @@ abstract class SystemUICoreStartableModule {
     @Binds
     @IntoSet
     abstract fun bindDynamicBarChipsRefiner(impl: AxDynamicBarChipsRefiner): OngoingActivityChipsRefiner
+
+    @Binds
+    @IntoMap
+    @ClassKey(AxAppLockerHelper::class)
+    abstract fun bindAxAppLockerHelper(impl: AxAppLockerHelper): CoreStartable
 }

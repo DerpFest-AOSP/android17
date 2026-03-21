@@ -575,6 +575,7 @@ public abstract class SystemService {
      * @param name the name of the new service
      * @param service the service object
      */
+    @android.annotation.SuppressLint("UnflaggedApi")
     public final void publishBinderService(@NonNull String name, @NonNull IBinder service) {
         publishBinderService(name, service, false);
     }
