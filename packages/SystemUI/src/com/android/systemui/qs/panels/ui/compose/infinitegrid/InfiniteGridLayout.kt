@@ -18,6 +18,7 @@ package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -28,6 +29,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
@@ -84,20 +86,32 @@ constructor(
                 textFeedbackContentViewModelFactory.create(context)
             }
 
-        val columns = viewModel.columnsWithMediaViewModel.columns
+        val panelStyle = rememberQSPanelStyle()
+        val isClassicStyle = panelStyle == 1
+        val classicColumns = integerResource(R.integer.quick_settings_num_columns_classic)
+        val baseColumns = viewModel.columnsWithMediaViewModel.columns
+        val columns = if (isClassicStyle) classicColumns else baseColumns
         val largeTilesSpan = viewModel.columnsWithMediaViewModel.largeSpan
         val largeTiles by viewModel.iconTilesViewModel.largeTilesState
         // Tiles or largeTiles may be updated while this is composed, so listen to any changes
         val sizedTiles =
-            remember(tiles, largeTiles, largeTilesSpan, columns) {
+            remember(tiles, largeTiles, largeTilesSpan, columns, isClassicStyle) {
                 tiles.map {
-                    val span = if (largeTiles.contains(it.spec)) minOf(largeTilesSpan, columns) else 1
-                    SizedTileImpl(it, span)
+                    val width =
+                        if (isClassicStyle) {
+                            1
+                        } else if (largeTiles.contains(it.spec)) {
+                            minOf(largeTilesSpan, columns)
+                        } else {
+                            1
+                        }
+                    SizedTileImpl(it, width)
                 }
             }
         val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
 
+        CompositionLocalProvider(LocalQSPanelStyle provides panelStyle) {
         if (QSMaterialExpressiveTiles.isEnabled) {
             ButtonGroupGrid(
                 sizedTiles = sizedTiles,
@@ -109,7 +123,7 @@ constructor(
             ) { sizedTile, interactionSource ->
                 Tile(
                     tile = sizedTile.tile,
-                    iconOnly = iconTilesViewModel.isIconTile(sizedTile.tile.spec),
+                    iconOnly = isClassicStyle || iconTilesViewModel.isIconTile(sizedTile.tile.spec),
                     squishiness = { squishiness },
                     tileHapticsViewModelFactoryProvider = tileHapticsViewModelFactoryProvider,
                     coroutineScope = scope,
@@ -138,7 +152,7 @@ constructor(
                 Element(it.tile.spec.toElementKey(), Modifier) {
                     Tile(
                         tile = it.tile,
-                        iconOnly = iconTilesViewModel.isIconTile(it.tile.spec),
+                        iconOnly = isClassicStyle || iconTilesViewModel.isIconTile(it.tile.spec),
                         squishiness = { squishiness },
                         tileHapticsViewModelFactoryProvider = tileHapticsViewModelFactoryProvider,
                         coroutineScope = scope,
@@ -159,6 +173,7 @@ constructor(
                     )
                 }
             }
+        }
         }
 
         TileListener(tiles, listening)

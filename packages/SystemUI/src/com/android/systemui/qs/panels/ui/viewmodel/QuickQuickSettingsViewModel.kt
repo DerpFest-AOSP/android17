@@ -101,6 +101,10 @@ constructor(
             .let { splitInRowsSequence(it, qqsColumnsValue).take(rows).toList().flatten() }
     }
 
+    val allTileViewModels by derivedStateOf {
+        currentTiles.map { TileViewModel(it.tile, it.spec) }
+    }
+
     override suspend fun onActivated(): Nothing {
         coroutineScope {
             launch { hydrator.activate() }

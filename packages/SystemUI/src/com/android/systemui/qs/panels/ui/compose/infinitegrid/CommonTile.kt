@@ -32,9 +32,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -83,8 +83,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.android.compose.modifiers.size
@@ -421,6 +423,52 @@ object TileBounceMotionTestKeys {
     val BounceScale = MotionTestValueKey<Float>("bounceScale")
 }
 
+/**
+ * Classic circular tile content: icon inside a colored circle with label text below.
+ */
+@Composable
+fun ClassicCircleTileContent(
+    label: String,
+    iconProvider: Context.() -> Icon,
+    colors: TileColors,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        val animatedBgColor by animateColorAsState(colors.background, label = "CircleBgColor")
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(CommonTileDefaults.ClassicCircleSize)
+                .clip(RoundedCornerShape(50))
+                .drawBehind { drawRect(animatedBgColor) },
+        ) {
+            SmallTileContent(
+                iconProvider = iconProvider,
+                color = colors.icon,
+                size = { CommonTileDefaults.ClassicIconSize },
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+        val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+        BasicText(
+            text = label,
+            maxLines = 2,
+            style = TextStyle(
+                color = labelColor,
+                fontSize = CommonTileDefaults.ClassicLabelSize,
+                textAlign = TextAlign.Center,
+            ),
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .fillMaxWidth(),
+        )
+    }
+}
+
 object CommonTileDefaults {
     val IconSize = 32.dp
     val LargeTileIconSize = 28.dp
@@ -438,6 +486,11 @@ object CommonTileDefaults {
     val TileLabelBlurWidth = 32.dp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000
+
+    val ClassicCircleSize = 56.dp
+    val ClassicIconSize = 24.dp
+    val ClassicTileHeight = 96.dp
+    val ClassicLabelSize = 11.sp
 
     @Composable
     fun longPressLabelSettings() = stringResource(id = R.string.accessibility_long_click_tile)

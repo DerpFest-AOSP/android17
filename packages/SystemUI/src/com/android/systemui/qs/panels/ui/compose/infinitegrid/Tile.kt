@@ -22,6 +22,8 @@ import android.content.Context
 import android.content.res.Resources
 import android.database.ContentObserver
 import android.graphics.Color as AndroidColor
+import android.os.Handler
+import android.os.Looper
 import android.os.Trace
 import android.os.UserHandle
 import android.provider.Settings
@@ -58,7 +60,9 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -112,6 +116,7 @@ import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.panels.ui.compose.BounceableInfo
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveTileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ClassicTileHeight
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.longPressLabelMoreDetails
@@ -132,6 +137,51 @@ import com.android.systemui.qs.ui.composable.QuickSettingsShade
 import com.android.systemui.qs.ui.compose.borderOnFocus
 import com.android.systemui.res.R
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
+
+val LocalQSPanelStyle = compositionLocalOf { 0 }
+
+@Composable
+fun rememberQSPanelStyle(): Int = rememberSecureIntSetting("qs_panel_style")
+
+@Composable
+private fun rememberSecureIntSetting(key: String, defaultValue: Int = 0): Int {
+    val context = LocalContext.current
+    val value by produceState(
+        initialValue =
+            Settings.Secure.getIntForUser(
+                context.contentResolver,
+                key,
+                defaultValue,
+                UserHandle.USER_CURRENT,
+            ),
+    ) {
+        val observer =
+            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    value =
+                        Settings.Secure.getIntForUser(
+                            context.contentResolver,
+                            key,
+                            defaultValue,
+                            UserHandle.USER_CURRENT,
+                        )
+                }
+            }
+        context.contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(key),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+        try {
+            awaitCancellation()
+        } finally {
+            context.contentResolver.unregisterContentObserver(observer)
+        }
+    }
+    return value
+}
 
 @Composable
 fun TileLazyGrid(
@@ -220,13 +270,15 @@ fun ContentScope.Tile(
                 tileHapticsViewModelFactoryProvider.getHapticsViewModelFactory()?.create(tile)
             }
 
+        val isClassicPanelStyle = LocalQSPanelStyle.current == 1
+
         if (tile.spec.spec == "sound" && !iconOnly) {
             QSTileRingerSlider()
             return@trace
         }
 
         val shapeMode = rememberTileShapeMode()
-        val wantCircle = shapeMode == 3 && iconOnly
+        val wantCircle = !isClassicPanelStyle && shapeMode == 3 && iconOnly
         val tileShape =
             if (wantCircle) CircleShape
             else TileDefaults.animateTileShapeAsState(uiState.state, shapeMode).value
@@ -240,6 +292,18 @@ fun ContentScope.Tile(
                 wantCircle -> { { Color.Transparent } }
                 backgroundBrush != null -> { { Color.Transparent } }
                 else -> { { animatedColor } }
+            }
+        val panelExpandableColor: () -> Color =
+            if (isClassicPanelStyle) {
+                { Color.Transparent }
+            } else {
+                outerColor
+            }
+        val panelExpandableShape: Shape =
+            if (isClassicPanelStyle) {
+                RoundedCornerShape(0.dp)
+            } else {
+                outerShape
             }
         val focusBorderColor = MaterialTheme.colorScheme.secondary
 
@@ -258,21 +322,23 @@ fun ContentScope.Tile(
         }
 
         TileExpandable(
-            color = outerColor,
-            shape = outerShape,
+            color = panelExpandableColor,
+            shape = panelExpandableShape,
             squishiness = squishiness,
             hapticsViewModel = hapticsViewModel,
             modifier =
                 modifier
                     .then(surfaceRevealModifier)
-                    .thenIf(backgroundBrush != null && !wantCircle) {
+                    .thenIf(backgroundBrush != null && !wantCircle && !isClassicPanelStyle) {
                         Modifier.background(requireNotNull(backgroundBrush), outerShape)
                     }
-                    .thenIf(!wantCircle) { 
-                        modifier.borderOnFocus(color = focusBorderColor, outerShape.topEnd) 
+                    .thenIf(!wantCircle && !isClassicPanelStyle) {
+                        modifier.borderOnFocus(color = focusBorderColor, outerShape.topEnd)
                     }
                     .fillMaxWidth()
-                    .height(CommonTileDefaults.TileHeight)
+                    .height(
+                        if (isClassicPanelStyle) ClassicTileHeight else CommonTileDefaults.TileHeight,
+                    )
                     .thenIf(currentBounceableInfo != null) {
                         Modifier.bounceable(
                             currentBounceableInfo!!.bounceable,
@@ -346,7 +412,7 @@ fun ContentScope.Tile(
                         }
                 }
 
-            if (wantCircle) {
+            if (wantCircle && !isClassicPanelStyle) {
                 val interaction = remember { MutableInteractionSource() }
 
                 Box(Modifier.fillMaxSize()) {
@@ -393,7 +459,14 @@ fun ContentScope.Tile(
                     modifier = contentRevealModifier,
                 ) {
                     val iconProvider: Context.() -> Icon = { getTileIcon(icon = icon) }
-                    if (iconOnly) {
+                    if (isClassicPanelStyle) {
+                        ClassicCircleTileContent(
+                            label = uiState.label,
+                            iconProvider = iconProvider,
+                            colors = colors,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    } else if (iconOnly) {
                         SmallTileContent(
                             iconProvider = iconProvider,
                             color = colors.icon,
@@ -464,10 +537,12 @@ fun TileContainer(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val tileHeight =
+        if (LocalQSPanelStyle.current == 1) ClassicTileHeight else TileHeight
     Box(
         modifier =
             modifier
-                .height(TileHeight)
+                .height(tileHeight)
                 .fillMaxWidth()
                 .tileCombinedClickable(
                     onClick = onClick ?: {},

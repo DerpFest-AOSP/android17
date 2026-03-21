@@ -18,6 +18,7 @@ package com.android.systemui.qs.panels.ui.compose
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,7 +33,10 @@ import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.qs.composefragment.ui.GridAnchor
 import com.android.systemui.qs.flags.QSMaterialExpressiveTiles
+import com.android.systemui.qs.panels.shared.model.SizedTileImpl
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.LocalQSPanelStyle
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.Tile
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
 import com.android.systemui.qs.panels.ui.viewmodel.BounceableTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.QuickQuickSettingsViewModel
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements.toElementKey
@@ -44,14 +48,25 @@ fun ContentScope.QuickQuickSettings(
     modifier: Modifier = Modifier,
     listening: () -> Boolean,
 ) {
-    val columns by viewModel.qqsColumns.collectAsStateWithLifecycle(
+    val panelStyle = rememberQSPanelStyle()
+    val isClassicStyle = panelStyle == 1
+    val classicColumns = integerResource(R.integer.quick_settings_num_columns_classic)
+    val columnsFlow by viewModel.qqsColumns.collectAsStateWithLifecycle(
         initialValue = integerResource(R.integer.quick_settings_infinite_grid_num_columns)
     )
-    val sizedTiles = viewModel.tileViewModels
+    val columns = if (isClassicStyle) classicColumns else columnsFlow
+    val sizedTiles =
+        if (isClassicStyle) {
+            val maxTiles = columns * 2
+            viewModel.allTileViewModels.take(maxTiles).fastMap { SizedTileImpl(it, 1) }
+        } else {
+            viewModel.tileViewModels
+        }
     val tiles = sizedTiles.fastMap { it.tile }
     val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
+    CompositionLocalProvider(LocalQSPanelStyle provides panelStyle) {
     Box(modifier = modifier) {
         GridAnchor()
 
@@ -66,7 +81,7 @@ fun ContentScope.QuickQuickSettings(
             ) { sizedTile, interactionSource ->
                 Tile(
                     tile = sizedTile.tile,
-                    iconOnly = sizedTile.isIcon,
+                    iconOnly = isClassicStyle || sizedTile.isIcon,
                     squishiness = { squishiness },
                     coroutineScope = scope,
                     tileHapticsViewModelFactoryProvider =
@@ -95,7 +110,7 @@ fun ContentScope.QuickQuickSettings(
                 Element(it.tile.spec.toElementKey(), Modifier) {
                     Tile(
                         tile = it.tile,
-                        iconOnly = it.isIcon,
+                        iconOnly = isClassicStyle || it.isIcon,
                         squishiness = { squishiness },
                         coroutineScope = scope,
                         bounceableInfo =
@@ -117,6 +132,7 @@ fun ContentScope.QuickQuickSettings(
                 }
             }
         }
+    }
     }
 
     TileListener(tiles, listening)

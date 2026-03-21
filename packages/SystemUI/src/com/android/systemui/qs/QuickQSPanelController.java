@@ -126,8 +126,29 @@ public class QuickQSPanelController extends QSPanelControllerBase<QuickQSPanel> 
     }
 
     @Override
+    protected void recreateTiles() {
+        updateMaxTilesForStyle();
+        super.recreateTiles();
+    }
+
+    private void updateMaxTilesForStyle() {
+        int maxTiles;
+        if (mQsTileStyle == 1) {
+            maxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles_classic);
+        } else {
+            maxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles);
+        }
+        mView.setMaxTiles(maxTiles);
+    }
+
+    @Override
     protected void onConfigurationChanged() {
-        int newMaxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles);
+        int newMaxTiles;
+        if (mQsTileStyle == 1) {
+            newMaxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles_classic);
+        } else {
+            newMaxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles);
+        }
         if (newMaxTiles != mView.getNumQuickTiles()) {
             setMaxTiles(newMaxTiles);
         }
