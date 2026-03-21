@@ -431,6 +431,7 @@ fun ClassicCircleTileContent(
     label: String,
     iconProvider: Context.() -> Icon,
     colors: TileColors,
+    hideLabel: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -453,19 +454,21 @@ fun ClassicCircleTileContent(
                 modifier = Modifier.align(Alignment.Center),
             )
         }
-        val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-        BasicText(
-            text = label,
-            maxLines = 2,
-            style = TextStyle(
-                color = labelColor,
-                fontSize = CommonTileDefaults.ClassicLabelSize,
-                textAlign = TextAlign.Center,
-            ),
-            modifier = Modifier
-                .padding(top = 4.dp)
-                .fillMaxWidth(),
-        )
+        if (!hideLabel) {
+            val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+            BasicText(
+                text = label,
+                maxLines = 2,
+                style = TextStyle(
+                    color = labelColor,
+                    fontSize = CommonTileDefaults.ClassicLabelSize,
+                    textAlign = TextAlign.Center,
+                ),
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .fillMaxWidth(),
+            )
+        }
     }
 }
 

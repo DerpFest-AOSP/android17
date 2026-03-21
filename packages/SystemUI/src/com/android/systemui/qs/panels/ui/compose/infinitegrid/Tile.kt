@@ -116,6 +116,7 @@ import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.panels.ui.compose.BounceableInfo
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveTileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ClassicCircleSize
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ClassicTileHeight
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
@@ -141,8 +142,13 @@ import kotlinx.coroutines.awaitCancellation
 
 val LocalQSPanelStyle = compositionLocalOf { 0 }
 
+val LocalQSTileLabelHide = compositionLocalOf { false }
+
 @Composable
 fun rememberQSPanelStyle(): Int = rememberSecureIntSetting("qs_panel_style")
+
+@Composable
+fun rememberQSTileLabelHide(): Boolean = rememberSecureIntSetting("qs_tile_label_hide") == 1
 
 @Composable
 private fun rememberSecureIntSetting(key: String, defaultValue: Int = 0): Int {
@@ -337,7 +343,12 @@ fun ContentScope.Tile(
                     }
                     .fillMaxWidth()
                     .height(
-                        if (isClassicPanelStyle) ClassicTileHeight else CommonTileDefaults.TileHeight,
+                        when {
+                            isClassicPanelStyle && LocalQSTileLabelHide.current ->
+                                ClassicCircleSize + 8.dp
+                            isClassicPanelStyle -> ClassicTileHeight
+                            else -> CommonTileDefaults.TileHeight
+                        },
                     )
                     .thenIf(currentBounceableInfo != null) {
                         Modifier.bounceable(
@@ -464,6 +475,7 @@ fun ContentScope.Tile(
                             label = uiState.label,
                             iconProvider = iconProvider,
                             colors = colors,
+                            hideLabel = LocalQSTileLabelHide.current,
                             modifier = Modifier.align(Alignment.Center),
                         )
                     } else if (iconOnly) {
@@ -537,8 +549,15 @@ fun TileContainer(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
+    val isClassic = LocalQSPanelStyle.current == 1
     val tileHeight =
-        if (LocalQSPanelStyle.current == 1) ClassicTileHeight else TileHeight
+        if (isClassic && LocalQSTileLabelHide.current) {
+            ClassicCircleSize + 8.dp
+        } else if (isClassic) {
+            ClassicTileHeight
+        } else {
+            TileHeight
+        }
     Box(
         modifier =
             modifier

@@ -88,6 +88,7 @@ constructor(
 
         val panelStyle = rememberQSPanelStyle()
         val isClassicStyle = panelStyle == 1
+        val hideTileLabels = rememberQSTileLabelHide()
         val classicColumns = integerResource(R.integer.quick_settings_num_columns_classic)
         val baseColumns = viewModel.columnsWithMediaViewModel.columns
         val columns = if (isClassicStyle) classicColumns else baseColumns
@@ -111,7 +112,10 @@ constructor(
         val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
 
-        CompositionLocalProvider(LocalQSPanelStyle provides panelStyle) {
+        CompositionLocalProvider(
+            LocalQSPanelStyle provides panelStyle,
+            LocalQSTileLabelHide provides hideTileLabels,
+        ) {
         if (QSMaterialExpressiveTiles.isEnabled) {
             ButtonGroupGrid(
                 sizedTiles = sizedTiles,
