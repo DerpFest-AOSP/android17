@@ -66,6 +66,7 @@ import com.android.systemui.smartspace.dagger.SmartspaceModule.Companion.WEATHER
 import com.android.systemui.smartspace.ui.binder.SmartspaceViewBinder
 import com.android.systemui.smartspace.ui.viewmodel.SmartspaceViewModel
 import com.android.systemui.statusbar.phone.KeyguardBypassController
+import com.android.systemui.weather.WeatherSmartspacePluginAccessor
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.DeviceProvisionedController
 import com.android.systemui.util.asIndenting
@@ -133,6 +134,10 @@ constructor(
             override val isSwipeEventLoggingEnabled: Boolean
                 get() = configPlugin?.isSwipeEventLoggingEnabled ?: false
         }
+
+    init {
+        WeatherSmartspacePluginAccessor.setPlugin(weatherPlugin)
+    }
 
     // This stores recently received Smartspace pushes to be included in dumpsys.
     private val recentSmartspaceData: Deque<List<SmartspaceTarget>> = LinkedList()
