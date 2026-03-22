@@ -76,6 +76,7 @@ fun BuildNumber(
             
             Text(
                 text = dataUsageText,
+                style = MaterialTheme.typography.bodySmall,
                 modifier =
                     modifier
                         .focusable()
