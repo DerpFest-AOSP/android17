@@ -82,6 +82,7 @@ val Kosmos.defaultKeyguardBlueprint by
             clockSection = keyguardClockSection,
             smartspaceSection = keyguardSmartspaceSection,
             keyguardSliceViewSection = mock(),
+            keyguardClockStyleSection = mock(),
             udfpsAccessibilityOverlaySection = mock(),
             accessibilityActionsSection = mock(),
         )
@@ -105,6 +106,7 @@ val Kosmos.splitShadeBlueprint by
             smartspaceSection = keyguardSmartspaceSection,
             mediaSection = mock(),
             keyguardSliceViewSection = mock(),
+            keyguardClockStyleSection = mock(),
             accessibilityActionsSection = mock(),
         )
     }

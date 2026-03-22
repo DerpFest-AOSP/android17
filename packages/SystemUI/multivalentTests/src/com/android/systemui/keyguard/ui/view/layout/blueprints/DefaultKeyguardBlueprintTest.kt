@@ -38,6 +38,7 @@ import com.android.systemui.keyguard.ui.view.layout.sections.DefaultSettingsPopu
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultShortcutsSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultStatusBarSection
 import com.android.systemui.keyguard.ui.view.layout.sections.DefaultUdfpsAccessibilityOverlaySection
+import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardClockStyleSection
 import com.android.systemui.keyguard.ui.view.layout.sections.KeyguardSliceViewSection
 import com.android.systemui.keyguard.ui.view.layout.sections.SmartspaceSection
 import com.android.systemui.util.mockito.whenever
@@ -71,6 +72,7 @@ class DefaultKeyguardBlueprintTest : SysuiTestCase() {
     @Mock private lateinit var clockSection: ClockSection
     @Mock private lateinit var smartspaceSection: SmartspaceSection
     @Mock private lateinit var keyguardSliceViewSection: KeyguardSliceViewSection
+    @Mock private lateinit var keyguardClockStyleSection: KeyguardClockStyleSection
     @Mock
     private lateinit var udfpsAccessibilityOverlaySection: DefaultUdfpsAccessibilityOverlaySection
 
@@ -94,6 +96,7 @@ class DefaultKeyguardBlueprintTest : SysuiTestCase() {
                 clockSection,
                 smartspaceSection,
                 keyguardSliceViewSection,
+                keyguardClockStyleSection,
                 udfpsAccessibilityOverlaySection,
             )
     }

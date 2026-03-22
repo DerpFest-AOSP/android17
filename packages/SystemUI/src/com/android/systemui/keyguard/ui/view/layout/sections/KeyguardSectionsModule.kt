@@ -18,11 +18,18 @@
 package com.android.systemui.keyguard.ui.view.layout.sections
 
 import com.android.systemui.keyguard.shared.model.KeyguardSection
+import dagger.Binds
 import dagger.BindsOptionalOf
 import dagger.Module
+import dagger.multibindings.IntoSet
 import javax.inject.Named
 
 @Module
+interface KeyguardClockStyleSectionModule {
+    @Binds @IntoSet fun keyguardClockStyleSection(impl: KeyguardClockStyleSection): KeyguardSection
+}
+
+@Module(includes = [KeyguardClockStyleSectionModule::class])
 abstract class KeyguardSectionsModule {
 
     @Module
@@ -34,5 +41,4 @@ abstract class KeyguardSectionsModule {
     @BindsOptionalOf
     @Named(KEYGUARD_AMBIENT_INDICATION_AREA_SECTION)
     abstract fun defaultAmbientIndicationAreaSection(): KeyguardSection
-
 }

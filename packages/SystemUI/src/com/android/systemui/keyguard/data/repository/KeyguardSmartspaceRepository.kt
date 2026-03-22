@@ -54,26 +54,39 @@ constructor(
     override val isWeatherEnabled: StateFlow<Boolean> =
         secureSettings
             .observerFlow(
-                names = arrayOf(Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED),
+                names =
+                    arrayOf(
+                        Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED,
+                        Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+                    ),
                 userId = UserHandle.USER_ALL,
             )
             .onStart { emit(Unit) }
-            .map { getLockscreenWeatherEnabled() }
+            .map { isLockscreenWeatherEnabled() }
             .stateIn(
                 scope = applicationScope,
                 started = SharingStarted.WhileSubscribed(),
-                initialValue = getLockscreenWeatherEnabled()
+                initialValue = isLockscreenWeatherEnabled()
             )
 
     override fun setBcSmartspaceVisibility(visibility: Int) {
         _bcSmartspaceVisibility.value = visibility
     }
 
-    private fun getLockscreenWeatherEnabled(): Boolean {
-        return secureSettings.getIntForUser(
-            Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED,
-            1,
-            userTracker.userId
-        ) == 1
+    /** Weather row enabled when setting is on and custom ClockStyle is not active. */
+    private fun isLockscreenWeatherEnabled(): Boolean {
+        val weatherOn =
+            secureSettings.getIntForUser(
+                Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED,
+                1,
+                userTracker.userId,
+            ) == 1
+        val customClockStyle =
+            secureSettings.getIntForUser(
+                Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+                0,
+                userTracker.userId,
+            ) != 0
+        return weatherOn && !customClockStyle
     }
 }

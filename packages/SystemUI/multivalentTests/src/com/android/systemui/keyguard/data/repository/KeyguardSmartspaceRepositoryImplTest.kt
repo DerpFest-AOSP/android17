@@ -72,4 +72,14 @@ class KeyguardSmartspaceRepositoryImplTest : SysuiTestCase() {
             val value = collectLastValue(underTest.isWeatherEnabled)
             Truth.assertThat(value()).isEqualTo(false)
         }
+
+    @Test
+    fun testWeatherEnabled_falseWhenCustomClockStyle() =
+        scope.runTest {
+            fakeSettings.putInt(Settings.Secure.LOCK_SCREEN_WEATHER_ENABLED, 1)
+            fakeSettings.putInt(Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE, 1)
+
+            val value = collectLastValue(underTest.isWeatherEnabled)
+            Truth.assertThat(value()).isEqualTo(false)
+        }
 }
