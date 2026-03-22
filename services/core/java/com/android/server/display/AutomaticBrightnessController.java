@@ -97,6 +97,15 @@ public class AutomaticBrightnessController {
     public static final int AUTO_BRIGHTNESS_MODE_CHARGING = 4;
     public static final int AUTO_BRIGHTNESS_MODE_MAX = AUTO_BRIGHTNESS_MODE_CHARGING;
 
+    // Number of consecutive invalid (negative) lux samples that triggers a forced
+    // restart of the light sensor listener. See handleLightSensorEvent().
+    private static final int INVALID_LUX_SAMPLE_RESTART_THRESHOLD = 5;
+
+    // Maximum time to wait for any light sensor event (valid or invalid) before
+    // assuming the sensor HAL has stopped delivering events entirely and forcing
+    // a listener restart. See scheduleLightSensorWatchdog().
+    private static final long LIGHT_SENSOR_WATCHDOG_TIMEOUT_MILLIS = 3000;
+
     // How long the current sensor reading is assumed to be valid beyond the current time.
     // This provides a bit of prediction, as well as ensures that the weight for the last sample is
     // non-zero, which in turn ensures that the total weight is non-zero.
@@ -113,6 +122,7 @@ public class AutomaticBrightnessController {
     private static final int MSG_UPDATE_FOREGROUND_APP_SYNC = 5;
     private static final int MSG_RUN_UPDATE = 6;
     private static final int MSG_INVALIDATE_PAUSED_SHORT_TERM_MODEL = 7;
+    private static final int MSG_LIGHT_SENSOR_WATCHDOG = 8;
 
     // Callbacks for requesting updates to the display's power state
     private final Callbacks mCallbacks;
@@ -222,6 +232,11 @@ public class AutomaticBrightnessController {
 
     // The number of light samples collected since the light sensor was enabled.
     private int mRecentLightSamples;
+
+    // The number of consecutive invalid (negative) lux samples received from the
+    // light sensor. Used to detect a stuck/misbehaving sensor HAL and force a
+    // listener restart in handleLightSensorEvent(). Reset to 0 on any valid sample.
+    private int mConsecutiveInvalidLuxSamples;
 
     // A ring buffer containing all of the recent ambient light sensor readings.
     private AmbientLightRingBuffer mAmbientLightRingBuffer;
@@ -740,6 +755,7 @@ public class AutomaticBrightnessController {
                 registerForegroundAppUpdater();
                 mSensorManager.registerListener(mLightSensorListener, mLightSensor,
                         mCurrentLightSensorRate * 1000, mHandler);
+                scheduleLightSensorWatchdog();
                 return true;
             }
         } else if (mLightSensorEnabled) {
@@ -755,15 +771,66 @@ public class AutomaticBrightnessController {
             mAmbientLightRingBuffer.clear();
             mCurrentLightSensorRate = -1;
             mHandler.removeMessages(MSG_UPDATE_AMBIENT_LUX);
+            mHandler.removeMessages(MSG_LIGHT_SENSOR_WATCHDOG);
             unregisterForegroundAppUpdater();
             mSensorManager.unregisterListener(mLightSensorListener);
         }
         return false;
     }
 
+    private void scheduleLightSensorWatchdog() {
+        mHandler.removeMessages(MSG_LIGHT_SENSOR_WATCHDOG);
+        mHandler.sendEmptyMessageDelayed(MSG_LIGHT_SENSOR_WATCHDOG,
+                LIGHT_SENSOR_WATCHDOG_TIMEOUT_MILLIS);
+    }
+
+    private void restartLightSensorListener() {
+        // WORKAROUND: on some devices the light sensor HAL stops delivering any
+        // events at all (valid or invalid) after certain transitions, such as
+        // waking from doze/screen-off, leaving auto-brightness permanently stuck.
+        // Force a full unregister/register cycle to make the HAL re-initialize the
+        // sensor, then keep watching in case it happens again.
+        Slog.w(TAG, "No light sensor events received within "
+                + LIGHT_SENSOR_WATCHDOG_TIMEOUT_MILLIS + " ms, restarting light sensor listener");
+        mSensorManager.unregisterListener(mLightSensorListener);
+        mSensorManager.registerListener(mLightSensorListener, mLightSensor,
+                mCurrentLightSensorRate * 1000, mHandler);
+        scheduleLightSensorWatchdog();
+    }
+
     private void handleLightSensorEvent(long time, float lux) {
         Trace.traceCounter(Trace.TRACE_TAG_POWER, "ALS", (int) lux);
         mHandler.removeMessages(MSG_UPDATE_AMBIENT_LUX);
+
+        if (lux < 0) {
+            // Sensor HAL occasionally reports transient negative/invalid lux values,
+            // most commonly right after waking from doze/screen-off. Discard these
+            // entirely instead of feeding them into the ring buffer: pushing a
+            // clamped-to-zero sample here would still contaminate the ambient lux
+            // average over mAmbientLightHorizonLong, dragging the calculated
+            // brightness down until a new valid sample arrives.
+            Slog.w(TAG, "Ambient lux was negative (" + lux + "), discarding sample");
+            mConsecutiveInvalidLuxSamples++;
+
+            // WORKAROUND: on some devices the light sensor HAL stops delivering any
+            // further events at all after a burst of invalid readings (observed after
+            // unlocking the screen), leaving auto-brightness permanently stuck since no
+            // new valid sample ever arrives to correct it. If we see too many invalid
+            // samples in a row, force a full unregister/register cycle of the sensor
+            // listener to make the HAL re-initialize the sensor, instead of relying on
+            // the user manually toggling auto-brightness off and on in Settings.
+            if (mConsecutiveInvalidLuxSamples >= INVALID_LUX_SAMPLE_RESTART_THRESHOLD) {
+                Slog.w(TAG, "Too many consecutive invalid lux samples ("
+                        + mConsecutiveInvalidLuxSamples + "), restarting light sensor listener");
+                mConsecutiveInvalidLuxSamples = 0;
+                mSensorManager.unregisterListener(mLightSensorListener);
+                mSensorManager.registerListener(mLightSensorListener, mLightSensor,
+                        mCurrentLightSensorRate * 1000, mHandler);
+            }
+            return;
+        }
+
+        mConsecutiveInvalidLuxSamples = 0;
 
         if (mAmbientLightRingBuffer.size() == 0) {
             // switch to using the steady-state sample rate after grabbing the initial light sample
@@ -1446,6 +1513,10 @@ public class AutomaticBrightnessController {
                 case MSG_INVALIDATE_PAUSED_SHORT_TERM_MODEL:
                     mPausedShortTermModel.invalidate();
                     break;
+
+                case MSG_LIGHT_SENSOR_WATCHDOG:
+                    restartLightSensorListener();
+                    break;
             }
         }
     }
@@ -1454,6 +1525,9 @@ public class AutomaticBrightnessController {
         @Override
         public void onSensorChanged(SensorEvent event) {
             if (mLightSensorEnabled) {
+                // Any event at all -- valid or invalid -- proves the sensor HAL is
+                // still alive, so reset the watchdog before processing the value.
+                scheduleLightSensorWatchdog();
                 // The time received from the sensor is in nano seconds, hence changing it to ms
                 final long time = TimeUnit.NANOSECONDS.toMillis(event.timestamp);
                 final float lux = event.values[0];
