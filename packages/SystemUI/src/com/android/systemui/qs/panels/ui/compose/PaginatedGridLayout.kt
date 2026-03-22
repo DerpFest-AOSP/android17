@@ -93,9 +93,13 @@ constructor(
         )
         val columns = if (panelStyle == 1) classicColumns else cardColumns
 
-        val rows by viewModel.rows.collectAsStateWithLifecycle(
+        val rowsForCard by viewModel.rows.collectAsStateWithLifecycle(
             initialValue = integerResource(R.integer.quick_settings_paginated_grid_num_rows)
         )
+        val classicRows by viewModel.classicRows.collectAsStateWithLifecycle(
+            initialValue = integerResource(R.integer.quick_settings_paginated_grid_num_rows)
+        )
+        val rows = if (panelStyle == 1) classicRows else rowsForCard
 
         val pages =
             remember(tiles, columns, rows, panelStyle, classicColumns) {

@@ -619,6 +619,26 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                 false,
                 classicQsLayoutObserver,
                 UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_LAYOUT_ROWS_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_LAYOUT_ROWS_LANDSCAPE_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QQS_LAYOUT_ROWS_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QQS_LAYOUT_ROWS_LANDSCAPE_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
 
         // All wallpaper color and keyguard logic only applies when Monet is enabled.
         if (!mIsMonetEnabled) {

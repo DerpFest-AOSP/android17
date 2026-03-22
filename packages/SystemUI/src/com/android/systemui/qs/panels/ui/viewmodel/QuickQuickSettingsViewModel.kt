@@ -16,7 +16,6 @@
 
 package com.android.systemui.qs.panels.ui.viewmodel
 
-import android.content.res.Configuration
 import android.content.res.Resources
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.derivedStateOf
@@ -101,23 +100,24 @@ constructor(
     val classicQqsColumns: Int
         get() = classicQqsColumnsValue
 
-    /**
-     * Row count for classic QQS from resources only (does not use [qqs_layout_rows]).
-     * Media-in-row doubling matches card behavior.
-     */
-    private val classicQqsRowsResource by derivedStateOf {
-        val base =
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows_landscape)
-            } else {
-                resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows)
-            }
-        if (mediaInRowViewModel.shouldMediaShowInRow) base * 2 else base
+    private val classicQqsRowsWithoutMedia by
+        hydrator.hydratedStateOf(
+            traceName = "classicQqsRowsWithoutMedia",
+            initialValue = resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows),
+            source = quickQuickSettingsRowInteractor.classicQuickRows,
+        )
+
+    private val classicQqsRowsCount by derivedStateOf {
+        if (mediaInRowViewModel.shouldMediaShowInRow) {
+            classicQqsRowsWithoutMedia * 2
+        } else {
+            classicQqsRowsWithoutMedia
+        }
     }
 
-    /** Max tiles in QQS for classic: classic columns × resource row count (layout rows untouched). */
+    /** Max tiles in QQS for classic: classic columns × classic row count (including media doubling). */
     val classicQqsMaxTiles by derivedStateOf {
-        classicQqsColumnsValue * classicQqsRowsResource
+        classicQqsColumnsValue * classicQqsRowsCount
     }
 
     private val largeTilesSpan: Int

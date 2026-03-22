@@ -178,4 +178,78 @@ constructor(
                     else R.integer.quick_settings_num_columns_classic
                 )
             )
+
+    /** Rows per page for expanded QS when using classic circular tiles. */
+    val classicRows =
+        combine(
+            systemSettingsRepository.intSetting(Settings.System.QS_LAYOUT_ROWS_CLASSIC, 0),
+            systemSettingsRepository.intSetting(
+                Settings.System.QS_LAYOUT_ROWS_LANDSCAPE_CLASSIC,
+                0,
+            ),
+            configurationRepository.onConfigurationChange.emitOnStart()
+        ) { settingValue, landscapeSettingValue, _ ->
+            val isLandscape =
+                resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+            if (isLandscape && landscapeSettingValue > 0) {
+                landscapeSettingValue
+            } else if (settingValue > 0) {
+                settingValue
+            } else {
+                if (isLandscape) {
+                    resources.getInteger(R.integer.quick_settings_paginated_grid_num_rows_landscape)
+                } else {
+                    resources.getInteger(R.integer.quick_settings_paginated_grid_num_rows_classic)
+                }
+            }
+        }
+            .map { it.coerceAtLeast(1) }
+            .distinctUntilChanged()
+            .stateIn(
+                scope,
+                SharingStarted.WhileSubscribed(),
+                resources.getInteger(
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+                        R.integer.quick_settings_paginated_grid_num_rows_landscape
+                    else R.integer.quick_settings_paginated_grid_num_rows_classic
+                )
+            )
+
+    /** Row count for QQS when using classic circular tiles. */
+    val classicQuickRows =
+        combine(
+            systemSettingsRepository.intSetting(Settings.System.QQS_LAYOUT_ROWS_CLASSIC, 0),
+            systemSettingsRepository.intSetting(
+                Settings.System.QQS_LAYOUT_ROWS_LANDSCAPE_CLASSIC,
+                0,
+            ),
+            configurationRepository.onConfigurationChange.emitOnStart()
+        ) { settingValue, landscapeSettingValue, _ ->
+            val isLandscape =
+                resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+            if (isLandscape && landscapeSettingValue > 0) {
+                landscapeSettingValue
+            } else if (settingValue > 0) {
+                settingValue
+            } else {
+                if (isLandscape) {
+                    resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows_landscape)
+                } else {
+                    resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows)
+                }
+            }
+        }
+            .map { it.coerceAtLeast(1) }
+            .distinctUntilChanged()
+            .stateIn(
+                scope,
+                SharingStarted.WhileSubscribed(),
+                resources.getInteger(
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+                        R.integer.quick_qs_paginated_grid_num_rows_landscape
+                    else R.integer.quick_qs_paginated_grid_num_rows
+                )
+            )
 }

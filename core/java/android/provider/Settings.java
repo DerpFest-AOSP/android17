@@ -7312,6 +7312,30 @@ public final class Settings {
                 "qqs_layout_columns_landscape_classic";
 
         /**
+         * Number of rows per page in quick settings when using classic circular tiles.
+         * @hide
+         */
+        public static final String QS_LAYOUT_ROWS_CLASSIC = "qs_layout_rows_classic";
+
+        /**
+         * Number of rows per page in quick settings (classic circular) for landscape orientation.
+         * @hide
+         */
+        public static final String QS_LAYOUT_ROWS_LANDSCAPE_CLASSIC = "qs_layout_rows_landscape_classic";
+
+        /**
+         * Number of rows in quick quick settings when using classic circular tiles.
+         * @hide
+         */
+        public static final String QQS_LAYOUT_ROWS_CLASSIC = "qqs_layout_rows_classic";
+
+        /**
+         * Number of rows in quick quick settings (classic circular) for landscape orientation.
+         * @hide
+         */
+        public static final String QQS_LAYOUT_ROWS_LANDSCAPE_CLASSIC = "qqs_layout_rows_landscape_classic";
+
+        /**
          * Whether media-in-row should halve QS columns.
          * @hide
          */

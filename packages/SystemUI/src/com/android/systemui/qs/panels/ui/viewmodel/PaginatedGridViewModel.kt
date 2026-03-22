@@ -64,6 +64,8 @@ constructor(
 
     val classicColumns: StateFlow<Int> = qsColumnsRepository.classicColumns
 
+    val classicRows: Flow<Int> = rowRepository.classicRows
+
     val showArrowsInPagerDots by
         hydrator.hydratedStateOf(
             traceName = "showArrowsInPagerDots",
