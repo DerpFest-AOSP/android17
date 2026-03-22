@@ -47,6 +47,7 @@ import android.app.WallpaperColors;
 import android.app.WallpaperManager;
 import android.app.WallpaperManager.OnColorsChangedListener;
 import android.content.BroadcastReceiver;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -579,6 +580,44 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
                         reevaluateSystemTheme(true /* forceReload */);
                     }
                 },
+                UserHandle.USER_ALL);
+
+        ContentObserver classicQsLayoutObserver = new ContentObserver(mBgHandler) {
+            @Override
+            public void onChange(boolean selfChange, Collection<Uri> collection, int flags,
+                    int userId) {
+                if (DEBUG) Log.d(TAG, "Classic QS layout changed for user: " + userId);
+                if (mUserTracker.getUserId() != userId) {
+                    return;
+                }
+                if (!mDeviceProvisionedController.isUserSetup(userId)) {
+                    Log.i(TAG, "Theme application deferred when setting changed.");
+                    mDeferredThemeEvaluation = true;
+                    return;
+                }
+                reevaluateSystemTheme(true /* forceReload */);
+            }
+        };
+        ContentResolver cr = mContext.getContentResolver();
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_LAYOUT_COLUMNS_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_LAYOUT_COLUMNS_LANDSCAPE_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QQS_LAYOUT_COLUMNS_CLASSIC),
+                false,
+                classicQsLayoutObserver,
+                UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QQS_LAYOUT_COLUMNS_LANDSCAPE_CLASSIC),
+                false,
+                classicQsLayoutObserver,
                 UserHandle.USER_ALL);
 
         // All wallpaper color and keyguard logic only applies when Monet is enabled.

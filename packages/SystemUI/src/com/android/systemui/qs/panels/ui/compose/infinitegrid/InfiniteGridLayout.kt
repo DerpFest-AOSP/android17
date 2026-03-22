@@ -41,6 +41,7 @@ import com.android.systemui.qs.flags.QSMaterialExpressiveTiles
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.ButtonGroupGrid
 import com.android.systemui.qs.panels.ui.compose.EditTileListState
+import com.android.systemui.qs.panels.data.repository.QSColumnsRepository
 import com.android.systemui.qs.panels.ui.compose.PaginatableGridLayout
 import com.android.systemui.qs.panels.ui.compose.TileListener
 import com.android.systemui.qs.panels.ui.compose.bounceableInfo
@@ -66,6 +67,7 @@ constructor(
     override val viewModelFactory: InfiniteGridViewModel.Factory,
     private val textFeedbackContentViewModelFactory: TextFeedbackContentViewModel.Factory,
     private val tileHapticsViewModelFactoryProvider: TileHapticsViewModelFactoryProvider,
+    private val qsColumnsRepository: QSColumnsRepository,
 ) : PaginatableGridLayout {
 
     @Composable
@@ -90,7 +92,9 @@ constructor(
         val isClassicStyle = panelStyle == 1
         val hideTileLabels = rememberQSTileLabelHide()
         val qsTileIconShapeKey = rememberQSTileIconShapeKey()
-        val classicColumns = integerResource(R.integer.quick_settings_num_columns_classic)
+        val classicColumns by qsColumnsRepository.classicColumns.collectAsStateWithLifecycle(
+            initialValue = integerResource(R.integer.quick_settings_num_columns_classic)
+        )
         val baseColumns = viewModel.columnsWithMediaViewModel.columns
         val columns = if (isClassicStyle) classicColumns else baseColumns
         val largeTilesSpan = viewModel.columnsWithMediaViewModel.largeSpan
@@ -224,13 +228,18 @@ constructor(
             }
         val actions =
             remember(topBarActionsViewModel) { topBarActionsViewModel.actions.toMutableStateList() }
-        val columns = columnsViewModel.columns
-        val largeTilesSpan = columnsViewModel.largeSpan
+        val panelStyle = rememberQSPanelStyle()
+        val isClassicEdit = panelStyle == 1
+        val classicEditColumns by qsColumnsRepository.classicColumns.collectAsStateWithLifecycle(
+            initialValue = integerResource(R.integer.quick_settings_num_columns_classic)
+        )
+        val columns = if (isClassicEdit) classicEditColumns else columnsViewModel.columns
+        val largeTilesSpan = if (isClassicEdit) 1 else columnsViewModel.largeSpan
         val largeTiles by viewModel.iconTilesViewModel.largeTilesState
 
         val currentTiles by rememberUpdatedState(tiles.filter { it.isCurrent })
         val listState =
-            remember(columns, largeTilesSpan) {
+            remember(columns, largeTilesSpan, isClassicEdit) {
                 EditTileListState(
                     currentTiles,
                     largeTiles,

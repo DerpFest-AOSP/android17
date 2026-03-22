@@ -9,5 +9,8 @@
     <integer name="quick_settings_infinite_grid_num_columns_landscape">6</integer>
     <integer name="quick_settings_paginated_grid_num_rows_landscape">2</integer>
     <integer name="quick_qs_paginated_grid_num_rows_landscape">1</integer>
+
+    <!-- Classic circular QS defaults when layout Secure settings are unset (0) -->
+    <integer name="quick_settings_num_columns_classic_landscape">6</integer>
 </resources>
 

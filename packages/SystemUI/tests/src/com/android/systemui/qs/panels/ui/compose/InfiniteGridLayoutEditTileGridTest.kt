@@ -45,6 +45,7 @@ import com.android.systemui.kosmos.runTest
 import com.android.systemui.kosmos.useUnconfinedTestDispatcher
 import com.android.systemui.qs.composefragment.dagger.usingMediaInComposeFragment
 import com.android.systemui.qs.panels.data.repository.defaultLargeTilesRepository
+import com.android.systemui.qs.panels.data.repository.qsColumnsRepository
 import com.android.systemui.qs.panels.domain.interactor.iconTilesInteractor
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.InfiniteGridLayout
 import com.android.systemui.qs.panels.ui.viewmodel.InfiniteGridViewModel
@@ -86,6 +87,7 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                     },
                 textFeedbackContentViewModelFactory,
                 tileHapticsViewModelFactoryProvider,
+                qsColumnsRepository,
             )
         }
 

@@ -18,6 +18,7 @@ package com.android.systemui.qs.panels.data.repository
 
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.provider.Settings
 import com.android.systemui.common.ui.data.repository.ConfigurationRepository
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
@@ -82,4 +83,44 @@ constructor(
         )
     val defaultColumns: Int =
         resources.getInteger(R.integer.quick_settings_infinite_grid_num_columns)
+
+    /**
+     * Column count for classic circular QS (`qs_panel_style` = 1), with fallbacks to
+     * [R.integer.quick_settings_num_columns_classic] / [R.integer.quick_settings_num_columns_classic_landscape].
+     */
+    val classicColumns =
+        combine(
+            systemSettingsRepository.intSetting(Settings.System.QS_LAYOUT_COLUMNS_CLASSIC, 0),
+            systemSettingsRepository.intSetting(
+                Settings.System.QS_LAYOUT_COLUMNS_LANDSCAPE_CLASSIC,
+                0,
+            ),
+            configurationRepository.onConfigurationChange.emitOnStart()
+        ) { settingValue, landscapeSettingValue, _ ->
+            val isLandscape =
+                resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+            if (isLandscape && landscapeSettingValue > 0) {
+                landscapeSettingValue
+            } else if (settingValue > 0) {
+                settingValue
+            } else {
+                if (isLandscape) {
+                    resources.getInteger(R.integer.quick_settings_num_columns_classic_landscape)
+                } else {
+                    resources.getInteger(R.integer.quick_settings_num_columns_classic)
+                }
+            }
+        }
+            .map { it.coerceAtLeast(1) }
+            .distinctUntilChanged()
+            .stateIn(
+                scope,
+                SharingStarted.WhileSubscribed(),
+                resources.getInteger(
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+                        R.integer.quick_settings_num_columns_classic_landscape
+                    else R.integer.quick_settings_num_columns_classic
+                )
+            )
 }

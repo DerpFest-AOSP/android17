@@ -56,14 +56,13 @@ fun ContentScope.QuickQuickSettings(
     val isClassicStyle = panelStyle == 1
     val hideTileLabels = rememberQSTileLabelHide()
     val qsTileIconShapeKey = rememberQSTileIconShapeKey()
-    val classicColumns = integerResource(R.integer.quick_settings_num_columns_classic)
     val columnsFlow by viewModel.qqsColumns.collectAsStateWithLifecycle(
         initialValue = integerResource(R.integer.quick_settings_infinite_grid_num_columns)
     )
-    val columns = if (isClassicStyle) classicColumns else columnsFlow
+    val columns = if (isClassicStyle) viewModel.classicQqsColumns else columnsFlow
     val sizedTiles =
         if (isClassicStyle) {
-            val maxTiles = columns * 2
+            val maxTiles = viewModel.classicQqsMaxTiles
             viewModel.allTileViewModels.take(maxTiles).fastMap { SizedTileImpl(it, 1) }
         } else {
             viewModel.tileViewModels

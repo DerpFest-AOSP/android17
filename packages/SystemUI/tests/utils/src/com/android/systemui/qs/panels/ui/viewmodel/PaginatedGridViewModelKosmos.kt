@@ -20,6 +20,7 @@ import com.android.systemui.classifier.domain.interactor.falsingInteractor
 import com.android.systemui.development.ui.viewmodel.buildNumberViewModelFactory
 import com.android.systemui.inputdevice.domain.interactor.pointerDeviceInteractor
 import com.android.systemui.kosmos.Kosmos
+import com.android.systemui.qs.panels.data.repository.qsColumnsRepository
 import com.android.systemui.qs.panels.data.repository.quickQuickSettingsRowRepository
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.editModeButtonViewModelFactory
 
@@ -33,6 +34,7 @@ val Kosmos.paginatedGridViewModel by
             falsingInteractor,
             pointerDeviceInteractor,
             quickQuickSettingsRowRepository,
+            qsColumnsRepository,
             qsColumnsViewModelFactory,
         )
     }

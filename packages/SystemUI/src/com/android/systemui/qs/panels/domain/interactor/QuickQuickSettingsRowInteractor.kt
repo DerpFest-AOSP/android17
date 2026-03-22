@@ -29,4 +29,5 @@ constructor(
     val rows = quickQuickSettingsRowRepository.rows
     val quickRows = quickQuickSettingsRowRepository.quickRows
     val quickColumns = quickQuickSettingsRowRepository.quickColumns
+    val classicQuickColumns = quickQuickSettingsRowRepository.classicQuickColumns
 }

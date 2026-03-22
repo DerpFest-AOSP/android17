@@ -24,7 +24,12 @@ interface PaginatableViewModel {
     /** Keys to use to invalidate the pages, other than the tiles and rows. */
     val pageKeys: Array<Any>
 
-    fun splitIntoPages(tiles: List<TileViewModel>, rows: Int): List<List<TileViewModel>>
+    fun splitIntoPages(
+        tiles: List<TileViewModel>,
+        rows: Int,
+        columnsOverride: Int? = null,
+        classicStyle: Boolean = false,
+    ): List<List<TileViewModel>>
 
     companion object {
         /**

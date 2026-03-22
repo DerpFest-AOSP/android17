@@ -55,6 +55,7 @@ import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsDataUsageViewMod
 import com.android.systemui.qs.panels.dagger.PaginatedBaseLayoutType
 import com.android.systemui.qs.panels.ui.compose.Dimensions.FooterHeight
 import com.android.systemui.qs.panels.ui.compose.Dimensions.InterPageSpacing
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
 import com.android.systemui.qs.panels.ui.compose.toolbar.EditModeButton
 import com.android.systemui.qs.panels.ui.viewmodel.PaginatedGridViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TileViewModel
@@ -85,14 +86,25 @@ constructor(
                 delegateGridLayout.viewModelFactory.create()
             }
 
-        val columns = viewModel.columnsWithMediaViewModel.columns
+        val panelStyle = rememberQSPanelStyle()
+        val cardColumns = viewModel.columnsWithMediaViewModel.columns
+        val classicColumns by viewModel.classicColumns.collectAsStateWithLifecycle(
+            initialValue = integerResource(R.integer.quick_settings_num_columns_classic)
+        )
+        val columns = if (panelStyle == 1) classicColumns else cardColumns
+
         val rows by viewModel.rows.collectAsStateWithLifecycle(
             initialValue = integerResource(R.integer.quick_settings_paginated_grid_num_rows)
         )
 
         val pages =
-            remember(tiles, columns, rows) {
-                delegateGridViewModel.splitIntoPages(tiles, rows)
+            remember(tiles, columns, rows, panelStyle, classicColumns) {
+                delegateGridViewModel.splitIntoPages(
+                    tiles,
+                    rows,
+                    columnsOverride = if (panelStyle == 1) classicColumns else null,
+                    classicStyle = panelStyle == 1,
+                )
             }
 
         val pagerState = rememberPagerState(0) { pages.size }

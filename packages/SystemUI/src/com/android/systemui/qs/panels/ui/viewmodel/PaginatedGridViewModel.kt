@@ -24,6 +24,7 @@ import com.android.systemui.inputdevice.domain.interactor.PointerDeviceInteracto
 import com.android.systemui.lifecycle.ExclusiveActivatable
 import com.android.systemui.lifecycle.Hydrator
 import com.android.systemui.media.controls.ui.controller.MediaHierarchyManager.Companion.LOCATION_QS
+import com.android.systemui.qs.panels.data.repository.QSColumnsRepository
 import com.android.systemui.qs.panels.data.repository.QuickQuickSettingsRowRepository
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.EditModeButtonViewModel
 import com.android.systemui.qs.ui.viewmodel.QuickSettingsContainerViewModel
@@ -32,6 +33,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class PaginatedGridViewModel
@@ -44,6 +46,7 @@ constructor(
     private val falsingInteractor: FalsingInteractor,
     pointerDeviceInteractor: PointerDeviceInteractor,
     private val rowRepository: QuickQuickSettingsRowRepository,
+    qsColumnsRepository: QSColumnsRepository,
     columnsWithMediaViewModelFactory: QSColumnsViewModel.Factory,
 ) : IconTilesViewModel by iconTilesViewModel, ExclusiveActivatable() {
 
@@ -58,6 +61,8 @@ constructor(
         get() = columnsWithMediaViewModel.columns
 
     val rows: Flow<Int> = rowRepository.rows
+
+    val classicColumns: StateFlow<Int> = qsColumnsRepository.classicColumns
 
     val showArrowsInPagerDots by
         hydrator.hydratedStateOf(
