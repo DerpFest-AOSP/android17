@@ -160,7 +160,11 @@ class SmartspaceWeatherClockController(
             ContentDescriptionUtil.setFormattedContentDescription(
                 WEATHER_CLOCK_TAG,
                 tv,
-                if (SmartspaceUtils.isEmpty(subItemInfo.text)) "" else subItemInfo.text.text,
+                if (SmartspaceUtils.isEmpty(subItemInfo.text)) {
+                    ""
+                } else {
+                    subItemInfo.text?.text ?: ""
+                },
                 subItemInfo.icon?.contentDescription,
             )
         }
