@@ -410,4 +410,13 @@
     <!-- OnePlus-style volume panel -->
     <string name="volume_panel_system_volume">System volume</string>
     <string name="volume_panel_settings">Settings</string>
+
+    <!-- Samsung-style volume panel: active stream label in header -->
+    <string name="volume_panel_stream_media">Media</string>
+    <string name="volume_panel_stream_ringtone">Ringtone</string>
+    <string name="volume_panel_stream_notification">Notification</string>
+    <string name="volume_panel_stream_alarm">Alarm</string>
+    <string name="volume_panel_stream_call">Call</string>
+    <string name="volume_panel_stream_system">System</string>
+    <string name="volume_panel_stream_volume">Volume</string>
 </resources>
