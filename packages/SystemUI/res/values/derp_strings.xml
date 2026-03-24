@@ -406,4 +406,8 @@
     <string name="ax_dynamic_bar_sports_final">Final</string>
     <string name="ax_dynamic_bar_sports_halftime">Halftime</string>
     <string name="ax_dynamic_bar_sports_upcoming">Upcoming</string>
+
+    <!-- OnePlus-style volume panel -->
+    <string name="volume_panel_system_volume">System volume</string>
+    <string name="volume_panel_settings">Settings</string>
 </resources>
