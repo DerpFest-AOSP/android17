@@ -8,18 +8,19 @@ package com.android.systemui.qs.panels.ui.compose.infinitegrid
 import android.graphics.Matrix
 import android.util.PathParser
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 
-private const val ICON_MASK_PATH_VIEWBOX = 100f
+private const val DEFAULT_ICON_MASK_VIEWBOX = 100f
 
-/**
- * Icon mask paths for classic QS tiles, kept in sync with
- * `packages/apps/Launcher3/.../shapes/ShapesProvider.kt` (same keys and SVG path data).
- */
+/** Path + original SVG viewBox size (vendor overlays use 48×48 or 2.2×2.2). */
+private data class IconMaskSpec(val path: String, val viewBox: Float = DEFAULT_ICON_MASK_VIEWBOX)
+
+/** Icon mask paths for classic QS tiles. */
 object QSTileIconShapes {
     private const val CIRCLE_PATH = "M50 0A50 50,0,1,1,50 100A50 50,0,1,1,50 0"
     private const val SQUARE_PATH =
@@ -63,6 +64,53 @@ object QSTileIconShapes {
         "M12.97,0 C8.41,0 4.14,2.55 2.21,6.68 -1.03,13.61 -0.71,21.78 3.16,28.46 4.89,31.46 4.89,35.2 3.16,38.2 -1.05,45.48 -1.05,54.52 3.16,61.8 4.89,64.8 4.89,68.54 3.16,71.54 -0.71,78.22 -1.03,86.39 2.21,93.32 4.14,97.45 8.41,100 12.97,100 21.38,100 78.62,100 87.03,100 91.59,100 95.85,97.45 97.79,93.32 101.02,86.39 100.71,78.22 96.84,71.54 95.1,68.54 95.1,64.8 96.84,61.8 101.05,54.52 101.05,45.48 96.84,38.2 95.1,35.2 95.1,31.46 96.84,28.46 100.71,21.78 101.02,13.61 97.79,6.68 95.85,2.55 91.59,0 87.03,0 78.62,0 21.38,0 12.97,0 Z"
     private const val ROUNDED_HEXAGON_PATH =
         "M4.8 33V67c0 5.8 3 11 8 13.7l29.4 17c4.9 2.7 11 2.7 15.9 0l29.4 -17c4.9 -2.7 8 -8 8 -13.7V33c0 -5.8 -3 -11 -8 -13.7l-29.4 -17c-4.9 -2.7 -11 -2.7 -15.9 0l-29.7 17C7.8 22.2 4.8 27.5 4.8 33z"
+
+
+    /** Full viewBox fill for mask/preview; classic UI shows icon only (no colored disc). */
+    private const val JUST_ICONS_CLIP_PATH = "M0,0 L100,0 L100,100 L0,100 Z"
+
+    private const val TEAR_DROP_OVERLAY_PATH = "M50,0A50,50,0,0 1 100,50 L100,85 A15,15,0,0 1 85,100 L50,100 A50,50,0,0 1 50,0z"
+
+    // Single top cloud from Wavey overlay; stacking all layers unions to a filled disk.
+    private const val WAVEY_PATH =
+        "M10.37,11.11c8.99,3.44 17.31,0.6 23.95,-5.18c0.77,-0.67 1.59,-1.23 2.42,-1.7c-3.67,-2.36 -8.04,-3.74 -12.73,-3.74c-7.87,0 -14.84,3.87 -19.12,9.8C6.8,10.23 8.67,10.46 10.37,11.11z"
+
+    private const val POKESIGN_PATH = "M24,0C10.95,0 0.36,10.58 0.36,23.64c0,13.06 10.58,23.64 23.64,23.64c13.05,0 23.64,-10.58 23.64,-23.64C47.64,10.58 37.05,0 24,0zM24,42.64c-10.49,0 -19,-8.51 -19,-19C5,13.14 13.51,4.63 24,4.63c10.49,0 19,8.51 19,19C43,34.13 34.49,42.64 24,42.64z M23.91,18.65c2.54,0 4.62,1.9 4.95,4.35h9.72C38.24,15.23 31.85,9.03 24,9.03S9.76,15.23 9.42,23h9.54C19.29,20.55 21.37,18.65 23.91,18.65z M23.91,28.68c-2.3,0 -4.22,-1.56 -4.81,-3.68H9.46C10.15,32.43 16.39,38.25 24,38.25c7.61,0 13.85,-5.82 14.54,-13.25h-9.82C28.13,27.12 26.21,28.68 23.91,28.68z"
+
+    private const val NINJA_PATH =
+        "M21.47,24c0,-1.36 1.08,-2.46 2.42,-2.52V0.85l-0.17,-0.25l-8.51,13.62L1.55,22.92h0.43l12.73,10l9.19,14.2V26.52C22.55,26.46 21.47,25.36 21.47,24z M15.02,32.71l-12.59,-9.91l12.99,-8.25l8.32,-13.25l0.15,0.23l0,-1.35l-0.17,-0.26l-8.77,14.04l-14.69,9.33l1.59,0l12.58,9.88l9.47,14.63l0,-1.38z M33.09,14.62l-9.19,-13.77v20.63c0.04,-0 0.07,-0.01 0.1,-0.01c1.39,0 2.53,1.13 2.53,2.53S25.4,26.53 24,26.53c-0.04,0 -0.07,-0.01 -0.1,-0.01v20.6L24,47.27l9.68,-15.21l12.56,-9.15L33.09,14.62z M33.35,14.35l-9.46,-14.17l0,1.35l8.88,13.3l12.81,8.11l-12.12,8.82l-9.47,14.82l-0.1,-0.15l0,1.38l0.11,0.16l9.96,-15.65l12.95,-9.43z M24,27.28c-1.81,0 -3.28,-1.47 -3.28,-3.28c0,-1.81 1.47,-3.28 3.28,-3.28c1.81,0 3.28,1.47 3.28,3.28C27.28,25.81 25.81,27.28 24,27.28zM24,22.22c-0.98,0 -1.78,0.8 -1.78,1.78c0,0.98 0.8,1.78 " +
+        "1.78,1.78c0.98,0 1.78,-0.8 1.78,-1.78C25.78,23.02 24.98,22.22 24,22.22z"
+
+    // Dotted ring drawn on top; clip uses [CIRCLE_PATH] (see [ornamentPathForClassicTile]).
+    private const val DOTTED_CIRCLE_ORNAMENT_PATH =
+        "M45.65,19.56l1.55,-0.31c0,0 0.18,1.18 0.35,2.35c0.06,1.19 0.12,2.38 0.12,2.38h-1.58c0,0 -0.06,-1.11 -0.11,-2.22C45.81,20.66 45.65,19.56 45.65,19.56z M43.38,13.37l1.39,-0.76c0,0 0.14,0.26 0.33,0.67c0.19,0.4 0.45,0.94 0.71,1.47c0.2,0.56 0.41,1.12 0.56,1.54c0.15,0.42 0.25,0.7 0.25,0.7l-1.51,0.47c0,0 -0.09,-0.26 -0.23,-0.65c-0.14,-0.39 -0.33,-0.91 -0.52,-1.43c-0.24,-0.5 -0.48,-1 -0.66,-1.38C43.51,13.62 43.38,13.37 43.38,13.37z M39.38,8.13L40.49,7c0,0 0.23,0.19 0.52,0.53c0.3,0.33 0.7,0.77 1.1,1.21c0.39,0.45 0.72,0.94 1,1.3c0.27,0.36 0.44,0.6 0.44,0.6l-1.31,0.89c0,0 -0.17,-0.22 -0.42,-0.56c-0.26,-0.33 -0.57,-0.79 -0.93,-1.21c-0.37,-0.41 -0.75,-0.82 -1.03,-1.13C39.6,8.31 39.38,8.13 39.38,8.13z M34.03,4.3l0.72,-1.41c0,0 0.28,0.12 0.66,0.34c0.38,0.23 0.89,0.54 1.4,0.85c0.52,0.29 0.97,0.69 " +
+        "1.34,0.94c0.36,0.27 0.6,0.44 0.6,0.44l-0.99,1.24c0,0 -0.22,-0.17 -0.56,-0.42c-0.34,-0.24 -0.76,-0.61 -1.25,-0.88c-0.47,-0.29 -0.95,-0.58 -1.3,-0.79C34.28,4.4 34.03,4.3 34.03,4.3z M27.78,2.21l0.27,-1.56c0,0 0.29,0.05 0.73,0.12c0.43,0.11 1.01,0.26 1.59,0.41c0.58,0.13 1.14,0.34 1.56,0.5c0.42,0.15 0.7,0.26 0.7,0.26l-0.58,1.47c0,0 -0.26,-0.09 -0.65,-0.24c-0.39,-0.14 -0.91,-0.35 -1.45,-0.47c-0.54,-0.14 -1.08,-0.28 -1.48,-0.38C28.06,2.26 27.78,2.21 27.78,2.21z M21.2,2.06l-0.2,-1.57c0,0 0.29,-0.06 0.74,-0.09c0.44,-0.02 1.04,-0.05 1.63,-0.08c0.59,-0.05 1.19,0 1.63,0.02c0.44,0.02 0.74,0.04 0.74,0.04l-0.12,1.58c0,0 -0.28,-0.01 -0.69,-0.04c-0.42,-0.02 -0.97,-0.07 -1.52,-0.02c-0.56,0.03 -1.11,0.06 -1.52,0.08C21.47,2 21.2,2.06 21.2,2.06z M14.86,3.85l-0.65,-1.44c0,0 0.26,-0.14 0.68,-0.31c0.42,-0.15 " +
+        "0.98,-0.36 1.54,-0.56c0.55,-0.23 1.14,-0.34 1.57,-0.46c0.43,-0.11 0.72,-0.19 0.72,-0.19l0.35,1.54c0,0 -0.27,0.07 -0.67,0.17c-0.4,0.11 -0.95,0.21 -1.46,0.43c-0.52,0.19 -1.04,0.38 -1.43,0.52C15.1,3.71 14.86,3.85 14.86,3.85z M9.34,7.43L8.29,6.25c0,0 0.22,-0.2 0.55,-0.5c0.35,-0.28 0.83,-0.63 1.3,-0.99c0.47,-0.37 0.98,-0.68 1.36,-0.91c0.38,-0.23 0.64,-0.39 0.64,-0.39l0.79,1.37c0,0 -0.24,0.14 -0.59,0.36c-0.36,0.21 -0.84,0.5 -1.27,0.85c-0.44,0.34 -0.89,0.66 -1.22,0.92C9.54,7.25 9.34,7.43 9.34,7.43z M5.11,12.48l-1.35,-0.82c0,0 0.59,-1.04 1.34,-1.96c0.35,-0.48 0.71,-0.95 1.03,-1.27c0.3,-0.33 0.5,-0.55 0.5,-0.55l1.16,1.08c0,0 -0.19,0.2 -0.47,0.51c-0.29,0.3 -0.63,0.74 -0.96,1.19C5.66,11.52 5.11,12.48 5.11,12.48z M2.56,18.55l-1.53,-0.39c0,0 0.07,-0.29 0.19,-0.72c0.09,-0.44 0.31,-0.99 " +
+        "0.51,-1.55c0.37,-1.13 0.92,-2.19 0.92,-2.19l1.42,0.69c0,0 -0.52,0.98 -0.86,2.04c-0.19,0.52 -0.4,1.04 -0.48,1.45C2.63,18.28 2.56,18.55 2.56,18.55z M1.92,25.11l-1.58,0.08c0,0 -0.01,-0.3 -0.04,-0.74C0.26,24 0.31,23.41 0.34,22.81c0.01,-1.19 0.23,-2.36 0.23,-2.36l1.56,0.23c0,0 -0.21,1.09 -0.22,2.21c-0.02,0.56 -0.08,1.11 -0.03,1.52C1.91,24.83 1.92,25.11 1.92,25.11z M3.23,31.56l-1.49,0.54c0,0 -0.45,-1.1 -0.7,-2.27c-0.15,-0.58 -0.31,-1.15 -0.36,-1.6c-0.07,-0.44 -0.11,-0.74 -0.11,-0.74l1.56,-0.23c0,0 0.04,0.27 0.1,0.69c0.04,0.42 0.2,0.95 0.33,1.49C2.81,30.53 3.23,31.56 3.23,31.56z M6.39,37.34l-1.26,0.96c0,0 -0.18,-0.24 -0.44,-0.6c-0.28,-0.35 -0.59,-0.85 -0.9,-1.37c-0.66,-1 -1.14,-2.09 -1.14,-2.09l1.42,-0.69c0,-0 0.45,1.02 1.06,1.95c0.28,0.48 0.57,0.95 0.84,1.27C6.22,37.11 6.39,37.34 6.39,37.34z " +
+        "M11.1,41.93l-0.92,1.28c0,0 -0.24,-0.18 -0.6,-0.44c-0.36,-0.26 -0.83,-0.62 -1.26,-1.04c-0.44,-0.4 -0.89,-0.79 -1.2,-1.11c-0.3,-0.33 -0.5,-0.55 -0.5,-0.55l1.16,-1.08c0,0 0.19,0.21 0.47,0.51c0.29,0.3 0.71,0.66 1.12,1.03c0.4,0.39 0.84,0.73 1.18,0.97C10.88,41.76 11.1,41.93 11.1,41.93z M16.97,44.93l-0.5,1.5c0,0 -0.28,-0.1 -0.7,-0.25c-0.42,-0.16 -0.99,-0.33 -1.52,-0.61c-0.54,-0.26 -1.07,-0.52 -1.47,-0.71c-0.39,-0.21 -0.64,-0.38 -0.64,-0.38l0.79,-1.37c0,0 0.23,0.15 0.6,0.35c0.38,0.18 0.88,0.42 1.38,0.66c0.49,0.26 1.03,0.42 1.41,0.57C16.71,44.84 16.97,44.93 16.97,44.93z M23.46,46.06l-0.04,1.58c0,0 -0.3,-0.01 -0.74,-0.04c-0.44,-0.04 -1.04,-0.02 -1.63,-0.13c-0.59,-0.09 -1.18,-0.18 -1.62,-0.25c-0.22,-0.03 -0.4,-0.08 -0.53,-0.11c-0.13,-0.03 -0.2,-0.05 -0.2,-0.05l0.35,-1.54c0,0 0.07,0.02 " +
+        "0.19,0.05c0.12,0.03 0.28,0.08 0.49,0.1c0.41,0.06 0.96,0.15 1.51,0.23c0.55,0.11 1.11,0.09 1.52,0.13C23.18,46.05 23.46,46.06 23.46,46.06z M29.99,45.24l0.43,1.52c0,0 -0.29,0.07 -0.72,0.19c-0.43,0.11 -1,0.28 -1.6,0.34c-0.59,0.09 -1.18,0.18 -1.62,0.25c-0.44,0.04 -0.74,0.05 -0.74,0.05l-0.12,-1.58c0,0 0.28,-0 0.69,-0.04c0.41,-0.06 0.96,-0.15 1.51,-0.23c0.55,-0.06 1.09,-0.22 1.49,-0.32S29.99,45.24 29.99,45.24z M35.99,42.52l0.86,1.33c0,0 -0.25,0.15 -0.63,0.39c-0.39,0.22 -0.88,0.57 -1.42,0.81c-0.54,0.26 -1.07,0.52 -1.47,0.71c-0.41,0.18 -0.69,0.27 -0.69,0.27l-0.58,-1.47c0,0 0.27,-0.08 0.65,-0.25c0.38,-0.18 0.88,-0.42 1.38,-0.66c0.51,-0.22 0.97,-0.54 1.33,-0.75C35.75,42.67 35.99,42.52 35.99,42.52z M40.93,38.16l1.21,1.02c0,0 -0.2,0.22 -0.5,0.55c-0.31,0.32 -0.68,0.79 -1.12,1.19c-0.44,0.4 -0.88,0.8 " +
+        "-1.21,1.1c-0.32,0.31 -0.57,0.47 -0.57,0.47l-0.99,-1.24c0,0 0.24,-0.15 0.54,-0.44c0.31,-0.28 0.72,-0.65 1.13,-1.03c0.41,-0.38 0.76,-0.81 1.04,-1.11C40.74,38.37 40.93,38.16 40.93,38.16z M44.37,32.54l1.46,0.61c0,0 -0.51,1.08 -1.03,2.14c-0.31,0.51 -0.62,1.02 -0.85,1.4c-0.23,0.38 -0.4,0.63 -0.4,0.63l-1.31,-0.89c0,0 0.16,-0.23 0.37,-0.59c0.22,-0.35 0.5,-0.83 0.79,-1.3C43.89,33.54 44.37,32.54 44.37,32.54z M45.98,26.15l1.57,0.15c0,0 -0.03,0.29 -0.1,0.74c-0.07,0.44 -0.16,1.03 -0.25,1.62c-0.29,1.15 -0.58,2.31 -0.58,2.31l-1.51,-0.47c0,0 0.27,-1.08 0.54,-2.15c0.08,-0.55 0.17,-1.1 0.23,-1.51C45.95,26.42 45.98,26.15 45.98,26.15z"
+
+    // Mountain paths only; omit circular sky path from overlay or clip becomes a disk.
+    private const val ATTEMPT_MOUNTAIN_PATH =
+        "M44.27,35.8L36.4,30.73l4,5.54l-6.53,-3.8l2.53,4.09l-6,-3.34l0.67,3.05l-5.07,-2.47l1.53,2.47l-4.8,-2.47l0.67,2.76l-10.27,-5.83l4.93,5.54l-8.53,-4.93l3.93,4.93l-6.7,-3.4l2.17,3.4v0.29l-4.33,-1.96L3.1,35c3.97,7.55 11.86,12.72 20.99,12.72c9.56,0 17.78,-5.67 21.53,-13.83l-6.82,-4.82L44.27,35.8z M40.27,26.2l-5.13,1.63l0.67,1.83l-3.73,0.35l-3.53,2.65l-5.8,-0.46l-3.93,-4.38l-6.4,-2.43L11,30.27l-7.27,1.47L2.25,33.22c0.26,0.61 0.55,1.2 0.85,1.78l1.5,-0.4l4.33,1.96v-0.29l-2.17,-3.4l6.7,3.4l-3.93,-4.93l8.53,4.93l-4.93,-5.54l10.27,5.83l-0.67,-2.76l4.8,2.47l-1.53,-2.47l5.07,2.47L30.4,33.22l6,3.34l-2.53,-4.09l6.53,3.8l-4,-5.54l7.87,5.07l-5.47,-6.73l6.82,4.82c0.2,-0.44 0.4,-0.88 0.57,-1.33L40.27,26.2z M41.1,24.1l-5.3,-0.7l-4.5,1.4L27.1,22l-5.8,-5.3l-6.5,2.2L1.34,30.73c0.25,0.86 0.57,1.68 " +
+        "0.91,2.49l1.49,-1.49L11,30.27l1.4,-4.87l6.4,2.43l3.93,4.38l5.8,0.46l3.53,-2.65l3.73,-0.35l-0.67,-1.83l5.13,-1.63l5.92,6.36c0.35,-0.89 0.66,-1.81 0.9,-2.75L41.1,24.1z"
+
+    // Line ornament drawn on top of the tile; clip uses [IOS_ROUNDED_SQUARE_PATH] (see [ornamentPathForClassicTile]).
+    private const val SQUAREMEDO_ORNAMENT_PATH =
+        "M7.92,31.72l8.35,8.36l1.06,0l-9.42,-9.42z M1.26,24l5.91,-5.91l0,-1.06l-6.97,6.97l6.97,6.97l0,-1.06z M24,46.74l-5.91,-5.91l-1.06,0l6.97,6.97l6.97,-6.97l-1.06,0z M30.66,40.08l1.06,0l8.36,-8.36l0,-1.06z M46.74,24l-5.91,5.91l0,1.06l6.97,-6.97l-6.97,-6.97l0,1.06z M16.28,7.92l-8.36,8.36l0,1.06l9.42,-9.42z M24,1.26l5.91,5.91l1.06,0l-6.97,-6.97l-6.97,6.97l1.06,0z M40.08,16.28l-8.36,-8.36l-1.06,0l9.42,9.42z M29.27,7.92l1.39,0l-0.75,-0.75l-1.39,0z M19.48,7.17l-1.39,0l-0.75,0.75l1.39,0z M40.08,29.08l0,1.58l0.75,-0.75l0,-1.58z M40.83,19.48l0,-1.39l-0.75,-0.75l0,1.39z M40.83,30.97l-0.75,0.75l0,8.36l-8.36,0l-0.75,0.75l9.86,0z M40.08,7.92l0,8.36l0.75,0.75l0,-9.86l-9.86,0l0.75,0.75z M18.92,40.08l-1.58,0l0.75,0.75l1.58,0z M28.33,40.83l1.58,0l0.75,-0.75l-1.58,0z M7.92,18.73l0,-1.39l-0.75,0.75l0,1.39z " +
+        "M7.92,7.92l8.36,0l0.75,-0.75l-9.86,0l0,9.86l0.75,-0.75z M7.92,40.08l0,-8.36l-0.75,-0.75l0,9.86l9.85,0l-0.75,-0.75z M7.17,28.33l0,1.58l0.75,0.75l0,-1.58z M17.34,40.08l-1.06,0l0.75,0.75l1.06,0z M30.66,7.92l1.06,0l-0.75,-0.75l-1.06,0z M40.08,17.34l0.75,0.75l0,-1.06l-0.75,-0.75z M17.34,7.92l0.75,-0.75l-1.06,0l-0.75,0.75z M30.66,40.08l-0.75,0.75l1.06,0l0.75,-0.75z M7.92,30.66l-0.75,-0.75l0,1.06l0.75,0.75z M40.08,30.66l0,1.06l0.75,-0.75l0,-1.06z M7.92,17.34l0,-1.06l-0.75,0.75l0,1.06z M7.92,28.65l0,0.43l11,11l0.43,0z M28.65,40.08l0.43,0l11,-11l0,-0.43z M24,44.72l-3.9,-3.9l-0.43,0l4.33,4.33l4.33,-4.33l-0.43,0z M3.28,24l3.9,-3.9l0,-0.63l-4.43,4.43l4.43,4.43l0,-0.43z M19.35,7.92l-0.63,0l-10.8,10.8l0,0.63z M44.72,24l-3.9,3.9l0,0.43l4.43,-4.43l-4.43,-4.43l0,0.63z " +
+        "M40.08,19.35l0,-0.63l-10.8,-10.8l-0.63,0z M24,3.28l3.9,3.9l0.63,0l-4.52,-4.52l-4.52,4.52l0.63,0z M28.65,7.92l0.63,0l-0.75,-0.75l-0.63,0z M40.83,20.1l0,-0.63l-0.75,-0.75l0,0.63z M20.1,7.17l-0.63,0l-0.75,0.75l0.63,0z M7.92,19.35l0,-0.63l-0.75,0.75l0,0.63z M7.17,27.9l0,0.43l0.75,0.75l0,-0.43z M27.9,40.83l0.43,0l0.75,-0.75l-0.43,0z M40.83,27.9l-0.75,0.75l0,0.43l0.75,-0.75z M19.35,40.08l-0.43,0l0.75,0.75l0.43,0z M3.81,23.9l3.36,-3.37l0,-0.43l-3.9,3.9l3.9,3.9l0,-0.63z M40.08,19.79l0,-0.43l-11.43,-11.43l-0.43,0z M24,3.71l3.46,3.46l0.43,0l-3.9,-3.9l-3.9,3.9l0.43,0z M19.79,7.92l-0.43,0l-11.43,11.43l0,0.43z M24,44.1l-3.27,-3.27l-0.63,0l3.9,3.9l3.9,-3.9l-0.63,0z M40.83,20.1l0,0.43l3.37,3.37l-3.37,3.37l0,0.63l3.9,-3.9z M28.02,40.08l0.63,0l11.43,-11.43l0,-0.63z M7.92,28.02l0,0.63l11.43,11.43l0.63,0z " +
+        "M27.27,40.83l0.63,0l0.75,-0.75l-0.63,0z M19.98,40.08l-0.63,0l0.75,0.75l0.63,0z M7.17,27.27l0,0.63l0.75,0.75l0,-0.63z M40.83,20.54l0,-0.43l-0.75,-0.75l0,0.43z M40.08,28.02l0,0.63l0.75,-0.75l0,-0.63z M28.21,7.92l0.43,0l-0.75,-0.75l-0.43,0z M7.92,19.79l0,-0.43l-0.75,0.75l0,0.43z M20.54,7.17l-0.43,0l-0.75,0.75l0.43,0z"
+
+    private const val SHISHU_INK_PATH =
+        "M21.19,44.39c-1.38,-0.51 -2.76,-1 -4.12,-1.54c-0.25,-0.1 -0.8,-0.15 -0.63,-0.54c0.17,-0.38 0.56,-0.04 0.83,0.08c2.2,0.96 4.46,1.61 6.9,1.5c1.14,-0.05 2.19,-0.44 3.29,-0.67c2.47,-0.5 4.88,-1.24 7.07,-2.5c1.97,-1.14 3.67,-2.65 5.09,-4.46c1.16,-1.48 2.09,-3.09 3.11,-4.65c1.15,-1.76 1.52,-3.71 1.76,-5.72c0.03,-0.23 0.06,-0.53 0.21,-0.68c0.74,-0.73 0.5,-1.58 0.35,-2.41c-0.15,-0.79 -0.38,-1.55 -0.6,-2.33c-0.3,-1.08 -0.63,-2.16 -0.75,-3.29c-0.04,-0.41 -0.14,-0.79 -0.46,-1.08c-0.3,-0.27 -0.56,-0.58 -0.76,-0.92c-0.15,-0.25 -0.27,-0.45 -0.58,-0.09c-0.31,0.37 -0.49,0.05 -0.49,-0.24c0.01,-0.79 -0.57,-1.31 -0.8,-1.97c-0.49,-1.39 -1.64,-2.26 -2.43,-3.42c-0.24,-0.35 -0.56,-0.66 -0.96,-0.83c-1.62,-0.7 -3.07,-1.72 -4.72,-2.36c-1.9,-0.74 -3.77,-1.52 -5.89,-1.15c-0.25,0.04 -0.54,-0.02 " +
+        "-0.79,-0.09c-1.11,-0.35 -2.16,-0.17 -3.21,0.23c-0.87,0.33 -1.7,0.69 -2.68,0.69c-0.8,0 -1.5,0.55 -2.18,0.95c-1.75,1.04 -3.31,2.33 -4.72,3.8c-1.22,1.27 -2.36,2.62 -3.61,3.85c-0.56,0.56 -0.86,1.3 -1.36,1.78c-1.14,1.1 -1.06,2.69 -1.89,3.88c-0.32,0.45 -0.35,1 -0.39,1.54c-0.02,0.37 -0.02,0.75 0.15,1.1c0.18,0.37 0.17,0.73 -0.03,1.07c-0.58,1.03 -0.14,1.98 0.29,2.89c0.27,0.56 0.49,1.07 0.28,1.67c-0.09,0.25 -0.05,0.47 0.19,0.52c1.03,0.21 0.88,1.09 0.96,1.77c0.06,0.52 0.03,1.27 -0.38,1.5c-0.69,0.38 -1.09,0.64 -0.6,1.43c0.06,0.09 -0.12,0.23 -0.27,0.18c-0.09,-0.03 -0.17,-0.12 -0.25,-0.19c-0.23,-0.24 -0.41,-0.77 -0.7,-0.65c-0.31,0.13 -0.33,0.67 -0.44,1.05c-0.06,0.21 0.06,0.55 -0.28,0.57c-0.32,0.02 -0.35,-0.29 -0.39,-0.52c-0.13,-0.86 -0.99,-0.89 -1.5,-1.13c-0.78,-0.35 -1.16,-0.98 -1.4,-1.61c-0.49,-1.28 " +
+        "-0.99,-2.59 -1.07,-3.99c-0.01,-0.17 -0.13,-0.34 -0.2,-0.52c0,-0.05 0,-0.11 0,-0.16c0.37,-0.72 0.37,-1.49 0.32,-2.27c-0.16,-2.56 0.06,-5.04 1.33,-7.36c0.79,-1.44 1.5,-2.94 1.82,-4.59c0.1,-0.53 0.4,-1.03 0.73,-1.5c1.24,-1.69 2.64,-3.19 4.44,-4.31c1.76,-1.1 3.35,-2.46 5.22,-3.39c3.15,-1.55 6.49,-2.39 10,-2.57c0.5,-0.03 1.02,0.08 1.5,-0.17c1.12,0 2.25,0 3.37,0c0.16,0.12 0.32,0.12 0.48,0c0.11,0 0.21,0 0.32,0c0.34,0.18 0.71,0.23 1.07,0.31c1.59,0.36 3.15,0.71 4.58,1.59c2.12,1.3 3.9,2.98 5.66,4.69c2.77,2.69 4.68,5.9 5.87,9.6c1.47,4.56 1.17,9.05 -0.13,13.56c-0.23,0.79 -0.63,1.52 -0.96,2.28c-0.08,0.19 -0.17,0.47 -0.44,0.27c-0.33,-0.25 -0.42,0 -0.54,0.2c-0.42,0.71 -0.78,1.46 -1.24,2.15c-1.96,2.91 -4.33,5.38 -7.43,7.14c-2.64,1.5 -5.4,2.52 -8.41,2.88c-0.69,0.08 -1.39,0.02 -2.05,0.28c-0.05,0 -0.11,0 " +
+        "-0.16,0c-0.16,-0.11 -0.32,-0.12 -0.48,0c-0.11,0 -0.21,0 -0.32,0c-0.16,-0.12 -0.32,-0.12 -0.48,0c-0.05,0 -0.11,0 -0.16,0c-0.21,-0.14 -0.43,-0.15 -0.64,0c-0.05,0 -0.11,0 -0.16,0c-1.33,-0.26 -2.66,-0.53 -3.99,-0.79c-2.31,-0.46 -4.33,-1.49 -6.08,-3.05c-0.12,-0.11 -0.25,-0.21 -0.34,-0.34c-0.05,-0.08 -0.09,-0.22 -0.06,-0.29c0.08,-0.16 0.23,-0.1 0.34,-0.03c0.34,0.21 0.67,0.45 1,0.66c2.17,1.36 4.51,2.29 7.04,2.72c0.46,0.25 0.96,0.09 1.44,0.16c1.72,0.34 3.43,0.21 5.14,-0.04c0.13,-0.02 0.34,-0.02 0.33,-0.15c-0.02,-0.21 -0.25,-0.13 -0.39,-0.12c-1.03,0.05 -2.07,0.1 -3.1,0.2c-0.66,0.07 -1.33,-0.15 -1.98,0.1C22.17,44.35 21.7,44.15 21.19,44.39zM32.91,43.1c0.11,-0.05 0.21,-0.11 0.32,-0.16c0.03,-0.02 0.06,-0.03 0.1,-0.05c-0.03,0.02 -0.06,0.03 -0.1,0.05c-0.11,0.05 -0.22,0.11 -0.32,0.16c-0.03,0.02 " +
+        "-0.06,0.04 -0.09,0.05C32.85,43.14 32.88,43.12 32.91,43.1zM34.67,42.3c0.03,-0.02 0.06,-0.03 0.1,-0.05c-0.03,0.02 -0.06,0.04 -0.09,0.05c-0.03,0.02 -0.06,0.03 -0.09,0.05C34.61,42.33 34.64,42.31 34.67,42.3zM24.88,1.68c0.11,0 0.21,-0 0.32,-0c0.07,0.02 0.11,0.16 0.21,0.04c-0.07,-0.01 -0.14,-0.03 -0.21,-0.04C25.1,1.6 24.99,1.6 24.88,1.68c-0.11,0 -0.22,0 -0.32,0c-0.11,-0.09 -0.21,-0.08 -0.32,-0c-0.05,0.05 -0.18,-0.05 -0.19,0.09c0.06,-0.03 0.13,-0.06 0.19,-0.09c0.11,-0 0.21,-0 0.32,-0C24.67,1.77 24.78,1.77 24.88,1.68zM13.32,4.57c0.08,-0.01 0.16,-0.01 0.23,-0.04c0.08,-0.03 0.23,-0 0.16,-0.17c-0,-0.01 -0.14,0.03 -0.21,0.06c-0.07,0.04 -0.12,0.1 -0.18,0.14c-0.03,0.02 -0.06,0.03 -0.1,0.05C13.26,4.61 13.29,4.59 13.32,4.57zM27.45,1.84c0.07,0.03 0.14,0.09 0.21,0.1c0.08,0.01 0.19,0.09 " +
+        "0.25,-0.04c-0.08,-0.01 -0.16,-0.03 -0.23,-0.04c-0.08,-0.01 -0.16,-0.01 -0.24,-0.01c-0.05,-0.02 -0.09,-0.05 -0.14,-0.07c-0.31,-0.1 -0.62,-0.09 -0.93,-0.04c-0.01,0 -0.01,0.03 -0.02,0.05c0.28,0.02 0.57,0.03 0.86,0.05C27.3,1.84 27.37,1.84 27.45,1.84zM22.03,1.88c-0.04,-0.19 -0.16,-0.1 -0.23,-0.09c-2.48,0.31 -4.86,0.97 -7.1,2.1c-0.11,0.06 -0.34,0.01 -0.31,0.25c0.13,-0.03 0.26,-0.03 0.38,-0.08c2.25,-0.92 4.56,-1.68 6.96,-2.08C21.83,1.95 21.93,1.91 22.03,1.88zM22.97,1.83c0.09,-0.01 0.25,0 0.28,-0.05C23.3,1.69 23.17,1.7 23.11,1.7c-0.1,0 -0.26,-0.01 -0.29,0.05C22.77,1.84 22.91,1.8 22.97,1.83z"
+
     const val CIRCLE_KEY = "circle"
     const val SQUARE_KEY = "square"
     const val FOUR_SIDED_COOKIE_KEY = "four_sided_cookie"
@@ -85,68 +133,118 @@ object QSTileIconShapes {
     const val TEARDROP_KEY = "teardrop"
     const val VESSEL_KEY = "vessel"
     const val ROUNDED_HEXAGON_KEY = "rounded_hexagon"
+    const val JUST_ICONS_KEY = "just_icons"
+    const val TEAR_DROP_OVERLAY_KEY = "tear_drop_overlay"
+    const val WAVEY_KEY = "wavey"
+    const val POKESIGN_KEY = "pokesign"
+    const val NINJA_KEY = "ninja"
+    const val DOTTED_CIRCLE_KEY = "dotted_circle"
+    const val ATTEMPT_MOUNTAIN_KEY = "attempt_mountain"
+    const val SQUAREMEDO_KEY = "squaremedo"
+    const val SHISHU_INK_KEY = "shishu_ink"
 
     /** [Settings.Secure] key; value is a shape key such as [CIRCLE_KEY]. */
     const val SETTINGS_KEY = "qs_tile_icon_shape"
 
     const val DEFAULT_KEY = CIRCLE_KEY
 
-    private val PATH_BY_KEY: Map<String, String> =
+    /** Old keys that duplicated a circular mask (gradient/dual-tone overlays, Shishu ring). */
+    private val LEGACY_CIRCLE_ONLY_KEYS =
+        setOf("circle_dual_tone", "circle_gradient", "shishu_nights")
+
+    private val MASK_SPEC_BY_KEY: Map<String, IconMaskSpec> =
         mapOf(
-            CIRCLE_KEY to CIRCLE_PATH,
-            SQUARE_KEY to SQUARE_PATH,
-            FOUR_SIDED_COOKIE_KEY to FOUR_SIDED_COOKIE_PATH,
-            SEVEN_SIDED_COOKIE_KEY to SEVEN_SIDED_COOKIE_PATH,
-            ARCH_KEY to ARCH_PATH,
-            IOS_ROUNDED_SQUARE_KEY to IOS_ROUNDED_SQUARE_PATH,
-            MEOW_KEY to MEOW_PATH,
-            FLOWER_KEY to FLOWER_PATH,
-            HEART_KEY to HEART_PATH,
-            HEXAGON_KEY to HEXAGON_PATH,
-            LEAF_KEY to LEAF_PATH,
-            CLOUDY_KEY to CLOUDY_PATH,
-            CYLINDRICAL_KEY to CYLINDRICAL_PATH,
-            STRETCHED_KEY to STRETCHED_PATH,
-            PEBBLE_KEY to PEBBLE_PATH,
-            RICE_BALLS_KEY to RICE_BALLS_PATH,
-            ROUNDED_RECT_KEY to ROUNDED_RECT_PATH,
-            SQUIRCLE_KEY to SQUIRCLE_PATH,
-            TAPERED_RECT_KEY to TAPERED_RECT_PATH,
-            TEARDROP_KEY to TEARDROP_PATH,
-            VESSEL_KEY to VESSEL_PATH,
-            ROUNDED_HEXAGON_KEY to ROUNDED_HEXAGON_PATH,
+            CIRCLE_KEY to IconMaskSpec(CIRCLE_PATH),
+            SQUARE_KEY to IconMaskSpec(SQUARE_PATH),
+            FOUR_SIDED_COOKIE_KEY to IconMaskSpec(FOUR_SIDED_COOKIE_PATH),
+            SEVEN_SIDED_COOKIE_KEY to IconMaskSpec(SEVEN_SIDED_COOKIE_PATH),
+            ARCH_KEY to IconMaskSpec(ARCH_PATH),
+            IOS_ROUNDED_SQUARE_KEY to IconMaskSpec(IOS_ROUNDED_SQUARE_PATH),
+            MEOW_KEY to IconMaskSpec(MEOW_PATH),
+            FLOWER_KEY to IconMaskSpec(FLOWER_PATH),
+            HEART_KEY to IconMaskSpec(HEART_PATH),
+            HEXAGON_KEY to IconMaskSpec(HEXAGON_PATH),
+            LEAF_KEY to IconMaskSpec(LEAF_PATH),
+            CLOUDY_KEY to IconMaskSpec(CLOUDY_PATH),
+            CYLINDRICAL_KEY to IconMaskSpec(CYLINDRICAL_PATH),
+            STRETCHED_KEY to IconMaskSpec(STRETCHED_PATH),
+            PEBBLE_KEY to IconMaskSpec(PEBBLE_PATH),
+            RICE_BALLS_KEY to IconMaskSpec(RICE_BALLS_PATH),
+            ROUNDED_RECT_KEY to IconMaskSpec(ROUNDED_RECT_PATH),
+            SQUIRCLE_KEY to IconMaskSpec(SQUIRCLE_PATH),
+            TAPERED_RECT_KEY to IconMaskSpec(TAPERED_RECT_PATH),
+            TEARDROP_KEY to IconMaskSpec(TEARDROP_PATH),
+            VESSEL_KEY to IconMaskSpec(VESSEL_PATH),
+            ROUNDED_HEXAGON_KEY to IconMaskSpec(ROUNDED_HEXAGON_PATH),
+            JUST_ICONS_KEY to IconMaskSpec(JUST_ICONS_CLIP_PATH),
+            TEAR_DROP_OVERLAY_KEY to IconMaskSpec(TEAR_DROP_OVERLAY_PATH),
+            WAVEY_KEY to IconMaskSpec(WAVEY_PATH, 48f),
+            POKESIGN_KEY to IconMaskSpec(POKESIGN_PATH, 48f),
+            NINJA_KEY to IconMaskSpec(NINJA_PATH, 48f),
+            DOTTED_CIRCLE_KEY to IconMaskSpec(CIRCLE_PATH),
+            ATTEMPT_MOUNTAIN_KEY to IconMaskSpec(ATTEMPT_MOUNTAIN_PATH, 48f),
+            SQUAREMEDO_KEY to IconMaskSpec(IOS_ROUNDED_SQUARE_PATH),
+            SHISHU_INK_KEY to IconMaskSpec(SHISHU_INK_PATH, 48f),
         )
 
     /** All valid shape keys (for settings UI). */
-    val ALL_KEYS: List<String> = PATH_BY_KEY.keys.toList()
+    val ALL_KEYS: List<String> = MASK_SPEC_BY_KEY.keys.toList()
 
-    fun pathStringForKey(key: String): String =
-        PATH_BY_KEY[key] ?: PATH_BY_KEY.getValue(DEFAULT_KEY)
+    private fun maskSpecForKey(key: String): IconMaskSpec =
+        MASK_SPEC_BY_KEY[key] ?: MASK_SPEC_BY_KEY.getValue(DEFAULT_KEY)
+
+    fun pathStringForKey(key: String): String = maskSpecForKey(key).path
 
     fun normalizeKey(raw: String?): String {
         if (raw.isNullOrBlank()) return DEFAULT_KEY
-        return if (PATH_BY_KEY.containsKey(raw)) raw else DEFAULT_KEY
+        if (raw in LEGACY_CIRCLE_ONLY_KEYS) return DEFAULT_KEY
+        return if (MASK_SPEC_BY_KEY.containsKey(raw)) raw else DEFAULT_KEY
     }
 
     private val shapeCache = mutableMapOf<String, Shape>()
 
-    /** Cached [Shape] for [key] (paths are in a 0–100 coordinate space). */
+    /** Cached [Shape] for [key]; path data uses each mask's viewBox (typically 100 or 48). */
     fun shapeForKey(key: String): Shape {
         val k = normalizeKey(key)
-        return shapeCache.getOrPut(k) { QSTileScaledPathShape(pathStringForKey(k)) }
+        if (k == JUST_ICONS_KEY) return RectangleShape
+        return shapeCache.getOrPut(k) {
+            val spec = maskSpecForKey(k)
+            QSTileScaledPathShape(spec.path, spec.viewBox)
+        }
+    }
+
+    /** Classic style: no tile background—only the glyph (see [JUST_ICONS_KEY]). */
+    fun isJustIconsShape(key: String): Boolean = normalizeKey(key) == JUST_ICONS_KEY
+
+    /**
+     * Optional path drawn on top of the classic tile (after clip) so line-only artwork stays
+     * visible. Pair is (pathData, viewBox). Null when the shape has no such overlay.
+     */
+    fun ornamentPathForClassicTile(key: String): Pair<String, Float>? {
+        val k = normalizeKey(key)
+        return when (k) {
+            DOTTED_CIRCLE_KEY -> DOTTED_CIRCLE_ORNAMENT_PATH to 48f
+            SQUAREMEDO_KEY -> SQUAREMEDO_ORNAMENT_PATH to 48f
+            else -> null
+        }
     }
 }
 
 /**
- * Clips to an SVG path from [pathString], scaled from a 100×100 viewBox to the layout size (same
- * convention as launcher adaptive icon masks).
+ * Clips to an SVG path from [pathString], scaled from [viewBox] to the layout size (same convention
+ * as launcher adaptive icon masks, which use a 100×100 viewBox).
  */
-private class QSTileScaledPathShape(pathString: String) : Shape {
+private class QSTileScaledPathShape(
+    pathString: String,
+    private val viewBox: Float = DEFAULT_ICON_MASK_VIEWBOX,
+) : Shape {
     private val basePath: android.graphics.Path by lazy {
         try {
             PathParser.createPathFromPathData(pathString)
         } catch (_: RuntimeException) {
-            PathParser.createPathFromPathData(QSTileIconShapes.pathStringForKey(QSTileIconShapes.DEFAULT_KEY))
+            PathParser.createPathFromPathData(
+                QSTileIconShapes.pathStringForKey(QSTileIconShapes.DEFAULT_KEY)
+            )
         }
     }
 
@@ -157,7 +255,7 @@ private class QSTileScaledPathShape(pathString: String) : Shape {
     ): Outline {
         val path = android.graphics.Path(basePath)
         val matrix = Matrix()
-        matrix.setScale(size.width / ICON_MASK_PATH_VIEWBOX, size.height / ICON_MASK_PATH_VIEWBOX)
+        matrix.setScale(size.width / viewBox, size.height / viewBox)
         path.transform(matrix)
         return Outline.Generic(path.asComposePath())
     }

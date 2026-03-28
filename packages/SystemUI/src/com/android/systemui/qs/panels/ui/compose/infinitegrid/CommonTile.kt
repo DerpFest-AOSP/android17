@@ -17,6 +17,9 @@
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import android.content.Context
+import android.graphics.Matrix
+import android.service.quicksettings.Tile.STATE_ACTIVE
+import android.util.PathParser
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
@@ -35,6 +38,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -57,6 +61,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -424,13 +430,19 @@ object TileBounceMotionTestKeys {
 }
 
 /**
- * Classic circular tile content: icon inside a colored circle with label text below.
+ * Classic tile content: icon inside a shaped clip with optional label below. Uses an accented fill
+ * except for [QSTileIconShapes.JUST_ICONS_KEY] and ornament-only shapes (transparent panel).
+ * When the tile has no fill (just icons, dotted circle, squaremedo) and [tileState] is active,
+ * icon, label, and ornament use [androidx.compose.material3.MaterialTheme.colorScheme.primary]
+ * (including when QS tile gradient is enabled).
  */
 @Composable
 fun ClassicCircleTileContent(
     label: String,
     iconProvider: Context.() -> Icon,
     colors: TileColors,
+    /** [android.service.quicksettings.Tile] state, e.g. [STATE_ACTIVE]. */
+    tileState: Int,
     hideLabel: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -442,34 +454,86 @@ fun ClassicCircleTileContent(
         val animatedBgColor by animateColorAsState(colors.background, label = "CircleBgColor")
         val tileIconShapeKey = LocalQSTileIconShapeKey.current
         val tileIconShape = remember(tileIconShapeKey) { QSTileIconShapes.shapeForKey(tileIconShapeKey) }
+        val justIcons = remember(tileIconShapeKey) { QSTileIconShapes.isJustIconsShape(tileIconShapeKey) }
+        val ornamentSpec =
+            remember(tileIconShapeKey) { QSTileIconShapes.ornamentPathForClassicTile(tileIconShapeKey) }
+        val ornamentBasePath = remember(ornamentSpec) {
+            ornamentSpec?.let { (pathStr, _) ->
+                runCatching { PathParser.createPathFromPathData(pathStr) }.getOrNull()
+            }
+        }
+        // Ornament-only shapes (dotted ring, squaremedo lines): no accented fill—panel shows through.
+        val noTileFill = justIcons || ornamentSpec != null
+        // Transparent classic tiles (just icons, dotted circle, squaremedo): active uses accent even
+        // when QS gradient is on (filled tiles still use gradient/contrast from [TileColors]).
+        val useAccentNoFillActive = noTileFill && tileState == STATE_ACTIVE
+        val iconTintTarget =
+            if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.icon
+        val labelTintTarget =
+            if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.label
+        val iconTint by animateColorAsState(iconTintTarget, label = "ClassicTileIconTint")
+        val labelTint by animateColorAsState(labelTintTarget, label = "ClassicTileLabelTint")
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(CommonTileDefaults.ClassicCircleSize)
-                .clip(tileIconShape)
-                .drawBehind {
-                    val brush = colors.backgroundBrush
-                    if (brush != null) {
-                        drawRect(brush = brush)
-                    } else {
-                        drawRect(animatedBgColor)
+                .then(
+                    run {
+                        val spec = ornamentSpec
+                        val basePath = ornamentBasePath
+                        if (spec != null && basePath != null) {
+                            Modifier.drawWithContent {
+                                drawContent()
+                                val path = android.graphics.Path(basePath)
+                                val matrix = Matrix()
+                                matrix.setScale(size.width / spec.second, size.height / spec.second)
+                                path.transform(matrix)
+                                drawPath(
+                                    path = path.asComposePath(),
+                                    color = iconTint.copy(alpha = 0.45f),
+                                    style = Fill,
+                                )
+                            }
+                        } else {
+                            Modifier
+                        }
                     }
-                },
+                ),
         ) {
-            SmallTileContent(
-                iconProvider = iconProvider,
-                color = colors.icon,
-                size = { CommonTileDefaults.ClassicIconSize },
-                modifier = Modifier.align(Alignment.Center),
-            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(tileIconShape)
+                    .then(
+                        if (noTileFill) {
+                            Modifier
+                        } else {
+                            Modifier.drawBehind {
+                                val brush = colors.backgroundBrush
+                                if (brush != null) {
+                                    drawRect(brush = brush)
+                                } else {
+                                    drawRect(animatedBgColor)
+                                }
+                            }
+                        }
+                    ),
+            ) {
+                SmallTileContent(
+                    iconProvider = iconProvider,
+                    color = iconTint,
+                    size = { CommonTileDefaults.ClassicIconSize },
+                    modifier = Modifier.align(Alignment.Center),
+                )
+            }
         }
         if (!hideLabel) {
-            val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
             BasicText(
                 text = label,
                 maxLines = 2,
                 style = TextStyle(
-                    color = labelColor,
+                    color = labelTint,
                     fontSize = CommonTileDefaults.ClassicLabelSize,
                     textAlign = TextAlign.Center,
                 ),

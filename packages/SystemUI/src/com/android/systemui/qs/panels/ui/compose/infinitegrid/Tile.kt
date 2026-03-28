@@ -524,6 +524,7 @@ fun ContentScope.Tile(
                             label = uiState.label,
                             iconProvider = iconProvider,
                             colors = colors,
+                            tileState = uiState.state,
                             hideLabel = LocalQSTileLabelHide.current,
                             modifier = Modifier.align(Alignment.Center),
                         )
