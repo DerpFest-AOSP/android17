@@ -98,8 +98,15 @@ constructor(
     }
 
     override fun applyConstraints(constraintSet: ConstraintSet) {
-        keyguardClockViewModel.currentClock.value?.let { clock ->
+        val clock = keyguardClockViewModel.currentClock.value
+        if (clock != null) {
             constraintSet.applyDeltaFrom(buildConstraints(clock, constraintSet))
+        } else if (isCustomClockStyleEnabled()) {
+            // Hide flex clock hosts when the registry has no clock but a custom ClockStyle is shown.
+            constraintSet.apply {
+                setVisibility(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL, GONE)
+                setVisibility(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, GONE)
+            }
         }
     }
 
@@ -123,17 +130,11 @@ constructor(
             setAlpha(getTargetClockFace(clock).views, 1F)
             setAlpha(getNonTargetClockFace(clock).views, 0F)
 
-            // Hide small clock when custom clock is enabled by setting alpha to 0
-            val isCustomClockEnabled = Settings.Secure.getIntForUser(
-                    context.contentResolver,
-                    Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
-                    0,
-                    UserHandle.USER_CURRENT
-            ) != 0
-
-            if (isCustomClockEnabled) {
-                setAlpha(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL, 0F)
-                setAlpha(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, 0F)
+            // Hide flex clock (ClockRegistry) when a custom ClockStyle is shown — GONE is reliable
+            // vs alpha 0 (still composited / can overlap custom clock time & date).
+            if (isCustomClockStyleEnabled()) {
+                setVisibility(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL, GONE)
+                setVisibility(ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE, GONE)
             }
 
             if (!keyguardClockViewModel.isLargeClockVisible.value) {
@@ -325,4 +326,12 @@ constructor(
 
         constrainWeatherClockDateIconsBarrier(constraints)
     }
+
+    private fun isCustomClockStyleEnabled(): Boolean =
+        Settings.Secure.getIntForUser(
+            context.contentResolver,
+            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+            0,
+            UserHandle.USER_CURRENT,
+        ) != 0
 }

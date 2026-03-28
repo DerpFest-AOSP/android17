@@ -17,6 +17,8 @@
 package com.android.systemui.keyguard.ui.view.layout.sections
 
 import android.content.Context
+import android.os.UserHandle
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
@@ -403,8 +405,10 @@ constructor(
             setVisibility(weatherId, if (showWeather) VISIBLE else GONE)
             setAlpha(weatherId, if (showWeather) 1f else 0f)
 
+            // Custom ClockStyle layouts include their own date; hide smartspace date to avoid doubling.
             val showDateView =
-                !keyguardClockViewModel.hasCustomWeatherDataDisplay.value || !isLargeClockVisible
+                (!keyguardClockViewModel.hasCustomWeatherDataDisplay.value || !isLargeClockVisible) &&
+                    !isCustomClockStyleEnabled()
             setVisibility(dateId, if (showDateView) VISIBLE else GONE)
             setAlpha(dateId, if (showDateView) 1f else 0f)
 
@@ -420,4 +424,12 @@ constructor(
             }
         }
     }
+
+    private fun isCustomClockStyleEnabled(): Boolean =
+        Settings.Secure.getIntForUser(
+            context.contentResolver,
+            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+            0,
+            UserHandle.USER_CURRENT,
+        ) != 0
 }
