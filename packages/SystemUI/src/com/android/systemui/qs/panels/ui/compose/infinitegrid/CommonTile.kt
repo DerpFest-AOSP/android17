@@ -62,7 +62,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.asComposePath
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -457,12 +460,14 @@ fun ClassicCircleTileContent(
         val justIcons = remember(tileIconShapeKey) { QSTileIconShapes.isJustIconsShape(tileIconShapeKey) }
         val ornamentSpec =
             remember(tileIconShapeKey) { QSTileIconShapes.ornamentPathForClassicTile(tileIconShapeKey) }
+        val ornamentStrokeFraction =
+            remember(tileIconShapeKey) { QSTileIconShapes.classicOrnamentStrokeWidthFraction(tileIconShapeKey) }
         val ornamentBasePath = remember(ornamentSpec) {
             ornamentSpec?.let { (pathStr, _) ->
                 runCatching { PathParser.createPathFromPathData(pathStr) }.getOrNull()
             }
         }
-        // Ornament-only shapes (dotted ring, squaremedo lines): no accented fill—panel shows through.
+        // Ornament-only shapes (dotted / solid ring, squaremedo lines): no accented fill—panel shows through.
         val noTileFill = justIcons || ornamentSpec != null
         // Transparent classic tiles (just icons, dotted circle, squaremedo): active uses accent even
         // when QS gradient is on (filled tiles still use gradient/contrast from [TileColors]).
@@ -488,11 +493,28 @@ fun ClassicCircleTileContent(
                                 val matrix = Matrix()
                                 matrix.setScale(size.width / spec.second, size.height / spec.second)
                                 path.transform(matrix)
-                                drawPath(
-                                    path = path.asComposePath(),
-                                    color = iconTint.copy(alpha = 0.45f),
-                                    style = Fill,
-                                )
+                                val strokeW =
+                                    ornamentStrokeFraction?.let { f ->
+                                        minOf(size.width, size.height) * f
+                                    }
+                                if (strokeW != null) {
+                                    drawPath(
+                                        path = path.asComposePath(),
+                                        color = iconTint.copy(alpha = 0.45f),
+                                        style =
+                                            Stroke(
+                                                width = strokeW,
+                                                cap = StrokeCap.Round,
+                                                join = StrokeJoin.Round,
+                                            ),
+                                    )
+                                } else {
+                                    drawPath(
+                                        path = path.asComposePath(),
+                                        color = iconTint.copy(alpha = 0.45f),
+                                        style = Fill,
+                                    )
+                                }
                             }
                         } else {
                             Modifier

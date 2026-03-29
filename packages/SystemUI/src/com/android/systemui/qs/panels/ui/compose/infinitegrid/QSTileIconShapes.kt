@@ -119,7 +119,12 @@ object QSTileIconShapes {
     const val POKESIGN_KEY = "pokesign"
     const val NINJA_KEY = "ninja"
     const val DOTTED_CIRCLE_KEY = "dotted_circle"
+    /** Circular outline (stroke); same mask as [DOTTED_CIRCLE_KEY], solid line instead of dots. */
+    const val OUTLINE_STYLE_KEY = "outline_style"
     const val SQUAREMEDO_KEY = "squaremedo"
+
+    /** Old [Settings.Secure] values mapped to current keys. */
+    private val SHAPE_KEY_ALIASES = mapOf("solid_circle_ring" to OUTLINE_STYLE_KEY)
 
     /** [Settings.Secure] key; value is a shape key such as [CIRCLE_KEY]. */
     const val SETTINGS_KEY = "qs_tile_icon_shape"
@@ -158,6 +163,7 @@ object QSTileIconShapes {
             POKESIGN_KEY to IconMaskSpec(POKESIGN_PATH, 48f),
             NINJA_KEY to IconMaskSpec(NINJA_PATH, 48f),
             DOTTED_CIRCLE_KEY to IconMaskSpec(CIRCLE_PATH),
+            OUTLINE_STYLE_KEY to IconMaskSpec(CIRCLE_PATH),
             SQUAREMEDO_KEY to IconMaskSpec(IOS_ROUNDED_SQUARE_PATH),
         )
 
@@ -172,7 +178,8 @@ object QSTileIconShapes {
     fun normalizeKey(raw: String?): String {
         if (raw.isNullOrBlank()) return DEFAULT_KEY
         if (raw in LEGACY_CIRCLE_ONLY_KEYS) return DEFAULT_KEY
-        return if (MASK_SPEC_BY_KEY.containsKey(raw)) raw else DEFAULT_KEY
+        val key = SHAPE_KEY_ALIASES[raw] ?: raw
+        return if (MASK_SPEC_BY_KEY.containsKey(key)) key else DEFAULT_KEY
     }
 
     private val shapeCache = mutableMapOf<String, Shape>()
@@ -198,7 +205,21 @@ object QSTileIconShapes {
         val k = normalizeKey(key)
         return when (k) {
             DOTTED_CIRCLE_KEY -> DOTTED_CIRCLE_ORNAMENT_PATH to 48f
+            OUTLINE_STYLE_KEY -> CIRCLE_PATH to DEFAULT_ICON_MASK_VIEWBOX
             SQUAREMEDO_KEY -> SQUAREMEDO_ORNAMENT_PATH to 48f
+            else -> null
+        }
+    }
+
+    /**
+     * When non-null, the classic ornament is drawn with [androidx.compose.ui.graphics.drawscope.Stroke]
+     * of this width as a fraction of `min(tile width, tile height)`; when null, the ornament uses
+     * fill (e.g. dotted pattern).
+     */
+    fun classicOrnamentStrokeWidthFraction(key: String): Float? {
+        val k = normalizeKey(key)
+        return when (k) {
+            OUTLINE_STYLE_KEY -> 0.022f
             else -> null
         }
     }
