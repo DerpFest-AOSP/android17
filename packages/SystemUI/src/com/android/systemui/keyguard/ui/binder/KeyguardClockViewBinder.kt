@@ -16,9 +16,16 @@
 
 package com.android.systemui.keyguard.ui.binder
 
+import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.os.UserHandle
+import android.provider.Settings
 import android.transition.AutoTransition
 import android.transition.TransitionManager
 import android.transition.TransitionSet
+import android.view.View
 import android.view.View.INVISIBLE
 import android.view.ViewGroup
 import androidx.annotation.VisibleForTesting
@@ -44,6 +51,7 @@ import com.android.systemui.plugins.keyguard.ui.clocks.ClockController
 import com.android.systemui.util.kotlin.DisposableHandles
 import com.android.systemui.util.ui.value
 import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -107,6 +115,29 @@ object KeyguardClockViewBinder {
                         viewModel.clockSize.collect { clockSize ->
                             updateBurnInLayer(keyguardRootView, viewModel, clockSize)
                             blueprintInteractor.refreshBlueprint(Type.ClockSize)
+                        }
+                    }
+
+                    launch {
+                        val cr = keyguardRootView.context.contentResolver
+                        val uri =
+                            Settings.Secure.getUriFor(Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE)
+                        val observer =
+                            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                                override fun onChange(selfChange: Boolean) {
+                                    updateBurnInLayer(
+                                        keyguardRootView,
+                                        viewModel,
+                                        viewModel.clockSize.value,
+                                    )
+                                    applyConstraints(clockSection, keyguardRootView, false)
+                                }
+                            }
+                        cr.registerContentObserver(uri, false, observer)
+                        try {
+                            awaitCancellation()
+                        } finally {
+                            cr.unregisterContentObserver(observer)
                         }
                     }
 
@@ -215,6 +246,24 @@ object KeyguardClockViewBinder {
     ) {
         val burnInLayer = viewModel.burnInLayer
         val clockController = viewModel.currentClock.value
+
+        if (isCustomClockStyleEnabled(keyguardRootView.context)) {
+            // AodBurnInLayer composites the small flex clock with scale; that leaves a tiny
+            // left-aligned ghost that disappears when burn-in layer is hidden in doze/AOD.
+            clockController?.let { clock ->
+                clock.smallClock.layout.views.forEach {
+                    burnInLayer?.removeView(it)
+                    it.visibility = View.GONE
+                }
+                clock.largeClock.layout.views.forEach {
+                    burnInLayer?.removeView(it)
+                    it.visibility = View.GONE
+                }
+            }
+            burnInLayer?.updatePostLayout(keyguardRootView)
+            return
+        }
+
         // Large clocks won't be added to or removed from burn in layer
         // Weather large clock has customized burn in preventing mechanism
         // Non-weather large clock will only scale and translate vertically
@@ -230,6 +279,14 @@ object KeyguardClockViewBinder {
         }
         viewModel.burnInLayer?.updatePostLayout(keyguardRootView)
     }
+
+    private fun isCustomClockStyleEnabled(context: Context): Boolean =
+        Settings.Secure.getIntForUser(
+            context.contentResolver,
+            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+            0,
+            UserHandle.USER_CURRENT,
+        ) != 0
 
     fun cleanupClockViews(
         lastClock: ClockController?,
