@@ -295,4 +295,6 @@ public interface StatusBarManagerInternal {
      * DerpFest extensions
      */
     void toggleCameraFlash();
+
+    void restartSystemUI();
 }

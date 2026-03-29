@@ -421,4 +421,7 @@ oneway interface IStatusBar
      * DerpFest extensions
      */
     void toggleCameraFlash();
+
+    /** Ask SystemUI to restart itself (handled on main thread via CommandQueue). */
+    void restartSystemUI();
 }

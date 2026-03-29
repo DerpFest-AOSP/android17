@@ -262,4 +262,7 @@ interface IStatusBarService
      * DerpFest extensions
      */
     void toggleCameraFlash();
+
+    /** Restart SystemUI process (privileged; uses in-process kill, not force-stop). */
+    void restartSystemUI();
 }
