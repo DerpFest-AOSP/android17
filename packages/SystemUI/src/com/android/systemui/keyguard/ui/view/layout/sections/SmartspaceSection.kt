@@ -260,35 +260,18 @@ constructor(
                         context.resources.getDimensionPixelSize(R.dimen.smartspace_padding_vertical),
                     )
 
-                    // Match the large clock: centered faces get a centered date row; start-aligned
-                    // faces (e.g. typography) get date/weather pinned to the start.
-                    if (keyguardClockViewModel.clockShouldBeCentered.value) {
-                        connect(
-                            sharedR.id.date_smartspace_view_large,
-                            ConstraintSet.START,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
-                            ConstraintSet.START,
-                        )
-                        connect(
-                            sharedR.id.date_smartspace_view_large,
-                            ConstraintSet.END,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
-                            ConstraintSet.END,
-                        )
-                        setHorizontalChainStyle(
-                            sharedR.id.date_smartspace_view_large,
-                            ConstraintSet.CHAIN_PACKED,
-                        )
-                    } else {
-                        connect(
-                            sharedR.id.date_smartspace_view_large,
-                            ConstraintSet.START,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
-                            ConstraintSet.START,
-                            KeyguardSmartspaceViewModel.getDateWeatherStartMargin(context),
-                        )
-                        clear(sharedR.id.date_smartspace_view_large, ConstraintSet.END)
-                    }
+                    // Pin the date+weather strip to the large clock's start. Do not use
+                    // clockShouldBeCentered here — that tracks shade/notifications and is often true
+                    // on phones, which used to CHAIN_PACKED-center this strip and left a lone weather
+                    // icon floating in the middle under typography / left-weighted flex clocks.
+                    connect(
+                        sharedR.id.date_smartspace_view_large,
+                        ConstraintSet.START,
+                        ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
+                        ConstraintSet.START,
+                        KeyguardSmartspaceViewModel.getDateWeatherStartMargin(context),
+                    )
+                    clear(sharedR.id.date_smartspace_view_large, ConstraintSet.END)
                 } else {
                     if (dateWeatherBelowSmallClock || !dateWeatherBelowLargeClock) {
                         connect(

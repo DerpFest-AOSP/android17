@@ -42,12 +42,27 @@
         android:layout_marginStart="4dp"
         android:textColor="@android:color/white" />
 
+    <!-- Date: Smartspace date is hidden for custom ClockStyle; embed it here like other ClockStyle layouts. -->
+    <TextClock
+        android:id="@+id/date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:format12Hour="EEE, d MMM"
+        android:format24Hour="EEE, d MMM"
+        android:fontFamily="@*android:string/config_clockFontFamily"
+        android:textColor="@android:color/white"
+        android:textSize="22sp" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="4dp"
-        android:gravity="center_horizontal"
+        android:layout_gravity="start"
+        android:layout_marginTop="0dp"
+        android:layout_marginStart="4dp"
+        android:gravity="start|center_vertical"
         android:orientation="horizontal">
 
         <com.android.systemui.weather.WeatherImageView

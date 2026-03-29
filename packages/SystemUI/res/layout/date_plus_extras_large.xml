@@ -4,13 +4,13 @@
     android:id="@+id/date_smartspace_view_large"
     android:layout_width="wrap_content"
     android:layout_height="@dimen/date_weather_view_height"
-    android:gravity="center_vertical"
+    android:gravity="start|center_vertical"
     android:orientation="horizontal">
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="fill_parent"
         android:focusable="true"
-        android:gravity="center_vertical"
+        android:gravity="start|center_vertical"
         android:orientation="horizontal">
         <ImageView
             android:id="@id/dnd_icon"
