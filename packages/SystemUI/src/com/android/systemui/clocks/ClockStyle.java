@@ -343,8 +343,13 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             case CLOCK_STYLE_KEY:
                 mClockStyle = TunerService.parseInteger(newValue, DEFAULT_STYLE);
                 if (mClockStyle != 0) {
-                    Settings.Secure.putIntForUser(mContext.getContentResolver(),
-                            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_FACE, 0,
+                    // Clear flex-clock (wallpaper-picker) face JSON. Must use putString: this key
+                    // holds JSON (JSON_OBJECT_VALIDATOR), not an int — putInt(0) corrupts the value
+                    // and can reset lock screen wallpaper / customization.
+                    Settings.Secure.putStringForUser(
+                            mContext.getContentResolver(),
+                            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_FACE,
+                            "{}",
                             UserHandle.USER_CURRENT);
                 }
                 updateClockView();
