@@ -915,7 +915,7 @@ fun rememberQsTileGradientForRinger(): Pair<Brush?, Color?>? {
 
 /** Whether to use accent-style tint for QS tiles (1 = enabled, 0 = default). Recomposes when setting changes. */
 @Composable
-private fun rememberQsUseNewTint(): Boolean {
+internal fun rememberQsUseNewTint(): Boolean {
     val context = LocalContext.current
     val contentResolver = context.contentResolver
     fun read(): Int =

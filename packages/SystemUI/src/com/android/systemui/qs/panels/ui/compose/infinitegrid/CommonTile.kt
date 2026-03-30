@@ -19,6 +19,7 @@ package com.android.systemui.qs.panels.ui.compose.infinitegrid
 import android.content.Context
 import android.graphics.Matrix
 import android.service.quicksettings.Tile.STATE_ACTIVE
+import android.service.quicksettings.Tile.STATE_INACTIVE
 import android.util.PathParser
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
@@ -438,6 +439,8 @@ object TileBounceMotionTestKeys {
  * When the tile has no fill (just icons, dotted circle, squaremedo) and [tileState] is active,
  * icon, label, and ornament use [androidx.compose.material3.MaterialTheme.colorScheme.primary]
  * (including when QS tile gradient is enabled).
+ * When [Settings.System.QS_PANEL_BG_USE_NEW_TINT] is enabled ([rememberQsUseNewTint]), the label
+ * uses primary (accent); inactive tiles use primary at reduced alpha; unavailable keeps [TileColors].
  */
 @Composable
 fun ClassicCircleTileContent(
@@ -472,12 +475,18 @@ fun ClassicCircleTileContent(
         // Transparent classic tiles (just icons, dotted circle, squaremedo): active uses accent even
         // when QS gradient is on (filled tiles still use gradient/contrast from [TileColors]).
         val useAccentNoFillActive = noTileFill && tileState == STATE_ACTIVE
+        val useNewTint = rememberQsUseNewTint()
+        val primary = MaterialTheme.colorScheme.primary
         val iconTintTarget =
-            if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.icon
-        // Match icon tint: [TileColors.label] is onSurface for dual-target active tiles, but classic
-        // circle layout should keep label and icon the same (see activeDualTargetTileColors).
+            if (useAccentNoFillActive) primary else colors.icon
+        // Match icon unless QS_PANEL_BG_USE_NEW_TINT: then label is accent-tinted (primary).
         val labelTintTarget =
-            if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.icon
+            when {
+                useAccentNoFillActive -> primary
+                useNewTint && tileState == STATE_ACTIVE -> primary
+                useNewTint && tileState == STATE_INACTIVE -> primary.copy(alpha = 0.58f)
+                else -> colors.icon
+            }
         val iconTint by animateColorAsState(iconTintTarget, label = "ClassicTileIconTint")
         val labelTint by animateColorAsState(labelTintTarget, label = "ClassicTileLabelTint")
         Box(
