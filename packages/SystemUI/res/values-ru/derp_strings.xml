@@ -151,4 +151,83 @@
 
     <!-- 4G icon -->
     <string name="show_fourg_icon_title">Иконка 4G</string>
+
+    <!-- Word clock (ClockStyle): typographic header -->
+    <string name="word_clock_header">Сейчас</string>
+    <string-array name="word_clock_hours">
+        <item>Двенадцать</item>
+        <item>Один</item>
+        <item>Два</item>
+        <item>Три</item>
+        <item>Четыре</item>
+        <item>Пять</item>
+        <item>Шесть</item>
+        <item>Семь</item>
+        <item>Восемь</item>
+        <item>Девять</item>
+        <item>Десять</item>
+        <item>Одиннадцать</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Ровно</item>
+        <item>Одна</item>
+        <item>Две</item>
+        <item>Три</item>
+        <item>Четыре</item>
+        <item>Пять</item>
+        <item>Шесть</item>
+        <item>Семь</item>
+        <item>Восемь</item>
+        <item>Девять</item>
+        <item>Десять</item>
+        <item>Одиннадцать</item>
+        <item>Двенадцать</item>
+        <item>Тринадцать</item>
+        <item>Четырнадцать</item>
+        <item>Пятнадцать</item>
+        <item>Шестнадцать</item>
+        <item>Семнадцать</item>
+        <item>Восемнадцать</item>
+        <item>Девятнадцать</item>
+        <item>Двадцать</item>
+        <item>Двадцать\nодна</item>
+        <item>Двадцать\nдве</item>
+        <item>Двадцать\nтри</item>
+        <item>Двадцать\nчетыре</item>
+        <item>Двадцать\nпять</item>
+        <item>Двадцать\nшесть</item>
+        <item>Двадцать\nсемь</item>
+        <item>Двадцать\nвосемь</item>
+        <item>Двадцать\nдевять</item>
+        <item>Тридцать</item>
+        <item>Тридцать\nодна</item>
+        <item>Тридцать\nдве</item>
+        <item>Тридцать\nтри</item>
+        <item>Тридцать\nчетыре</item>
+        <item>Тридцать\nпять</item>
+        <item>Тридцать\nшесть</item>
+        <item>Тридцать\nсемь</item>
+        <item>Тридцать\nвосемь</item>
+        <item>Тридцать\nдевять</item>
+        <item>Сорок</item>
+        <item>Сорок\nодна</item>
+        <item>Сорок\nдве</item>
+        <item>Сорок\nтри</item>
+        <item>Сорок\nчетыре</item>
+        <item>Сорок\nпять</item>
+        <item>Сорок\nшесть</item>
+        <item>Сорок\nсемь</item>
+        <item>Сорок\nвосемь</item>
+        <item>Сорок\nдевять</item>
+        <item>Пятьдесят</item>
+        <item>Пятьдесят\nодна</item>
+        <item>Пятьдесят\nдве</item>
+        <item>Пятьдесят\nтри</item>
+        <item>Пятьдесят\nчетыре</item>
+        <item>Пятьдесят\nпять</item>
+        <item>Пятьдесят\nшесть</item>
+        <item>Пятьдесят\nсемь</item>
+        <item>Пятьдесят\nвосемь</item>
+        <item>Пятьдесят\nдевять</item>
+    </string-array>
 </resources>

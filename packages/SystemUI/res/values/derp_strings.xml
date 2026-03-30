@@ -198,4 +198,87 @@
     <string name="quick_settings_volume_label">Volume</string>
     <string name="qs_volume_dialog_title">Volume Control</string>
     <string name="qs_volume_dialog_mute">Mute</string>
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic header. [CHAR LIMIT=16] -->
+    <string name="word_clock_header">It\u2019s</string>
+
+    <!-- Word clock: hour in words (12-hour), index = Calendar.HOUR (0 = twelve). [CHAR LIMIT=16] -->
+    <string-array name="word_clock_hours">
+        <item>Twelve</item>
+        <item>One</item>
+        <item>Two</item>
+        <item>Three</item>
+        <item>Four</item>
+        <item>Five</item>
+        <item>Six</item>
+        <item>Seven</item>
+        <item>Eight</item>
+        <item>Nine</item>
+        <item>Ten</item>
+        <item>Eleven</item>
+    </string-array>
+
+    <!-- Word clock: minutes in words, index = minute 0–59. [CHAR LIMIT=24] -->
+    <string-array name="word_clock_minutes">
+        <item>O\u2019Clock</item>
+        <item>O\u2019One</item>
+        <item>O\u2019Two</item>
+        <item>O\u2019Three</item>
+        <item>O\u2019Four</item>
+        <item>O\u2019Five</item>
+        <item>O\u2019Six</item>
+        <item>O\u2019Seven</item>
+        <item>O\u2019Eight</item>
+        <item>O\u2019Nine</item>
+        <item>Ten</item>
+        <item>Eleven</item>
+        <item>Twelve</item>
+        <item>Thirteen</item>
+        <item>Fourteen</item>
+        <item>Fifteen</item>
+        <item>Sixteen</item>
+        <item>Seventeen</item>
+        <item>Eighteen</item>
+        <item>Nineteen</item>
+        <item>Twenty</item>
+        <item>Twenty\nOne</item>
+        <item>Twenty\nTwo</item>
+        <item>Twenty\nThree</item>
+        <item>Twenty\nFour</item>
+        <item>Twenty\nFive</item>
+        <item>Twenty\nSix</item>
+        <item>Twenty\nSeven</item>
+        <item>Twenty\nEight</item>
+        <item>Twenty\nNine</item>
+        <item>Thirty</item>
+        <item>Thirty\nOne</item>
+        <item>Thirty\nTwo</item>
+        <item>Thirty\nThree</item>
+        <item>Thirty\nFour</item>
+        <item>Thirty\nFive</item>
+        <item>Thirty\nSix</item>
+        <item>Thirty\nSeven</item>
+        <item>Thirty\nEight</item>
+        <item>Thirty\nNine</item>
+        <item>Forty</item>
+        <item>Forty\nOne</item>
+        <item>Forty\nTwo</item>
+        <item>Forty\nThree</item>
+        <item>Forty\nFour</item>
+        <item>Forty\nFive</item>
+        <item>Forty\nSix</item>
+        <item>Forty\nSeven</item>
+        <item>Forty\nEight</item>
+        <item>Forty\nNine</item>
+        <item>Fifty</item>
+        <item>Fifty\nOne</item>
+        <item>Fifty\nTwo</item>
+        <item>Fifty\nThree</item>
+        <item>Fifty\nFour</item>
+        <item>Fifty\nFive</item>
+        <item>Fifty\nSix</item>
+        <item>Fifty\nSeven</item>
+        <item>Fifty\nEight</item>
+        <item>Fifty\nNine</item>
+    </string-array>
 </resources>

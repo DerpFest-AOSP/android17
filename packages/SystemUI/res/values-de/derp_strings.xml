@@ -120,4 +120,83 @@
     <!-- Heads up snooze toast -->
     <string name="heads_up_snooze_message_one_minute"><xliff:g id="string">%s</xliff:g> - Benachrichtigungen werden für 1 Minute unterdrückt.</string>
     <string name="heads_up_snooze_message"><xliff:g id="string">%1$s</xliff:g> - Benachrichtigungen werden für <xliff:g id="number">%2$d</xliff:g> Minuten unterdrückt.</string>
+
+    <!-- Word clock (ClockStyle): typographic header -->
+    <string name="word_clock_header">Es ist</string>
+    <string-array name="word_clock_hours">
+        <item>Zwölf</item>
+        <item>Eins</item>
+        <item>Zwei</item>
+        <item>Drei</item>
+        <item>Vier</item>
+        <item>Fünf</item>
+        <item>Sechs</item>
+        <item>Sieben</item>
+        <item>Acht</item>
+        <item>Neun</item>
+        <item>Zehn</item>
+        <item>Elf</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Uhr</item>
+        <item>Eins</item>
+        <item>Zwei</item>
+        <item>Drei</item>
+        <item>Vier</item>
+        <item>Fünf</item>
+        <item>Sechs</item>
+        <item>Sieben</item>
+        <item>Acht</item>
+        <item>Neun</item>
+        <item>Zehn</item>
+        <item>Elf</item>
+        <item>Zwölf</item>
+        <item>Dreizehn</item>
+        <item>Vierzehn</item>
+        <item>Fünfzehn</item>
+        <item>Sechzehn</item>
+        <item>Siebzehn</item>
+        <item>Achtzehn</item>
+        <item>Neunzehn</item>
+        <item>Zwanzig</item>
+        <item>Einund\nzwanzig</item>
+        <item>Zweiund\nzwanzig</item>
+        <item>Dreiund\nzwanzig</item>
+        <item>Vierund\nzwanzig</item>
+        <item>Fünfund\nzwanzig</item>
+        <item>Sechsund\nzwanzig</item>
+        <item>Siebenund\nzwanzig</item>
+        <item>Achtund\nzwanzig</item>
+        <item>Neunund\nzwanzig</item>
+        <item>Dreißig</item>
+        <item>Einund\ndreißig</item>
+        <item>Zweiund\ndreißig</item>
+        <item>Dreiund\ndreißig</item>
+        <item>Vierund\ndreißig</item>
+        <item>Fünfund\ndreißig</item>
+        <item>Sechsund\ndreißig</item>
+        <item>Siebenund\ndreißig</item>
+        <item>Achtund\ndreißig</item>
+        <item>Neunund\ndreißig</item>
+        <item>Vierzig</item>
+        <item>Einund\nvierzig</item>
+        <item>Zweiund\nvierzig</item>
+        <item>Dreiund\nvierzig</item>
+        <item>Vierund\nvierzig</item>
+        <item>Fünfund\nvierzig</item>
+        <item>Sechsund\nvierzig</item>
+        <item>Siebenund\nvierzig</item>
+        <item>Achtund\nvierzig</item>
+        <item>Neunund\nvierzig</item>
+        <item>Fünfzig</item>
+        <item>Einund\nfünfzig</item>
+        <item>Zweiund\nfünfzig</item>
+        <item>Dreiund\nfünfzig</item>
+        <item>Vierund\nfünfzig</item>
+        <item>Fünfund\nfünfzig</item>
+        <item>Sechsund\nfünfzig</item>
+        <item>Siebenund\nfünfzig</item>
+        <item>Achtund\nfünfzig</item>
+        <item>Neunund\nfünfzig</item>
+    </string-array>
 </resources>

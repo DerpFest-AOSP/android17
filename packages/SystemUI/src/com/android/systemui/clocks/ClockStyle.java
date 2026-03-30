@@ -231,6 +231,10 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     }
 
     public void onTimeChanged() {
+        // Word clock uses TextViews, not TextClock; refresh every tick (not 15s-throttled).
+        if (currentClockView != null) {
+            WordClockFormatter.updateHourMinuteWordViews(mContext, currentClockView);
+        }
         long currentTimeMillis = System.currentTimeMillis();
         if (currentTimeMillis - lastUpdateTimeMillis >= UPDATE_INTERVAL_MILLIS) {
             if (currentClockView != null) {
