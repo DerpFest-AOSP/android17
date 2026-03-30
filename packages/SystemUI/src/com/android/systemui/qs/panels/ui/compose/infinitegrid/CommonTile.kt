@@ -474,8 +474,10 @@ fun ClassicCircleTileContent(
         val useAccentNoFillActive = noTileFill && tileState == STATE_ACTIVE
         val iconTintTarget =
             if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.icon
+        // Match icon tint: [TileColors.label] is onSurface for dual-target active tiles, but classic
+        // circle layout should keep label and icon the same (see activeDualTargetTileColors).
         val labelTintTarget =
-            if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.label
+            if (useAccentNoFillActive) MaterialTheme.colorScheme.primary else colors.icon
         val iconTint by animateColorAsState(iconTintTarget, label = "ClassicTileIconTint")
         val labelTint by animateColorAsState(labelTintTarget, label = "ClassicTileLabelTint")
         Box(
