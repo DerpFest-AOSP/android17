@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>ສິບສອງ</item>
+        <item>ໜຶ່ງ</item>
+        <item>ສອງ</item>
+        <item>ສາມ</item>
+        <item>ສີ່</item>
+        <item>ຫ້າ</item>
+        <item>ຫົກ</item>
+        <item>ເຈັດ</item>
+        <item>ແປດ</item>
+        <item>ເກົ້າ</item>
+        <item>ສິບ</item>
+        <item>ສິບເອັດ</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>O’Clock</item>
+        <item>O’One</item>
+        <item>O’Two</item>
+        <item>O’Three</item>
+        <item>O’Four</item>
+        <item>O’Five</item>
+        <item>O’Six</item>
+        <item>O’Seven</item>
+        <item>O’Eight</item>
+        <item>O’Nine</item>
+        <item>ສິບ</item>
+        <item>ສິບເອັດ</item>
+        <item>ສິບສອງ</item>
+        <item>ສິບສາມ</item>
+        <item>ສິບສີ່</item>
+        <item>ສິບຫ້າ</item>
+        <item>ສິບຫົກ</item>
+        <item>ສິບເຈັດ</item>
+        <item>ສິບແປດ</item>
+        <item>ສິບເກົ້າ</item>
+        <item>ຊາວ</item>
+        <item>ຊາວ\nເອັດ</item>
+        <item>ຊາວ\nສອງ</item>
+        <item>ຊາວ\nສາມ</item>
+        <item>ຊາວ\nສີ່</item>
+        <item>ຊາວ\nຫ້າ</item>
+        <item>ຊາວ\nຫົກ</item>
+        <item>ຊາວ\nເຈັດ</item>
+        <item>ຊາວ\nແປດ</item>
+        <item>ຊາວ\nເກົ້າ</item>
+        <item>ສາມສິບ</item>
+        <item>ສາມ\nສິບເອັດ</item>
+        <item>ສາມ\nສິບສອງ</item>
+        <item>ສາມ\nສິບສາມ</item>
+        <item>ສາມ\nສິບສີ່</item>
+        <item>ສາມ\nສິບຫ້າ</item>
+        <item>ສາມ\nສິບຫົກ</item>
+        <item>ສາມ\nສິບເຈັດ</item>
+        <item>ສາມສິບ\nແປດ</item>
+        <item>ສາມ\nສິບເກົ້າ</item>
+        <item>ສີ່ສິບ</item>
+        <item>ສີ່\nສິບເອັດ</item>
+        <item>ສີ່\nສິບສອງ</item>
+        <item>ສີ່\nສິບສາມ</item>
+        <item>ສີ່\nສິບສີ່</item>
+        <item>ສີ່\nສິບຫ້າ</item>
+        <item>ສີ່\nສິບຫົກ</item>
+        <item>ສີ່\nສິບເຈັດ</item>
+        <item>ສີ່\nສິບແປດ</item>
+        <item>ສີ່\nສິບເກົ້າ</item>
+        <item>ຫ້າສິບ</item>
+        <item>ຫ້າ\nສິບເອັດ</item>
+        <item>ຫ້າ\nສິບສອງ</item>
+        <item>ຫ້າ\nສິບສາມ</item>
+        <item>ຫ້າ\nສິບສີ່</item>
+        <item>ຫ້າ\nສິບຫ້າ</item>
+        <item>ຫ້າ\nສິບຫົກ</item>
+        <item>ຫ້າ\nສິບເຈັດ</item>
+        <item>ຫ້າ\nສິບແປດ</item>
+        <item>ຫ້າ\nສິບເກົ້າ</item>
+    </string-array>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Ishumi nambili</item>
+        <item>Kunye</item>
+        <item>Kubili</item>
+        <item>Kuthathu</item>
+        <item>Kune</item>
+        <item>Kuhlanu</item>
+        <item>Isithupha</item>
+        <item>Isikhombisa</item>
+        <item>Isishiyagalombili</item>
+        <item>Isishiyagalolunye</item>
+        <item>Ishumi</item>
+        <item>Ishumi nanye</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Ezimpondweni</item>
+        <item>O’Okukodwa</item>
+        <item>O’Okubili</item>
+        <item>O’Kuthathu</item>
+        <item>O’Okune</item>
+        <item>O’Isihlanu</item>
+        <item>O’Isithupha</item>
+        <item>O’Isikhombisa</item>
+        <item>O’Isishiyagalombili</item>
+        <item>O’Isishiyagalombili</item>
+        <item>Ishumi</item>
+        <item>Ishumi nanye</item>
+        <item>Ishumi nambili</item>
+        <item>Ishumi nantathu</item>
+        <item>Ishumi nane</item>
+        <item>Ishumi nanhlanu</item>
+        <item>Ishumi nesithupha</item>
+        <item>Ishumi nesikhombisa</item>
+        <item>Ishumi nesishiyagalombili</item>
+        <item>Ishumi nesishiyagalolunye</item>
+        <item>Amashumi amabili</item>
+        <item>Amashumi amabili\nnanye</item>
+        <item>Amashumi amabili\nnambili</item>
+        <item>Amashumi amabili\nnantathu</item>
+        <item>Amashumi amabili\nnane</item>
+        <item>Amashumi amabili\nnanhlanu</item>
+        <item>Amashumi amabili\nnesithupha</item>
+        <item>Amashumi amabili\nnesikhombisa</item>
+        <item>Amashumi nambili\nnesishiyagalombili</item>
+        <item>Amashumi amabili\nnesishiyagalolunye</item>
+        <item>Amashumi amathathu</item>
+        <item>Amashumi amathathu\nnanye</item>
+        <item>Amashumi amathathu\nnambili</item>
+        <item>Amashumi amathathu\nnantathu</item>
+        <item>Amashumi amathathu\nnane</item>
+        <item>Amashumi amathathu\nnesihlanu</item>
+        <item>Amashumi amathathu\nnesithupha</item>
+        <item>Amashumi amathathu\nnesikhombisa</item>
+        <item>Amshumi amathathu\nnesishiyagalombili</item>
+        <item>Amashumi amathathu\nnesishiyagalolunye</item>
+        <item>Amashumi amane</item>
+        <item>Amashumi amane\nnanye</item>
+        <item>Amashumi amane\nnambili</item>
+        <item>Amashumi amane\nnantathu</item>
+        <item>Amashumi amane\nnane</item>
+        <item>Amashumi amane\nnanhlanu</item>
+        <item>Amashumi amane\nnesithupha</item>
+        <item>Amashumi amane\nnesikhombisa</item>
+        <item>Amashumi nane\nnesishiyagalombili</item>
+        <item>Amashumi amane\nnesishiyagalolunye</item>
+        <item>Amashumi nanhlanu</item>
+        <item>Amashumi amahlanu\nnanye</item>
+        <item>Amashumi amahlanu\nnambili</item>
+        <item>Amashumi amahlanu\nnantathu</item>
+        <item>Amashumi amahlanu\nnane</item>
+        <item>Amashumi amahlanu\nnanhlanu</item>
+        <item>Amashumi amahlanu\nnesithupha</item>
+        <item>Amashumi amahlanu\nnesikhombisa</item>
+        <item>Amashumi amahlanu\nnesishiyagalombili</item>
+        <item>Amashumi amahlanu\nnesishiyagalolunye</item>
+    </string-array>
+</resources>

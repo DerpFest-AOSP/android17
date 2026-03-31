@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>дванаест</item>
+        <item>један</item>
+        <item>два</item>
+        <item>три</item>
+        <item>четири</item>
+        <item>пет</item>
+        <item>шест</item>
+        <item>седам</item>
+        <item>осам</item>
+        <item>девет</item>
+        <item>десет</item>
+        <item>једанаест</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>сата(и)</item>
+        <item>један</item>
+        <item>два</item>
+        <item>три</item>
+        <item>четири</item>
+        <item>пет</item>
+        <item>шест</item>
+        <item>седам</item>
+        <item>осам</item>
+        <item>девет</item>
+        <item>десет</item>
+        <item>једанаест</item>
+        <item>дванаест</item>
+        <item>тринаест</item>
+        <item>четрнаест</item>
+        <item>петнаест</item>
+        <item>шеснаест</item>
+        <item>седамнаест</item>
+        <item>осамнаест</item>
+        <item>деветнаест</item>
+        <item>двадесет</item>
+        <item>двадесет\nједан</item>
+        <item>двадесет\nдва</item>
+        <item>двадесет\nтри</item>
+        <item>двадесет\nчетири</item>
+        <item>двадесет\nпет</item>
+        <item>двадесет\nшест</item>
+        <item>двадесет\nседам</item>
+        <item>двадесет\nосам</item>
+        <item>двадесет\nдевет</item>
+        <item>тридесет</item>
+        <item>тридесет\nједан</item>
+        <item>тридесет\nдва</item>
+        <item>тридесет\nтри</item>
+        <item>тридесет\nчетири</item>
+        <item>тридесет\nпет</item>
+        <item>тридесет\nшест</item>
+        <item>тридесет\nседам</item>
+        <item>тридесет\nосам</item>
+        <item>тридесет\nдевет</item>
+        <item>четрдесет</item>
+        <item>четрдесет\nједан</item>
+        <item>четрдесет\nдва</item>
+        <item>четрдесет\nтри</item>
+        <item>четрдесет\nчетири</item>
+        <item>четрдесет\nпет</item>
+        <item>четрдесет\nшест</item>
+        <item>четрдесет\nседам</item>
+        <item>четрдесет\nосам</item>
+        <item>четрдесет\nдевет</item>
+        <item>педесет</item>
+        <item>педесет\nједан</item>
+        <item>педесет\nдва</item>
+        <item>педесет\nтри</item>
+        <item>педесет\nчетири</item>
+        <item>педесет\nпет</item>
+        <item>педесет\nшест</item>
+        <item>педесет\nседам</item>
+        <item>педесет\nосам</item>
+        <item>педесет\nдевет</item>
+    </string-array>
+</resources>

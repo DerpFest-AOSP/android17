@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Tolv</item>
+        <item>Ett</item>
+        <item>To</item>
+        <item>Tre</item>
+        <item>Fire</item>
+        <item>Fem</item>
+        <item>Seks</item>
+        <item>Sju</item>
+        <item>Åtte</item>
+        <item>Ni</item>
+        <item>Ti</item>
+        <item>Elleve</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>null-null</item>
+        <item>Ett</item>
+        <item>To</item>
+        <item>Tre</item>
+        <item>Fire</item>
+        <item>Fem</item>
+        <item>Seks</item>
+        <item>Sju</item>
+        <item>åtte</item>
+        <item>Ni</item>
+        <item>Ti</item>
+        <item>Elleve</item>
+        <item>Tolv</item>
+        <item>Tretten</item>
+        <item>Fjorten</item>
+        <item>Femten</item>
+        <item>Seksten</item>
+        <item>Sytten</item>
+        <item>Atten</item>
+        <item>Nitten</item>
+        <item>Tjue</item>
+        <item>Tjue\nen</item>
+        <item>Tjue\nto</item>
+        <item>Tjue\ntre</item>
+        <item>Tjue\nfire</item>
+        <item>Tjue\nfem</item>
+        <item>Tjue\nseks</item>
+        <item>Tjue\nsju</item>
+        <item>Tjue\nåtte</item>
+        <item>Tjue\nni</item>
+        <item>Tretti</item>
+        <item>Tretti\nen</item>
+        <item>Tretti\nto</item>
+        <item>Tretti\ntre</item>
+        <item>Tretti\nfire</item>
+        <item>Tretti\nfem</item>
+        <item>Tretti\nseks</item>
+        <item>Tretti\nsju</item>
+        <item>Tretti\nåtte</item>
+        <item>Tretti\nni</item>
+        <item>Førti</item>
+        <item>Førti\nen</item>
+        <item>Førti\nto</item>
+        <item>Førti\ntre</item>
+        <item>Førti\nfire</item>
+        <item>Førti\nfem</item>
+        <item>Førti\nseks</item>
+        <item>Førti\nsju</item>
+        <item>Førti\nåtte</item>
+        <item>Førti\nni</item>
+        <item>Femti</item>
+        <item>Femti\nen</item>
+        <item>Femti\nto</item>
+        <item>Femti\ntre</item>
+        <item>Femti\nfire</item>
+        <item>Femti\nfem</item>
+        <item>Femti\nseks</item>
+        <item>Femti\nsju</item>
+        <item>Femti\nåtte</item>
+        <item>Femti\nni</item>
+    </string-array>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>שתים-עשרה</item>
+        <item>אחת</item>
+        <item>שתיים</item>
+        <item>שלוש</item>
+        <item>ארבע</item>
+        <item>חמש</item>
+        <item>שש</item>
+        <item>שבע</item>
+        <item>שמונה</item>
+        <item>תשע</item>
+        <item>עשר</item>
+        <item>אחת-עשרה</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>בדיוק</item>
+        <item>ודקה</item>
+        <item>ושתי דקות</item>
+        <item>ושלוש דקות</item>
+        <item>וארבע דקות</item>
+        <item>וחמש דקות</item>
+        <item>ושש דקות</item>
+        <item>ושבע דקות</item>
+        <item>ושמונה דקות</item>
+        <item>ותשע דקות</item>
+        <item>עשר</item>
+        <item>אחת-עשרה</item>
+        <item>שתים-עשרה</item>
+        <item>שלוש-עשרה</item>
+        <item>ארבע-עשרה</item>
+        <item>חמש-עשרה</item>
+        <item>שש-עשרה</item>
+        <item>שבע-עשרה</item>
+        <item>שמונה-עשרה</item>
+        <item>תשע-עשרה</item>
+        <item>עשרים</item>
+        <item>עשרים\nואחת</item>
+        <item>עשרים\nושתיים</item>
+        <item>עשרים\nושלוש</item>
+        <item>עשרים\nוארבע</item>
+        <item>עשרים\nוחמש</item>
+        <item>עשרים\nושש</item>
+        <item>עשרים\nושבע</item>
+        <item>עשרים\nושמונה</item>
+        <item>עשרים\nותשע</item>
+        <item>שלושים</item>
+        <item>שלושים\nואחת</item>
+        <item>שלושים\nושתיים</item>
+        <item>שלושים\nושלוש</item>
+        <item>שלושים\nוארבע</item>
+        <item>שלושים\nוחמש</item>
+        <item>שלושים\nושש</item>
+        <item>שלושים\nושבע</item>
+        <item>שלושים\nושמונה</item>
+        <item>שלושים\nותשע</item>
+        <item>ארבעים</item>
+        <item>ארבעים\nואחת</item>
+        <item>ארבעים\nושתיים</item>
+        <item>ארבעים\nושלוש</item>
+        <item>ארבעים\nוארבע</item>
+        <item>ארבעים\nוחמש</item>
+        <item>ארבעים\nושש</item>
+        <item>ארבעים\nושבע</item>
+        <item>ארבעים\nושמונה</item>
+        <item>ארבעים\nותשע</item>
+        <item>חמישים</item>
+        <item>חמישים\nואחת</item>
+        <item>חמישים\nושתיים</item>
+        <item>חמישים\nושלוש</item>
+        <item>חמישים\nוארבע</item>
+        <item>חמישים\nוחמש</item>
+        <item>חמישים\nושש</item>
+        <item>חמישים\nושבע</item>
+        <item>חמישים\nושמונה</item>
+        <item>חמישים\nותשע</item>
+    </string-array>
+</resources>

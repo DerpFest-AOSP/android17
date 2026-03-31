@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>বারো</item>
+        <item>এক</item>
+        <item>দুই</item>
+        <item>তিন</item>
+        <item>চার</item>
+        <item>পাঁচ</item>
+        <item>ছয়</item>
+        <item>সাত</item>
+        <item>আট</item>
+        <item>নয়</item>
+        <item>দশ</item>
+        <item>ইলেভেন</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>বাজচ্ছে</item>
+        <item>এক</item>
+        <item>দুই</item>
+        <item>তিন</item>
+        <item>চার</item>
+        <item>পাঁচ</item>
+        <item>ছয়</item>
+        <item>সাত</item>
+        <item>আট</item>
+        <item>নয়</item>
+        <item>দশ</item>
+        <item>ইলেভেন</item>
+        <item>বারো</item>
+        <item>তেরো</item>
+        <item>চোদ্দো</item>
+        <item>পনেরো</item>
+        <item>ষোল</item>
+        <item>সতেরো</item>
+        <item>আঠারো</item>
+        <item>উনিশ</item>
+        <item>কুড়ি</item>
+        <item>এ\nকুশ</item>
+        <item>বাই\nশ</item>
+        <item>তেই\nশ</item>
+        <item>চব্বি\nশ</item>
+        <item>পঁচি\nশ</item>
+        <item>চাব্বি\nশ</item>
+        <item>সা\nতাশ</item>
+        <item>আটা\nশ</item>
+        <item>উন\nত্রিশ</item>
+        <item>তিরিশ</item>
+        <item>এক\nত্রিশ</item>
+        <item>বত্রি\nশ</item>
+        <item>তে\nত্রিশ</item>
+        <item>চৌ\nত্রিশ</item>
+        <item>পঁয়\nত্রিশ</item>
+        <item>ছত্রি\nশ</item>
+        <item>সাই\nত্রিশ</item>
+        <item>আট\nত্রিশ</item>
+        <item>উন\nচল্লিশ</item>
+        <item>চল্লিশ</item>
+        <item>একচ\nল্লিশ</item>
+        <item>বিয়া\nল্লিশ</item>
+        <item>তেতা\nল্লিশ</item>
+        <item>চুয়া\nল্লিশ</item>
+        <item>পঁয়তা\nল্লিশ</item>
+        <item>চুয়া\nল্লিশ</item>
+        <item>সাত\nচল্লিশ</item>
+        <item>আটচ\nল্লিশ</item>
+        <item>উন\nপঞ্চাশ</item>
+        <item>পঞ্চাশ</item>
+        <item>একা\nন্ন</item>
+        <item>বাহ\nন্ন</item>
+        <item>তিপা\nন্ন</item>
+        <item>চুয়া\nন্ন</item>
+        <item>পঞ্চা\nন্ন</item>
+        <item>পঞ্চা\nন্ন</item>
+        <item>সা\nতান্ন</item>
+        <item>আটা\nন্ন</item>
+        <item>উন\nষাট</item>
+    </string-array>
+</resources>

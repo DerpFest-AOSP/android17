@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>دوازده</item>
+        <item>یک</item>
+        <item>دو</item>
+        <item>سه</item>
+        <item>چهار</item>
+        <item>پنج</item>
+        <item>شش</item>
+        <item>هفت</item>
+        <item>هشت</item>
+        <item>نه</item>
+        <item>ده</item>
+        <item>یازده</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>ساعت</item>
+        <item>یک</item>
+        <item>دو</item>
+        <item>سه</item>
+        <item>چهار</item>
+        <item>پنج</item>
+        <item>شش</item>
+        <item>هفت</item>
+        <item>هشت</item>
+        <item>نه</item>
+        <item>ده</item>
+        <item>یازده</item>
+        <item>دوازده</item>
+        <item>سیزده</item>
+        <item>چهارده</item>
+        <item>پانزده</item>
+        <item>شانزده</item>
+        <item>هفده</item>
+        <item>هجده</item>
+        <item>نوزده</item>
+        <item>بیست</item>
+        <item>بیست‌و\nیک</item>
+        <item>بیست‌و\nدو</item>
+        <item>بیست‌و\nسه</item>
+        <item>بیست و\nچهار</item>
+        <item>بیست‌و\nپنج</item>
+        <item>بیست‌و\nشش</item>
+        <item>بیست‌و\nهفت</item>
+        <item>بیست‌و\nهشت</item>
+        <item>بیست‌و\nنه</item>
+        <item>سی</item>
+        <item>سی‌و\nیک</item>
+        <item>سی‌و\nدو</item>
+        <item>سی‌و\nسه</item>
+        <item>سی‌و\nچهار</item>
+        <item>سی‌و\nپنج</item>
+        <item>سی‌و\nشش</item>
+        <item>سی‌و\nهفت</item>
+        <item>سی‌و\nهشت</item>
+        <item>سی‌و\nنه</item>
+        <item>چهل</item>
+        <item>چهل‌و\nیک</item>
+        <item>چهل‌و\nدو</item>
+        <item>چهل‌و\nسه</item>
+        <item>چهل‌و\nچهار</item>
+        <item>چهل‌و\nپنج</item>
+        <item>چهل‌و\nشش</item>
+        <item>چهل‌و\nهفت</item>
+        <item>چهل‌و\nهشت</item>
+        <item>چهل‌و\nنه</item>
+        <item>پنجاه</item>
+        <item>پنجاه‌و\nیک</item>
+        <item>پنجاه‌و\nدو</item>
+        <item>چهل‌و\nسه</item>
+        <item>چهل‌و\nچهار</item>
+        <item>پنجاه‌و\nپنج</item>
+        <item>پنجاه‌و\nشش</item>
+        <item>پنجاه‌و\nهفت</item>
+        <item>پنجاه‌و\nهشت</item>
+        <item>پنجاه‌و\nنه</item>
+    </string-array>
+</resources>

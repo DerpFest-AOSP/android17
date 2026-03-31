@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Kaksitoista</item>
+        <item>Yksi</item>
+        <item>Kaksi</item>
+        <item>Kolme</item>
+        <item>Neljä</item>
+        <item>Viisi</item>
+        <item>Kuusi</item>
+        <item>Seitsemän</item>
+        <item>Kahdeksan</item>
+        <item>Yhdeksän</item>
+        <item>Kymmenen</item>
+        <item>Yksitoista</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Nolla nolla</item>
+        <item>Nolla yksi</item>
+        <item>Nolla kaksi</item>
+        <item>Nolla kolme</item>
+        <item>Nolla neljä</item>
+        <item>Nolla viisi</item>
+        <item>Nolla kuusi</item>
+        <item>Nolla seitsemän</item>
+        <item>Nolla kahdeksan</item>
+        <item>Nolla yhdeksän</item>
+        <item>Kymmenen</item>
+        <item>Yksitoista</item>
+        <item>Kaksitoista</item>
+        <item>Kolmetoista</item>
+        <item>Neljätoista</item>
+        <item>Viisitoista</item>
+        <item>Kuusitoista</item>
+        <item>Seitsemäntoista</item>
+        <item>Kahdeksantoista</item>
+        <item>Yhdeksäntoista</item>
+        <item>Kaksikymmentä</item>
+        <item>Kaksikymmentä-\nyksi</item>
+        <item>Kaksikymmentä-\nkaksi</item>
+        <item>Kaksikymmentä-\nkolme</item>
+        <item>Kaksikymmentä-\nneljä</item>
+        <item>Kaksikymmentä-\nviisi</item>
+        <item>Kaksikymmentä-\nkuusi</item>
+        <item>Kaksikymmentä-\nseitsemän</item>
+        <item>28</item>
+        <item>Kaksikymmentä-\nyhdeksän</item>
+        <item>Kolmekymmentä</item>
+        <item>Kolmekymmentä-\nyksi</item>
+        <item>Kolmekymmentä-\nkaksi</item>
+        <item>Kolmekymmentä-\nkolme</item>
+        <item>Kolmekymmentä-\nneljä</item>
+        <item>Kolmekymmentä-\nviisi</item>
+        <item>Kolmekymmentä-\nkuusi</item>
+        <item>Kolmekymmentä-\nseitsemän</item>
+        <item>Kolmekymmentä-\nkahdeksan</item>
+        <item>Kolmekymmentä-\nyhdeksän</item>
+        <item>Neljäkymmentä</item>
+        <item>Neljäkymmentä-\nyksi</item>
+        <item>Neljäkymmentä-\nkaksi</item>
+        <item>Neljäkymmentä-\nkolme</item>
+        <item>Neljäkymmentä-\nneljä</item>
+        <item>Neljäkymmentä-\nviisi</item>
+        <item>Neljäkymmentä-\nkuusi</item>
+        <item>Neljäkymmentä-\nseitsemän</item>
+        <item>Neljäkymmentä-\nkahdeksan</item>
+        <item>Neljäkymmentä-\nyhdeksän</item>
+        <item>Viisikymmentä</item>
+        <item>Viisikymmentä-\nyksi</item>
+        <item>Viisikymmentä-\nkaksi</item>
+        <item>Viisikymmentä-\nkolme</item>
+        <item>Viisikymmentä-\nneljä</item>
+        <item>Viisikymmentä-\nviisi</item>
+        <item>Viisikymmentä-\nkuusi</item>
+        <item>Viisikymmentä-\nseitsemän</item>
+        <item>Viisikymmentä-\nkahdeksan</item>
+        <item>Viisikymmentä-\nyhdeksän</item>
+    </string-array>
+</resources>

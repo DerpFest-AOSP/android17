@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>十二</item>
+        <item>一</item>
+        <item>二</item>
+        <item>三</item>
+        <item>四</item>
+        <item>五</item>
+        <item>六</item>
+        <item>七</item>
+        <item>八</item>
+        <item>九</item>
+        <item>十</item>
+        <item>十一</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>零九</item>
+        <item>零一</item>
+        <item>零二</item>
+        <item>零三</item>
+        <item>零四</item>
+        <item>零五</item>
+        <item>零六</item>
+        <item>零七</item>
+        <item>零八</item>
+        <item>零九</item>
+        <item>十</item>
+        <item>十一</item>
+        <item>十二</item>
+        <item>十三</item>
+        <item>十四</item>
+        <item>十五</item>
+        <item>十六</item>
+        <item>十七</item>
+        <item>十八</item>
+        <item>十九</item>
+        <item>二十</item>
+        <item>二十\n一</item>
+        <item>二十\n二</item>
+        <item>二十\n三</item>
+        <item>二十\n四</item>
+        <item>二十\n五</item>
+        <item>二十\n六</item>
+        <item>二十\n七</item>
+        <item>二十\n八</item>
+        <item>二十\n九</item>
+        <item>三十</item>
+        <item>三十\n一</item>
+        <item>三十\n二</item>
+        <item>三十\n三</item>
+        <item>三十\n四</item>
+        <item>三十\n五</item>
+        <item>三十\n六</item>
+        <item>三十\n七</item>
+        <item>三十\n八</item>
+        <item>三十\n九</item>
+        <item>四十</item>
+        <item>四十\n一</item>
+        <item>四十\n二</item>
+        <item>四十\n三</item>
+        <item>四十\n四</item>
+        <item>四十\n五</item>
+        <item>四十\n六</item>
+        <item>四十\n七</item>
+        <item>四十\n八</item>
+        <item>四十\n九</item>
+        <item>五十</item>
+        <item>五十\n一</item>
+        <item>五十\n二</item>
+        <item>五十\n三</item>
+        <item>五十\n四</item>
+        <item>五十\n五</item>
+        <item>五十\n六</item>
+        <item>五十\n七</item>
+        <item>五十\n八</item>
+        <item>五十\n九</item>
+    </string-array>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Sita</item>
+        <item>Saba</item>
+        <item>Nane</item>
+        <item>Tisa</item>
+        <item>Kumi</item>
+        <item>Kumi na moja</item>
+        <item>Kumi na mbili</item>
+        <item>Moja</item>
+        <item>Mbili</item>
+        <item>Tatu</item>
+        <item>Nne</item>
+        <item>Tano</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Kamili</item>
+        <item>Na Dakika Moja</item>
+        <item>Na Dakika Mbili</item>
+        <item>Na Dakika Tatu</item>
+        <item>Na Dakika Nne</item>
+        <item>Na Dakika Tano</item>
+        <item>Na Dakika Sita</item>
+        <item>Na Dakika Saba</item>
+        <item>Nane</item>
+        <item>Na Dakika Tisa</item>
+        <item>Kumi</item>
+        <item>Kumi na Moja</item>
+        <item>Kumi na Mbili</item>
+        <item>Kumi na tatu</item>
+        <item>Kumi na nne</item>
+        <item>Kumi na Tano</item>
+        <item>Kumi na Sita</item>
+        <item>Kumi na Saba</item>
+        <item>Kumi na nane</item>
+        <item>Kumi na tisa</item>
+        <item>Ishirini</item>
+        <item>Ishirini na\nMoja</item>
+        <item>Ishirini na\nMbili</item>
+        <item>Ishirini na\nTatu</item>
+        <item>Ishirini na\nNne</item>
+        <item>Ishirini na \nTano</item>
+        <item>Ishirni na\nSita</item>
+        <item>Ishirini na\nSaba</item>
+        <item>Ishirini na\nNane</item>
+        <item>Ishirini na\nTisa</item>
+        <item>Thelathini</item>
+        <item>Thelathini na\nMoja</item>
+        <item>Thelathini na\nMbili</item>
+        <item>Thelathini na\nTatu</item>
+        <item>Thelathini na\nNne</item>
+        <item>Thelathini na\nTano</item>
+        <item>Thelathini na\nSita</item>
+        <item>Thelathini na\nSaba</item>
+        <item>Thelathini na\nNane</item>
+        <item>Thelathini na\nTisa</item>
+        <item>Arobaini</item>
+        <item>Arobaini na\nMoja</item>
+        <item>Arobaini na\nMbili</item>
+        <item>Arobaini na\nTatu</item>
+        <item>Arobaini na\nNne</item>
+        <item>Arobaini na\nTano</item>
+        <item>Arobaini na\nSita</item>
+        <item>Arobaini na\nSaba</item>
+        <item>Arobaini na\nNane</item>
+        <item>Arobaini na\nTisa</item>
+        <item>Hamsini</item>
+        <item>Hamsini na\nMoja</item>
+        <item>Hamsini na\nMbili</item>
+        <item>Hamsini\nTatu</item>
+        <item>Hamsini na\nNne</item>
+        <item>Hamsini na\nTano</item>
+        <item>Hamsini na\nSita</item>
+        <item>Hamsini na\nSaba</item>
+        <item>Hamsini na\nNane</item>
+        <item>Hamsini na\nTisa</item>
+    </string-array>
+</resources>

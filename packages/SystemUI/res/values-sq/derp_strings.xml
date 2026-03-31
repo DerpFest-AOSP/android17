@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Dymbëdhjetë</item>
+        <item>Një</item>
+        <item>Dy</item>
+        <item>Tre</item>
+        <item>Katër</item>
+        <item>Pesë</item>
+        <item>Gjashtë</item>
+        <item>Shtatë</item>
+        <item>Tetë</item>
+        <item>Nëntë</item>
+        <item>Dhjetë</item>
+        <item>Njëmbëdhjetë</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Fiks</item>
+        <item>E një</item>
+        <item>E dy</item>
+        <item>E tre</item>
+        <item>E katër</item>
+        <item>E pesë</item>
+        <item>E gjashtë</item>
+        <item>E shtatë</item>
+        <item>E tetë</item>
+        <item>E nëntë</item>
+        <item>Dhjetë</item>
+        <item>Njëmbëdhjetë</item>
+        <item>Dymbëdhjetë</item>
+        <item>Trembëdhjetë</item>
+        <item>Katërmbëdhjetë</item>
+        <item>Pesëmbëdhjetë</item>
+        <item>Gjashtëmbëdhjetë</item>
+        <item>Shtatëmbëdhjetë</item>
+        <item>Tetëmbëdhjetë</item>
+        <item>Nëntëmbëdhjetë</item>
+        <item>Njëzet</item>
+        <item>Njëzet\ne një</item>
+        <item>Njëzet\ne dy</item>
+        <item>Njëzet\ne tre</item>
+        <item>Njëzet\ne katër</item>
+        <item>Njëzet\ne pesë</item>
+        <item>Njëzet\ne gjashtë</item>
+        <item>Njëzet\ne shtatë</item>
+        <item>Njëzet\ne tetë</item>
+        <item>Njëzet\ne nëntë</item>
+        <item>Tridhjetë</item>
+        <item>Tridhjetë\ne një</item>
+        <item>Tridhjetë\ne dy</item>
+        <item>Tridhjetë\ne tre</item>
+        <item>Tridhjetë\ne katër</item>
+        <item>Tridhjetë\ne pesë</item>
+        <item>Tridhjetë\ne gjashtë</item>
+        <item>Tridhjetë\ne shtatë</item>
+        <item>Tridhjetë\ne tetë</item>
+        <item>Tridhjetë\ne nëntë</item>
+        <item>Dyzet</item>
+        <item>Dyzet\ne një</item>
+        <item>Dyzet\ne dy</item>
+        <item>Dyzet\ne tre</item>
+        <item>Dyzet\ne katër</item>
+        <item>Dyzet\ne pesë</item>
+        <item>Dyzet\ne gjashtë</item>
+        <item>Dyzet\ne shtatë</item>
+        <item>Dyzet\ne tetë</item>
+        <item>Dyzet\ne nëntë</item>
+        <item>Pesëdhjetë</item>
+        <item>Pesëdhjetë\ne një</item>
+        <item>Pesëdhjetë\ne dy</item>
+        <item>Pesëdhjetë\ne tre</item>
+        <item>Pesëdhjetë\ne katër</item>
+        <item>Pesëdhjetë\ne pesë</item>
+        <item>Pesëdhjetë\ne gjashtë</item>
+        <item>Pesëdhjetë\ne shtatë</item>
+        <item>Pesëdhjetë\ne tetë</item>
+        <item>Pesëdhjetë\ne nëntë</item>
+    </string-array>
+</resources>

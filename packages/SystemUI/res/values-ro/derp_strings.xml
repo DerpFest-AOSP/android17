@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Douăsprezece</item>
+        <item>Unu</item>
+        <item>Două</item>
+        <item>Trei</item>
+        <item>Patru</item>
+        <item>Cinci</item>
+        <item>Șase</item>
+        <item>Șapte</item>
+        <item>Opt</item>
+        <item>Nouă</item>
+        <item>Zece</item>
+        <item>Unsprezece</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>.</item>
+        <item>și unu</item>
+        <item>și două</item>
+        <item>și trei</item>
+        <item>și patru</item>
+        <item>și cinci</item>
+        <item>și șase</item>
+        <item>și șapte</item>
+        <item>și opt</item>
+        <item>și nouă</item>
+        <item>Zece</item>
+        <item>Unsprezece</item>
+        <item>Douăsprezece</item>
+        <item>Treisprezece</item>
+        <item>Paisprezece</item>
+        <item>Cincisprezece</item>
+        <item>Șaisprezece</item>
+        <item>Șaptesprezece</item>
+        <item>Optsprezece</item>
+        <item>Nouăsprezece</item>
+        <item>Douăzeci</item>
+        <item>Douăzeci\nși unu</item>
+        <item>Douăzeci\nși doi</item>
+        <item>Douăzeci\nși trei</item>
+        <item>Douăzeci\nși patru</item>
+        <item>Douăzeci\nși cinci</item>
+        <item>Douăzeci\nși șase</item>
+        <item>Douăzeci\nși șapte</item>
+        <item>Douăzeci\nși opt</item>
+        <item>Douăzeci\nși nouă</item>
+        <item>Treizeci</item>
+        <item>Treizeci\nși unu</item>
+        <item>Treizeci\nși două</item>
+        <item>Treizeci\nși trei</item>
+        <item>Treizeci\nși patru</item>
+        <item>Treizeci\nși cinci</item>
+        <item>Treizeci\nși șase</item>
+        <item>Treizeci\nși șapte</item>
+        <item>Treizeci\nși opt</item>
+        <item>Treizeci\nși nouă</item>
+        <item>Patruzeci</item>
+        <item>Patruzeci\nși unu</item>
+        <item>Patruzeci\nși două</item>
+        <item>Patruzeci\nși trei</item>
+        <item>Patruzeci\nși patru</item>
+        <item>Patruzeci\nși cinci</item>
+        <item>Patruzeci\nși șase</item>
+        <item>Patruzeci\nși șapte</item>
+        <item>Patruzeci\nși opt</item>
+        <item>Patruzeci\nși nouă</item>
+        <item>Cincizeci</item>
+        <item>Cincizeci\nși unu</item>
+        <item>Cincizeci\nși doi</item>
+        <item>Cincizeci\nși trei</item>
+        <item>Cincizeci\nși patru</item>
+        <item>Cincizeci\nși cinci</item>
+        <item>Cincizeci\nși șase</item>
+        <item>Cincizeci\nși șapte</item>
+        <item>Cincizeci\nși opt</item>
+        <item>Cincizeci\nși nouă</item>
+    </string-array>
+</resources>

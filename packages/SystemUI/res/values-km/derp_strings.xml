@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>ដប់ពីរ</item>
+        <item>មួយ</item>
+        <item>ពីរ</item>
+        <item>បី</item>
+        <item>បួន</item>
+        <item>ប្រាំ</item>
+        <item>ប្រាំមួយ</item>
+        <item>ប្រាំពីរ</item>
+        <item>ប្រាំបី</item>
+        <item>ប្រាំបួន</item>
+        <item>ដប់</item>
+        <item>ដប់មួយ</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>ម៉ោង</item>
+        <item>មួយ</item>
+        <item>ពីរ</item>
+        <item>បី</item>
+        <item>បួន</item>
+        <item>ប្រាំ</item>
+        <item>ប្រាំមួយ</item>
+        <item>ប្រាំពីរ</item>
+        <item>ប្រាំបី</item>
+        <item>ប្រាំបួន</item>
+        <item>ដប់</item>
+        <item>ដប់មួយ</item>
+        <item>ដប់ពីរ</item>
+        <item>ដប់បី</item>
+        <item>ដប់បួន</item>
+        <item>ដប់ប្រាំ</item>
+        <item>ដប់ប្រាំមួយ</item>
+        <item>ដប់ប្រាំពីរ</item>
+        <item>ដប់​ប្រាំបី</item>
+        <item>ដប់​ប្រាំបួន</item>
+        <item>ម្ភៃ</item>
+        <item>ម្ភៃ\nមួយ</item>
+        <item>ម្ភៃ\nពីរ</item>
+        <item>ម្ភៃ\nបី</item>
+        <item>ម្ភៃ\nបួន</item>
+        <item>ម្ភៃ\nប្រាំ</item>
+        <item>ម្ភៃ\nប្រាំមួយ</item>
+        <item>ម្ភៃ\nប្រាំពីរ</item>
+        <item>ម្ភៃ\nប្រាំបី</item>
+        <item>ម្ភៃ\nប្រាំបួន</item>
+        <item>សាមសិប</item>
+        <item>សាមសិប\nមួយ</item>
+        <item>សាមសិប\nពីរ</item>
+        <item>សាមសិប\nបី</item>
+        <item>សាមសិប\nបួន</item>
+        <item>សាមសិប\nប្រាំ</item>
+        <item>សាមសិប\nប្រាំមួយ</item>
+        <item>សាមសិប\nប្រាំពីរ</item>
+        <item>សាមសិប\nប្រាំបី</item>
+        <item>សាមសិប\nប្រាំបួន</item>
+        <item>សែសិប</item>
+        <item>សែសិប\nមួយ</item>
+        <item>សែសិប\nពីរ</item>
+        <item>សែសិប\nបី</item>
+        <item>សែសិប\nបួន</item>
+        <item>សែសិប\nប្រាំ</item>
+        <item>សែសិប\nប្រាំមួយ</item>
+        <item>សែសិប\nប្រាំពីរ</item>
+        <item>សែសិប\nប្រាំបី</item>
+        <item>សែសិប\nប្រាំបួន</item>
+        <item>ហាសិប</item>
+        <item>ហាសិប\nមួយ</item>
+        <item>ហាសិប\nពីរ</item>
+        <item>ហាសិប\nបី</item>
+        <item>ហាសិប\nបួន</item>
+        <item>ហាសិប\nប្រាំ</item>
+        <item>ហាសិប\nប្រាំមួយ</item>
+        <item>ហាសិប\nប្រាំពីរ</item>
+        <item>ហាសិប\nប្រាំបី</item>
+        <item>ហាសិប\nប្រាំបួន</item>
+    </string-array>
+</resources>

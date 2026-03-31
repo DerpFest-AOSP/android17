@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Doze</item>
+        <item>Uma</item>
+        <item>Duas</item>
+        <item>Três</item>
+        <item>Quatro</item>
+        <item>Cinco</item>
+        <item>Seis</item>
+        <item>Sete</item>
+        <item>Oito</item>
+        <item>Nove</item>
+        <item>Dez</item>
+        <item>Onze</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Em ponto</item>
+        <item>Um</item>
+        <item>Dois</item>
+        <item>Três</item>
+        <item>Quatro</item>
+        <item>Cinco</item>
+        <item>Seis</item>
+        <item>Sete</item>
+        <item>Oito</item>
+        <item>Nove</item>
+        <item>Dez</item>
+        <item>Onze</item>
+        <item>Doze</item>
+        <item>Treze</item>
+        <item>Catorze</item>
+        <item>Quinze</item>
+        <item>Dezesseis</item>
+        <item>Dezessete</item>
+        <item>Dezoito</item>
+        <item>Dezenove</item>
+        <item>Vinte</item>
+        <item>Vinte\ne um</item>
+        <item>Vinte\ne dois</item>
+        <item>Vinte\ne três</item>
+        <item>Vinte\ne quatro</item>
+        <item>Vinte\ne cinco</item>
+        <item>Vinte\ne seis</item>
+        <item>Vinte\ne sete</item>
+        <item>Vinte\ne oito</item>
+        <item>Vinte\ne nove</item>
+        <item>Trinta</item>
+        <item>Trinta\ne um</item>
+        <item>Trinta\ne dois</item>
+        <item>Trinta\ne três</item>
+        <item>Trinta\ne quatro</item>
+        <item>Trinta\ne cinco</item>
+        <item>Trinta\ne seis</item>
+        <item>Trinta\ne sete</item>
+        <item>Trinta\ne oito</item>
+        <item>Trinta\ne nove</item>
+        <item>Quarenta</item>
+        <item>Quarenta\ne um</item>
+        <item>Quarenta\ne dois</item>
+        <item>Quarenta\ne três</item>
+        <item>Quarenta\ne quatro</item>
+        <item>Quarenta\ne cinco</item>
+        <item>Quarenta\ne seis</item>
+        <item>Quarenta\ne sete</item>
+        <item>Quarenta\ne oito</item>
+        <item>Quarenta\ne nove</item>
+        <item>Cinquenta</item>
+        <item>Cinquenta\ne um</item>
+        <item>Cinquenta\ne dois</item>
+        <item>Cinquenta\ne três</item>
+        <item>Cinquenta\ne quatro</item>
+        <item>Cinquenta\ne cinco</item>
+        <item>Cinquenta\ne seis</item>
+        <item>Cinquenta\ne sete</item>
+        <item>Cinquenta\ne oito</item>
+        <item>Cinquenta\ne nove</item>
+    </string-array>
+</resources>

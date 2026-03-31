@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Арван хоёр</item>
+        <item>Нэг</item>
+        <item>Хоёр</item>
+        <item>Гурав</item>
+        <item>Дөрөв</item>
+        <item>Тав</item>
+        <item>Зургаа</item>
+        <item>Долоо</item>
+        <item>Найм</item>
+        <item>Ес</item>
+        <item>Арав</item>
+        <item>Арван нэг</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Цаг</item>
+        <item>Нэг</item>
+        <item>Хоёр</item>
+        <item>Гурав</item>
+        <item>Дөрөв</item>
+        <item>Тав</item>
+        <item>Зургаа</item>
+        <item>Долоо</item>
+        <item>Найм</item>
+        <item>Ес</item>
+        <item>Арав</item>
+        <item>Арван нэг</item>
+        <item>Арван хоёр</item>
+        <item>Арван гурав</item>
+        <item>Арван дөрөв</item>
+        <item>Арван тав</item>
+        <item>Арван зургаа</item>
+        <item>Арван долоо</item>
+        <item>Арван найм</item>
+        <item>Арван ес</item>
+        <item>Хорь</item>
+        <item>Хорь\nНэг</item>
+        <item>Хорь\nХоёр</item>
+        <item>Хорь\nГурав</item>
+        <item>Хорь\nДөрөв</item>
+        <item>Хорь\nТав</item>
+        <item>Хорь\nЗургаа</item>
+        <item>Хорь\nДолоо</item>
+        <item>Хорь\nНайм</item>
+        <item>Хорь\nЕс</item>
+        <item>Гуч</item>
+        <item>Гуч\nНэг</item>
+        <item>Гуч\nХоёр</item>
+        <item>Гуч\nГурав</item>
+        <item>Гуч\nДөрөв</item>
+        <item>Гуч\nТав</item>
+        <item>Гуч\nЗургаа</item>
+        <item>Гуч\nДолоо</item>
+        <item>Гуч\nНайм</item>
+        <item>Гуч\nЕс</item>
+        <item>Дөч</item>
+        <item>Дөч\nНэг</item>
+        <item>Дөч\nХоёр</item>
+        <item>Дөч\nГурав</item>
+        <item>Дөч\nДөрөв</item>
+        <item>Дөч\nТав</item>
+        <item>Дөч\nЗургаа</item>
+        <item>Дөч\nДолоо</item>
+        <item>Дөч\nНайм</item>
+        <item>Дөч\nЕс</item>
+        <item>Тавь</item>
+        <item>Тавь\nНэг</item>
+        <item>Тавь\nХоёр</item>
+        <item>Тавь\nГурав</item>
+        <item>Тавь\nДөрөв</item>
+        <item>Тавь\nТав</item>
+        <item>Тавь\nЗургаа</item>
+        <item>Тавь\nДолоо</item>
+        <item>Тавь\nНайм</item>
+        <item>Тавь\nЕс</item>
+    </string-array>
+</resources>

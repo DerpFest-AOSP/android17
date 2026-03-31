@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Dwanaście</item>
+        <item>Jeden</item>
+        <item>Dwa</item>
+        <item>Trzy</item>
+        <item>Cztery</item>
+        <item>Pięć</item>
+        <item>Sześć</item>
+        <item>Siedem</item>
+        <item>Osiem</item>
+        <item>Dziewięć</item>
+        <item>Dziesięć</item>
+        <item>Jedenaście</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Zero zero</item>
+        <item>Zero jeden</item>
+        <item>Zero dwa</item>
+        <item>Zero trzy</item>
+        <item>Zero cztery</item>
+        <item>Zero pięć</item>
+        <item>Zero sześć</item>
+        <item>Zero siedem</item>
+        <item>Zero osiem</item>
+        <item>Zero dziewięć</item>
+        <item>Dziesięć</item>
+        <item>Jedenaście</item>
+        <item>Dwanaście</item>
+        <item>Trzynaście</item>
+        <item>Czternaście</item>
+        <item>Piętnaście</item>
+        <item>Szesnaście</item>
+        <item>Siedemnaście</item>
+        <item>Osiemnaście</item>
+        <item>Dziewiętnaście</item>
+        <item>Dwadzieścia</item>
+        <item>Dwadzieścia\njeden</item>
+        <item>Dwadzieścia\ndwa</item>
+        <item>Dwadzieścia\ntrzy</item>
+        <item>Dwadzieścia\ncztery</item>
+        <item>Dwadzieścia\npięć</item>
+        <item>Dwadzieścia\nsześć</item>
+        <item>Dwadzieścia\nsiedem</item>
+        <item>Dwadzieścia\nosiem</item>
+        <item>Dwadzieścia\ndziewięć</item>
+        <item>Trzydzieści</item>
+        <item>Trzydzieści\njeden</item>
+        <item>Trzydzieści\ndwa</item>
+        <item>Trzydzieści\ntrzy</item>
+        <item>Trzydzieści\ncztery</item>
+        <item>Trzydzieści\npięć</item>
+        <item>Trzydzieści\nsześć</item>
+        <item>Trzydzieści\nsiedem</item>
+        <item>Trzydzieści\nosiem</item>
+        <item>Trzydzieści\ndziewięć</item>
+        <item>Czterdzieści</item>
+        <item>Czterdzieści\njeden</item>
+        <item>Czterdzieści\ndwa</item>
+        <item>Czterdzieści\ntrzy</item>
+        <item>Czterdzieści\ncztery</item>
+        <item>Czterdzieści\npięć</item>
+        <item>Czterdzieści\nsześć</item>
+        <item>Czterdzieści\nsiedem</item>
+        <item>Czterdzieści\nosiem</item>
+        <item>Czterdzieści\ndziewięć</item>
+        <item>Pięćdziesiąt</item>
+        <item>Pięćdziesiąt\njeden</item>
+        <item>Pięćdziesiąt\ndwa</item>
+        <item>Pięćdziesiąt\ntrzy</item>
+        <item>Pięćdziesiąt\ncztery</item>
+        <item>Pięćdziesiąt\npięć</item>
+        <item>Pięćdziesiąt\nsześć</item>
+        <item>Pięćdziesiąt\nsiedem</item>
+        <item>Pięćdziesiąt\nosiem.</item>
+        <item>Pięćdziesiąt\ndziewięć</item>
+    </string-array>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>አስራ ሁለት</item>
+        <item>አንድ</item>
+        <item>ሁለት</item>
+        <item>ሶስት</item>
+        <item>አራት</item>
+        <item>አምስት</item>
+        <item>ስድስት</item>
+        <item>ሰባት</item>
+        <item>ስምንት</item>
+        <item>ዘጠኝ</item>
+        <item>አስር</item>
+        <item>አስራ አንድ</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>ሰዓት</item>
+        <item>አንድ</item>
+        <item>ሁለት</item>
+        <item>ሶስት</item>
+        <item>አራት</item>
+        <item>አምስት</item>
+        <item>ስድስት</item>
+        <item>ሰባት</item>
+        <item>ስምንት</item>
+        <item>ዘጠኝ</item>
+        <item>አስር</item>
+        <item>አስራ አንድ</item>
+        <item>አስራ ሁለት</item>
+        <item>አስራ ሶስት</item>
+        <item>አስራ አራት</item>
+        <item>አስራ አምስት</item>
+        <item>አስራ ስድስት</item>
+        <item>አስራ ሰባት</item>
+        <item>አስራ ስምንት</item>
+        <item>አስራ ዘጠኝ</item>
+        <item>ሃያ</item>
+        <item>ሃያ\nአንድ</item>
+        <item>ሃያ\nሁለት</item>
+        <item>ሃያ\nሶስት</item>
+        <item>ሃያ\nአራት</item>
+        <item>ሃያ\nአምስት</item>
+        <item>ሃያ\nስድስት</item>
+        <item>ሃያ\nሰባት</item>
+        <item>ሃያ\nስምንት</item>
+        <item>ሃያ\nዘጠኝ</item>
+        <item>ሰላሳ</item>
+        <item>ሰላሳ\nአንድ</item>
+        <item>ሰላሳ\nሁለት</item>
+        <item>ሰላሳ\nሶስት</item>
+        <item>ሰላሳ\nአራት</item>
+        <item>ሰላሳ\nአምስት</item>
+        <item>ሰላሳ\nስድስት</item>
+        <item>ሰላሳ\nሰባት</item>
+        <item>ሰላሳ\nስምንት</item>
+        <item>ሰላሳ\nዘጠኝ</item>
+        <item>አርባ</item>
+        <item>አርባ\nአንድ</item>
+        <item>አርባ\nሁለት</item>
+        <item>አርባ\nሶስት</item>
+        <item>አርባ\nአራት</item>
+        <item>አርባ\nአምስት</item>
+        <item>አርባ\nስድስት</item>
+        <item>አርባ\nሰባት</item>
+        <item>አርባ\nስምንት</item>
+        <item>አርባ\nዘጠኝ</item>
+        <item>ሃምሳ</item>
+        <item>ሃምሳ\nአንድ</item>
+        <item>ሃምሳ\nሁለት</item>
+        <item>ሃምሳ\nሶስት</item>
+        <item>ሃምሳ\nአራት</item>
+        <item>ሃምሳ\nአምስት</item>
+        <item>ሃምሳ\nስድስት</item>
+        <item>ሃምሳ\nሰባት</item>
+        <item>ሃምሳ\nስምንት</item>
+        <item>ሃምሳ\nዘጠኝ</item>
+    </string-array>
+</resources>

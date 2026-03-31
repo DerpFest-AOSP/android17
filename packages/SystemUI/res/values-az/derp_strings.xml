@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>On iki</item>
+        <item>Bir</item>
+        <item>İki</item>
+        <item>Üç</item>
+        <item>Dörd</item>
+        <item>Beş</item>
+        <item>Altı</item>
+        <item>Yeddi</item>
+        <item>Səkkiz</item>
+        <item>Doqquz</item>
+        <item>On</item>
+        <item>On bir</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Saat</item>
+        <item>Bir</item>
+        <item>İki</item>
+        <item>Üç</item>
+        <item>Dörd</item>
+        <item>Beş</item>
+        <item>Altı</item>
+        <item>Yeddi</item>
+        <item>Səkkiz</item>
+        <item>doqquz</item>
+        <item>On</item>
+        <item>On bir</item>
+        <item>On iki</item>
+        <item>On üç</item>
+        <item>On dörd</item>
+        <item>On beş</item>
+        <item>On altı</item>
+        <item>On yeddi</item>
+        <item>On səkkiz</item>
+        <item>On doqquz</item>
+        <item>İyirmi</item>
+        <item>İyirmi\nBir</item>
+        <item>İyirmi\nİki</item>
+        <item>İyirmi\nÜç</item>
+        <item>İyirmi\nDörd</item>
+        <item>İyirmi\nBeş</item>
+        <item>İyirmi\nAltı</item>
+        <item>İyirmi\nYeddi</item>
+        <item>İyirmi\nSəkkiz</item>
+        <item>İyirmi\nDoqquz</item>
+        <item>Otuz</item>
+        <item>Otuz\nBir</item>
+        <item>Otuz\nİki</item>
+        <item>Otuz\nÜç</item>
+        <item>Otuz\nDörd</item>
+        <item>Otuz\nBeş</item>
+        <item>Otuz\nAltı</item>
+        <item>Otuz\nYeddi</item>
+        <item>Otuz\nYeddi</item>
+        <item>Otuz\nDoqquz</item>
+        <item>Qırx</item>
+        <item>Qırx\nBir</item>
+        <item>Qırx\nİki</item>
+        <item>Qırx\nÜç</item>
+        <item>Qırx\nİki</item>
+        <item>Qırx\nBeş</item>
+        <item>Qırx\nAltı</item>
+        <item>Qırx\nYeddi</item>
+        <item>Qırx\nSəkkiz</item>
+        <item>Qırx\nDoqquz</item>
+        <item>Əlli</item>
+        <item>Əlli\nBir</item>
+        <item>Əlli\nİki</item>
+        <item>Əlli\nÜç</item>
+        <item>Əlli\nDörd</item>
+        <item>Əlli\nBeş</item>
+        <item>Əlli\nAltı</item>
+        <item>Əlli\nYeddi</item>
+        <item>Əlli\nSəkkiz</item>
+        <item>Əlli\nDoqquz</item>
+    </string-array>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Kaksteist</item>
+        <item>Üks</item>
+        <item>Kaks</item>
+        <item>Kolm</item>
+        <item>Neli</item>
+        <item>Viis</item>
+        <item>Kuus</item>
+        <item>Seitse</item>
+        <item>Kaheksa</item>
+        <item>Üheksa</item>
+        <item>Kümme</item>
+        <item>Üksteist</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>null üks</item>
+        <item>null üks</item>
+        <item>null kaks</item>
+        <item>null kolm</item>
+        <item>null neli</item>
+        <item>null viis</item>
+        <item>null kuus</item>
+        <item>null seitse</item>
+        <item>null kaheksa</item>
+        <item>null üheksa</item>
+        <item>Kümme</item>
+        <item>Üksteist</item>
+        <item>Kaksteist</item>
+        <item>Kolmteist</item>
+        <item>Neliteist</item>
+        <item>Viisteist</item>
+        <item>Kuusteist</item>
+        <item>Seitseteist</item>
+        <item>Kaheksateist</item>
+        <item>Üheksateist</item>
+        <item>Kakskümmend</item>
+        <item>Kakskümmend\nüks</item>
+        <item>Kakskümmend\nkaks</item>
+        <item>Kakskümmend\nkolm</item>
+        <item>Kakskümmend\nneli</item>
+        <item>Kakskümmend\nviis</item>
+        <item>Kakskümmend\nkuus</item>
+        <item>Kakskümmend\nseitse</item>
+        <item>Kakskümmend\nkaheksa</item>
+        <item>Kakskümmend\nüheksa</item>
+        <item>Kolmkümmend</item>
+        <item>Kolmkümmend\nüks</item>
+        <item>Kolmkümmend\nkaks</item>
+        <item>Kolmkümmend\nkolm</item>
+        <item>Kolmkümmend\nneli</item>
+        <item>Kolmkümmend\nviis</item>
+        <item>Kolmkümmend\nkuus</item>
+        <item>Kolmkümmend\nseitse</item>
+        <item>Kolmkümmend\nkaheksa</item>
+        <item>Kolmkümmend\nüheksa</item>
+        <item>Nelikümmend</item>
+        <item>Nelikümmend\nüks</item>
+        <item>Nelikümmend\nkaks</item>
+        <item>Nelikümmend\nkolm</item>
+        <item>Nelikümmend\nneli</item>
+        <item>Nelikümmend\nviis</item>
+        <item>Nelikümmend\nkuus</item>
+        <item>Nelikümmend\nseitse</item>
+        <item>Nelikümmend\nkaheksa</item>
+        <item>Nelikümmend\nüheksa</item>
+        <item>Viiskümmend</item>
+        <item>Viiskümmend\nüks</item>
+        <item>Viiskümmend\nkaks</item>
+        <item>Viiskümmend\nkolm</item>
+        <item>Viiskümmend\nneli</item>
+        <item>Viiskümmend\nviis</item>
+        <item>Viiskümmend\nkuus</item>
+        <item>Viiskümmend\nseitse</item>
+        <item>Viiskümmend\nkaheksa</item>
+        <item>Viiskümmend\nüheksa</item>
+    </string-array>
+</resources>

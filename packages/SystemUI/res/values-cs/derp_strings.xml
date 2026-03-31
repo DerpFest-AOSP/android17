@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Dvanáct</item>
+        <item>Jedna</item>
+        <item>Dvě</item>
+        <item>Tři</item>
+        <item>Čtyři</item>
+        <item>Pět</item>
+        <item>Šest</item>
+        <item>Sedm</item>
+        <item>Osm</item>
+        <item>Devět</item>
+        <item>Deset</item>
+        <item>Jedenáct</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item></item>
+        <item>Jedna</item>
+        <item>Dvě</item>
+        <item>Tři</item>
+        <item>Čtyři</item>
+        <item>Pět</item>
+        <item>Šest</item>
+        <item>Sedm</item>
+        <item>Osm</item>
+        <item>Devět</item>
+        <item>Deset</item>
+        <item>Jedenáct</item>
+        <item>Dvanáct</item>
+        <item>Třináct</item>
+        <item>Čtrnáct</item>
+        <item>Patnáct</item>
+        <item>Šestnáct</item>
+        <item>Sedmnáct</item>
+        <item>Osmnáct</item>
+        <item>Devatenáct</item>
+        <item>Dvacet</item>
+        <item>Dvacet\njedna</item>
+        <item>Dvacet\ndva</item>
+        <item>Dvacet\ntři</item>
+        <item>Dvacet\nčtyři</item>
+        <item>Dvacet\npět</item>
+        <item>Dvacet\nšest</item>
+        <item>Dvacet\nsedm</item>
+        <item>Dvacet\nosm</item>
+        <item>Dvacet\ndevět</item>
+        <item>Třicet</item>
+        <item>Třicet\njedna</item>
+        <item>Třicet\ndva</item>
+        <item>Třicet\ntři</item>
+        <item>Třicet\nčtyři</item>
+        <item>Třicet\npět</item>
+        <item>Třicet\nšest</item>
+        <item>Třicet\nsedm</item>
+        <item>Třicet\nosm</item>
+        <item>Třicet\ndevět</item>
+        <item>Čtyřicet</item>
+        <item>Čtyřicet\njedna</item>
+        <item>Čtyřicet\ndva</item>
+        <item>Čtyřicet\ntři</item>
+        <item>Čtyřicet\nčtyři</item>
+        <item>Čtyřicet\npět</item>
+        <item>Čtyřicet\nšest</item>
+        <item>Čtyřicet\nsedm</item>
+        <item>Čtyřicet\nosm</item>
+        <item>Čtyřicet\ndevět</item>
+        <item>Padesát</item>
+        <item>Padesát\njedna</item>
+        <item>Padesát\ndva</item>
+        <item>Padesát\ntři</item>
+        <item>Padesát\nčtyři</item>
+        <item>Padesát\npět</item>
+        <item>Padesát\nšest</item>
+        <item>Padesát\nsedm</item>
+        <item>Padesát\nosm</item>
+        <item>Padesát\ndevět</item>
+    </string-array>
+</resources>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>สิบสอง</item>
+        <item>หนึ่ง</item>
+        <item>สอง</item>
+        <item>สาม</item>
+        <item>สี่</item>
+        <item>ห้า</item>
+        <item>หก</item>
+        <item>เจ็ด</item>
+        <item>แปด</item>
+        <item>เก้า</item>
+        <item>สิบ</item>
+        <item>สิบเอ็ด</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>นาฬิกา</item>
+        <item>ศูนย์หนึ่ง</item>
+        <item>ศูนย์สอง</item>
+        <item>ศูนย์สาม</item>
+        <item>ศูนย์สี่</item>
+        <item>ศูนย์ห้า</item>
+        <item>ศูนย์หก</item>
+        <item>ศูนย์เจ็ด</item>
+        <item>ศูนย์แปด</item>
+        <item>ศูนย์เก้า</item>
+        <item>สิบ</item>
+        <item>สิบเอ็ด</item>
+        <item>สิบสอง</item>
+        <item>สิบสาม</item>
+        <item>สิบสี่</item>
+        <item>สิบห้า</item>
+        <item>สิบหก</item>
+        <item>สิบเจ็ด</item>
+        <item>สิบแปด</item>
+        <item>สิบเก้า</item>
+        <item>ยี่สิบ</item>
+        <item>ยี่สิบ\nเอ็ด</item>
+        <item>ยี่สิบ\nสอง</item>
+        <item>ยี่สิบ\nสาม</item>
+        <item>ยี่สิบ\nสี่</item>
+        <item>ยี่สิบ\nห้า</item>
+        <item>ยี่สิบ\nหก</item>
+        <item>ยี่สิบ\nเจ็ด</item>
+        <item>ยี่สิบ\nแปด</item>
+        <item>ยี่สิบ\nเก้า</item>
+        <item>สามสิบ</item>
+        <item>สามสิบ\nเอ็ด</item>
+        <item>สามสิบ\nสอง</item>
+        <item>สามสิบ\nสาม</item>
+        <item>สามสิบ\nสี่</item>
+        <item>สามสิบ\nห้า</item>
+        <item>สามสิบ\nหก</item>
+        <item>สามสิบ\nเจ็ด</item>
+        <item>สามสิบ\nแปด</item>
+        <item>สามสิบ\nเก้า</item>
+        <item>สี่สิบ</item>
+        <item>สี่สิบ\nเอ็ด</item>
+        <item>สี่สิบ\nสอง</item>
+        <item>สี่สิบ\nสาม</item>
+        <item>สี่สิบ\nสี่</item>
+        <item>สี่สิบ\nห้า</item>
+        <item>สี่สิบ\nหก</item>
+        <item>สี่สิบ\nเจ็ด</item>
+        <item>สี่สิบ\nแปด</item>
+        <item>สี่สิบ\nเก้า</item>
+        <item>ห้าสิบ</item>
+        <item>ห้าสิบ\nเอ็ด</item>
+        <item>ห้าสิบ\nสอง</item>
+        <item>ห้าสิบ\nสาม</item>
+        <item>ห้าสิบ\nสี่</item>
+        <item>ห้าสิบ\nห้า</item>
+        <item>ห้าสิบ\nหก</item>
+        <item>ห้าสิบ\nเจ็ด</item>
+        <item>ห้าสิบ\nแปด</item>
+        <item>ห้าสิบ\nเก้า</item>
+    </string-array>
+</resources>

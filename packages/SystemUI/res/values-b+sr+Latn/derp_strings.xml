@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>dvanaest</item>
+        <item>jedan</item>
+        <item>dva</item>
+        <item>tri</item>
+        <item>četiri</item>
+        <item>pet</item>
+        <item>šest</item>
+        <item>sedam</item>
+        <item>osam</item>
+        <item>devet</item>
+        <item>deset</item>
+        <item>jedanaest</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>sata(i)</item>
+        <item>jedan</item>
+        <item>dva</item>
+        <item>tri</item>
+        <item>četiri</item>
+        <item>pet</item>
+        <item>šest</item>
+        <item>sedam</item>
+        <item>osam</item>
+        <item>devet</item>
+        <item>deset</item>
+        <item>jedanaest</item>
+        <item>dvanaest</item>
+        <item>trinaest</item>
+        <item>četrnaest</item>
+        <item>petnaest</item>
+        <item>šesnaest</item>
+        <item>sedamnaest</item>
+        <item>osamnaest</item>
+        <item>devetnaest</item>
+        <item>dvadeset</item>
+        <item>dvadeset\njedan</item>
+        <item>dvadeset\ndva</item>
+        <item>dvadeset\ntri</item>
+        <item>dvadeset\nčetiri</item>
+        <item>dvadeset\npet</item>
+        <item>dvadeset\nšest</item>
+        <item>dvadeset\nsedam</item>
+        <item>dvadeset\nosam</item>
+        <item>dvadeset\ndevet</item>
+        <item>trideset</item>
+        <item>trideset\njedan</item>
+        <item>trideset\ndva</item>
+        <item>trideset\ntri</item>
+        <item>trideset\nčetiri</item>
+        <item>trideset\npet</item>
+        <item>trideset\nšest</item>
+        <item>trideset\nsedam</item>
+        <item>trideset\nosam</item>
+        <item>trideset\ndevet</item>
+        <item>četrdeset</item>
+        <item>četrdeset\njedan</item>
+        <item>četrdeset\ndva</item>
+        <item>četrdeset\ntri</item>
+        <item>četrdeset\nčetiri</item>
+        <item>četrdeset\npet</item>
+        <item>četrdeset\nšest</item>
+        <item>četrdeset\nsedam</item>
+        <item>četrdeset\nosam</item>
+        <item>četrdeset\ndevet</item>
+        <item>pedeset</item>
+        <item>pedeset\njedan</item>
+        <item>pedeset\ndva</item>
+        <item>pedeset\ntri</item>
+        <item>pedeset\nčetiri</item>
+        <item>pedeset\npet</item>
+        <item>pedeset\nšest</item>
+        <item>pedeset\nsedam</item>
+        <item>pedeset\nosam</item>
+        <item>pedeset\ndevet</item>
+    </string-array>
+</resources>

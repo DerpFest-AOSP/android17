@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Oʻn ikki</item>
+        <item>Bir</item>
+        <item>Ikki</item>
+        <item>Uch</item>
+        <item>Toʻrt</item>
+        <item>Besh</item>
+        <item>Olti</item>
+        <item>Yetti</item>
+        <item>Sakkiz</item>
+        <item>Toʻqqiz</item>
+        <item>Oʻn</item>
+        <item>Oʻn bir</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Soat</item>
+        <item>Nol bir</item>
+        <item>Nol ikki</item>
+        <item>Nol uch</item>
+        <item>Nol toʻrt</item>
+        <item>Nol besh</item>
+        <item>Nol olti</item>
+        <item>Nol yetti</item>
+        <item>Nol sakkiz</item>
+        <item>Nol toʻqqiz</item>
+        <item>Oʻn</item>
+        <item>Oʻn bir</item>
+        <item>Oʻn ikki</item>
+        <item>Oʻn uch</item>
+        <item>Oʻn toʻrt</item>
+        <item>Oʻn besh</item>
+        <item>Oʻn olti</item>
+        <item>Oʻn yetti</item>
+        <item>Oʻn sakkiz</item>
+        <item>Oʻn toʻqqiz</item>
+        <item>Yigirma</item>
+        <item>Yigirma\nbir</item>
+        <item>Yigirma\nikki</item>
+        <item>Yigirma\nuch</item>
+        <item>Yigirma\ntoʻrt</item>
+        <item>Yigirma\nbesh</item>
+        <item>Yigirma\nolti</item>
+        <item>Yigirma\nyetti</item>
+        <item>Yigirma\nsakkiz</item>
+        <item>Yigirma\ntoʻqqiz</item>
+        <item>Oʻttiz</item>
+        <item>Oʻttiz\nbir</item>
+        <item>Oʻttiz\nikki</item>
+        <item>Oʻttiz\nuch</item>
+        <item>Oʻttiz\ntoʻrt</item>
+        <item>Oʻttiz\nbesh</item>
+        <item>Oʻttiz\nolti</item>
+        <item>Oʻttiz\nyetti</item>
+        <item>Oʻttiz\nsakkiz</item>
+        <item>Oʻttiz\ntoʻqqiz</item>
+        <item>Qirq</item>
+        <item>Qirq\nbir</item>
+        <item>Qirq\nikki</item>
+        <item>Qirq\nuch</item>
+        <item>Qirq\ntoʻrt</item>
+        <item>Qirq\nbesh</item>
+        <item>Qirq\nolti</item>
+        <item>Qirq\nyetti</item>
+        <item>Qirq\nsakkiz</item>
+        <item>Qirq\ntoʻqqiz</item>
+        <item>Ellik</item>
+        <item>Ellik\nbir</item>
+        <item>Ellik\nikki</item>
+        <item>Ellik\nuch</item>
+        <item>Ellik\ntoʻrt</item>
+        <item>Ellik\nbesh</item>
+        <item>Ellik\nolti</item>
+        <item>Ellik\nyetti</item>
+        <item>Ellik\nsakkiz</item>
+        <item>Ellik\ntoʻqqiz</item>
+    </string-array>
+</resources>

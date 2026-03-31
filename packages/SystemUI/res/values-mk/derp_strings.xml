@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Дванаесет</item>
+        <item>Еден</item>
+        <item>Два</item>
+        <item>Три</item>
+        <item>Четири</item>
+        <item>Пет</item>
+        <item>Шест</item>
+        <item>Седум</item>
+        <item>Осум</item>
+        <item>Девет</item>
+        <item>Десет</item>
+        <item>Единаесет</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>часот</item>
+        <item>Еден по полноќ</item>
+        <item>Два по полноќ</item>
+        <item>Три по полноќ</item>
+        <item>Четири по полноќ</item>
+        <item>Пет по полноќ</item>
+        <item>Шест по полноќ</item>
+        <item>Седум по полноќ</item>
+        <item>Осум по полноќ</item>
+        <item>Девет по полноќ</item>
+        <item>Десет</item>
+        <item>Единаесет</item>
+        <item>Дванаесет</item>
+        <item>Тринаесет</item>
+        <item>Четиринаесет</item>
+        <item>Петнаесет</item>
+        <item>Шестнаесет</item>
+        <item>Седумнаесет</item>
+        <item>Осумнаесет</item>
+        <item>Деветнаесет</item>
+        <item>Дваесет</item>
+        <item>Дваесет\nи еден</item>
+        <item>Дваесет\nи два</item>
+        <item>Дваесет\nи три</item>
+        <item>Дваесет\nи четири</item>
+        <item>Дваесет\nи пет</item>
+        <item>Дваесет\nи шест</item>
+        <item>Дваесет\nи седум</item>
+        <item>Дваесет\nи осум</item>
+        <item>Дваесет\nи девет</item>
+        <item>Триесет</item>
+        <item>Триесет\nи еден</item>
+        <item>Триесет\nи два</item>
+        <item>Триесет\nи три</item>
+        <item>Триесет\nи четири</item>
+        <item>Триесет\nи пет</item>
+        <item>Триесет\nи шест</item>
+        <item>Триесет\nи седум</item>
+        <item>Триесет\nи осум</item>
+        <item>Триесет\nи девет</item>
+        <item>Четириесет</item>
+        <item>Четириесет\nи еден</item>
+        <item>Четириесет\nи два</item>
+        <item>Четириесет\nи три</item>
+        <item>Четириесет\nи четири</item>
+        <item>Четириесет\nи пет</item>
+        <item>Четириесет\nи шест</item>
+        <item>Четириесет\nи седум</item>
+        <item>Четириесет\nи осум</item>
+        <item>Четириесет\nи девет</item>
+        <item>Педесет</item>
+        <item>Педесет\nи еден</item>
+        <item>Педесет\nи два</item>
+        <item>Педесет\nи три</item>
+        <item>Педесет\nи четири</item>
+        <item>Педесет\nи пет</item>
+        <item>Педесет\nи шест</item>
+        <item>Педесет\nи седум</item>
+        <item>Педесет\nи осум</item>
+        <item>Педесет\nи девет</item>
+    </string-array>
+</resources>

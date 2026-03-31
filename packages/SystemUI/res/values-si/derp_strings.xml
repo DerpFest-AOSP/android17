@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>දොළහ</item>
+        <item>එක</item>
+        <item>දෙක</item>
+        <item>තුන</item>
+        <item>හතර</item>
+        <item>පහ</item>
+        <item>හය</item>
+        <item>හත</item>
+        <item>අට</item>
+        <item>නවය</item>
+        <item>දහය</item>
+        <item>එකොළහ</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>පැය</item>
+        <item>එකයි</item>
+        <item>දෙකයි</item>
+        <item>තුනයි</item>
+        <item>හතරයි</item>
+        <item>පහයි</item>
+        <item>හයයි</item>
+        <item>හතයි</item>
+        <item>අටයි</item>
+        <item>නවයයි</item>
+        <item>දහය</item>
+        <item>එකොළහ</item>
+        <item>දොළහ</item>
+        <item>දහතුන</item>
+        <item>දහහතර</item>
+        <item>පහළොව</item>
+        <item>දහසය</item>
+        <item>දහහත</item>
+        <item>දහඅට</item>
+        <item>දහනවය</item>
+        <item>විස්ස</item>
+        <item>විසි\nඑක</item>
+        <item>විසි\nදෙක</item>
+        <item>විසි\nතුනයි</item>
+        <item>විසි\nහතර</item>
+        <item>විසි\nපහ</item>
+        <item>විසි\nහය</item>
+        <item>විසි\nහත</item>
+        <item>විසි\nඅට</item>
+        <item>විසි\nනවය</item>
+        <item>තිහ</item>
+        <item>තිස්\nඑක</item>
+        <item>තිස්\nදෙක</item>
+        <item>තිස්\nතුන</item>
+        <item>තිස්\nහතර</item>
+        <item>තිස්\nපහ</item>
+        <item>තිස්\nහය</item>
+        <item>තිස්\nහත</item>
+        <item>තිස්\nඅට</item>
+        <item>තිස්\nනවය</item>
+        <item>හතළිහ</item>
+        <item>හතළිස්\nඑක</item>
+        <item>හතළිස්\nදෙක</item>
+        <item>හතළිස්\nතුන</item>
+        <item>හතළිස්\nහතර</item>
+        <item>හතළිස්\nපහ</item>
+        <item>හතළිස්\nහය</item>
+        <item>හතළිස්\nහත</item>
+        <item>හතළිස්\nඅට</item>
+        <item>හතළිස්\nනවය</item>
+        <item>පනහ</item>
+        <item>පනස්\nඑක</item>
+        <item>පනස්\nදෙක</item>
+        <item>පනස්\nතුන</item>
+        <item>පනස්\nහතර</item>
+        <item>පනස්\nපහ</item>
+        <item>පනස\nහය</item>
+        <item>පනස්\nහත</item>
+        <item>පනස්\nඅට</item>
+        <item>පනස්\nනවය</item>
+    </string-array>
+</resources>

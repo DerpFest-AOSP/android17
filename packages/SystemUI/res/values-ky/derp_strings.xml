@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Он эки</item>
+        <item>Бир</item>
+        <item>Эки</item>
+        <item>Үч</item>
+        <item>Төрт</item>
+        <item>Беш</item>
+        <item>Алты</item>
+        <item>Жети</item>
+        <item>Сегиз</item>
+        <item>Тогуз</item>
+        <item>Он</item>
+        <item>Он бир</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Саат</item>
+        <item>Ноль бир</item>
+        <item>Ноль эки</item>
+        <item>Ноль үч</item>
+        <item>Ноль төрт</item>
+        <item>Ноль беш</item>
+        <item>Ноль алты</item>
+        <item>Ноль жети</item>
+        <item>Ноль сегиз</item>
+        <item>Ноль тогуз</item>
+        <item>Он</item>
+        <item>Он бир</item>
+        <item>Он эки</item>
+        <item>Он үч</item>
+        <item>Он төрт</item>
+        <item>Он беш</item>
+        <item>Он алты</item>
+        <item>Он жети</item>
+        <item>Он сегиз</item>
+        <item>Он тогуз</item>
+        <item>Жыйырма</item>
+        <item>Жыйырма\nбир</item>
+        <item>Жыйырма\nэки</item>
+        <item>Жыйырма\nүч</item>
+        <item>Жыйырма\nтөрт</item>
+        <item>Жыйырма\nбеш</item>
+        <item>Жыйырма\nалты</item>
+        <item>Жыйырма\nжети</item>
+        <item>Жыйырма\nсегиз</item>
+        <item>Жыйырма\nтогуз</item>
+        <item>Отуз</item>
+        <item>Отуз\nбир</item>
+        <item>Отуз\nэки</item>
+        <item>Отуз\nүч</item>
+        <item>Отуз\nтөрт</item>
+        <item>Отуз\nбеш</item>
+        <item>Отуз\nалты</item>
+        <item>Кырк\nжети</item>
+        <item>Отуз\nсегиз</item>
+        <item>Отуз\nтогуз</item>
+        <item>Кырк</item>
+        <item>Кырк\nбир</item>
+        <item>Кырк\nэки</item>
+        <item>Кырк\nүч</item>
+        <item>Кырк\nтөрт</item>
+        <item>Кырк\nбеш</item>
+        <item>Кырк\nалты</item>
+        <item>Кырк\nжети</item>
+        <item>Кырк\nсегиз</item>
+        <item>Кырк\nтогуз</item>
+        <item>Элүү</item>
+        <item>Элүү\nбир</item>
+        <item>Элүү\nэки</item>
+        <item>Элүү\nүч</item>
+        <item>Элүү\nтөрт</item>
+        <item>Кырк\nбеш</item>
+        <item>Элүү\nалты</item>
+        <item>Кырк\nжети</item>
+        <item>Элүү\nсегиз</item>
+        <item>Элүү\nтогуз</item>
+    </string-array>
+</resources>

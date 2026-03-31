@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>పన్నెండు</item>
+        <item>ఒకటి</item>
+        <item>రెండు</item>
+        <item>మూడు</item>
+        <item>నాలుగు</item>
+        <item>ఐదు</item>
+        <item>ఆరు</item>
+        <item>ఏడు</item>
+        <item>ఎనిమిది</item>
+        <item>తొమ్మిది</item>
+        <item>పది</item>
+        <item>పదకొండు</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>అవుతుంది</item>
+        <item>ఒకటి అవుతుంది</item>
+        <item>రెండు అవుతుంది</item>
+        <item>మూడు అవుతుంది</item>
+        <item>నాలుగు అవుతుంది</item>
+        <item>ఐదు అవుతుంది</item>
+        <item>ఆరు అవుతుంది</item>
+        <item>ఏడు అవుతుంది</item>
+        <item>ఎనిమిది అవుతుంది</item>
+        <item>తొమ్మిది అవుతుంది</item>
+        <item>పది</item>
+        <item>పదకొండు</item>
+        <item>పన్నెండు</item>
+        <item>పదమూడు</item>
+        <item>పద్నాలుగు</item>
+        <item>పదిహేను</item>
+        <item>పదహారు</item>
+        <item>పదిహేడు</item>
+        <item>పద్దెనిమిది</item>
+        <item>పంతొమ్మిది</item>
+        <item>ఇరవై</item>
+        <item>ఇరవై\nఒకటి</item>
+        <item>ఇరవై\nరెండు</item>
+        <item>ఇరవై\nమూడు</item>
+        <item>ఇరవై\nనాలుగు</item>
+        <item>ఇరవై\nఐదు</item>
+        <item>ఇరవై\nఆరు</item>
+        <item>ఇరవై\nఏడు</item>
+        <item>ఇరవై\nఎనిమిది</item>
+        <item>ఇరవై\nతొమ్మిది</item>
+        <item>ముప్పై</item>
+        <item>ముప్పై\nఒకటి</item>
+        <item>ముప్పై\nరెండు</item>
+        <item>ముప్పై\nమూడు</item>
+        <item>ముప్పై\nనాలుగు</item>
+        <item>ముప్పై\nఐదు</item>
+        <item>ముప్పై\nఆరు</item>
+        <item>ముప్పై\nఏడు</item>
+        <item>ముప్ఫై\nఎనిమిది</item>
+        <item>ముప్పై\nతొమ్మిది</item>
+        <item>నలభై</item>
+        <item>నలభై\nఒకటి</item>
+        <item>నలభై\nరెండు</item>
+        <item>నలభై\nమూడు</item>
+        <item>నలభై\nనాలుగు</item>
+        <item>నలభై\nఐదు</item>
+        <item>నలభై\nఆరు</item>
+        <item>నలభై\nఏడు</item>
+        <item>నలభై\nఎనిమిది</item>
+        <item>నలభై\nతొమ్మిది</item>
+        <item>యాభై</item>
+        <item>యాభై\nఒకటి</item>
+        <item>యాభై\nరెండు</item>
+        <item>యాభై\nమూడు</item>
+        <item>యాభై\nనాలుగు</item>
+        <item>యాభై\nఐదు</item>
+        <item>యాభై\nఆరు</item>
+        <item>యాభై\nఏడు</item>
+        <item>యాభై\nఎనిమిది</item>
+        <item>యాభై\nతొమ్మిది</item>
+    </string-array>
+</resources>

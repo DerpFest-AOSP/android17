@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Tizenkettő</item>
+        <item>Egy</item>
+        <item>Kettő</item>
+        <item>Három</item>
+        <item>Négy</item>
+        <item>Öt</item>
+        <item>Hat</item>
+        <item>Hét</item>
+        <item>Nyolc</item>
+        <item>Kilenc</item>
+        <item>Tíz</item>
+        <item>Tizenegy</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>óra</item>
+        <item>Egy</item>
+        <item>Kettő</item>
+        <item>Három</item>
+        <item>Négy</item>
+        <item>Öt</item>
+        <item>Hat</item>
+        <item>Hét</item>
+        <item>Nyolc</item>
+        <item>Kilenc</item>
+        <item>Tíz</item>
+        <item>Tizenegy</item>
+        <item>Tizenkettő</item>
+        <item>Tizenhárom</item>
+        <item>Tizennégy</item>
+        <item>Tizenöt</item>
+        <item>Tizenhat</item>
+        <item>Tizenhét</item>
+        <item>Tizennyolc</item>
+        <item>Tizenkilenc</item>
+        <item>Húsz</item>
+        <item>Huszon\negy</item>
+        <item>Huszon\nkettő</item>
+        <item>Huszon\nhárom</item>
+        <item>Huszon\nnégy</item>
+        <item>Huszon\nöt</item>
+        <item>Huszon\nhat</item>
+        <item>Huszon\nhét</item>
+        <item>Huszon\nnyolc</item>
+        <item>Huszon\nkilenc</item>
+        <item>Harminc</item>
+        <item>Harminc\negy</item>
+        <item>Harminc\nkettő</item>
+        <item>Harminc\nhárom</item>
+        <item>Harminc\nnégy</item>
+        <item>Harminc\nöt</item>
+        <item>Harminc\nhat</item>
+        <item>Harminc\nhét</item>
+        <item>Harminc\nnyolc</item>
+        <item>Harminc\nkilenc</item>
+        <item>Negyven</item>
+        <item>Negyven\negy</item>
+        <item>Negyven\nkettő</item>
+        <item>Negyven\nhárom</item>
+        <item>Negyven\nnégy</item>
+        <item>Negyven\nöt</item>
+        <item>Negyven\nhat</item>
+        <item>Negyven\nhét</item>
+        <item>Negyven\nnyolc</item>
+        <item>Negyven\nkilenc</item>
+        <item>Ötven</item>
+        <item>Ötven\negy</item>
+        <item>Ötven\nkettő</item>
+        <item>Ötven\nhárom</item>
+        <item>Ötven\nnégy</item>
+        <item>Ötven\nöt</item>
+        <item>Ötven\nhat</item>
+        <item>Ötven\nhét</item>
+        <item>Ötven\nnyolc</item>
+        <item>Ötven\nkilenc</item>
+    </string-array>
+</resources>

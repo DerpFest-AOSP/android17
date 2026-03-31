@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Divpadsmit</item>
+        <item>Viens</item>
+        <item>Divi</item>
+        <item>Trīs</item>
+        <item>Četri</item>
+        <item>Pieci</item>
+        <item>Seši</item>
+        <item>Septiņi</item>
+        <item>Astoņi</item>
+        <item>Deviņi</item>
+        <item>Desmit</item>
+        <item>Vienpadsmit</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Nulle, nulle</item>
+        <item>Viena</item>
+        <item>Divas</item>
+        <item>Trīs</item>
+        <item>Četras</item>
+        <item>Piecas</item>
+        <item>Sešas</item>
+        <item>Septiņas</item>
+        <item>Astoņas</item>
+        <item>Deviņas</item>
+        <item>Desmit</item>
+        <item>Vienpadsmit</item>
+        <item>Divpadsmit</item>
+        <item>Trīspadsmit</item>
+        <item>Četrpadsmit</item>
+        <item>Piecpadsmit</item>
+        <item>Sešdpadsmit</item>
+        <item>Septiņpadsmit</item>
+        <item>Astoņpadsmit</item>
+        <item>Deviņpadsmit</item>
+        <item>Divdesmit</item>
+        <item>Divdesmit\nviena</item>
+        <item>Divdesmit\ndivas</item>
+        <item>Divdesmit\ntrīs</item>
+        <item>Divdesmit\nčetras</item>
+        <item>Divdesmit\npiecas</item>
+        <item>Divdesmit\nsešas</item>
+        <item>Divdesmit\nseptiņas</item>
+        <item>Divdesmit\nastoņas</item>
+        <item>Divdesmit\ndeviņas</item>
+        <item>Trīsdesmit</item>
+        <item>Trīsdesmit\nviena</item>
+        <item>Trīsdesmit\ndivas</item>
+        <item>Trīsdesmit\ntrīs</item>
+        <item>Trīsdesmit\nčetras</item>
+        <item>Trīsdesmit\npiecas</item>
+        <item>Trīsdesmit\nsešas</item>
+        <item>Trīsdesmit\nseptiņas</item>
+        <item>Trīsdesmit\nastoņas</item>
+        <item>Trīsdesmit\ndeviņas</item>
+        <item>Četrdesmit</item>
+        <item>Četrdesmit\nviena</item>
+        <item>Četrdesmit\ndivas</item>
+        <item>Četrdesmit\ntrīs</item>
+        <item>Četrdesmit\nčetras</item>
+        <item>Četrdesmit\npiecas</item>
+        <item>Četrdesmit\nsešas</item>
+        <item>Četrdesmit\nseptiņas</item>
+        <item>Četrdesmit\nastoņas</item>
+        <item>Četrdesmit\ndeviņas</item>
+        <item>Piecdesmit</item>
+        <item>Piecdesmit\nviena</item>
+        <item>Piecdesmit\ndivas</item>
+        <item>Piecdesmit\ntrīs</item>
+        <item>Piecdesmit\nčetras</item>
+        <item>Piecdesmit\npiecas</item>
+        <item>Piecdesmit\nsešas</item>
+        <item>Piecdesmit\nseptiņas</item>
+        <item>Piecdesmit\nastoņas</item>
+        <item>Piecdesmit\ndeviņas</item>
+    </string-array>
+</resources>

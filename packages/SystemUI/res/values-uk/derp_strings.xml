@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>дванадцята</item>
+        <item>перша</item>
+        <item>друга</item>
+        <item>третя</item>
+        <item>четверта</item>
+        <item>п’ята</item>
+        <item>шоста</item>
+        <item>сьома</item>
+        <item>восьма</item>
+        <item>дев’ята</item>
+        <item>десята</item>
+        <item>одинадцята</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item></item>
+        <item>одна</item>
+        <item>дві</item>
+        <item>три</item>
+        <item>чотири</item>
+        <item>п’ять</item>
+        <item>шість</item>
+        <item>сім</item>
+        <item>вісім</item>
+        <item>дев’ять</item>
+        <item>десять</item>
+        <item>одинадцять</item>
+        <item>дванадцять</item>
+        <item>тринадцять</item>
+        <item>чотирнадцять</item>
+        <item>п’ятнадцять</item>
+        <item>шістнадцять</item>
+        <item>сімнадцять</item>
+        <item>вісімнадцять</item>
+        <item>дев’ятнадцять</item>
+        <item>двадцять</item>
+        <item>двадцять\nодна</item>
+        <item>двадцять\nдві</item>
+        <item>двадцять\nтри</item>
+        <item>двадцять\nчотири</item>
+        <item>двадцять\nп’ять</item>
+        <item>двадцять\nшість</item>
+        <item>двадцять\nсім</item>
+        <item>двадцять\nвісім</item>
+        <item>двадцять\nдев’ять</item>
+        <item>тридцять</item>
+        <item>тридцять\nодна</item>
+        <item>тридцять\nдві</item>
+        <item>тридцять\nтри</item>
+        <item>тридцять\nчотири</item>
+        <item>тридцять\nп’ять</item>
+        <item>тридцять\nшість</item>
+        <item>тридцять\nсім</item>
+        <item>тридцять\nвісім</item>
+        <item>тридцять\nдев’ять</item>
+        <item>сорок</item>
+        <item>сорок\nодна</item>
+        <item>сорок\nдві</item>
+        <item>сорок\nтри</item>
+        <item>сорок\nчотири</item>
+        <item>сорок\nп’ять</item>
+        <item>сорок\nшість</item>
+        <item>сорок\nсім</item>
+        <item>сорок\nвісім</item>
+        <item>сорок\nдев’ять</item>
+        <item>п’ятдесят</item>
+        <item>п’ятдесят\nодна</item>
+        <item>п’ятдесят\nдві</item>
+        <item>п’ятдесят\nтри</item>
+        <item>п’ятдесят\nчотири</item>
+        <item>п’ятдесят\nп’ять</item>
+        <item>п’ятдесят\nшість</item>
+        <item>п’ятдесят\nсім</item>
+        <item>п’ятдесят\nвісім</item>
+        <item>п’ятдесят\nдев’ять</item>
+    </string-array>
+</resources>

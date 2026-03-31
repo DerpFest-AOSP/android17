@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>ਬਾਰਾਂ</item>
+        <item>ਇੱਕ</item>
+        <item>ਦੋ</item>
+        <item>ਤਿੰਨ</item>
+        <item>ਚਾਰ</item>
+        <item>ਪੰਜ</item>
+        <item>ਛੇ</item>
+        <item>ਸੱਤ</item>
+        <item>ਅੱਠ</item>
+        <item>ਨੌ</item>
+        <item>ਦਸ</item>
+        <item>ਗਿਆਰਾਂ</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>ਵਜੇ</item>
+        <item>ਇੱਕ</item>
+        <item>ਦੋ</item>
+        <item>ਤਿੰਨ</item>
+        <item>ਚਾਰ</item>
+        <item>ਪੰਜ</item>
+        <item>ਛੇ</item>
+        <item>ਸੱਤ</item>
+        <item>ਅੱਠ</item>
+        <item>ਨੌ</item>
+        <item>ਦਸ</item>
+        <item>ਗਿਆਰਾਂ</item>
+        <item>ਬਾਰਾਂ</item>
+        <item>ਤੇਰਾਂ</item>
+        <item>ਚੌਦਾਂ</item>
+        <item>ਪੰਦਰਾਂ</item>
+        <item>ਸੋਲਾਂ</item>
+        <item>ਸਤਾਰਾਂ</item>
+        <item>ਅਠਾਰਾਂ</item>
+        <item>ਉੱਨੀ</item>
+        <item>ਵੀਹ</item>
+        <item>ਵੀਹ\nਇੱਕ</item>
+        <item>ਵੀਹ\nਦੋ</item>
+        <item>ਵੀਹ\nਤਿੰਨ</item>
+        <item>ਵੀਹ\nਚਾਰ</item>
+        <item>ਵੀਹ\nਪੰਜ</item>
+        <item>ਵੀਹ\nਛੇ</item>
+        <item>ਵੀਹ\nਸੱਤ</item>
+        <item>ਵੀਹ\nਅੱਠ</item>
+        <item>ਵੀਹ\nਨੌ</item>
+        <item>ਤੀਹ</item>
+        <item>ਤੀਹ\nਇੱਕ</item>
+        <item>ਤੀਹ\nਦੋ</item>
+        <item>ਤੀਹ\nਤਿੰਨ</item>
+        <item>ਤੀਹ\nਚਾਰ</item>
+        <item>ਤੀਹ\nਪੰਜ</item>
+        <item>ਤੀਹ\nਛੇ</item>
+        <item>ਤੀਹ\nਸੱਤ</item>
+        <item>ਤੀਹ\nਅੱਠ</item>
+        <item>ਤੀਹ\nਨੌ</item>
+        <item>ਚਾਲੀ</item>
+        <item>ਚਾਲੀ\nਇੱਕ</item>
+        <item>ਚਾਲੀ\nਦੋ</item>
+        <item>ਚਾਲੀ\nਤਿੰਨ</item>
+        <item>ਚਾਲੀ\nਚਾਰ</item>
+        <item>ਚਾਲੀ\nਪੰਜ</item>
+        <item>ਚਾਲੀ\nਛੇ</item>
+        <item>ਚਾਲੀ\nਸੱਤ</item>
+        <item>ਚਾਲੀ\nਅੱਠ</item>
+        <item>ਚਾਲੀ\nਨੌ</item>
+        <item>ਪੰਜਾਹ</item>
+        <item>ਪੰਜਾਹ\nਇੱਕ</item>
+        <item>ਪੰਜਾਹ\nਦੋ</item>
+        <item>ਪੰਜਾਹ\nਤਿੰਨ</item>
+        <item>ਪੰਜਾਹ\nਚਾਰ</item>
+        <item>ਪੰਜਾਹ\nਪੰਜ</item>
+        <item>ਪੰਜਾਹ\nਛੇ</item>
+        <item>ਪੰਜਾਹ\nਸੱਤ</item>
+        <item>ਪੰਜਾਹ\nਅੱਠ</item>
+        <item>ਪੰਜਾਹ\nਨੌ</item>
+    </string-array>
+</resources>

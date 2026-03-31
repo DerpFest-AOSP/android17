@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Dua Belas</item>
+        <item>Satu</item>
+        <item>Dua</item>
+        <item>Tiga</item>
+        <item>Empat</item>
+        <item>Lima</item>
+        <item>Enam</item>
+        <item>Tujuh</item>
+        <item>Delapan</item>
+        <item>Sembilan</item>
+        <item>Sepuluh</item>
+        <item>Sebelas</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Tepat</item>
+        <item>Satu</item>
+        <item>Dua</item>
+        <item>Tiga</item>
+        <item>Empat</item>
+        <item>Lima</item>
+        <item>Enam</item>
+        <item>Tujuh</item>
+        <item>Delapan</item>
+        <item>Sembilan</item>
+        <item>Sepuluh</item>
+        <item>Sebelas</item>
+        <item>Dua Belas</item>
+        <item>Tiga Belas</item>
+        <item>Empat Belas</item>
+        <item>Lima Belas</item>
+        <item>Enam Belas</item>
+        <item>Tujuh Belas</item>
+        <item>Delapan Belas</item>
+        <item>Sembilan Belas</item>
+        <item>Dua Puluh</item>
+        <item>Dua Puluh\nSatu</item>
+        <item>Dua Puluh\nDua</item>
+        <item>Dua Puluh\nTiga</item>
+        <item>Dua Puluh\nEmpat</item>
+        <item>Dua Puluh\nLima</item>
+        <item>Dua Puluh\nEnam</item>
+        <item>Dua Puluh\nTujuh</item>
+        <item>Dua Puluh\nDelapan</item>
+        <item>Dua Puluh\nSembilan</item>
+        <item>Tiga Puluh</item>
+        <item>Tiga Puluh\nSatu</item>
+        <item>Tiga Puluh\nDua</item>
+        <item>Tiga Puluh\nTiga</item>
+        <item>Tiga Puluh\nEmpat</item>
+        <item>Tiga Puluh\nLima</item>
+        <item>Tiga Puluh\nEnam</item>
+        <item>Tiga Puluh\nTujuh</item>
+        <item>Tiga Puluh\nDelapan</item>
+        <item>Tiga Puluh\nSembilan</item>
+        <item>Empat Puluh</item>
+        <item>Empat Puluh\nSatu</item>
+        <item>Empat Puluh\nDua</item>
+        <item>Empat Puluh\nTiga</item>
+        <item>Empat Puluh\nEmpat</item>
+        <item>Empat Puluh\nLima</item>
+        <item>Empat Puluh\nEnam</item>
+        <item>Empat Puluh\nTujuh</item>
+        <item>Empat Puluh\nDelapan</item>
+        <item>Empat Puluh\nSembilan</item>
+        <item>Lima Puluh</item>
+        <item>Lima Puluh\nSatu</item>
+        <item>Lima Puluh\nDua</item>
+        <item>Lima Puluh\nTiga</item>
+        <item>Lima Puluh\nEmpat</item>
+        <item>Lima Puluh\nLima</item>
+        <item>Lima Puluh\nEnam</item>
+        <item>Lima Puluh\nTujuh</item>
+        <item>Lima Puluh\nDelapan</item>
+        <item>Lima Puluh\nSembilan</item>
+    </string-array>
+</resources>

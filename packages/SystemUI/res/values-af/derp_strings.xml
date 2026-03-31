@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Twaalf</item>
+        <item>Een</item>
+        <item>Twee</item>
+        <item>Drie</item>
+        <item>Vier</item>
+        <item>Vyf</item>
+        <item>Ses</item>
+        <item>Sewe</item>
+        <item>Agt</item>
+        <item>Nege</item>
+        <item>Tien</item>
+        <item>Elf</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>uur</item>
+        <item>Een</item>
+        <item>Twee</item>
+        <item>Drie</item>
+        <item>Vier</item>
+        <item>Vyf</item>
+        <item>Ses</item>
+        <item>Sewe</item>
+        <item>Agt</item>
+        <item>Nege</item>
+        <item>Tien</item>
+        <item>Elf</item>
+        <item>Twaalf</item>
+        <item>Dertien</item>
+        <item>Veertien</item>
+        <item>Vyftien</item>
+        <item>Sestien</item>
+        <item>Sewentien</item>
+        <item>Agtien</item>
+        <item>Negentien</item>
+        <item>Twintig</item>
+        <item>Een en\ntwintig</item>
+        <item>Twee en\ntwintig</item>
+        <item>Drie en\ntwintig</item>
+        <item>Vier en\ntwintig</item>
+        <item>Vyf en\ntwintig</item>
+        <item>Ses en\ntwintig</item>
+        <item>Sewe en\ntwintig</item>
+        <item>Agt en\ntwintig</item>
+        <item>Nege en\ntwintig</item>
+        <item>Dertig</item>
+        <item>Een en\ndertig</item>
+        <item>Twee en\ndertig</item>
+        <item>Drie en\ndertig</item>
+        <item>Vier en\ndertig</item>
+        <item>Vyf en\ndertig</item>
+        <item>Ses en\ndertig</item>
+        <item>Sewe en\ndertig</item>
+        <item>Agt en\ndertig</item>
+        <item>Nege en\ndertig</item>
+        <item>Veertig</item>
+        <item>Een en\nveertig</item>
+        <item>Twee en\nveertig</item>
+        <item>Drie en\nveertig</item>
+        <item>Vier en\nveertig</item>
+        <item>Vyf en\nveertig</item>
+        <item>Ses en\nveertig</item>
+        <item>Sewe en\nveertig</item>
+        <item>Agt en\nveertig</item>
+        <item>Nege en\nveertig</item>
+        <item>Vyftig</item>
+        <item>Een en\nvyftig</item>
+        <item>Twee en\nvyftig</item>
+        <item>Drie en\nvyftig</item>
+        <item>Vier en\nvyftig</item>
+        <item>Vyf en\nvyftig</item>
+        <item>Ses en\nvyftig</item>
+        <item>Sewe en\nvyftig</item>
+        <item>Agt en\nvyftig</item>
+        <item>Nege en\nvyftig</item>
+    </string-array>
+</resources>

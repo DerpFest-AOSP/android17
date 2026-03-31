@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Dvylika</item>
+        <item>Pirma</item>
+        <item>Dvi</item>
+        <item>Trys</item>
+        <item>Keturios</item>
+        <item>Penkios</item>
+        <item>Šešios</item>
+        <item>Septyn.</item>
+        <item>Aštuon.</item>
+        <item>Devynios</item>
+        <item>Dešimt</item>
+        <item>Vienuol.</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>val.</item>
+        <item>Pirma</item>
+        <item>Dvi</item>
+        <item>Trys</item>
+        <item>Keturios</item>
+        <item>Penkios</item>
+        <item>Šešios</item>
+        <item>Septynios</item>
+        <item>Aštuonios</item>
+        <item>Devynios</item>
+        <item>Dešimt</item>
+        <item>Vienuolika</item>
+        <item>Dvylika</item>
+        <item>Trylika</item>
+        <item>Keturiolika</item>
+        <item>Penkiolika</item>
+        <item>Šešiolika</item>
+        <item>Septyniolika</item>
+        <item>Aštuoniolika</item>
+        <item>Devyniolika</item>
+        <item>Dvidešimt</item>
+        <item>Dvidešimt\nviena</item>
+        <item>Dvidešimt\ndvi</item>
+        <item>Dvidešimt\ntrys</item>
+        <item>Dvidešimt\nketur.</item>
+        <item>Dvidešimt\npenkios</item>
+        <item>Dvidešimt\nšešios</item>
+        <item>Dvidešimt\nseptyn.</item>
+        <item>Dvidešimt\naštuon.</item>
+        <item>Dvidešimt\ndevyn.</item>
+        <item>Trisdešimt</item>
+        <item>Trisdešimt\nviena</item>
+        <item>Trisdešimt\ndvi</item>
+        <item>Trisdešimt\ntrys</item>
+        <item>Trisdešimt\nketur.</item>
+        <item>Trisdeš.\npenkios</item>
+        <item>Trisdešimt\nšešios</item>
+        <item>Trisdeš.\nseptyn.</item>
+        <item>Trisdeš.\naštuon.</item>
+        <item>Trisdešimt\ndevyn.</item>
+        <item>Keturiasdešimt</item>
+        <item>Keturiasd.\nviena</item>
+        <item>Keturiasdeš.\ndvi</item>
+        <item>Keturiasdeš.\ntrys</item>
+        <item>Keturiasd.\nketur.</item>
+        <item>Keturiasd.\npenk.</item>
+        <item>Keturiasd.\nšešios</item>
+        <item>Keturiasd.\nsept.</item>
+        <item>Keturiasdeš.\našt.</item>
+        <item>Keduriasd.\ndevyn.</item>
+        <item>Penkiasdešimt</item>
+        <item>Penkiasdeš.\nviena</item>
+        <item>Penkiasdešimt\ndvi</item>
+        <item>Penkiasdeš.\ntrys</item>
+        <item>Penkiasd.\nketur.</item>
+        <item>Penkiasdeš.\npenk.</item>
+        <item>Penkiasd.\nšešios</item>
+        <item>Penkiasd.\nseptyn.</item>
+        <item>Penkiasd.\naštuon.</item>
+        <item>Penkiasd.\ndevyn.</item>
+    </string-array>
+</resources>

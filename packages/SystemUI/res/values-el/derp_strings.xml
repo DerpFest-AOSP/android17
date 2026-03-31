@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>Δώδεκα</item>
+        <item>Μία</item>
+        <item>Δύο</item>
+        <item>Τρία</item>
+        <item>Τέσσερα</item>
+        <item>Πέντε</item>
+        <item>Έξι</item>
+        <item>Επτά</item>
+        <item>Οκτώ</item>
+        <item>Εννέα</item>
+        <item>Δέκα</item>
+        <item>Έντεκα</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>Ακριβώς</item>
+        <item>Ένα</item>
+        <item>Δύο</item>
+        <item>Τρεις</item>
+        <item>Τέσσερα</item>
+        <item>Πέντε</item>
+        <item>Έξι</item>
+        <item>Επτά</item>
+        <item>Οκτώ</item>
+        <item>Εννέα</item>
+        <item>Δέκα</item>
+        <item>Έντεκα</item>
+        <item>Δώδεκα</item>
+        <item>Δεκατρία</item>
+        <item>Δεκατέσσερα</item>
+        <item>Δεκαπέντε</item>
+        <item>Δεκαέξι</item>
+        <item>Δεκαεπτά</item>
+        <item>Δεκαοκτώ</item>
+        <item>Δεκαεννέα</item>
+        <item>Είκοσι</item>
+        <item>Είκοσι\nένα</item>
+        <item>Είκοσι\nδύο</item>
+        <item>Είκοσι\nτρία</item>
+        <item>Είκοσι\nτέσσερα</item>
+        <item>Είκοσι\nπέντε</item>
+        <item>Είκοσι\nέξι</item>
+        <item>Είκοσι\nεπτά</item>
+        <item>Είκοσι\nοκτώ</item>
+        <item>Είκοσι\nεννέα</item>
+        <item>Τριάντα</item>
+        <item>Τριάντα\nένα</item>
+        <item>Τριάντα\nδύο</item>
+        <item>Τριάντα\nοκτώ</item>
+        <item>Τριάντα\nοκτώ</item>
+        <item>Τριάντα\nπέντε</item>
+        <item>Τριάντα\nέξι</item>
+        <item>Τριάντα\nεπτά</item>
+        <item>Τριάντα\nοκτώ</item>
+        <item>Τριάντα\nεννέα</item>
+        <item>Σαράντα</item>
+        <item>Σαράντα\nένα</item>
+        <item>Σαράντα\nδύο</item>
+        <item>Σαράντα\nτρία</item>
+        <item>Σαράντα\nτέσσερα</item>
+        <item>Σαράντα\nπέντε</item>
+        <item>Σαράντα\nέξι</item>
+        <item>Σαράντα\nεπτά</item>
+        <item>Σαράντα\nοκτώ</item>
+        <item>Σαράντα\nεννέα</item>
+        <item>Πενήντα</item>
+        <item>Πενήντα\nένα</item>
+        <item>Πενήντα\nδύο</item>
+        <item>Πενήντα\nτρία</item>
+        <item>Πενήντα\nτέσσερα</item>
+        <item>Πενήντα\nπέντε</item>
+        <item>Πενήντα\nέξι</item>
+        <item>Πενήντα\nεπτά</item>
+        <item>Πενήντα\nοκτώ</item>
+        <item>Πενήντα\nεννέα</item>
+    </string-array>
+</resources>

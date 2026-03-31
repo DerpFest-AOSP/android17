@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
+         Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
+    <string-array name="word_clock_hours">
+        <item>ဆယ့်နှစ်</item>
+        <item>တစ်</item>
+        <item>နှစ်</item>
+        <item>သုံး</item>
+        <item>လေး</item>
+        <item>ငါး</item>
+        <item>ခြောက်</item>
+        <item>ခုနစ်</item>
+        <item>ရှစ်</item>
+        <item>ကိုး</item>
+        <item>တစ်ဆယ်</item>
+        <item>ဆယ့်တစ်</item>
+    </string-array>
+    <string-array name="word_clock_minutes">
+        <item>နာရီ</item>
+        <item>တစ်</item>
+        <item>နှစ်</item>
+        <item>သုံး</item>
+        <item>လေး</item>
+        <item>ငါး</item>
+        <item>ခြောက်</item>
+        <item>ခုနစ်</item>
+        <item>ရှစ်</item>
+        <item>ကိုး</item>
+        <item>တစ်ဆယ်</item>
+        <item>တစ်ဆယ့်တစ်</item>
+        <item>တစ်ဆယ့်နှစ်</item>
+        <item>တစ်ဆယ့်သုံး</item>
+        <item>တစ်ဆယ့်လေး</item>
+        <item>တစ်ဆယ့်ငါး</item>
+        <item>တစ်ဆယ့်ခြောက်</item>
+        <item>တစ်ဆယ့်ခုနစ်</item>
+        <item>တစ်ဆယ့်ရှစ်</item>
+        <item>တစ်ဆယ့်ကိုး</item>
+        <item>နှစ်ဆယ်</item>
+        <item>နှစ်ဆယ့်\nတစ်</item>
+        <item>နှစ်ဆယ့်\nနှစ်</item>
+        <item>နှစ်ဆယ့်\nသုံး</item>
+        <item>နှစ်ဆယ့်\nလေး</item>
+        <item>နှစ်ဆယ့်\nငါး</item>
+        <item>နှစ်ဆယ့်\nခြောက်</item>
+        <item>နှစ်ဆယ့်\nခုနစ်</item>
+        <item>နှစ်ဆယ့်\nရှစ်</item>
+        <item>နှစ်ဆယ့်\nကိုး</item>
+        <item>သုံးဆယ်</item>
+        <item>သုံးဆယ့်\nတစ်</item>
+        <item>သုံးဆယ့်\nနှစ်</item>
+        <item>သုံးဆယ့်\nသုံး</item>
+        <item>သုံးဆယ့်\nလေး</item>
+        <item>သုံးဆယ့်\nငါး</item>
+        <item>သုံးဆယ့်\nခြောက်</item>
+        <item>သုံးဆယ့်\nခုနစ်</item>
+        <item>သုံးဆယ့်\nရှစ်</item>
+        <item>သုံးဆယ့်\nကိုး</item>
+        <item>လေးဆယ်</item>
+        <item>လေးဆယ့်\nတစ်</item>
+        <item>လေးဆယ့်\nနှစ်</item>
+        <item>လေးဆယ့်\nသုံး</item>
+        <item>လေးဆယ့်\nလေး</item>
+        <item>လေးဆယ့်\nငါး</item>
+        <item>လေးဆယ့်\nခြောက်</item>
+        <item>လေးဆယ့်\nခုနစ်</item>
+        <item>လေးဆယ့်\nရှစ်</item>
+        <item>လေးဆယ့်\nကိုး</item>
+        <item>ငါးဆယ်</item>
+        <item>ငါးဆယ့်\nတစ်</item>
+        <item>ငါးဆယ့်\nနှစ်</item>
+        <item>ငါးဆယ့်\nသုံး</item>
+        <item>ငါးဆယ့်\nလေး</item>
+        <item>ငါးဆယ့်\nငါး</item>
+        <item>ငါးဆယ့်\nခြောက်</item>
+        <item>ငါးဆယ့်\nခုနစ်</item>
+        <item>ငါးဆယ့်\nရှစ်</item>
+        <item>ငါးဆယ့်\nကိုး</item>
+    </string-array>
+</resources>
