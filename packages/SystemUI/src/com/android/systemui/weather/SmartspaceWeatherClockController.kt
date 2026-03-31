@@ -144,6 +144,9 @@ class SmartspaceWeatherClockController(
         weatherTemp?.let { tv ->
             BcSmartspaceTemplateDataUtils.setText(tv, subItemInfo.text)
             tv.setCompoundDrawablesRelative(null, null, null, null)
+            // Init keeps GONE; template path must show the view (header path sets VISIBLE in applyHeaderAction).
+            tv.visibility =
+                if (SmartspaceUtils.isEmpty(subItemInfo.text)) View.GONE else View.VISIBLE
             if (subItemInfo.tapAction != null) {
                 BcSmartSpaceUtil.setOnClickListener(
                     tv,
