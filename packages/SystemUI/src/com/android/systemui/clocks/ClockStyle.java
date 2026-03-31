@@ -20,9 +20,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.ContentObserver;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.AttributeSet;
@@ -86,6 +88,12 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     public static final String CLOCK_CUSTOM_COLOR_KEY = Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_CUSTOM_COLOR;
     public static final String CLOCK_TEXT_OPACITY_KEY = Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_OPACITY;
     public static final String CLOCK_FRAME_MARGIN_TOP_KEY = Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_MARGIN_TOP;
+    /**
+     * Show embedded date/weather inside custom clock layouts (0/1). See {@link
+     * Settings.Secure#LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER}.
+     */
+    public static final String CLOCK_EMBEDDED_DATE_WEATHER_KEY =
+            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER;
 
     public static final String COLOR_MODE_DEFAULT = "default";
     public static final String COLOR_MODE_ACCENT = "accent";
@@ -120,6 +128,14 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
     private final Handler mBurnInProtectionHandler = new Handler();
     private int mCurrentShiftX = 0;
     private int mCurrentShiftY = 0;
+
+    private final ContentObserver mEmbeddedDateWeatherObserver =
+            new ContentObserver(new Handler(Looper.getMainLooper())) {
+                @Override
+                public void onChange(boolean selfChange) {
+                    applyEmbeddedDateWeatherVisibility(currentClockView);
+                }
+            };
 
     private final BroadcastReceiver mScreenReceiver = new BroadcastReceiver() {
         @Override
@@ -186,6 +202,12 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
         filter.addAction(Intent.ACTION_TIME_CHANGED);
         filter.addAction("com.android.systemui.doze.pulse");
         mContext.registerReceiver(mScreenReceiver, filter, Context.RECEIVER_EXPORTED);
+        mContext.getContentResolver()
+                .registerContentObserver(
+                        Settings.Secure.getUriFor(
+                                Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER),
+                        false,
+                        mEmbeddedDateWeatherObserver);
     }
 
     @Override
@@ -201,6 +223,7 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
         mTunerService.removeTunable(this);
         mBurnInProtectionHandler.removeCallbacks(mBurnInProtectionRunnable);
         mContext.unregisterReceiver(mScreenReceiver);
+        mContext.getContentResolver().unregisterContentObserver(mEmbeddedDateWeatherObserver);
     }
 
     private void startBurnInProtection() {
@@ -335,10 +358,47 @@ public class ClockStyle extends RelativeLayout implements TunerService.Tunable {
             
                 updateClockTextColor();
                 updateClockFrameMargin();
+                applyEmbeddedDateWeatherVisibility(currentClockView);
             }
         }
         onTimeChanged();
         setVisibility(mClockStyle != 0 ? View.VISIBLE : View.GONE);
+    }
+
+    /**
+     * Hides or shows date/weather views inside the inflated clock layout (not the separate
+     * Smartspace row). Default is show (1).
+     */
+    private void applyEmbeddedDateWeatherVisibility(View root) {
+        if (root == null) {
+            return;
+        }
+        final boolean show =
+                Settings.Secure.getIntForUser(
+                        mContext.getContentResolver(),
+                        Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER,
+                        1,
+                        UserHandle.USER_CURRENT)
+                        == 1;
+        View date = root.findViewById(R.id.date);
+        if (date != null) {
+            date.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+        if (!show) {
+            int[] weatherIds =
+                    new int[] {
+                        R.id.weather_image,
+                        R.id.weather_text,
+                        R.id.miui_weather_text,
+                        R.id.clockWeather,
+                    };
+            for (int id : weatherIds) {
+                View w = root.findViewById(id);
+                if (w != null) {
+                    w.setVisibility(View.GONE);
+                }
+            }
+        }
     }
 
     @Override

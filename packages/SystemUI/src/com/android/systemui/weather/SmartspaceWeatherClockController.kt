@@ -9,7 +9,11 @@ import android.app.smartspace.SmartspaceTarget
 import android.app.smartspace.SmartspaceUtils
 import android.app.smartspace.uitemplatedata.BaseTemplateData
 import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
 import android.os.Parcelable
+import android.provider.Settings
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -41,15 +45,40 @@ class SmartspaceWeatherClockController(
     private val shadowIconDrawable: DoubleShadowIconDrawable =
         DoubleShadowIconDrawable(iconSize, iconInset, context)
 
+    private val embeddedSettingObserver: ContentObserver =
+        object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                if (!isEmbeddedDateWeatherEnabled()) {
+                    clearViews()
+                }
+            }
+        }
+
     fun init() {
+        context.contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(
+                Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER
+            ),
+            false,
+            embeddedSettingObserver,
+        )
         dataProvider = WeatherSmartspacePluginAccessor.getPlugin()
         dataProvider?.registerListener(this)
     }
 
     fun removeObserver() {
+        context.contentResolver.unregisterContentObserver(embeddedSettingObserver)
         dataProvider?.unregisterListener(this)
         dataProvider = null
         clearViews()
+    }
+
+    private fun isEmbeddedDateWeatherEnabled(): Boolean {
+        return Settings.Secure.getInt(
+            context.contentResolver,
+            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER,
+            1,
+        ) == 1
     }
 
     private fun clearViews() {
@@ -67,6 +96,10 @@ class SmartspaceWeatherClockController(
     }
 
     override fun onSmartspaceTargetsUpdated(targets: List<out Parcelable>?) {
+        if (!isEmbeddedDateWeatherEnabled()) {
+            clearViews()
+            return
+        }
         val smartspaceTargets = targets.orEmpty().mapNotNull { it as? SmartspaceTarget }
         if (smartspaceTargets.size > 1) {
             return

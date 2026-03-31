@@ -14454,6 +14454,15 @@ public final class Settings {
         public static final String LOCK_SCREEN_CUSTOM_CLOCK_MARGIN_TOP = "lock_screen_custom_clock_margin_top";
 
         /**
+         * When a custom {@link #LOCK_SCREEN_CUSTOM_CLOCK_STYLE} is active: show date and weather
+         * views embedded in the clock layout (e.g. {@code @+id/date}, weather widgets). 0 = hide,
+         * 1 = show (default).
+         * @hide
+         */
+        public static final String LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER =
+                "lock_screen_custom_clock_show_embedded_date_weather";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *
