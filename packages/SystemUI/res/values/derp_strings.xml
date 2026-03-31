@@ -202,8 +202,8 @@
     <!-- Word clock (ClockStyle keyguard_clock_word): typographic header. [CHAR LIMIT=16] -->
     <string name="word_clock_header">It\u2019s</string>
 
-    <!-- Word clock: hour in words (12-hour), index = Calendar.HOUR (0 = twelve). [CHAR LIMIT=16] -->
-    <string-array name="word_clock_hours">
+    <!-- Word clock: 12-hour face, index = Calendar.HOUR (0 = twelve o’clock). [CHAR LIMIT=16] -->
+    <string-array name="word_clock_hours_12">
         <item>Twelve</item>
         <item>One</item>
         <item>Two</item>
@@ -216,6 +216,34 @@
         <item>Nine</item>
         <item>Ten</item>
         <item>Eleven</item>
+    </string-array>
+
+    <!-- Word clock: 24-hour face, index = Calendar.HOUR_OF_DAY (0 = midnight). [CHAR LIMIT=20] -->
+    <string-array name="word_clock_hours_24">
+        <item>Zero</item>
+        <item>One</item>
+        <item>Two</item>
+        <item>Three</item>
+        <item>Four</item>
+        <item>Five</item>
+        <item>Six</item>
+        <item>Seven</item>
+        <item>Eight</item>
+        <item>Nine</item>
+        <item>Ten</item>
+        <item>Eleven</item>
+        <item>Twelve</item>
+        <item>Thirteen</item>
+        <item>Fourteen</item>
+        <item>Fifteen</item>
+        <item>Sixteen</item>
+        <item>Seventeen</item>
+        <item>Eighteen</item>
+        <item>Nineteen</item>
+        <item>Twenty</item>
+        <item>Twenty\nOne</item>
+        <item>Twenty\nTwo</item>
+        <item>Twenty\nThree</item>
     </string-array>
 
     <!-- Word clock: minutes in words, index = minute 0–59. [CHAR LIMIT=24] -->

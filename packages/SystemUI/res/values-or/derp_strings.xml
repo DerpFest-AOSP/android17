@@ -7,7 +7,7 @@
 
     <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
          Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
-    <string-array name="word_clock_hours">
+    <string-array name="word_clock_hours_12">
         <item>ବାର</item>
         <item>ଏକ</item>
         <item>ଦୁଇ</item>

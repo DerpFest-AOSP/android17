@@ -7,7 +7,7 @@
 
     <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
          Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
-    <string-array name="word_clock_hours">
+    <string-array name="word_clock_hours_12">
         <item>十二</item>
         <item>一</item>
         <item>二</item>
@@ -20,6 +20,32 @@
         <item>九</item>
         <item>十</item>
         <item>十一</item>
+    </string-array>
+    <string-array name="word_clock_hours_24">
+        <item>零</item>
+        <item>一</item>
+        <item>二</item>
+        <item>三</item>
+        <item>四</item>
+        <item>五</item>
+        <item>六</item>
+        <item>七</item>
+        <item>八</item>
+        <item>九</item>
+        <item>十</item>
+        <item>十一</item>
+        <item>十二</item>
+        <item>十三</item>
+        <item>十四</item>
+        <item>十五</item>
+        <item>十六</item>
+        <item>十七</item>
+        <item>十八</item>
+        <item>十九</item>
+        <item>二十</item>
+        <item>二十\n一</item>
+        <item>二十\n二</item>
+        <item>二十\n三</item>
     </string-array>
     <string-array name="word_clock_minutes">
         <item>点整</item>

@@ -28,18 +28,28 @@ import java.util.Calendar;
 
 /**
  * Typographic word clock strings for {@link R.layout#keyguard_clock_word}, following the same
- * hour/minute phrasing and indexing as legacy AOSP {@code TypographicClock} (Bug 122301289):
- * {@link Calendar#HOUR} (0–11) maps to {@link R.array#word_clock_hours}; minutes use
- * {@link R.array#word_clock_minutes} (O\u2019Clock, O\u2019One, …).
+ * hour/minute phrasing as legacy AOSP {@code TypographicClock} (Bug 122301289). Minutes use
+ * {@link R.array#word_clock_minutes}. Hours depend on system 12/24h setting:
+ * <ul>
+ *   <li>12-hour: {@link Calendar#HOUR} (0–11) maps to {@link R.array#word_clock_hours_12}</li>
+ *   <li>24-hour: {@link Calendar#HOUR_OF_DAY} (0–23) maps to {@link R.array#word_clock_hours_24}</li>
+ * </ul>
  */
 public final class WordClockFormatter {
 
     private WordClockFormatter() {}
 
-    /** Hour line: Twelve / One / … / Eleven from {@link R.array#word_clock_hours}. */
+    /** Hour line from {@link R.array#word_clock_hours_12} or {@link R.array#word_clock_hours_24}. */
     public static String typographicHourText(Context context, Calendar cal) {
-        String[] hours = context.getResources().getStringArray(R.array.word_clock_hours);
-        int idx = cal.get(Calendar.HOUR) % 12;
+        boolean is24 = DateFormat.is24HourFormat(context);
+        String[] hours =
+                context.getResources()
+                        .getStringArray(
+                                is24 ? R.array.word_clock_hours_24 : R.array.word_clock_hours_12);
+        int idx =
+                is24
+                        ? cal.get(Calendar.HOUR_OF_DAY)
+                        : cal.get(Calendar.HOUR);
         if (idx < 0 || idx >= hours.length) {
             return "";
         }

@@ -8,7 +8,7 @@
     <!-- Word clock (ClockStyle keyguard_clock_word): typographic strings.
          Imported from Pie res-keyguard type_clock_*; spot-check known issues. -->
     <string name="word_clock_header">Bây giờ là</string>
-    <string-array name="word_clock_hours">
+    <string-array name="word_clock_hours_12">
         <item>Mười hai</item>
         <item>Một</item>
         <item>Hai</item>

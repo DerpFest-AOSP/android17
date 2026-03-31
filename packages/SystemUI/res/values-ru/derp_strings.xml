@@ -154,7 +154,7 @@
 
     <!-- Word clock (ClockStyle): typographic header -->
     <string name="word_clock_header">Сейчас</string>
-    <string-array name="word_clock_hours">
+    <string-array name="word_clock_hours_12">
         <item>Двенадцать</item>
         <item>Один</item>
         <item>Два</item>
@@ -167,6 +167,32 @@
         <item>Девять</item>
         <item>Десять</item>
         <item>Одиннадцать</item>
+    </string-array>
+    <string-array name="word_clock_hours_24">
+        <item>Ноль</item>
+        <item>Один</item>
+        <item>Два</item>
+        <item>Три</item>
+        <item>Четыре</item>
+        <item>Пять</item>
+        <item>Шесть</item>
+        <item>Семь</item>
+        <item>Восемь</item>
+        <item>Девять</item>
+        <item>Десять</item>
+        <item>Одиннадцать</item>
+        <item>Двенадцать</item>
+        <item>Тринадцать</item>
+        <item>Четырнадцать</item>
+        <item>Пятнадцать</item>
+        <item>Шестнадцать</item>
+        <item>Семнадцать</item>
+        <item>Восемнадцать</item>
+        <item>Девятнадцать</item>
+        <item>Двадцать</item>
+        <item>Двадцать\nодин</item>
+        <item>Двадцать\nдва</item>
+        <item>Двадцать\nтри</item>
     </string-array>
     <string-array name="word_clock_minutes">
         <item>Ровно</item>

@@ -111,7 +111,7 @@ def word_clock_body_lines(header: str | None, hours: list[str], minutes: list[st
         lines.append(
             '    <string name="word_clock_header">' + escape_item_for_xml(header) + "</string>"
         )
-    lines.append('    <string-array name="word_clock_hours">')
+    lines.append('    <string-array name="word_clock_hours_12">')
     for h in hours:
         lines.append("        <item>" + escape_item_for_xml(h) + "</item>")
     lines.append("    </string-array>")
@@ -197,7 +197,7 @@ def main() -> int:
         out_path = out_root / d.name / "derp_strings.xml"
         if out_path.exists():
             txt = out_path.read_text(encoding="utf-8")
-            if "word_clock_hours" in txt:
+            if "word_clock_hours_12" in txt:
                 print("skip existing word_clock", d.name)
                 continue
             merge_into_existing(out_path, header, hours, minutes)

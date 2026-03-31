@@ -124,7 +124,7 @@
     <!-- Word clock (ClockStyle): typographic header -->
     <string name="word_clock_header">Es ist</string>
     <!-- Hour line includes “Uhr” (e.g. Zwölf Uhr Neunzehn). :00 uses empty minute line below. -->
-    <string-array name="word_clock_hours">
+    <string-array name="word_clock_hours_12">
         <item>Zwölf Uhr</item>
         <item>Ein Uhr</item>
         <item>Zwei Uhr</item>
@@ -137,6 +137,33 @@
         <item>Neun Uhr</item>
         <item>Zehn Uhr</item>
         <item>Elf Uhr</item>
+    </string-array>
+    <!-- 24-hour: same “… Uhr” pattern as 12h; minute line unchanged. -->
+    <string-array name="word_clock_hours_24">
+        <item>Null Uhr</item>
+        <item>Ein Uhr</item>
+        <item>Zwei Uhr</item>
+        <item>Drei Uhr</item>
+        <item>Vier Uhr</item>
+        <item>Fünf Uhr</item>
+        <item>Sechs Uhr</item>
+        <item>Sieben Uhr</item>
+        <item>Acht Uhr</item>
+        <item>Neun Uhr</item>
+        <item>Zehn Uhr</item>
+        <item>Elf Uhr</item>
+        <item>Zwölf Uhr</item>
+        <item>Dreizehn Uhr</item>
+        <item>Vierzehn Uhr</item>
+        <item>Fünfzehn Uhr</item>
+        <item>Sechzehn Uhr</item>
+        <item>Siebzehn Uhr</item>
+        <item>Achtzehn Uhr</item>
+        <item>Neunzehn Uhr</item>
+        <item>Zwanzig Uhr</item>
+        <item>Einund\nzwanzig Uhr</item>
+        <item>Zweiund\nzwanzig Uhr</item>
+        <item>Dreiund\nzwanzig Uhr</item>
     </string-array>
     <string-array name="word_clock_minutes">
         <item></item>
