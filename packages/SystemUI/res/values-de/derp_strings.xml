@@ -125,7 +125,8 @@
     <string name="word_clock_header">Es ist</string>
     <string-array name="word_clock_hours">
         <item>Zwölf</item>
-        <item>Eins</item>
+        <!-- “Ein Uhr” at :00 (hour + minute line “Uhr”), not “Eins” -->
+        <item>Ein</item>
         <item>Zwei</item>
         <item>Drei</item>
         <item>Vier</item>
