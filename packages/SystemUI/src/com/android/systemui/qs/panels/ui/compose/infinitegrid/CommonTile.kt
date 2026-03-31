@@ -441,6 +441,8 @@ object TileBounceMotionTestKeys {
  * (including when QS tile gradient is enabled).
  * When [Settings.System.QS_PANEL_BG_USE_NEW_TINT] is enabled ([rememberQsUseNewTint]), the label
  * uses primary (accent); inactive tiles use primary at reduced alpha; unavailable keeps [TileColors].
+ * When new tint is off, labels use onSurface so active tiles match inactive (labels sit on the
+ * panel surface, not on the accent icon fill).
  */
 @Composable
 fun ClassicCircleTileContent(
@@ -479,12 +481,17 @@ fun ClassicCircleTileContent(
         val primary = MaterialTheme.colorScheme.primary
         val iconTintTarget =
             if (useAccentNoFillActive) primary else colors.icon
-        // Match icon unless QS_PANEL_BG_USE_NEW_TINT: then label is accent-tinted (primary).
+        // Label sits on the panel surface (not on the icon fill). When new tint is off, active
+        // tiles used colors.icon (= onPrimary), which is for text on accent and is unreadable on
+        // surface—match inactive tiles (onSurface). When new tint is on, accent-tint labels.
+        val onSurface = MaterialTheme.colorScheme.onSurface
         val labelTintTarget =
             when {
-                useAccentNoFillActive -> primary
+                useAccentNoFillActive && useNewTint -> primary
+                useAccentNoFillActive && !useNewTint -> onSurface
                 useNewTint && tileState == STATE_ACTIVE -> primary
                 useNewTint && tileState == STATE_INACTIVE -> primary.copy(alpha = 0.58f)
+                tileState == STATE_ACTIVE && !useNewTint -> onSurface
                 else -> colors.icon
             }
         val iconTint by animateColorAsState(iconTintTarget, label = "ClassicTileIconTint")
