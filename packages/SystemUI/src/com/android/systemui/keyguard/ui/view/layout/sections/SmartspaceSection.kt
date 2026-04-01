@@ -401,10 +401,11 @@ constructor(
             setVisibility(weatherId, if (showWeather) VISIBLE else GONE)
             setAlpha(weatherId, if (showWeather) 1f else 0f)
 
-            // Custom ClockStyle layouts include their own date; hide smartspace date to avoid doubling.
-            val showDateView =
-                (!keyguardClockViewModel.hasCustomWeatherDataDisplay.value || !isLargeClockVisible) &&
-                    !isCustomClockStyleEnabled()
+            // Custom ClockStyle: hide duplicate date/weather via KeyguardSmartspaceViewBinder when
+            // embedded date/weather is shown in the clock; keep this strip visible so alarm/DND
+            // (DateSmartspaceView extras) still appear. When embedded is off, ClockStyle hides
+            // in-clock date/weather — show the full Smartspace row here.
+            val showDateView = shouldShowSmartspaceDateStrip(isLargeClockVisible)
             setVisibility(dateId, if (showDateView) VISIBLE else GONE)
             setAlpha(dateId, if (showDateView) 1f else 0f)
 
@@ -429,4 +430,18 @@ constructor(
             UserHandle.USER_CURRENT,
         ) != 0
 
+    /**
+     * Whether the Smartspace date strip (date + weather + alarm/DND) should be visible.
+     * Custom ClockStyle used to hide the entire strip, which removed next-alarm; we keep it
+     * visible and hide duplicate date/weather in [KeyguardSmartspaceViewBinder] when appropriate.
+     */
+    private fun shouldShowSmartspaceDateStrip(isLargeClockVisible: Boolean): Boolean {
+        val hasCustomWeather = keyguardClockViewModel.hasCustomWeatherDataDisplay.value
+        val baseShow = !hasCustomWeather || !isLargeClockVisible
+        if (!isCustomClockStyleEnabled()) {
+            return baseShow
+        }
+        // Custom ClockStyle: always keep the strip for alarm/DND; binder trims duplicate date/weather.
+        return true
+    }
 }

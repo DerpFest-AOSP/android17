@@ -16,6 +16,12 @@
 
 package com.android.systemui.keyguard.ui.binder
 
+import android.database.ContentObserver
+import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.os.UserHandle
+import android.provider.Settings
 import android.view.View
 import androidx.constraintlayout.helper.widget.Layer
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -33,6 +39,8 @@ import com.android.systemui.plugins.keyguard.VRectF
 import com.android.systemui.res.R
 import com.android.systemui.shared.R as sharedR
 import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
 
 object KeyguardSmartspaceViewBinder {
@@ -83,6 +91,22 @@ object KeyguardSmartspaceViewBinder {
                             )
                         )
                     }
+                }
+
+                launch("$TAG#customClockSmartspaceStrip") {
+                    combine(
+                            clockViewModel.hasCustomWeatherDataDisplay,
+                            clockViewModel.isLargeClockVisible,
+                            smartspaceViewModel.isWeatherVisible,
+                            customClockSmartspaceSettingsFlow(keyguardRootView.context),
+                        ) { _, _, _, _ -> }
+                        .collect {
+                            updateCustomClockSmartspaceStripInnerViews(
+                                keyguardRootView,
+                                clockViewModel,
+                                smartspaceViewModel,
+                            )
+                        }
                 }
 
                 if (com.android.systemui.shared.Flags.clockReactiveSmartspaceLayout()) {
@@ -250,6 +274,85 @@ object KeyguardSmartspaceViewBinder {
                 removeView(dateView)
             }
         }
+    }
+
+    /**
+     * Emits when custom clock style or embedded date/weather settings change, so we can hide
+     * duplicate Smartspace date/weather while keeping alarm/DND visible.
+     */
+    private fun customClockSmartspaceSettingsFlow(context: android.content.Context) =
+        callbackFlow {
+            val cr = context.contentResolver
+            val uris: List<Uri> =
+                listOf(
+                    Settings.Secure.getUriFor(Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE),
+                    Settings.Secure.getUriFor(
+                        Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER
+                    ),
+                )
+            val observer =
+                object : ContentObserver(Handler(Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) {
+                        trySend(Unit)
+                    }
+                }
+            uris.forEach { cr.registerContentObserver(it, false, observer) }
+            trySend(Unit)
+            awaitClose { cr.unregisterContentObserver(observer) }
+        }
+
+    private fun updateCustomClockSmartspaceStripInnerViews(
+        keyguardRootView: ConstraintLayout,
+        clockViewModel: KeyguardClockViewModel,
+        smartspaceViewModel: KeyguardSmartspaceViewModel,
+    ) {
+        if (!smartspaceViewModel.isSmartspaceEnabled || !smartspaceViewModel.isDateWeatherDecoupled) {
+            return
+        }
+        val cr = keyguardRootView.context.contentResolver
+        val customStyle =
+            Settings.Secure.getIntForUser(
+                cr,
+                Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+                0,
+                UserHandle.USER_CURRENT,
+            ) != 0
+        val embedded =
+            Settings.Secure.getIntForUser(
+                cr,
+                Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_SHOW_EMBEDDED_DATE_WEATHER,
+                1,
+                UserHandle.USER_CURRENT,
+            ) == 1
+        // Embedded date: ClockStyle shows it — hide Smartspace duplicate. Embedded weather: only
+        // hide Smartspace weather when the clock face also displays weather (avoid losing weather
+        // on clocks that have date but no weather row).
+        val hideSmartspaceDate = customStyle && embedded
+        val hideSmartspaceWeather =
+            customStyle && embedded && clockViewModel.hasCustomWeatherDataDisplay.value
+        val weatherVisible = smartspaceViewModel.isWeatherVisible.value
+
+        fun applyToDateStrip(dateStrip: View?) {
+            if (dateStrip == null) return
+            val date = dateStrip.findViewById<View>(R.id.date)
+            val weatherId =
+                if (dateStrip.id == sharedR.id.date_smartspace_view_large) {
+                    sharedR.id.weather_smartspace_view_large
+                } else {
+                    sharedR.id.weather_smartspace_view
+                }
+            val weather = dateStrip.findViewById<View>(weatherId)
+            date?.visibility = if (hideSmartspaceDate) View.GONE else View.VISIBLE
+            weather?.visibility =
+                when {
+                    hideSmartspaceWeather -> View.GONE
+                    weatherVisible -> View.VISIBLE
+                    else -> View.GONE
+                }
+        }
+
+        applyToDateStrip(keyguardRootView.findViewById(sharedR.id.date_smartspace_view))
+        applyToDateStrip(keyguardRootView.findViewById(sharedR.id.date_smartspace_view_large))
     }
 
     private const val TAG = "KeyguardSmartspaceViewBinder"
