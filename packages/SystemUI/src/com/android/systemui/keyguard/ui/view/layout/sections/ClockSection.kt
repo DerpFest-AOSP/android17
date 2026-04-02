@@ -149,7 +149,7 @@ constructor(
                     connect(
                         sharedR.id.bc_smartspace_view,
                         TOP,
-                        ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                        smartspaceClockAnchorId(),
                         BOTTOM,
                     )
                 }
@@ -334,4 +334,9 @@ constructor(
             0,
             UserHandle.USER_CURRENT,
         ) != 0
+
+    /** See [SmartspaceSection.smartspaceSmallClockAnchorId]: flex hosts are GONE for ClockStyle. */
+    private fun smartspaceClockAnchorId(): Int =
+        if (isCustomClockStyleEnabled()) R.id.clock_ls
+        else ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL
 }

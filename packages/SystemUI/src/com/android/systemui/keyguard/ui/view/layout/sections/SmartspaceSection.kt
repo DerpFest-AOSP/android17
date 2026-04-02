@@ -197,7 +197,7 @@ constructor(
                         connect(
                             sharedR.id.date_smartspace_view,
                             ConstraintSet.TOP,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                            smartspaceSmallClockAnchorId(),
                             ConstraintSet.BOTTOM,
                         )
                         connect(
@@ -210,7 +210,7 @@ constructor(
                         connect(
                             sharedR.id.bc_smartspace_view,
                             ConstraintSet.TOP,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                            smartspaceSmallClockAnchorId(),
                             ConstraintSet.BOTTOM,
                         )
                     }
@@ -218,7 +218,7 @@ constructor(
                     connect(
                         sharedR.id.date_smartspace_view,
                         ConstraintSet.TOP,
-                        ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                        smartspaceSmallClockAnchorId(),
                         ConstraintSet.BOTTOM,
                     )
                     connect(
@@ -255,7 +255,7 @@ constructor(
                     connect(
                         sharedR.id.date_smartspace_view_large,
                         ConstraintSet.TOP,
-                        ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
+                        smartspaceLargeClockAnchorId(),
                         ConstraintSet.BOTTOM,
                         context.resources.getDimensionPixelSize(R.dimen.smartspace_padding_vertical),
                     )
@@ -267,7 +267,7 @@ constructor(
                     connect(
                         sharedR.id.date_smartspace_view_large,
                         ConstraintSet.START,
-                        ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE,
+                        smartspaceLargeClockAnchorId(),
                         ConstraintSet.START,
                         KeyguardSmartspaceViewModel.getDateWeatherStartMargin(context),
                     )
@@ -288,7 +288,7 @@ constructor(
                         connect(
                             sharedR.id.date_smartspace_view,
                             ConstraintSet.START,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                            smartspaceSmallClockAnchorId(),
                             ConstraintSet.END,
                             context.resources.getDimensionPixelSize(
                                 R.dimen.smartspace_padding_horizontal
@@ -297,13 +297,13 @@ constructor(
                         connect(
                             sharedR.id.date_smartspace_view,
                             ConstraintSet.TOP,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                            smartspaceSmallClockAnchorId(),
                             ConstraintSet.TOP,
                         )
                         connect(
                             sharedR.id.date_smartspace_view,
                             ConstraintSet.BOTTOM,
-                            ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL,
+                            smartspaceSmallClockAnchorId(),
                             ConstraintSet.BOTTOM,
                         )
                     }
@@ -429,6 +429,18 @@ constructor(
             0,
             UserHandle.USER_CURRENT,
         ) != 0
+
+    /**
+     * Flex clock hosts are GONE when [ClockStyle] is shown; Smartspace must anchor to [R.id.clock_ls]
+     * or constraints resolve against a collapsed view (alarm/date strip jumps to the top-left).
+     */
+    private fun smartspaceSmallClockAnchorId(): Int =
+        if (isCustomClockStyleEnabled()) R.id.clock_ls
+        else ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL
+
+    private fun smartspaceLargeClockAnchorId(): Int =
+        if (isCustomClockStyleEnabled()) R.id.clock_ls
+        else ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE
 
     /**
      * Whether the Smartspace date strip (date + weather + alarm/DND) should be visible.

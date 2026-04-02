@@ -16,6 +16,7 @@
 
 package com.android.systemui.keyguard.ui.binder
 
+import android.content.Context
 import android.database.ContentObserver
 import android.net.Uri
 import android.os.Handler
@@ -162,6 +163,9 @@ object KeyguardSmartspaceViewBinder {
                             )
                             .collect { (isLargeClock, belowLarge, largeBounds) ->
                                 if (!isLargeClock) return@collect
+                                if (isCustomClockStyleEnabled(keyguardRootView.context)) {
+                                    return@collect
+                                }
                                 keyguardRootView.findViewById<View>(smallViewId)?.let {
                                     it.visibility = View.GONE
                                 }
@@ -191,6 +195,9 @@ object KeyguardSmartspaceViewBinder {
                             )
                             .collect { (isLargeClock, belowSmall, smallBounds) ->
                                 if (isLargeClock) return@collect
+                                if (isCustomClockStyleEnabled(keyguardRootView.context)) {
+                                    return@collect
+                                }
                                 keyguardRootView.findViewById<View>(largeViewId)?.let {
                                     it.visibility = View.GONE
                                 }
@@ -354,6 +361,14 @@ object KeyguardSmartspaceViewBinder {
         applyToDateStrip(keyguardRootView.findViewById(sharedR.id.date_smartspace_view))
         applyToDateStrip(keyguardRootView.findViewById(sharedR.id.date_smartspace_view_large))
     }
+
+    private fun isCustomClockStyleEnabled(context: Context): Boolean =
+        Settings.Secure.getIntForUser(
+            context.contentResolver,
+            Settings.Secure.LOCK_SCREEN_CUSTOM_CLOCK_STYLE,
+            0,
+            UserHandle.USER_CURRENT,
+        ) != 0
 
     private const val TAG = "KeyguardSmartspaceViewBinder"
 }
