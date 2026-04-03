@@ -69,6 +69,11 @@
         <item>1</item>
     </string-array>
 
+    <!-- Status bar tuner: network icons -->
+    <string name="status_bar_network_icons_category_title">Network icons</string>
+    <string name="custom_system_theme_title">Network icon themes</string>
+    <string name="custom_system_theme_summary">Customize network icon appearance</string>
+
     <!-- WiFi standard numbering on statusbar -->
     <string name="status_bar_wifi_standard">Wi-Fi standard number</string>
 
