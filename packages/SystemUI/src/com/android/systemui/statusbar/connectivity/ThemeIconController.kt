@@ -22,9 +22,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.view.ViewGroup
 import android.widget.ImageView
 import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.core.NewStatusBarIcons
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -119,6 +121,69 @@ object ThemeIconController {
             R.dimen.status_bar_wifi_overlay_width,
             R.dimen.status_bar_wifi_overlay_height,
         )
+    }
+
+    /**
+     * Enlarge the status bar slot so themed bitmaps are not clamped to the default 12sp
+     * NewStatusBarIcons pipeline height ([R.dimen.status_bar_mobile_signal_size_updated]).
+     */
+    @JvmStatic
+    fun applyThemedSignalIconSizing(iconView: ImageView) {
+        val lp = iconView.layoutParams
+        lp.height =
+            iconView.resources.getDimensionPixelSize(R.dimen.status_bar_themed_icon_slot_height)
+        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        iconView.adjustViewBounds = true
+        iconView.layoutParams = lp
+        iconView.requestLayout()
+    }
+
+    @JvmStatic
+    fun resetSignalIconSizing(iconView: ImageView) {
+        val res = iconView.resources
+        val h =
+            if (NewStatusBarIcons.isEnabled) {
+                res.getDimensionPixelSize(R.dimen.status_bar_mobile_signal_size_updated)
+            } else {
+                res.getDimensionPixelSize(R.dimen.status_bar_mobile_signal_size)
+            }
+        val lp = iconView.layoutParams
+        lp.height = h
+        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        iconView.adjustViewBounds = true
+        iconView.layoutParams = lp
+        iconView.requestLayout()
+    }
+
+    /**
+     * Same idea as [applyThemedSignalIconSizing] for Wi‑Fi ([R.dimen.status_bar_wifi_signal_height_updated]).
+     */
+    @JvmStatic
+    fun applyThemedWifiIconSizing(iconView: ImageView) {
+        val lp = iconView.layoutParams
+        lp.height =
+            iconView.resources.getDimensionPixelSize(R.dimen.status_bar_themed_icon_slot_height)
+        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        iconView.adjustViewBounds = true
+        iconView.layoutParams = lp
+        iconView.requestLayout()
+    }
+
+    @JvmStatic
+    fun resetWifiIconSizing(iconView: ImageView) {
+        val res = iconView.resources
+        val h =
+            if (NewStatusBarIcons.isEnabled) {
+                res.getDimensionPixelSize(R.dimen.status_bar_wifi_signal_height_updated)
+            } else {
+                res.getDimensionPixelSize(R.dimen.status_bar_wifi_signal_size)
+            }
+        val lp = iconView.layoutParams
+        lp.height = h
+        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        iconView.adjustViewBounds = true
+        iconView.layoutParams = lp
+        iconView.requestLayout()
     }
 
     @JvmStatic

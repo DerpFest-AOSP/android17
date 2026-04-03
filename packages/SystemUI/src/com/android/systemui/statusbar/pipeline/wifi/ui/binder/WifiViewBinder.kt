@@ -111,8 +111,10 @@ object WifiViewBinder {
                             .getThemedWifiIcon(view.context, lastWifiRes)
                         if (themed != null) {
                             iconView.setImageDrawable(themed)
+                            ThemeIconController.applyThemedWifiIconSizing(iconView)
                         } else {
                             iconView.setImageResource(lastWifiRes)
+                            ThemeIconController.resetWifiIconSizing(iconView)
                         }
                         groupView.invalidate()
                     }
@@ -127,8 +129,10 @@ object WifiViewBinder {
                                     .getThemedWifiIcon(view.context, wifiIcon.res)
                                 if (themedDrawable != null) {
                                     iconView.setImageDrawable(themedDrawable)
+                                    ThemeIconController.applyThemedWifiIconSizing(iconView)
                                 } else {
                                     IconViewBinder.bind(wifiIcon.icon, iconView)
+                                    ThemeIconController.resetWifiIconSizing(iconView)
                                 }
                             }
                         }

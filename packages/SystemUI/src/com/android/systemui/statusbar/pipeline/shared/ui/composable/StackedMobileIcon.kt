@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -170,7 +171,7 @@ private fun StackedMobileIconOverlay(
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    val iconHeight = with(density) { IconHeightSp.toDp() }
+    val iconHeight = dimensionResource(R.dimen.status_bar_themed_icon_slot_height)
     val paddingTop = with(density) { RoamingIconPaddingTopSp.toDp() }
 
     val primaryDrawable = remember(viewModel.primary.level, viewModel.primary.numberOfLevels, themeVersion) {

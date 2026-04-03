@@ -208,11 +208,13 @@
         match the core/status_bar_system_icon_size and change to sp unit -->
     <dimen name="status_bar_mobile_signal_size">15sp</dimen>
     <dimen name="status_bar_mobile_signal_size_updated">12sp</dimen>
-    <!-- ThemeIconController: match status bar signal/wifi viewport (same as pipeline drawables) -->
-    <dimen name="status_bar_signal_overlay_width">@dimen/status_bar_mobile_signal_size</dimen>
-    <dimen name="status_bar_signal_overlay_height">@dimen/status_bar_mobile_signal_size</dimen>
-    <dimen name="status_bar_wifi_overlay_width">@dimen/status_bar_wifi_signal_size</dimen>
-    <dimen name="status_bar_wifi_overlay_height">@dimen/status_bar_wifi_signal_size</dimen>
+    <!-- ThemeIconController: bitmap size + slot height (see ThemeIconController.applyThemed*Sizing) -->
+    <dimen name="status_bar_themed_icon_slot_height">@dimen/status_bar_bindable_icon_size</dimen>
+    <dimen name="status_bar_signal_overlay_height">@dimen/status_bar_themed_icon_slot_height</dimen>
+    <!-- Cellular bars are wider than tall (~17:12) -->
+    <dimen name="status_bar_signal_overlay_width">28sp</dimen>
+    <dimen name="status_bar_wifi_overlay_height">@dimen/status_bar_themed_icon_slot_height</dimen>
+    <dimen name="status_bar_wifi_overlay_width">@dimen/status_bar_themed_icon_slot_height</dimen>
 
     <!-- Size of the view displaying the mobile signal icon in the status bar. This value should
         match the viewport height of mobile signal drawables such as ic_lte_mobiledata
