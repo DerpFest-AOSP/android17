@@ -24,17 +24,13 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import com.android.systemui.qs.tileimpl.QSTileImpl
+import com.android.systemui.res.R
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 object ThemeIconController {
-
-    private const val NEW_SIGNAL_WIDTH_DP = 17f
-    private const val NEW_SIGNAL_HEIGHT_DP = 12f
-    private const val NEW_WIFI_WIDTH_DP = 17f
-    private const val NEW_WIFI_HEIGHT_DP = 12.58f
 
     private val SIGNAL_4BAR_NAMES = arrayOf(
         "ic_signal_cellular_0_4_bar",
@@ -97,7 +93,12 @@ object ThemeIconController {
         val names = if (numLevels > 5) SIGNAL_5BAR_NAMES else SIGNAL_4BAR_NAMES
         if (level < 0 || level >= names.size) return null
         val d = engine.getSystemThemeIconDrawable(names[level]) ?: return null
-        return scaleDrawable(context, d, NEW_SIGNAL_WIDTH_DP, NEW_SIGNAL_HEIGHT_DP)
+        return scaleDrawable(
+            context,
+            d,
+            R.dimen.status_bar_signal_overlay_width,
+            R.dimen.status_bar_signal_overlay_height,
+        )
     }
 
     @JvmStatic
@@ -112,7 +113,12 @@ object ThemeIconController {
         if (level < 0) return null
         val engine = ThemeEngine.getInstance(context) ?: return null
         val d = engine.getSystemThemeIconDrawable(WIFI_ICON_NAMES[level]) ?: return null
-        return scaleDrawable(context, d, NEW_WIFI_WIDTH_DP, NEW_WIFI_HEIGHT_DP)
+        return scaleDrawable(
+            context,
+            d,
+            R.dimen.status_bar_wifi_overlay_width,
+            R.dimen.status_bar_wifi_overlay_height,
+        )
     }
 
     @JvmStatic
@@ -154,15 +160,18 @@ object ThemeIconController {
     }
 
     private fun scaleDrawable(
-        context: Context, d: Drawable, widthDp: Float, heightDp: Float
+        context: Context,
+        d: Drawable,
+        widthDimenRes: Int,
+        heightDimenRes: Int,
     ): Drawable {
-        val density = context.resources.displayMetrics.density
-        val w = (widthDp * density).toInt()
-        val h = (heightDp * density).toInt()
+        val res = context.resources
+        val w = res.getDimensionPixelSize(widthDimenRes)
+        val h = res.getDimensionPixelSize(heightDimenRes)
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         d.setBounds(0, 0, w, h)
         d.draw(canvas)
-        return BitmapDrawable(context.resources, bitmap)
+        return BitmapDrawable(res, bitmap)
     }
 }
