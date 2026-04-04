@@ -215,8 +215,8 @@
     <!-- Cellular bars slightly wider than tall (aligned to ~15sp row height) -->
     <dimen name="status_bar_signal_overlay_width">22sp</dimen>
     <dimen name="status_bar_wifi_overlay_height">@dimen/status_bar_themed_icon_slot_height</dimen>
-    <!-- Wi‑Fi arcs are wider than tall (same width budget as cellular bars). Square canvas looked squashed. -->
-    <dimen name="status_bar_wifi_overlay_width">@dimen/status_bar_signal_overlay_width</dimen>
+    <!-- Wi‑Fi arcs slightly wider than tall; between square (~15sp) and cellular bar strip (22sp). -->
+    <dimen name="status_bar_wifi_overlay_width">18sp</dimen>
 
     <!-- Size of the view displaying the mobile signal icon in the status bar. This value should
         match the viewport height of mobile signal drawables such as ic_lte_mobiledata
