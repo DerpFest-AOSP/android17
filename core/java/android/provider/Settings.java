@@ -7131,16 +7131,6 @@ public final class Settings {
         public static final String HIDE_LOCKSCREEN_STATUS_BAR = "hide_lockscreen_status_bar";
 
         /**
-         * @hide
-         */
-        public static final String ISLAND_NOTIFICATION = "island_notification";
-
-        /**
-         * @hide
-         */
-        public static final String ISLAND_NOTIFICATION_NOW_PLAYING = "island_notification_now_playing";
-
-        /**
          * Whether to use the custom status bar header or not
          * @hide
          */
