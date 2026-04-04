@@ -24,6 +24,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.view.ViewGroup
 import android.widget.ImageView
+import com.android.settingslib.R as SettingsLibR
 import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.core.NewStatusBarIcons
@@ -63,7 +64,6 @@ object ThemeIconController {
     val themeVersion: StateFlow<Long> = _themeVersion.asStateFlow()
 
     private val refreshCallbacks = CopyOnWriteArrayList<Runnable>()
-    @Volatile private var wifiResIds: IntArray? = null
 
     @JvmStatic
     fun registerRefreshCallback(callback: Runnable) {
@@ -111,7 +111,7 @@ object ThemeIconController {
 
     @JvmStatic
     fun getThemedWifiIcon(context: Context, resId: Int): Drawable? {
-        val level = mapWifiResIdToLevel(context, resId)
+        val level = mapWifiResIdToLevel(resId)
         if (level < 0) return null
         val engine = ThemeEngine.getInstance(context) ?: return null
         val d = engine.getSystemThemeIconDrawable(WIFI_ICON_NAMES[level]) ?: return null
@@ -200,26 +200,37 @@ object ThemeIconController {
         parentGroup.invalidate()
     }
 
-    private fun mapWifiResIdToLevel(context: Context, resId: Int): Int {
-        if (resId == com.android.internal.R.drawable.ic_wifi_signal_0) return 0
-        if (resId == com.android.internal.R.drawable.ic_wifi_signal_1) return 1
-        if (resId == com.android.internal.R.drawable.ic_wifi_signal_2) return 2
-        if (resId == com.android.internal.R.drawable.ic_wifi_signal_3) return 3
-        if (resId == com.android.internal.R.drawable.ic_wifi_signal_4) return 4
-
-        if (wifiResIds == null) {
-            val res = context.resources
-            val pkg = context.packageName
-            wifiResIds = intArrayOf(
-                res.getIdentifier("ic_wifi_0", "drawable", pkg),
-                res.getIdentifier("ic_wifi_1", "drawable", pkg),
-                res.getIdentifier("ic_wifi_2", "drawable", pkg),
-                res.getIdentifier("ic_wifi_3", "drawable", pkg),
-            )
+    /**
+     * Maps the drawable used for the status bar / QS Wi‑Fi arc to a 0–4 level for theme lookup
+     * ([WIFI_ICON_NAMES] → `ic_wifi_signal_*` in the active icon pack).
+     *
+     * New status bar icons ([com.android.systemui.statusbar.connectivity.WifiIcons]) use
+     * SettingsLib `ic_wifi_*` / `ic_wifi_*_error` drawables, not [com.android.internal.R] ids.
+     */
+    private fun mapWifiResIdToLevel(resId: Int): Int {
+        when (resId) {
+            com.android.internal.R.drawable.ic_wifi_signal_0 -> return 0
+            com.android.internal.R.drawable.ic_wifi_signal_1 -> return 1
+            com.android.internal.R.drawable.ic_wifi_signal_2 -> return 2
+            com.android.internal.R.drawable.ic_wifi_signal_3 -> return 3
+            com.android.internal.R.drawable.ic_wifi_signal_4 -> return 4
         }
-        val ids = wifiResIds ?: return -1
-        for (i in ids.indices) {
-            if (ids[i] == resId) return i
+        when (resId) {
+            SettingsLibR.drawable.ic_wifi_0 -> return 0
+            SettingsLibR.drawable.ic_wifi_1 -> return 1
+            SettingsLibR.drawable.ic_wifi_2 -> return 2
+            SettingsLibR.drawable.ic_wifi_3 -> return 4
+            SettingsLibR.drawable.ic_wifi_0_error -> return 0
+            SettingsLibR.drawable.ic_wifi_1_error -> return 1
+            SettingsLibR.drawable.ic_wifi_2_error -> return 2
+            SettingsLibR.drawable.ic_wifi_3_error -> return 4
+        }
+        when (resId) {
+            SettingsLibR.drawable.ic_no_internet_wifi_signal_0 -> return 0
+            SettingsLibR.drawable.ic_no_internet_wifi_signal_1 -> return 1
+            SettingsLibR.drawable.ic_no_internet_wifi_signal_2 -> return 2
+            SettingsLibR.drawable.ic_no_internet_wifi_signal_3 -> return 3
+            SettingsLibR.drawable.ic_no_internet_wifi_signal_4 -> return 4
         }
         return -1
     }

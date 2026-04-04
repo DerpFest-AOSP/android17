@@ -208,11 +208,12 @@
         match the core/status_bar_system_icon_size and change to sp unit -->
     <dimen name="status_bar_mobile_signal_size">15sp</dimen>
     <dimen name="status_bar_mobile_signal_size_updated">12sp</dimen>
-    <!-- ThemeIconController: bitmap size + slot height (see ThemeIconController.applyThemed*Sizing) -->
-    <dimen name="status_bar_themed_icon_slot_height">@dimen/status_bar_bindable_icon_size</dimen>
+    <!-- ThemeIconController: match status bar Wi‑Fi / mobile icon row ([status_bar_wifi_signal_size]),
+         not bindable/compose tiles ([status_bar_bindable_icon_size]) — avoids oversized signal/cellular. -->
+    <dimen name="status_bar_themed_icon_slot_height">@dimen/status_bar_wifi_signal_size</dimen>
     <dimen name="status_bar_signal_overlay_height">@dimen/status_bar_themed_icon_slot_height</dimen>
-    <!-- Cellular bars are wider than tall (~17:12) -->
-    <dimen name="status_bar_signal_overlay_width">28sp</dimen>
+    <!-- Cellular bars slightly wider than tall (aligned to ~15sp row height) -->
+    <dimen name="status_bar_signal_overlay_width">22sp</dimen>
     <dimen name="status_bar_wifi_overlay_height">@dimen/status_bar_themed_icon_slot_height</dimen>
     <dimen name="status_bar_wifi_overlay_width">@dimen/status_bar_themed_icon_slot_height</dimen>
 
