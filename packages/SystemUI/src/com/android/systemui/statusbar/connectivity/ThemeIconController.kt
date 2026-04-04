@@ -124,6 +124,29 @@ object ThemeIconController {
     }
 
     /**
+     * Mobile data / RAT type icons (`ic_*_mobiledata`, …) from [android.customization.sb_data] overlays.
+     */
+    @JvmStatic
+    fun getThemedMobileDataIcon(context: Context, resId: Int): Drawable? {
+        if (resId == 0) return null
+        val name =
+            try {
+                context.resources.getResourceEntryName(resId)
+            } catch (_: Exception) {
+                return null
+            }
+        if (!name.contains("mobiledata")) return null
+        val engine = ThemeEngine.getInstance(context) ?: return null
+        val d = engine.getSystemThemeIconDrawable(name) ?: return null
+        return scaleDrawable(
+            context,
+            d,
+            R.dimen.status_bar_mobile_data_overlay_width,
+            R.dimen.status_bar_mobile_data_overlay_height,
+        )
+    }
+
+    /**
      * Enlarge the status bar slot so themed bitmaps are not clamped to the default 12sp
      * NewStatusBarIcons pipeline height ([R.dimen.status_bar_mobile_signal_size_updated]).
      */
@@ -177,6 +200,35 @@ object ThemeIconController {
                 res.getDimensionPixelSize(R.dimen.status_bar_wifi_signal_height_updated)
             } else {
                 res.getDimensionPixelSize(R.dimen.status_bar_wifi_signal_size)
+            }
+        val lp = iconView.layoutParams
+        lp.height = h
+        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        iconView.adjustViewBounds = true
+        iconView.layoutParams = lp
+        iconView.requestLayout()
+    }
+
+    /** Align with signal / Wi‑Fi themed row; RAT view defaults to [status_bar_mobile_type_size(_updated)]. */
+    @JvmStatic
+    fun applyThemedMobileDataIconSizing(iconView: ImageView) {
+        val lp = iconView.layoutParams
+        lp.height =
+            iconView.resources.getDimensionPixelSize(R.dimen.status_bar_themed_icon_slot_height)
+        lp.width = ViewGroup.LayoutParams.WRAP_CONTENT
+        iconView.adjustViewBounds = true
+        iconView.layoutParams = lp
+        iconView.requestLayout()
+    }
+
+    @JvmStatic
+    fun resetMobileDataIconSizing(iconView: ImageView) {
+        val res = iconView.resources
+        val h =
+            if (NewStatusBarIcons.isEnabled) {
+                res.getDimensionPixelSize(R.dimen.status_bar_mobile_type_size_updated)
+            } else {
+                res.getDimensionPixelSize(R.dimen.status_bar_mobile_type_size)
             }
         val lp = iconView.layoutParams
         lp.height = h

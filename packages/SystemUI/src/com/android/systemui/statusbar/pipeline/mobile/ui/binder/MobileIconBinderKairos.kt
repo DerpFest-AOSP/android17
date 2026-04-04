@@ -26,6 +26,8 @@ import android.widget.Space
 import androidx.core.view.isVisible
 import com.android.settingslib.graph.SignalDrawable
 import com.android.systemui.Flags
+import com.android.systemui.common.shared.model.Icon
+import com.android.systemui.common.ui.binder.ContentDescriptionViewBinder
 import com.android.systemui.common.ui.binder.IconViewBinder
 import com.android.systemui.kairos.BuildScope
 import com.android.systemui.kairos.BuildSpec
@@ -163,17 +165,34 @@ object MobileIconBinderKairos {
         val isVisible = viewModel.isVisible.sample()
 
         var lastCellularIconKairos: SignalIconModel.Cellular? = null
+        var lastNetworkTypeIconKairos: Icon.Resource? = null
         val refreshCallbackKairos = Runnable {
-            val icon = lastCellularIconKairos ?: return@Runnable
-            val themed = ThemeIconController
-                .getThemedSignalIcon(view.context, icon.level, icon.numberOfLevels)
-            if (themed != null) {
-                iconView.setImageDrawable(themed)
-                ThemeIconController.applyThemedSignalIconSizing(iconView)
-            } else {
-                iconView.setImageDrawable(mobileDrawable)
-                mobileDrawable.level = icon.toSignalDrawableState()
-                ThemeIconController.resetSignalIconSizing(iconView)
+            lastCellularIconKairos?.let { icon ->
+                val themed = ThemeIconController
+                    .getThemedSignalIcon(view.context, icon.level, icon.numberOfLevels)
+                if (themed != null) {
+                    iconView.setImageDrawable(themed)
+                    ThemeIconController.applyThemedSignalIconSizing(iconView)
+                } else {
+                    iconView.setImageDrawable(mobileDrawable)
+                    mobileDrawable.level = icon.toSignalDrawableState()
+                    ThemeIconController.resetSignalIconSizing(iconView)
+                }
+            }
+            lastNetworkTypeIconKairos?.let { dataIcon ->
+                val themedData =
+                    ThemeIconController.getThemedMobileDataIcon(view.context, dataIcon.resId)
+                if (themedData != null) {
+                    networkTypeView.setImageDrawable(themedData)
+                    ContentDescriptionViewBinder.bind(
+                        dataIcon.contentDescription,
+                        networkTypeView,
+                    )
+                    ThemeIconController.applyThemedMobileDataIconSizing(networkTypeView)
+                } else {
+                    IconViewBinder.bind(dataIcon, networkTypeView)
+                    ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                }
             }
             mobileGroupView.invalidate()
         }
@@ -304,7 +323,22 @@ object MobileIconBinderKairos {
                     viewModel.subscriptionId,
                     dataTypeId,
                 )
-                dataTypeId?.let { IconViewBinder.bind(dataTypeId, networkTypeView) }
+                lastNetworkTypeIconKairos = dataTypeId
+                dataTypeId?.let { icon ->
+                    val themedData =
+                        ThemeIconController.getThemedMobileDataIcon(view.context, icon.resId)
+                    if (themedData != null) {
+                        networkTypeView.setImageDrawable(themedData)
+                        ContentDescriptionViewBinder.bind(
+                            icon.contentDescription,
+                            networkTypeView,
+                        )
+                        ThemeIconController.applyThemedMobileDataIconSizing(networkTypeView)
+                    } else {
+                        IconViewBinder.bind(icon, networkTypeView)
+                        ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                    }
+                }
                 val prevVis = networkTypeContainer.visibility
                 networkTypeContainer.visibility =
                     if (dataTypeId != null) View.VISIBLE else View.GONE
