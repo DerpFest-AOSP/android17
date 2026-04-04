@@ -126,7 +126,6 @@ import com.android.systemui.statusbar.notification.ConversationNotificationManag
 import com.android.systemui.statusbar.notification.DynamicPrivacyController;
 import com.android.systemui.statusbar.notification.NotificationWakeUpCoordinator;
 import com.android.systemui.statusbar.notification.NotificationWakeUpCoordinatorLogger;
-import com.android.systemui.statusbar.notification.collection.NotifPipeline;
 import com.android.systemui.statusbar.notification.data.repository.NotificationsKeyguardViewStateRepository;
 import com.android.systemui.statusbar.notification.domain.interactor.ActiveNotificationsInteractor;
 import com.android.systemui.statusbar.notification.domain.interactor.NotificationsKeyguardInteractor;
@@ -280,8 +279,6 @@ public class NotificationPanelViewControllerBaseTest extends SysuiTestCase {
     @Mock private StatusBarLongPressGestureDetector mStatusBarLongPressGestureDetector;
     @Mock protected SysUIStateDisplaysInteractor mSysUIStateDisplaysInteractor;
     @Mock private WindowManagerProvider mWindowManagerProvider;
-    @Mock private NotifPipeline mNotifPipeline;
-
     protected final int mMaxUdfpsBurnInOffsetY = 5;
     protected FakeFeatureFlagsClassic mFeatureFlags = new FakeFeatureFlagsClassic();
     protected KeyguardClockInteractor mKeyguardClockInteractor;
@@ -584,8 +581,7 @@ public class NotificationPanelViewControllerBaseTest extends SysuiTestCase {
                 new BlurConfig(0f, 0f),
                 () -> mKosmos.getFakeShadeDisplaysRepository(),
                 mWindowRootViewBlurInteractor,
-                mContext,
-                mNotifPipeline);
+                mContext);
         mNotificationPanelViewController.initDependencies(
                 mCentralSurfaces,
                 null,

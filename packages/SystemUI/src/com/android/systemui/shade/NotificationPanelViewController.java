@@ -70,7 +70,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.Trace;
-import android.os.UserHandle;
 import android.provider.Settings;
 import android.util.IndentingPrintWriter;
 import android.util.Log;
@@ -134,7 +133,6 @@ import com.android.systemui.keyguard.ui.binder.KeyguardTouchViewBinder;
 import com.android.systemui.keyguard.ui.transitions.BlurConfig;
 import com.android.systemui.keyguard.ui.viewmodel.DreamingToLockscreenTransitionViewModel;
 import com.android.systemui.keyguard.ui.viewmodel.KeyguardTouchHandlingViewModel;
-import com.android.systemui.derpfest.pulselight.PulseLightView;
 import com.android.systemui.media.controls.domain.pipeline.MediaDataManager;
 import com.android.systemui.media.controls.ui.controller.KeyguardMediaController;
 import com.android.systemui.media.controls.ui.controller.MediaHierarchyManager;
@@ -180,7 +178,6 @@ import com.android.systemui.statusbar.notification.NotificationWakeUpCoordinator
 import com.android.systemui.statusbar.notification.PropertyAnimator;
 import com.android.systemui.statusbar.notification.ViewGroupFadeHelper;
 import com.android.systemui.statusbar.notification.collection.NotificationEntry;
-import com.android.systemui.statusbar.notification.collection.NotifPipeline;
 import com.android.systemui.statusbar.notification.domain.interactor.ActiveNotificationsInteractor;
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager;
 import com.android.systemui.statusbar.notification.headsup.HeadsUpTouchHelper;
@@ -241,7 +238,6 @@ import lineageos.providers.LineageSettings;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -623,9 +619,6 @@ public final class NotificationPanelViewController implements
     @Nullable
     private RenderEffect mBlurRenderEffect = null;
 
-    private PulseLightView mPulseLightView;
-    private NotifPipeline mNotifPipeline;
-
     @Inject
     public NotificationPanelViewController(NotificationPanelView view,
             @Main Handler handler,
@@ -707,8 +700,7 @@ public final class NotificationPanelViewController implements
             Lazy<ShadeDisplaysRepository> shadeDisplaysRepository,
             WindowRootViewBlurInteractor windowRootViewBlurInteractor,
             TunerService tunerService,
-            Context context,
-            NotifPipeline notifPipeline) {
+            Context context) {
         mBlurConfig = blurConfig;
         mWindowRootViewBlurInteractor = windowRootViewBlurInteractor;
         SceneContainerFlag.assertInLegacyMode();
@@ -915,7 +907,6 @@ public final class NotificationPanelViewController implements
         mQsHeaderImageView = mView.requireViewById(R.id.qs_header_image_view);
         mStatusBarHeaderMachine = new StatusBarHeaderMachine(context);
         dumpManager.registerDumpable(this);
-        mNotifPipeline = notifPipeline;
     }
 
     private void unlockAnimationFinished() {
@@ -973,7 +964,6 @@ public final class NotificationPanelViewController implements
         mQsController.init();
         mShadeHeadsUpTracker.addTrackingHeadsUpListener(
                 mNotificationStackScrollLayoutController::setTrackingHeadsUp);
-        mPulseLightView = (PulseLightView) mView.findViewById(R.id.pulse_light_view);
         mWakeUpCoordinator.setStackScroller(mNotificationStackScrollLayoutController);
         mWakeUpCoordinator.addListener(new NotificationWakeUpCoordinator.WakeUpListener() {
             @Override
@@ -2543,41 +2533,9 @@ public final class NotificationPanelViewController implements
         if (!mPulsing && !mDozing) {
             mAnimateNextPositionUpdate = false;
         }
-
-        showPulseLight();
-
         mNotificationStackScrollLayoutController.setPulsing(pulsing, animatePulse);
 
         updateKeyguardStatusViewAlignment();
-    }
-
-    private void showPulseLight() {
-        if (mPulseLightView == null || !isPulseLightEnabled()) return;
-        if (mPulsing) {
-            // Get the notification that's pulsing
-            String notifPackageName = "";
-            List<NotificationEntry> notificationEntries =
-                    new ArrayList(mNotifPipeline.getAllNotifs());
-            for (int i = 0; i < notificationEntries.size(); i++) {
-                NotificationEntry entry = notificationEntries.get(i);
-                if (entry.showingPulseLight()) {
-                    notifPackageName = entry.getSbn().getPackageName();
-                    break;
-                }
-            }
-            // Animate edge light only for notification pulse.
-            // Package not empty means pulse caused by a notification.
-            if (!notifPackageName.isEmpty()) {
-                mPulseLightView.startAnimation(notifPackageName);
-            }
-        } else {
-            mPulseLightView.stopAnimation();
-        }
-    }
-
-    private boolean isPulseLightEnabled() {
-        return Settings.Secure.getIntForUser(mView.getContext().getContentResolver(),
-                Settings.Secure.PULSE_AMBIENT_LIGHT, 0, UserHandle.USER_CURRENT) != 0;
     }
 
     public void performHapticFeedback(int constant) {

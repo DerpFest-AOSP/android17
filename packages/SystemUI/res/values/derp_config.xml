@@ -10,9 +10,6 @@
     <!-- Interval between subsequent shifting of statusbar and navbar contents, in seconds -->
     <integer name="config_statusBarBurnInProtectionShiftInterval">60</integer>
 
-    <!-- Whether to enable edge light only when the device face down -->
-    <bool name="config_showEdgeLightOnlyWhenFaceDown">false</bool>
-
     <!-- The CPU temperature sensor path, defaults to empty -->
     <string name="config_cpuTempSensor" translatable="false">/sys/class/thermal/thermal_zone0/temp</string>
 
