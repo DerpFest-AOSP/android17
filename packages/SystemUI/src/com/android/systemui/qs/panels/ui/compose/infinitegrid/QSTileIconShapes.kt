@@ -69,12 +69,6 @@ object QSTileIconShapes {
     /** Full viewBox fill for mask/preview; classic UI shows icon only (no colored disc). */
     private const val JUST_ICONS_CLIP_PATH = "M0,0 L100,0 L100,100 L0,100 Z"
 
-    private const val POKESIGN_PATH = "M24,0C10.95,0 0.36,10.58 0.36,23.64c0,13.06 10.58,23.64 23.64,23.64c13.05,0 23.64,-10.58 23.64,-23.64C47.64,10.58 37.05,0 24,0zM24,42.64c-10.49,0 -19,-8.51 -19,-19C5,13.14 13.51,4.63 24,4.63c10.49,0 19,8.51 19,19C43,34.13 34.49,42.64 24,42.64z M23.91,18.65c2.54,0 4.62,1.9 4.95,4.35h9.72C38.24,15.23 31.85,9.03 24,9.03S9.76,15.23 9.42,23h9.54C19.29,20.55 21.37,18.65 23.91,18.65z M23.91,28.68c-2.3,0 -4.22,-1.56 -4.81,-3.68H9.46C10.15,32.43 16.39,38.25 24,38.25c7.61,0 13.85,-5.82 14.54,-13.25h-9.82C28.13,27.12 26.21,28.68 23.91,28.68z"
-
-    private const val NINJA_PATH =
-        "M21.47,24c0,-1.36 1.08,-2.46 2.42,-2.52V0.85l-0.17,-0.25l-8.51,13.62L1.55,22.92h0.43l12.73,10l9.19,14.2V26.52C22.55,26.46 21.47,25.36 21.47,24z M15.02,32.71l-12.59,-9.91l12.99,-8.25l8.32,-13.25l0.15,0.23l0,-1.35l-0.17,-0.26l-8.77,14.04l-14.69,9.33l1.59,0l12.58,9.88l9.47,14.63l0,-1.38z M33.09,14.62l-9.19,-13.77v20.63c0.04,-0 0.07,-0.01 0.1,-0.01c1.39,0 2.53,1.13 2.53,2.53S25.4,26.53 24,26.53c-0.04,0 -0.07,-0.01 -0.1,-0.01v20.6L24,47.27l9.68,-15.21l12.56,-9.15L33.09,14.62z M33.35,14.35l-9.46,-14.17l0,1.35l8.88,13.3l12.81,8.11l-12.12,8.82l-9.47,14.82l-0.1,-0.15l0,1.38l0.11,0.16l9.96,-15.65l12.95,-9.43z M24,27.28c-1.81,0 -3.28,-1.47 -3.28,-3.28c0,-1.81 1.47,-3.28 3.28,-3.28c1.81,0 3.28,1.47 3.28,3.28C27.28,25.81 25.81,27.28 24,27.28zM24,22.22c-0.98,0 -1.78,0.8 -1.78,1.78c0,0.98 0.8,1.78 " +
-        "1.78,1.78c0.98,0 1.78,-0.8 1.78,-1.78C25.78,23.02 24.98,22.22 24,22.22z"
-
     // Dotted ring drawn on top; clip uses [CIRCLE_PATH] (see [ornamentPathForClassicTile]).
     private const val DOTTED_CIRCLE_ORNAMENT_PATH =
         "M45.65,19.56l1.55,-0.31c0,0 0.18,1.18 0.35,2.35c0.06,1.19 0.12,2.38 0.12,2.38h-1.58c0,0 -0.06,-1.11 -0.11,-2.22C45.81,20.66 45.65,19.56 45.65,19.56z M43.38,13.37l1.39,-0.76c0,0 0.14,0.26 0.33,0.67c0.19,0.4 0.45,0.94 0.71,1.47c0.2,0.56 0.41,1.12 0.56,1.54c0.15,0.42 0.25,0.7 0.25,0.7l-1.51,0.47c0,0 -0.09,-0.26 -0.23,-0.65c-0.14,-0.39 -0.33,-0.91 -0.52,-1.43c-0.24,-0.5 -0.48,-1 -0.66,-1.38C43.51,13.62 43.38,13.37 43.38,13.37z M39.38,8.13L40.49,7c0,0 0.23,0.19 0.52,0.53c0.3,0.33 0.7,0.77 1.1,1.21c0.39,0.45 0.72,0.94 1,1.3c0.27,0.36 0.44,0.6 0.44,0.6l-1.31,0.89c0,0 -0.17,-0.22 -0.42,-0.56c-0.26,-0.33 -0.57,-0.79 -0.93,-1.21c-0.37,-0.41 -0.75,-0.82 -1.03,-1.13C39.6,8.31 39.38,8.13 39.38,8.13z M34.03,4.3l0.72,-1.41c0,0 0.28,0.12 0.66,0.34c0.38,0.23 0.89,0.54 1.4,0.85c0.52,0.29 0.97,0.69 " +
@@ -116,8 +110,6 @@ object QSTileIconShapes {
     const val VESSEL_KEY = "vessel"
     const val ROUNDED_HEXAGON_KEY = "rounded_hexagon"
     const val JUST_ICONS_KEY = "just_icons"
-    const val POKESIGN_KEY = "pokesign"
-    const val NINJA_KEY = "ninja"
     const val DOTTED_CIRCLE_KEY = "dotted_circle"
     /** Circular outline (stroke); same mask as [DOTTED_CIRCLE_KEY], solid line instead of dots. */
     const val OUTLINE_STYLE_KEY = "outline_style"
@@ -133,7 +125,13 @@ object QSTileIconShapes {
 
     /** Old keys that duplicated a circular mask (gradient/dual-tone overlays, Shishu ring). */
     private val LEGACY_CIRCLE_ONLY_KEYS =
-        setOf("circle_dual_tone", "circle_gradient", "shishu_nights")
+        setOf(
+            "circle_dual_tone",
+            "circle_gradient",
+            "shishu_nights",
+            "pokesign",
+            "ninja",
+        )
 
     private val MASK_SPEC_BY_KEY: Map<String, IconMaskSpec> =
         mapOf(
@@ -160,8 +158,6 @@ object QSTileIconShapes {
             VESSEL_KEY to IconMaskSpec(VESSEL_PATH),
             ROUNDED_HEXAGON_KEY to IconMaskSpec(ROUNDED_HEXAGON_PATH),
             JUST_ICONS_KEY to IconMaskSpec(JUST_ICONS_CLIP_PATH),
-            POKESIGN_KEY to IconMaskSpec(POKESIGN_PATH, 48f),
-            NINJA_KEY to IconMaskSpec(NINJA_PATH, 48f),
             DOTTED_CIRCLE_KEY to IconMaskSpec(CIRCLE_PATH),
             OUTLINE_STYLE_KEY to IconMaskSpec(CIRCLE_PATH),
             SQUAREMEDO_KEY to IconMaskSpec(IOS_ROUNDED_SQUARE_PATH),
