@@ -75,6 +75,20 @@ object ThemeIconController {
         refreshCallbacks.remove(callback)
     }
 
+    /**
+     * Re-run Wi‑Fi / mobile / RAT [refreshCallbacks] and bump [themeVersion] for Compose, without
+     * clearing QS tile icon caches. Call from the same boot / dark-intensity path as
+     * [ConfigurationController.notifyThemeChanged] so status bar icons match tint timing when
+     * [ThemeEngine] has not fired yet.
+     */
+    @JvmStatic
+    fun refreshStatusBarIconCallbacks() {
+        _themeVersion.value++
+        for (cb in refreshCallbacks) {
+            cb.run()
+        }
+    }
+
     @JvmStatic
     fun onThemeChanged(tiles: Collection<com.android.systemui.plugins.qs.QSTile>) {
         QSTileImpl.ResourceIcon.clearCache()

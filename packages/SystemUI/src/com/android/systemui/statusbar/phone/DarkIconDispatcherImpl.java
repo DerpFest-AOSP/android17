@@ -35,6 +35,7 @@ import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent.DisplayAw
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent.LifecycleListener;
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent.PerDisplaySingleton;
 import com.android.systemui.dump.DumpManager;
+import com.android.systemui.statusbar.connectivity.ThemeIconController;
 import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.settingslib.Utils;
 
@@ -98,6 +99,7 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
                 // Notify theme change so battery and other components using themeChanged flow
                 // update immediately (same path as when wallpaper changes).
                 mConfigurationController.notifyThemeChanged();
+                ThemeIconController.refreshStatusBarIconCallbacks();
             }
         };
         if (newStatusBarIcons()) {
@@ -131,9 +133,15 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
             // Notify theme change so battery and other components get correct tint on boot
             // (themeChanged flow emits and color profile combine runs with current setting).
             mConfigurationController.notifyThemeChanged();
+            ThemeIconController.refreshStatusBarIconCallbacks();
             // Post again so components that subscribe later (e.g. status bar battery view)
-            // also receive the theme notification.
-            handler.postDelayed(mConfigurationController::notifyThemeChanged, 300);
+            // also receive the theme notification and Wi‑Fi/mobile binders have registered.
+            handler.postDelayed(
+                    () -> {
+                        mConfigurationController.notifyThemeChanged();
+                        ThemeIconController.refreshStatusBarIconCallbacks();
+                    },
+                    300);
         });
     }
 
