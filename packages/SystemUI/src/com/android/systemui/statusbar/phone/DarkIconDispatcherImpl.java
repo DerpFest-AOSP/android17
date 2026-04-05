@@ -142,6 +142,7 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
                         ThemeIconController.refreshStatusBarIconCallbacks();
                     },
                     300);
+            ThemeIconController.installGlobalThemeIconResyncHooks(mContext, handler);
         });
     }
 

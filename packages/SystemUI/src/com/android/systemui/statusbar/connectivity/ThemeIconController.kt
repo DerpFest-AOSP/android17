@@ -16,10 +16,18 @@
 
 package com.android.systemui.statusbar.connectivity
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.res.ThemeEngine
+import android.database.ContentObserver
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.os.Build
+import android.os.Handler
+import android.os.UserHandle
+import android.provider.Settings
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.view.ViewGroup
@@ -29,6 +37,7 @@ import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.core.NewStatusBarIcons
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -65,6 +74,36 @@ object ThemeIconController {
 
     private val refreshCallbacks = CopyOnWriteArrayList<Runnable>()
 
+    private val globalResyncHooksInstalled = AtomicBoolean(false)
+
+    private val themeEngineChangeListener = ThemeEngine.ThemeChangeListener { _: String? ->
+        refreshStatusBarIconCallbacks()
+    }
+
+    private val themeEngineBroadcastReceiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                refreshStatusBarIconCallbacks()
+            }
+        }
+
+    private var themeEngineDataObserver: ContentObserver? = null
+
+    private var pollHandler: Handler? = null
+    private var pollGeneration: Int = 0
+
+    private val pollRunnable =
+        object : Runnable {
+            override fun run() {
+                val h = pollHandler ?: return
+                refreshStatusBarIconCallbacks()
+                pollGeneration--
+                if (pollGeneration > 0) {
+                    h.postDelayed(this, 400L)
+                }
+            }
+        }
+
     @JvmStatic
     fun registerRefreshCallback(callback: Runnable) {
         refreshCallbacks.add(callback)
@@ -87,6 +126,105 @@ object ThemeIconController {
         for (cb in refreshCallbacks) {
             cb.run()
         }
+    }
+
+    /**
+     * Extra posts after boot: [ThemeEngine] binder / target caches can lag, and Wi‑Fi/mobile
+     * binders register after [DarkIconDispatcherImpl]'s first posts.
+     */
+    @JvmStatic
+    fun scheduleDeferredStatusBarIconResyncs(handler: Handler) {
+        val delays =
+            longArrayOf(
+                100L,
+                250L,
+                500L,
+                750L,
+                1200L,
+                2000L,
+                3000L,
+                5000L,
+                8000L,
+                12000L,
+                20000L,
+            )
+        for (delayMs in delays) {
+            handler.postDelayed({ refreshStatusBarIconCallbacks() }, delayMs)
+        }
+    }
+
+    /**
+     * One-time hooks so status bar icons resync when [ThemeEngine] becomes ready — without
+     * waiting for a new telephony / Wi‑Fi sample (binder + Secure settings often lag first paint).
+     */
+    @JvmStatic
+    fun installGlobalThemeIconResyncHooks(context: Context, handler: Handler) {
+        if (!globalResyncHooksInstalled.compareAndSet(false, true)) {
+            return
+        }
+        val app = context.applicationContext
+
+        ThemeEngine.getInstance(app)?.addThemeChangeListener(themeEngineChangeListener)
+
+        val filter = IntentFilter(ThemeEngine.ACTION_THEME_CHANGED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            app.registerReceiver(themeEngineBroadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            app.registerReceiver(themeEngineBroadcastReceiver, filter)
+        }
+
+        themeEngineDataObserver =
+            object : ContentObserver(handler) {
+                override fun onChange(selfChange: Boolean) {
+                    refreshStatusBarIconCallbacks()
+                }
+            }
+        app.contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(ThemeEngine.SETTINGS_THEME_ENGINE_DATA),
+            false,
+            themeEngineDataObserver!!,
+            UserHandle.USER_ALL,
+        )
+
+        scheduleDeferredStatusBarIconResyncs(handler)
+
+        pollHandler = handler
+        pollGeneration = 45
+        handler.post(pollRunnable)
+    }
+
+    /** True when the active system theme lists this Wi‑Fi level, even if [getThemedWifiIcon] is null. */
+    @JvmStatic
+    fun hasThemedWifiIconForResource(context: Context, resId: Int): Boolean {
+        val level = mapWifiResIdToLevel(resId)
+        if (level < 0) return false
+        val engine = ThemeEngine.getInstance(context) ?: return false
+        return engine.isTargetedResource(WIFI_ICON_NAMES[level])
+    }
+
+    /** True when the active system theme lists this signal level (see [getThemedSignalIcon]). */
+    @JvmStatic
+    fun hasThemedSignalIconForLevel(context: Context, level: Int, numLevels: Int): Boolean {
+        val names = if (numLevels > 5) SIGNAL_5BAR_NAMES else SIGNAL_4BAR_NAMES
+        if (level < 0 || level >= names.size) return false
+        val engine = ThemeEngine.getInstance(context) ?: return false
+        return engine.isTargetedResource(names[level])
+    }
+
+    /** True when [getThemedMobileDataIcon] would use a themed name (overlay may load late). */
+    @JvmStatic
+    fun hasThemedMobileDataIconForResource(context: Context, resId: Int): Boolean {
+        if (resId == 0) return false
+        val name =
+            try {
+                context.resources.getResourceEntryName(resId)
+            } catch (_: Exception) {
+                return false
+            }
+        if (!name.contains("mobiledata")) return false
+        val engine = ThemeEngine.getInstance(context) ?: return false
+        return engine.isTargetedResource(name)
     }
 
     @JvmStatic

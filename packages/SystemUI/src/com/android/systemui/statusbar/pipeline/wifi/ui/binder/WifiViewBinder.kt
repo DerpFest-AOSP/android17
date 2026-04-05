@@ -109,12 +109,22 @@ object WifiViewBinder {
                         if (lastWifiRes == 0) return@Runnable
                         val themed = ThemeIconController
                             .getThemedWifiIcon(view.context, lastWifiRes)
-                        if (themed != null) {
-                            iconView.setImageDrawable(themed)
-                            ThemeIconController.applyThemedWifiIconSizing(iconView)
-                        } else {
-                            iconView.setImageResource(lastWifiRes)
-                            ThemeIconController.resetWifiIconSizing(iconView)
+                        when {
+                            themed != null -> {
+                                iconView.setImageDrawable(themed)
+                                ThemeIconController.applyThemedWifiIconSizing(iconView)
+                            }
+                            ThemeIconController.hasThemedWifiIconForResource(
+                                view.context,
+                                lastWifiRes,
+                            ) -> {
+                                iconView.setImageResource(lastWifiRes)
+                                ThemeIconController.applyThemedWifiIconSizing(iconView)
+                            }
+                            else -> {
+                                iconView.setImageResource(lastWifiRes)
+                                ThemeIconController.resetWifiIconSizing(iconView)
+                            }
                         }
                         groupView.invalidate()
                     }
@@ -127,12 +137,22 @@ object WifiViewBinder {
                                 lastWifiRes = wifiIcon.res
                                 val themedDrawable = ThemeIconController
                                     .getThemedWifiIcon(view.context, wifiIcon.res)
-                                if (themedDrawable != null) {
-                                    iconView.setImageDrawable(themedDrawable)
-                                    ThemeIconController.applyThemedWifiIconSizing(iconView)
-                                } else {
-                                    IconViewBinder.bind(wifiIcon.icon, iconView)
-                                    ThemeIconController.resetWifiIconSizing(iconView)
+                                when {
+                                    themedDrawable != null -> {
+                                        iconView.setImageDrawable(themedDrawable)
+                                        ThemeIconController.applyThemedWifiIconSizing(iconView)
+                                    }
+                                    ThemeIconController.hasThemedWifiIconForResource(
+                                        view.context,
+                                        wifiIcon.res,
+                                    ) -> {
+                                        IconViewBinder.bind(wifiIcon.icon, iconView)
+                                        ThemeIconController.applyThemedWifiIconSizing(iconView)
+                                    }
+                                    else -> {
+                                        IconViewBinder.bind(wifiIcon.icon, iconView)
+                                        ThemeIconController.resetWifiIconSizing(iconView)
+                                    }
                                 }
                             }
                         }

@@ -128,13 +128,25 @@ object MobileIconBinder {
                         lastCellularIcon?.let { icon ->
                             val themed = ThemeIconController
                                 .getThemedSignalIcon(view.context, icon.level, icon.numberOfLevels)
-                            if (themed != null) {
-                                iconView.setImageDrawable(themed)
-                                ThemeIconController.applyThemedSignalIconSizing(iconView)
-                            } else {
-                                iconView.setImageDrawable(mobileDrawable)
-                                mobileDrawable.level = icon.toSignalDrawableState()
-                                ThemeIconController.resetSignalIconSizing(iconView)
+                            when {
+                                themed != null -> {
+                                    iconView.setImageDrawable(themed)
+                                    ThemeIconController.applyThemedSignalIconSizing(iconView)
+                                }
+                                ThemeIconController.hasThemedSignalIconForLevel(
+                                    view.context,
+                                    icon.level,
+                                    icon.numberOfLevels,
+                                ) -> {
+                                    iconView.setImageDrawable(mobileDrawable)
+                                    mobileDrawable.level = icon.toSignalDrawableState()
+                                    ThemeIconController.applyThemedSignalIconSizing(iconView)
+                                }
+                                else -> {
+                                    iconView.setImageDrawable(mobileDrawable)
+                                    mobileDrawable.level = icon.toSignalDrawableState()
+                                    ThemeIconController.resetSignalIconSizing(iconView)
+                                }
                             }
                         }
                         lastNetworkTypeIcon?.let { dataIcon ->
@@ -143,16 +155,30 @@ object MobileIconBinder {
                                     view.context,
                                     dataIcon.resId,
                                 )
-                            if (themedData != null) {
-                                networkTypeView.setImageDrawable(themedData)
-                                ContentDescriptionViewBinder.bind(
-                                    dataIcon.contentDescription,
-                                    networkTypeView,
-                                )
-                                ThemeIconController.applyThemedMobileDataIconSizing(networkTypeView)
-                            } else {
-                                IconViewBinder.bind(dataIcon, networkTypeView)
-                                ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                            when {
+                                themedData != null -> {
+                                    networkTypeView.setImageDrawable(themedData)
+                                    ContentDescriptionViewBinder.bind(
+                                        dataIcon.contentDescription,
+                                        networkTypeView,
+                                    )
+                                    ThemeIconController.applyThemedMobileDataIconSizing(networkTypeView)
+                                }
+                                ThemeIconController.hasThemedMobileDataIconForResource(
+                                    view.context,
+                                    dataIcon.resId,
+                                ) -> {
+                                    IconViewBinder.bind(dataIcon, networkTypeView)
+                                    ContentDescriptionViewBinder.bind(
+                                        dataIcon.contentDescription,
+                                        networkTypeView,
+                                    )
+                                    ThemeIconController.applyThemedMobileDataIconSizing(networkTypeView)
+                                }
+                                else -> {
+                                    IconViewBinder.bind(dataIcon, networkTypeView)
+                                    ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                                }
                             }
                         }
                         mobileGroupView.invalidate()
@@ -204,13 +230,25 @@ object MobileIconBinder {
                                             newIcon.level,
                                             newIcon.numberOfLevels
                                         )
-                                    if (themedDrawable != null) {
-                                        iconView.setImageDrawable(themedDrawable)
-                                        ThemeIconController.applyThemedSignalIconSizing(iconView)
-                                    } else {
-                                        iconView.setImageDrawable(mobileDrawable)
-                                        mobileDrawable.level = packedSignalDrawableState
-                                        ThemeIconController.resetSignalIconSizing(iconView)
+                                    when {
+                                        themedDrawable != null -> {
+                                            iconView.setImageDrawable(themedDrawable)
+                                            ThemeIconController.applyThemedSignalIconSizing(iconView)
+                                        }
+                                        ThemeIconController.hasThemedSignalIconForLevel(
+                                            view.context,
+                                            newIcon.level,
+                                            newIcon.numberOfLevels,
+                                        ) -> {
+                                            iconView.setImageDrawable(mobileDrawable)
+                                            mobileDrawable.level = packedSignalDrawableState
+                                            ThemeIconController.applyThemedSignalIconSizing(iconView)
+                                        }
+                                        else -> {
+                                            iconView.setImageDrawable(mobileDrawable)
+                                            mobileDrawable.level = packedSignalDrawableState
+                                            ThemeIconController.resetSignalIconSizing(iconView)
+                                        }
                                     }
                                     viewModel.verboseLogger?.logBinderSignalIconResult(
                                         parentView = view,
@@ -254,18 +292,34 @@ object MobileIconBinder {
                                         view.context,
                                         icon.resId,
                                     )
-                                if (themedData != null) {
-                                    networkTypeView.setImageDrawable(themedData)
-                                    ContentDescriptionViewBinder.bind(
-                                        icon.contentDescription,
-                                        networkTypeView,
-                                    )
-                                    ThemeIconController.applyThemedMobileDataIconSizing(
-                                        networkTypeView,
-                                    )
-                                } else {
-                                    IconViewBinder.bind(icon, networkTypeView)
-                                    ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                                when {
+                                    themedData != null -> {
+                                        networkTypeView.setImageDrawable(themedData)
+                                        ContentDescriptionViewBinder.bind(
+                                            icon.contentDescription,
+                                            networkTypeView,
+                                        )
+                                        ThemeIconController.applyThemedMobileDataIconSizing(
+                                            networkTypeView,
+                                        )
+                                    }
+                                    ThemeIconController.hasThemedMobileDataIconForResource(
+                                        view.context,
+                                        icon.resId,
+                                    ) -> {
+                                        IconViewBinder.bind(icon, networkTypeView)
+                                        ContentDescriptionViewBinder.bind(
+                                            icon.contentDescription,
+                                            networkTypeView,
+                                        )
+                                        ThemeIconController.applyThemedMobileDataIconSizing(
+                                            networkTypeView,
+                                        )
+                                    }
+                                    else -> {
+                                        IconViewBinder.bind(icon, networkTypeView)
+                                        ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                                    }
                                 }
                             }
                             val prevVis = networkTypeContainer.visibility
