@@ -81,9 +81,6 @@ import com.android.systemui.statusbar.chips.ui.compose.OngoingActivityChips
 import com.android.systemui.statusbar.core.NewStatusBarIcons
 import com.android.systemui.statusbar.core.RudimentaryBattery
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays
-import com.android.systemui.statusbar.NotificationListener
-import com.android.systemui.statusbar.OngoingActionProgress
-import com.android.systemui.statusbar.VibratorHelper
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager
 import com.android.systemui.statusbar.core.StatusBarForDesktop
 import com.android.systemui.statusbar.events.domain.interactor.SystemStatusEventAnimationInteractor
@@ -148,10 +145,8 @@ constructor(
     @DisplayAware private val homeStatusBarViewBinder: HomeStatusBarViewBinder,
     @DisplayAware private val homeStatusBarViewModelFactory: HomeStatusBarViewModelFactory,
     private val statusBarRegionSamplingViewModelFactory: StatusBarRegionSamplingViewModel.Factory,
-    private val notificationListener: NotificationListener,
     private val keyguardStateController: KeyguardStateController,
     private val headsUpManager: HeadsUpManager,
-    private val vibrator: VibratorHelper,
 ) {
     fun create(root: ViewGroup, andThen: (ViewGroup) -> Unit): ComposeView {
         val composeView = ComposeView(root.context)
@@ -177,10 +172,8 @@ constructor(
                         statusBarRegionSamplingViewModelFactory =
                             statusBarRegionSamplingViewModelFactory,
                         onViewCreated = andThen,
-                        notificationListener = notificationListener,
                         keyguardStateController = keyguardStateController,
                         headsUpManager = headsUpManager,
-                        vibrator = vibrator,
                         modifier = Modifier.sysUiResTagContainer(),
                     )
                 }
@@ -220,10 +213,8 @@ fun StatusBarRoot(
     mediaViewModelFactory: MediaViewModel.Factory,
     statusBarRegionSamplingViewModelFactory: StatusBarRegionSamplingViewModel.Factory,
     onViewCreated: (ViewGroup) -> Unit,
-    notificationListener: NotificationListener,
     keyguardStateController: KeyguardStateController,
     headsUpManager: HeadsUpManager,
-    vibrator: VibratorHelper,
     modifier: Modifier = Modifier,
 ) {
     val displayId = parent.context.displayId
@@ -283,10 +274,6 @@ fun StatusBarRoot(
                         statusBarViewModel = statusBarViewModel,
                         iconViewStore = iconViewStore,
                         appHandlesViewModel = appHandlesViewModel,
-                        notificationListener = notificationListener,
-                        keyguardStateController = keyguardStateController,
-                        headsUpManager = headsUpManager,
-                        vibrator = vibrator,
                         context = context,
                     )
                 }
@@ -453,10 +440,6 @@ private fun addStartSideComposable(
     statusBarViewModel: HomeStatusBarViewModel,
     iconViewStore: NotificationIconContainerViewBinder.IconViewStore?,
     appHandlesViewModel: AppHandlesViewModel,
-    notificationListener: NotificationListener,
-    keyguardStateController: KeyguardStateController,
-    headsUpManager: HeadsUpManager,
-    vibrator: VibratorHelper,
     context: Context,
 ) {
     val startSideExceptHeadsUp =
@@ -538,21 +521,7 @@ private fun addStartSideComposable(
                         )
                     }
 
-                val progressController = remember {
-                    com.android.systemui.statusbar.OnGoingActionProgressComposeController(
-                        context,
-                        notificationListener,
-                        keyguardStateController,
-                        headsUpManager,
-                        vibrator
-                    )
-                }
-                
                 val chipsVisibilityModel = statusBarViewModel.ongoingActivityChips
-                val hasSystemChips = chipsVisibilityModel.chips.active.isNotEmpty()
-                progressController.setSystemChipVisible(hasSystemChips)
-
-                OngoingActionProgress(controller = progressController)
 
                 if (chipsVisibilityModel.areChipsAllowed) {
                     OngoingActivityChips(

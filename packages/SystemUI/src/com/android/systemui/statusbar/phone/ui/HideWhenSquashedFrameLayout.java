@@ -13,7 +13,7 @@ import android.widget.FrameLayout;
 /**
  * A FrameLayout that hides its single child and takes zero width when there isn't enough
  * horizontal space to show the child at its natural size. Used so the combined notification
- * counter is fully hidden instead of squashed when the ongoing progress chip is active.
+ * counter is fully hidden instead of squashed when other status bar content needs the space.
  * Also hides entirely when the counter is force-hidden (e.g. on keyguard) to avoid overlap.
  */
 public class HideWhenSquashedFrameLayout extends FrameLayout {

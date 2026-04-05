@@ -20,7 +20,7 @@
     android:orientation="horizontal"
     android:paddingStart="4sp">
 
-    <!-- Wrapper hides counter when there isn't enough space (e.g. ongoing progress chip active) -->
+    <!-- Wrapper hides counter when there isn't enough space (e.g. status bar chips active) -->
     <com.android.systemui.statusbar.phone.ui.HideWhenSquashedFrameLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent">

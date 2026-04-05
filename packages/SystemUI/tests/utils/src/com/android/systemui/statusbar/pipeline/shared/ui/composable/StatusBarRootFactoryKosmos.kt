@@ -22,8 +22,6 @@ import com.android.systemui.media.controls.ui.controller.mediaHierarchyManager
 import com.android.systemui.media.controls.ui.view.qsMediaHost
 import com.android.systemui.media.remedia.ui.viewmodel.factory.mediaViewModelFactory
 import com.android.systemui.plugins.fakeDarkIconDispatcher
-import com.android.systemui.statusbar.NotificationListener
-import com.android.systemui.statusbar.VibratorHelper
 import com.android.systemui.statusbar.events.domain.interactor.systemStatusEventAnimationInteractor
 import com.android.systemui.statusbar.notification.headsup.HeadsUpManager
 import com.android.systemui.statusbar.notification.icon.ui.viewbinder.connectedDisplaysStatusBarNotificationIconViewStoreFactory
@@ -52,9 +50,7 @@ val Kosmos.statusBarRootFactory by
             homeStatusBarViewBinder = homeStatusBarViewBinder,
             homeStatusBarViewModelFactory = defaultDisplayHomeStatusBarViewModelFactory,
             statusBarRegionSamplingViewModelFactory = statusBarRegionSamplingViewModelFactory,
-            notificationListener = mock<NotificationListener>(),
             keyguardStateController = mock<KeyguardStateController>(),
             headsUpManager = mock<HeadsUpManager>(),
-            vibrator = mock<VibratorHelper>(),
         )
     }

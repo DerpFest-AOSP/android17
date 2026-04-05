@@ -7071,41 +7071,6 @@ public final class Settings {
         public static final String UDFPS_ICON = "udfps_icon";
 
         /**
-         * @hide
-         */
-        public static final String ONGOING_ACTION_CHIP = "ongoing_action_chip";
-
-        /**
-         * @hide
-         */
-        public static final String ONGOING_MEDIA_PROGRESS = "ongoing_media_progress";
-
-        /**
-         * @hide
-         */
-        public static final String ONGOING_COMPACT_MODE = "ongoing_compact_mode";
-
-        /**
-         * @hide
-         */
-        private static final String COMPACT_MODE = "compact_mode";
-
-        /**
-         * @hide
-         */
-        public static final String SHOW_MEDIA_PROGRESS = "show_media_progress";
-
-        /**
-         * @hide
-         */
-        public static final String PROGRESS_BAR_OPACITY = "progress_bar_opacity";
-
-        /**
-         * @hide
-         */
-        public static final String ONGOING_CHIP_COLOR_MODE = "ongoing_chip_color_mode";
-
-        /**
          * Whether to control brightness from status bar
          * 0 = 0ff, 1 = on
          * @hide
