@@ -22,6 +22,9 @@ private data class IconMaskSpec(val path: String, val viewBox: Float = DEFAULT_I
 
 /** Icon mask paths for classic QS tiles. */
 object QSTileIconShapes {
+    /** Matches [com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ClassicCircleSize]. */
+    private const val CLASSIC_CIRCLE_SIZE_DP = 56f
+
     private const val CIRCLE_PATH = "M50 0A50 50,0,1,1,50 100A50 50,0,1,1,50 0"
     private const val SQUARE_PATH =
         "M53.689 0.82 L53.689 .82 C67.434 .82 74.306 .82 79.758 2.978 87.649 6.103 93.897 12.351 97.022 20.242 99.18 25.694 99.18 32.566 99.18 46.311 V53.689 C99.18 67.434 99.18 74.306 97.022 79.758 93.897 87.649 87.649 93.897 79.758 97.022 74.306 99.18 67.434 99.18 53.689 99.18 H46.311 C32.566 99.18 25.694 99.18 20.242 97.022 12.351 93.897 6.103 87.649 2.978 79.758 .82 74.306 .82 67.434 .82 53.689 L.82 46.311 C.82 32.566 .82 25.694 2.978 20.242 6.103 12.351 12.351 6.103 20.242 2.978 25.694 .82 32.566 .82 46.311 .82Z"
@@ -113,6 +116,11 @@ object QSTileIconShapes {
     const val DOTTED_CIRCLE_KEY = "dotted_circle"
     /** Circular outline (stroke); same mask as [DOTTED_CIRCLE_KEY], solid line instead of dots. */
     const val OUTLINE_STYLE_KEY = "outline_style"
+    /**
+     * Low-alpha QS tile gradient wash inside the circle when gradient is enabled; solid
+     * surface-colored disc when disabled. ~2.2dp primary ring (see [classicOrnamentStrokeWidthFraction]).
+     */
+    const val OUTLINE_STYLE_DARK_KEY = "outline_style_dark"
     const val SQUAREMEDO_KEY = "squaremedo"
 
     /** Old [Settings.Secure] values mapped to current keys. */
@@ -160,6 +168,7 @@ object QSTileIconShapes {
             JUST_ICONS_KEY to IconMaskSpec(JUST_ICONS_CLIP_PATH),
             DOTTED_CIRCLE_KEY to IconMaskSpec(CIRCLE_PATH),
             OUTLINE_STYLE_KEY to IconMaskSpec(CIRCLE_PATH),
+            OUTLINE_STYLE_DARK_KEY to IconMaskSpec(CIRCLE_PATH),
             SQUAREMEDO_KEY to IconMaskSpec(IOS_ROUNDED_SQUARE_PATH),
         )
 
@@ -202,6 +211,7 @@ object QSTileIconShapes {
         return when (k) {
             DOTTED_CIRCLE_KEY -> DOTTED_CIRCLE_ORNAMENT_PATH to 48f
             OUTLINE_STYLE_KEY -> CIRCLE_PATH to DEFAULT_ICON_MASK_VIEWBOX
+            OUTLINE_STYLE_DARK_KEY -> CIRCLE_PATH to DEFAULT_ICON_MASK_VIEWBOX
             SQUAREMEDO_KEY -> SQUAREMEDO_ORNAMENT_PATH to 48f
             else -> null
         }
@@ -216,9 +226,17 @@ object QSTileIconShapes {
         val k = normalizeKey(key)
         return when (k) {
             OUTLINE_STYLE_KEY -> 0.022f
+            OUTLINE_STYLE_DARK_KEY -> 2.2f / CLASSIC_CIRCLE_SIZE_DP
             else -> null
         }
     }
+
+    /**
+     * Classic tile: gradient wash or solid surface + accent ring ([OUTLINE_STYLE_DARK_KEY]); not a
+     * fully transparent ornament-only tile.
+     */
+    fun classicUsesDarkOutlineBackdrop(key: String): Boolean =
+        normalizeKey(key) == OUTLINE_STYLE_DARK_KEY
 }
 
 /**

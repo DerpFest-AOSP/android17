@@ -437,12 +437,20 @@ object TileBounceMotionTestKeys {
  * Classic tile content: icon inside a shaped clip with optional label below. Uses an accented fill
  * except for [QSTileIconShapes.JUST_ICONS_KEY] and ornament-only shapes (transparent panel).
  * When the tile has no fill (just icons, dotted circle, squaremedo) and [tileState] is active,
- * icon, label, and ornament use [androidx.compose.material3.MaterialTheme.colorScheme.primary]
- * (including when QS tile gradient is enabled).
- * When [Settings.System.QS_PANEL_BG_USE_NEW_TINT] is enabled ([rememberQsUseNewTint]), the label
- * uses primary (accent); inactive tiles use primary at reduced alpha; unavailable keeps [TileColors].
+ * icon and ornament use theme primary; labels follow new-tint rules below (no QS gradient luminance
+ * on those transparent shapes).
+ * When [Settings.System.QS_PANEL_BG_USE_NEW_TINT] is enabled ([rememberQsUseNewTint]), inactive
+ * tiles use primary at reduced alpha; unavailable keeps [TileColors].
  * When new tint is off, labels use onSurface so active tiles match inactive (labels sit on the
  * panel surface, not on the accent icon fill).
+ * [QSTileIconShapes.OUTLINE_STYLE_DARK_KEY] uses a low-alpha QS gradient inside the clip when
+ * gradient is enabled ([CommonTileDefaults.ClassicOutlineDarkGradientWashAlpha]); otherwise a solid
+ * surface disc—see [rememberQsTileGradientForRinger]. When on, an **active** tile matches the
+ * prior **inactive** icon/label look (muted foreground on the wash); **inactive** (and
+ * unavailable) tiles use a greyed ring ([CommonTileDefaults.ClassicOutlineDarkInactiveRingAlpha]
+ * on [androidx.compose.material3.ColorScheme.onSurfaceVariant]) with **no** inner wash/solid fill
+ * (panel shows through); **active** tiles keep the gradient wash or surface disc inside the clip.
+ * instead of accent.
  */
 @Composable
 fun ClassicCircleTileContent(
@@ -472,30 +480,54 @@ fun ClassicCircleTileContent(
                 runCatching { PathParser.createPathFromPathData(pathStr) }.getOrNull()
             }
         }
-        // Ornament-only shapes (dotted / solid ring, squaremedo lines): no accented fill—panel shows through.
-        val noTileFill = justIcons || ornamentSpec != null
-        // Transparent classic tiles (just icons, dotted circle, squaremedo): active uses accent even
-        // when QS gradient is on (filled tiles still use gradient/contrast from [TileColors]).
+        val darkOutlineBackdrop =
+            remember(tileIconShapeKey) {
+                QSTileIconShapes.classicUsesDarkOutlineBackdrop(tileIconShapeKey)
+            }
+        // Ornament-only shapes: no accented fill—panel shows through. [outline_style_dark] uses a
+        // low-alpha QS gradient wash or solid surface (see [QSTileIconShapes.classicUsesDarkOutlineBackdrop]).
+        val noTileFill = justIcons || (ornamentSpec != null && !darkOutlineBackdrop)
         val useAccentNoFillActive = noTileFill && tileState == STATE_ACTIVE
         val useNewTint = rememberQsUseNewTint()
         val primary = MaterialTheme.colorScheme.primary
-        val iconTintTarget =
-            if (useAccentNoFillActive) primary else colors.icon
         // Label sits on the panel surface (not on the icon fill). When new tint is off, active
         // tiles used colors.icon (= onPrimary), which is for text on accent and is unreadable on
         // surface—match inactive tiles (onSurface). When new tint is on, accent-tint labels.
         val onSurface = MaterialTheme.colorScheme.onSurface
+        val darkBackdropColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        val outlineDarkWashBrush = rememberQsTileGradientForRinger()?.first
+        val outlineDarkInactiveRing =
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                alpha = CommonTileDefaults.ClassicOutlineDarkInactiveRingAlpha,
+            )
         val labelTintTarget =
             when {
                 useAccentNoFillActive && useNewTint -> primary
                 useAccentNoFillActive && !useNewTint -> onSurface
+                darkOutlineBackdrop && tileState == STATE_ACTIVE && useNewTint ->
+                    primary.copy(alpha = 0.58f)
+                darkOutlineBackdrop && tileState == STATE_ACTIVE && !useNewTint -> onSurface
                 useNewTint && tileState == STATE_ACTIVE -> primary
                 useNewTint && tileState == STATE_INACTIVE -> primary.copy(alpha = 0.58f)
                 tileState == STATE_ACTIVE && !useNewTint -> onSurface
                 else -> colors.icon
             }
+        val iconTintTarget =
+            when {
+                useAccentNoFillActive -> primary
+                darkOutlineBackdrop && tileState == STATE_ACTIVE -> onSurface
+                else -> colors.icon
+            }
         val iconTint by animateColorAsState(iconTintTarget, label = "ClassicTileIconTint")
         val labelTint by animateColorAsState(labelTintTarget, label = "ClassicTileLabelTint")
+        val ringOrnamentColorTarget =
+            when {
+                !darkOutlineBackdrop -> iconTint.copy(alpha = 0.45f)
+                tileState == STATE_ACTIVE -> primary
+                else -> outlineDarkInactiveRing
+            }
+        val ringOrnamentColor by
+            animateColorAsState(ringOrnamentColorTarget, label = "ClassicOutlineDarkRing")
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -518,7 +550,7 @@ fun ClassicCircleTileContent(
                                 if (strokeW != null) {
                                     drawPath(
                                         path = path.asComposePath(),
-                                        color = iconTint.copy(alpha = 0.45f),
+                                        color = ringOrnamentColor,
                                         style =
                                             Stroke(
                                                 width = strokeW,
@@ -529,7 +561,7 @@ fun ClassicCircleTileContent(
                                 } else {
                                     drawPath(
                                         path = path.asComposePath(),
-                                        color = iconTint.copy(alpha = 0.45f),
+                                        color = ringOrnamentColor,
                                         style = Fill,
                                     )
                                 }
@@ -546,17 +578,30 @@ fun ClassicCircleTileContent(
                     .fillMaxSize()
                     .clip(tileIconShape)
                     .then(
-                        if (noTileFill) {
-                            Modifier
-                        } else {
-                            Modifier.drawBehind {
-                                val brush = colors.backgroundBrush
-                                if (brush != null) {
-                                    drawRect(brush = brush)
-                                } else {
-                                    drawRect(animatedBgColor)
+                        when {
+                            darkOutlineBackdrop && tileState == STATE_ACTIVE ->
+                                Modifier.drawBehind {
+                                    if (outlineDarkWashBrush != null) {
+                                        drawRect(
+                                            brush = outlineDarkWashBrush,
+                                            alpha =
+                                                CommonTileDefaults.ClassicOutlineDarkGradientWashAlpha,
+                                        )
+                                    } else {
+                                        drawRect(color = darkBackdropColor)
+                                    }
                                 }
-                            }
+                            darkOutlineBackdrop -> Modifier
+                            !noTileFill ->
+                                Modifier.drawBehind {
+                                    val brush = colors.backgroundBrush
+                                    if (brush != null) {
+                                        drawRect(brush = brush)
+                                    } else {
+                                        drawRect(animatedBgColor)
+                                    }
+                                }
+                            else -> Modifier
                         }
                     ),
             ) {
@@ -607,6 +652,18 @@ object CommonTileDefaults {
     val ClassicIconSize = 24.dp
     val ClassicTileHeight = 96.dp
     val ClassicLabelSize = 11.sp
+
+    /**
+     * Opacity for [rememberQsTileGradientForRinger] inside [QSTileIconShapes.OUTLINE_STYLE_DARK_KEY]
+     * (panel shows through; matches the subtle wash look of transparent classic tiles).
+     */
+    const val ClassicOutlineDarkGradientWashAlpha = 0.22f
+
+    /**
+     * Inactive / unavailable [QSTileIconShapes.OUTLINE_STYLE_DARK_KEY] ring: greyed
+     * [androidx.compose.material3.ColorScheme.onSurfaceVariant] (disabled-style outline).
+     */
+    const val ClassicOutlineDarkInactiveRingAlpha = 0.52f
 
     @Composable
     fun longPressLabelSettings() = stringResource(id = R.string.accessibility_long_click_tile)
