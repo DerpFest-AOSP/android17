@@ -5,6 +5,8 @@ import android.graphics.PixelFormat
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -68,6 +70,11 @@ import android.view.WindowInsets
 import androidx.compose.ui.input.pointer.PointerEvent
 
 private const val EXIT_ANIM_DURATION = 300L
+
+/** Matches legacy mini-player popup: scale 0.88→1 with synced alpha via fade + scale. */
+private const val ISLAND_EXPAND_MS = 350
+private const val ISLAND_COLLAPSE_MS = 250
+private const val ISLAND_POPUP_INITIAL_SCALE = 0.88f
 
 @SysUISingleton
 class AxDynamicBarExpandedPanel
@@ -268,16 +275,40 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
 
     AnimatedVisibility(
         visibleState = expandedVisible,
-        enter = fadeIn(tween(250)) + scaleIn(
-            animationSpec = tween(350),
-            initialScale = 0.4f,
-            transformOrigin = origin,
-        ),
-        exit = fadeOut(tween(200)) + scaleOut(
-            animationSpec = tween(250),
-            targetScale = 0.4f,
-            transformOrigin = origin,
-        ),
+        enter =
+            fadeIn(
+                animationSpec =
+                    tween(
+                        durationMillis = ISLAND_EXPAND_MS,
+                        easing = FastOutSlowInEasing,
+                    ),
+            ) +
+                scaleIn(
+                    animationSpec =
+                        tween(
+                            durationMillis = ISLAND_EXPAND_MS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    initialScale = ISLAND_POPUP_INITIAL_SCALE,
+                    transformOrigin = origin,
+                ),
+        exit =
+            fadeOut(
+                animationSpec =
+                    tween(
+                        durationMillis = ISLAND_COLLAPSE_MS,
+                        easing = LinearOutSlowInEasing,
+                    ),
+            ) +
+                scaleOut(
+                    animationSpec =
+                        tween(
+                            durationMillis = ISLAND_COLLAPSE_MS,
+                            easing = LinearOutSlowInEasing,
+                        ),
+                    targetScale = ISLAND_POPUP_INITIAL_SCALE,
+                    transformOrigin = origin,
+                ),
     ) {
         
         Box(
