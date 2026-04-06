@@ -58,6 +58,7 @@ public class ThemeEngine {
     public static final String CATEGORY_SYSTEMUI = "systemui";
     public static final String CATEGORY_UI_QS = "ui_qs";
     public static final String CATEGORY_UI_VOLUME = "ui_volume";
+    public static final String CATEGORY_BATTERY_STYLE = "battery_style";
 
     private static volatile ThemeEngine sInstance;
 

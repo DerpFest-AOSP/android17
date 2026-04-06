@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
+import com.android.systemui.res.R
 import com.android.systemui.statusbar.phone.domain.interactor.IsAreaDark
 import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
@@ -52,9 +53,13 @@ fun BatteryWithPercent(
     /** When false (e.g. quick settings), do not apply accent tint even if setting is on */
     useAccentTintInContext: Boolean = true,
 ) {
+    val ctx = LocalContext.current
+    val themedIconHeightPx =
+        ctx.resources.getDimensionPixelSize(R.dimen.config_batterymeterIconHeight)
     val batteryHeight =
         with(LocalDensity.current) {
-            BatteryViewModel.getStatusBarBatteryHeight(LocalContext.current).toDp()
+            if (themedIconHeightPx > 0) themedIconHeightPx.toDp()
+            else BatteryViewModel.getStatusBarBatteryHeight(ctx).toDp()
         }
 
     val textStyle =
