@@ -23,6 +23,7 @@ import com.android.systemui.kosmos.testScope
 import com.android.systemui.log.table.logcatTableLogBuffer
 import com.android.systemui.shared.settings.data.repository.systemSettingsRepository
 import com.android.systemui.statusbar.policy.batteryController
+import com.android.systemui.statusbar.policy.configurationController
 
 /** Use [Kosmos.batteryController.fake] to make the repo have the state you want */
 val Kosmos.batteryRepository by
@@ -32,6 +33,7 @@ val Kosmos.batteryRepository by
             testScope.backgroundScope,
             testDispatcher,
             batteryController,
+            configurationController,
             systemSettingsRepository,
             logcatTableLogBuffer(this, "BatteryTableLog"),
         )

@@ -34,6 +34,7 @@ import com.android.systemui.log.table.logcatTableLogBuffer
 import com.android.systemui.shared.settings.data.repository.fakeSystemSettingsRepository
 import com.android.systemui.shared.settings.data.repository.systemSettingsRepository
 import com.android.systemui.statusbar.policy.batteryController
+import com.android.systemui.statusbar.policy.configurationController
 import com.android.systemui.statusbar.policy.fake
 import com.android.systemui.testKosmos
 import com.google.common.truth.Truth.assertThat
@@ -58,6 +59,7 @@ class BatteryRepositoryTest : SysuiTestCase() {
                 backgroundScope,
                 testDispatcher,
                 batteryController,
+                configurationController,
                 systemSettingsRepository,
                 logcatTableLogBuffer(this, "BatteryTableLog"),
             )
