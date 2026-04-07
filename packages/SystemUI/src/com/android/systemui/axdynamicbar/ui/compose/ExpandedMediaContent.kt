@@ -150,52 +150,48 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
             modifier =
                 Modifier.fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
+            Box(
                 modifier =
-                    Modifier.weight(1f).clickable {
-                        interactor.openMediaApp()
-                        interactor.collapseIsland()
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    Modifier.size(CinematicArtBoxSize)
+                        .clip(CinematicArtInnerRadius)
+                        .background(Color.White.copy(alpha = 0.10f)),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier =
-                        Modifier.size(CinematicArtBoxSize)
-                            .clip(CinematicArtInnerRadius)
-                            .background(Color.White.copy(alpha = 0.10f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    when {
-                        event.albumArt != null ->
-                            Image(
-                                bitmap = event.albumArt!!.toScaledBitmap(CinematicArtBoxSize),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize().clip(CinematicArtInnerRadius),
-                            )
-                        event.appIcon != null ->
-                            Image(
-                                bitmap = event.appIcon!!.toScaledBitmap(36.dp),
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop,
-                            )
-                        else ->
-                            Icon(
-                                Icons.Filled.MusicNote,
-                                null,
-                                tint = onCard.copy(alpha = 0.50f),
-                                modifier = Modifier.size(26.dp),
-                            )
-                    }
+                when {
+                    event.albumArt != null ->
+                        Image(
+                            bitmap = event.albumArt!!.toScaledBitmap(CinematicArtBoxSize),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize().clip(CinematicArtInnerRadius),
+                        )
+                    event.appIcon != null ->
+                        Image(
+                            bitmap = event.appIcon!!.toScaledBitmap(36.dp),
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop,
+                        )
+                    else ->
+                        Icon(
+                            Icons.Filled.MusicNote,
+                            null,
+                            tint = onCard.copy(alpha = 0.50f),
+                            modifier = Modifier.size(26.dp),
+                        )
                 }
+            }
 
+            Column(modifier = Modifier.weight(1f)) {
                 Column(
-                    modifier = Modifier.weight(1f),
+                    modifier =
+                        Modifier.fillMaxWidth().clickable {
+                            interactor.openMediaApp()
+                            interactor.collapseIsland()
+                        },
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     Text(
@@ -207,8 +203,9 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = (-0.2).sp,
                             ),
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     if (event.artist.isNotEmpty()) {
                         Text(
@@ -221,28 +218,29 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                                 ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-
-                    Spacer(Modifier.height(6.dp))
-
-                    if (event.duration > 0L) {
-                        MediaSeekBar(
-                            event = event,
-                            interactor = interactor,
-                            accent = accent,
-                            cinematic = true,
+                            modifier = Modifier.fillMaxWidth(),
                         )
                     }
                 }
-            }
 
-            MediaControls(
-                event = event,
-                interactor = interactor,
-                accent = accent,
-                cinematic = true,
-            )
+                if (event.duration > 0L) {
+                    Spacer(Modifier.height(6.dp))
+                    MediaSeekBar(
+                        event = event,
+                        interactor = interactor,
+                        accent = accent,
+                        cinematic = true,
+                    )
+                }
+
+                Spacer(Modifier.height(10.dp))
+                MediaControls(
+                    event = event,
+                    interactor = interactor,
+                    accent = accent,
+                    cinematic = true,
+                )
+            }
         }
     }
 }
@@ -337,8 +335,8 @@ private fun MediaControls(
         val onCard = Color.White
         val playSurface = onCard.copy(alpha = 0.15f)
         Row(
-            modifier = modifier,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (event.customActions.isNotEmpty()) {
