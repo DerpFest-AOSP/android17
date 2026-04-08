@@ -24,8 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
@@ -109,11 +107,11 @@ private fun PathBatteryBody(
         contentDescription = contentDescription,
     ) {
         val level = levelProvider()
-        val colors = when (val provided = colorsProvider()) {
-            is BatteryColors.DarkTheme -> BatteryColors.DarkTheme.Default
-            is BatteryColors.LightTheme -> BatteryColors.LightTheme.Default
-            else -> provided
-        }
+        // Use the full color profile as-is: includes AccentLightTheme/AccentDarkTheme when
+        // status bar accent tinting is enabled, plus Charging/Error/PowerSave variants.
+        // Do not collapse to Default — Accent* types extend DarkTheme/LightTheme and would
+        // incorrectly lose accent and state colors.
+        val colors = colorsProvider()
         val showLevel = showLevelProvider()
 
         drawable.setBatteryLevel(level ?: 0)
@@ -232,7 +230,9 @@ private fun PillBatteryBody(
             drawPath(fullPath, color = accentColor, style = Fill)
         }
 
-        val textColor = if (isOutline) accentColor else Color.White
+        // Match pipeline batteries: glyph/percent use [BatteryColors.glyph] (accent-aware,
+        // charging/error/power-save aware). Avoid hardcoded white so accent tinting reads correctly.
+        val textColor = if (isOutline) accentColor else colors.glyph
         val textResult = if (showLevel && level != null) {
             textMeasurer.measure(
                 text = level.toString(),
