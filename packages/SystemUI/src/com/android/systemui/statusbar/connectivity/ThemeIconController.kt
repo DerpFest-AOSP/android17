@@ -212,7 +212,7 @@ object ThemeIconController {
         return engine.isTargetedResource(names[level])
     }
 
-    /** True when [getThemedMobileDataIcon] would use a themed name (overlay may load late). */
+    /** True when [getThemedMobileDataIcon] may apply (target list or classic `*mobiledata*` names). */
     @JvmStatic
     fun hasThemedMobileDataIconForResource(context: Context, resId: Int): Boolean {
         if (resId == 0) return false
@@ -222,7 +222,6 @@ object ThemeIconController {
             } catch (_: Exception) {
                 return false
             }
-        if (!name.contains("mobiledata")) return false
         val engine = ThemeEngine.getInstance(context) ?: return false
         return engine.isTargetedResource(name)
     }
@@ -276,7 +275,8 @@ object ThemeIconController {
     }
 
     /**
-     * Mobile data / RAT type icons (`ic_*_mobiledata`, …) from [android.customization.sb_data] overlays.
+     * RAT / mobile-data-type icons (e.g. `ic_lte_mobiledata`, or any name listed in the active
+     * system theme target arrays / [android.customization.sb_data]).
      */
     @JvmStatic
     fun getThemedMobileDataIcon(context: Context, resId: Int): Drawable? {
@@ -287,8 +287,10 @@ object ThemeIconController {
             } catch (_: Exception) {
                 return null
             }
-        if (!name.contains("mobiledata")) return null
         val engine = ThemeEngine.getInstance(context) ?: return null
+        val inTargetList = engine.isTargetedResource(name)
+        val legacyMobileDataName = name.contains("mobiledata", ignoreCase = true)
+        if (!inTargetList && !legacyMobileDataName) return null
         val d = engine.getSystemThemeIconDrawable(name) ?: return null
         return scaleDrawable(
             context,

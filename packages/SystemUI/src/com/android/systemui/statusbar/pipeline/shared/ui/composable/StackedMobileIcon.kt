@@ -106,19 +106,45 @@ fun StackedMobileIcon(viewModel: StackedMobileIconViewModel, modifier: Modifier 
             )
         }
 
-        viewModel.networkTypeIcon?.let {
+        viewModel.networkTypeIcon?.let { icon ->
             // Provide the RAT context needed for the resource overlays
             val ratContext = viewModel.mobileContext ?: LocalContext.current
+            val themeVer = ThemeIconController.themeVersion.collectAsStateWithLifecycle()
             CompositionLocalProvider(LocalContext provides ratContext) {
-                val height = with(LocalDensity.current) { IconHeightSp.toDp() }
+                val themedDrawable =
+                    remember(icon.resId, themeVer.value) {
+                        ThemeIconController.getThemedMobileDataIcon(ratContext, icon.resId)
+                    }
+                val useThemedHeight =
+                    themedDrawable != null ||
+                        ThemeIconController.hasThemedMobileDataIconForResource(
+                            ratContext,
+                            icon.resId,
+                        )
+                val height =
+                    if (useThemedHeight) {
+                        dimensionResource(R.dimen.status_bar_themed_icon_slot_height)
+                    } else {
+                        with(LocalDensity.current) { IconHeightSp.toDp() }
+                    }
                 val paddingEnd = with(LocalDensity.current) { RatIndicatorPaddingSp.toDp() }
-                Image(
-                    painter = painterResource(it.resId),
-                    contentDescription = it.contentDescription?.load(),
-                    modifier = Modifier.height(height).padding(end = paddingEnd),
-                    colorFilter = ColorFilter.tint(contentColor, BlendMode.SrcIn),
-                    contentScale = ContentScale.FillHeight,
-                )
+                if (themedDrawable != null) {
+                    Image(
+                        painter = rememberDrawablePainter(themedDrawable),
+                        contentDescription = icon.contentDescription?.load(),
+                        modifier = Modifier.height(height).padding(end = paddingEnd),
+                        colorFilter = ColorFilter.tint(contentColor, BlendMode.SrcIn),
+                        contentScale = ContentScale.FillHeight,
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(icon.resId),
+                        contentDescription = icon.contentDescription?.load(),
+                        modifier = Modifier.height(height).padding(end = paddingEnd),
+                        colorFilter = ColorFilter.tint(contentColor, BlendMode.SrcIn),
+                        contentScale = ContentScale.FillHeight,
+                    )
+                }
             }
         }
 

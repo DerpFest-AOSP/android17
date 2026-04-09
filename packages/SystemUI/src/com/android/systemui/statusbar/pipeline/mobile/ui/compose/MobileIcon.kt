@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -55,8 +57,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.Flags
+import com.android.compose.ui.graphics.painter.rememberDrawablePainter
 import com.android.systemui.common.ui.compose.load
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.connectivity.ThemeIconController
 import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
 import com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MobileIconViewModelCommon
 
@@ -82,6 +86,7 @@ fun MobileIcon(viewModel: MobileIconViewModelCommon, modifier: Modifier = Modifi
     val activityContainerVisible by
         viewModel.activityContainerVisible.collectAsStateWithLifecycle(initialValue = false)
     val context = LocalContext.current
+    val themeVer = ThemeIconController.themeVersion.collectAsStateWithLifecycle()
     val contentColor = LocalContentColor.current
     val spacing = with(LocalDensity.current) { MobileIconDimensions.IconSpacingSp.toDp() }
 
@@ -105,15 +110,40 @@ fun MobileIcon(viewModel: MobileIconViewModelCommon, modifier: Modifier = Modifi
         }
 
         networkTypeIcon?.let { networkIcon ->
-            val height = with(LocalDensity.current) { MobileIconDimensions.IconHeightSp.toDp() }
+            val themedDrawable =
+                remember(networkIcon.resId, themeVer.value) {
+                    ThemeIconController.getThemedMobileDataIcon(context, networkIcon.resId)
+                }
+            val useThemedHeight =
+                themedDrawable != null ||
+                    ThemeIconController.hasThemedMobileDataIconForResource(
+                        context,
+                        networkIcon.resId,
+                    )
+            val height =
+                if (useThemedHeight) {
+                    dimensionResource(R.dimen.status_bar_themed_icon_slot_height)
+                } else {
+                    with(LocalDensity.current) { MobileIconDimensions.IconHeightSp.toDp() }
+                }
             Box(modifier = Modifier.height(height), contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(networkIcon.resId),
-                    contentDescription = networkIcon.contentDescription?.load(),
-                    modifier = Modifier.height(height),
-                    colorFilter = ColorFilter.tint(contentColor, BlendMode.SrcIn),
-                    contentScale = ContentScale.FillHeight,
-                )
+                if (themedDrawable != null) {
+                    Image(
+                        painter = rememberDrawablePainter(themedDrawable),
+                        contentDescription = networkIcon.contentDescription?.load(),
+                        modifier = Modifier.height(height),
+                        colorFilter = ColorFilter.tint(contentColor, BlendMode.SrcIn),
+                        contentScale = ContentScale.FillHeight,
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(networkIcon.resId),
+                        contentDescription = networkIcon.contentDescription?.load(),
+                        modifier = Modifier.height(height),
+                        colorFilter = ColorFilter.tint(contentColor, BlendMode.SrcIn),
+                        contentScale = ContentScale.FillHeight,
+                    )
+                }
             }
         }
 
