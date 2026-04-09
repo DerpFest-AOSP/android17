@@ -157,12 +157,12 @@ constructor(
                     timerJob = null
                     _timerEvent.value = null
                 }
-                if (key == recorderNotifKey) {
+                if (key == stopwatchNotificationKey) {
                     stopwatchNotificationKey = null
                     _stopwatchEvent.value = null
                 }
 
-                if (sbn.key == recorderNotifKey) {
+                if (key == recorderNotifKey) {
                     recorderNotifKey = null
                     val currentState = _audioRecordingEvent.value?.state
                     if (currentState == RecordingState.SAVED) {
