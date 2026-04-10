@@ -69,6 +69,8 @@ phony {
         "IconPackAcherusAndroidOverlay",
         "IconPackAcherusSettingsOverlay",
         "IconPackAcherusSystemUIOverlay",
+        "IconPackFaintUIAndroidOverlay",
+        "IconPackFaintUISystemUIOverlay",
         "IconPackOutlineAndroidOverlay",
         "IconPackOutlineSettingsOverlay",
         "IconPackOutlineSystemUIOverlay",
