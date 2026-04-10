@@ -20,7 +20,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.database.ContentObserver
 import android.os.UserHandle
-import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import androidx.annotation.VisibleForTesting
@@ -131,6 +130,11 @@ import com.android.systemui.haptics.slider.SeekableSliderTrackerConfig
 import com.android.systemui.haptics.slider.SliderHapticFeedbackConfig
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
+import com.android.systemui.qs.ui.compose.qsSliderTrackCornerDp
+import com.android.systemui.qs.ui.compose.rememberQsSliderColors
+import com.android.systemui.qs.ui.compose.rememberQsSliderGradient
+import com.android.systemui.qs.ui.compose.rememberQsSliderUseNewTint
+import com.android.systemui.qs.ui.compose.rememberSliderShapeMode
 import com.android.systemui.qs.ui.compose.borderOnFocus
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.res.R
@@ -159,12 +163,7 @@ fun BrightnessSlider(
     hapticsViewModelFactory: SliderHapticsViewModel.Factory,
 ) {
     val shapeMode = rememberSliderShapeMode()
-    val trackCornerDp: Dp = when (shapeMode) {
-        1 -> 24.dp  /* Circle */
-        2 -> 12.dp  /* Rounded Square */
-        3 -> 0.dp /* Square */
-        else -> Dimensions.SliderTrackRoundedCorner
-    }
+    val trackCornerDp: Dp = qsSliderTrackCornerDp(shapeMode)
 
     var value by remember(gammaValue) { mutableIntStateOf(gammaValue) }
     val animatedValue by
@@ -186,10 +185,9 @@ fun BrightnessSlider(
                 SeekableSliderTrackerConfig(),
             )
         }
-    val gradient = brightnessGradient()
+    val gradient = rememberQsSliderGradient()
     val gradientBrush = gradient?.brush
-    val useNewTint = rememberQsBrightnessUseNewTint()
-    val colors = colors(gradientBrush != null, gradient?.endColor, useNewTint)
+    val colors = rememberQsSliderColors(gradient)
 
     // The value state is recreated every time gammaValue changes, so we recreate this derivedState
     // We have to use value as that's the value that changes when the user is dragging (gammaValue
@@ -455,46 +453,6 @@ fun BrightnessSlider(
     }
 }
 
-@Composable
-fun rememberSliderShapeMode(): Int {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
-
-    fun readShapeMode(): Int {
-        return try {
-            Settings.System.getIntForUser(
-                contentResolver, Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE, 0,
-                UserHandle.USER_CURRENT
-            )
-        } catch (_: Throwable) {
-            0
-        }
-    }
-
-    var shapeMode by remember { mutableIntStateOf(readShapeMode()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute {
-                    shapeMode = readShapeMode()
-                }
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_SLIDER_SHAPE),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return shapeMode
-}
-
 private fun Modifier.sliderBackground(color: Color, corner: Dp) = drawWithCache {
     val offsetAround = SliderBackgroundFrameSize.toSize()
     val newSize = Size(size.width + 2 * offsetAround.width, size.height + 2 * offsetAround.height)
@@ -536,8 +494,8 @@ private fun drawAutoBrightnessButton(
         3 -> RoundedCornerShape(0.dp)
         else -> RoundedCornerShape(animatedCornerRadius)
     }
-    val useNewTint = rememberQsBrightnessUseNewTint()
-    val gradient = brightnessGradient()
+    val useNewTint = rememberQsSliderUseNewTint()
+    val gradient = rememberQsSliderGradient()
     val gradientBrush = gradient?.brush
     val autoBrightnessBrush = if (autoMode) gradientBrush else null
     val backgroundColor by animateColorAsState(
@@ -622,12 +580,7 @@ fun BrightnessSliderContainer(
     var dragging by remember { mutableStateOf(false) }
 
     val shapeMode = rememberSliderShapeMode()
-    val trackCornerDp: Dp = when (shapeMode) {
-        1 -> 24.dp  /* Circle */
-        2 -> 12.dp  /* Rounded Square */
-        3 -> 0.dp /* Square */
-        else -> Dimensions.SliderTrackRoundedCorner
-    }
+    val trackCornerDp: Dp = qsSliderTrackCornerDp(shapeMode)
     val bgCornerDp: Dp = when (shapeMode) {
         1 -> 50.dp  /* Circle */
         2 -> 24.dp  /* Rounded Square */
@@ -704,7 +657,7 @@ data class ContainerColors(val idleColor: Color, val mirrorColor: Color) {
     }
 }
 
-private object Dimensions {
+internal object Dimensions {
     val SliderBackgroundFrameSize = DpSize(10.dp, 6.dp)
     val SliderBackgroundRoundedCorner = 24.dp
     val SliderTrackRoundedCorner = 12.dp
@@ -731,7 +684,7 @@ private object Dimensions {
             dimensionResource(id = R.dimen.overlay_qs_layout_brightness_track_height)
 }
 
-private object AnimationSpecs {
+internal object AnimationSpecs {
     val IconAppearSpec = tween<Float>(durationMillis = 100, delayMillis = 33)
     val IconDisappearSpec = tween<Float>(durationMillis = 50)
 }
@@ -748,243 +701,3 @@ object BrightnessSliderMotionTestKeys {
     val ActiveIconAlpha = MotionTestValueKey<Float>("activeIconAlpha")
     val InactiveIconAlpha = MotionTestValueKey<Float>("inactiveIconAlpha")
 }
-
-@Composable
-private fun rememberQsBrightnessGradientEnabled(): Boolean {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
-
-    fun readGradientEnabled(): Boolean {
-        return try {
-            Settings.System.getIntForUser(
-                contentResolver, Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED, 1,
-                UserHandle.USER_CURRENT
-            ) == 1
-        } catch (_: Throwable) {
-            true
-        }
-    }
-
-    var gradientEnabled by remember { mutableStateOf(readGradientEnabled()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute {
-                    gradientEnabled = readGradientEnabled()
-                }
-            }
-        }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED),
-            false, observer, UserHandle.USER_ALL
-        )
-
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return gradientEnabled
-}
-
-@Composable
-private fun rememberQsBrightnessUseNewTint(): Boolean {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
-    fun read(): Int =
-        try {
-            Settings.System.getIntForUser(
-                contentResolver,
-                Settings.System.QS_BRIGHTNESS_USE_NEW_TINT,
-                0,
-                UserHandle.USER_CURRENT
-            )
-        } catch (_: Throwable) {
-            0
-        }
-    var value by remember { mutableIntStateOf(read()) }
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute { value = read() }
-            }
-        }
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_BRIGHTNESS_USE_NEW_TINT),
-            false,
-            observer,
-            UserHandle.USER_ALL
-        )
-        onDispose { contentResolver.unregisterContentObserver(observer) }
-    }
-    return value == 1
-}
-
-/** Converts raw ARGB int from Settings to Compose Color. Forces full opacity when alpha is 0 (treats as 0x00RRGGBB). */
-private fun gradientSettingArgbToColor(argb: Int): Color {
-    val a = (argb shr 24) and 0xFF
-    val r = (argb shr 16) and 0xFF
-    val g = (argb shr 8) and 0xFF
-    val b = argb and 0xFF
-    val alpha = if (a == 0) 1f else a / 255f
-    return Color(red = r / 255f, green = g / 255f, blue = b / 255f, alpha = alpha)
-}
-
-/** User-chosen gradient start/end when gradient is enabled (ColorPickerSystemPreference). Null = use default. */
-@Composable
-private fun rememberQsGradientCustomColors(): Pair<Color?, Color?> {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
-
-    fun readStart(): Int {
-        return try {
-            Settings.System.getIntForUser(
-                contentResolver, Settings.System.GRADIENT_START_COLOR, 0,
-                UserHandle.USER_CURRENT
-            )
-        } catch (_: Throwable) {
-            0
-        }
-    }
-    fun readEnd(): Int {
-        return try {
-            Settings.System.getIntForUser(
-                contentResolver, Settings.System.GRADIENT_END_COLOR, 0,
-                UserHandle.USER_CURRENT
-            )
-        } catch (_: Throwable) {
-            0
-        }
-    }
-
-    var startArgb by remember { mutableIntStateOf(readStart()) }
-    var endArgb by remember { mutableIntStateOf(readEnd()) }
-
-    DisposableEffect(contentResolver) {
-        val observer = object : ContentObserver(null) {
-            override fun onChange(selfChange: Boolean) {
-                context.mainExecutor.execute {
-                    startArgb = readStart()
-                    endArgb = readEnd()
-                }
-            }
-        }
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
-            false, observer, UserHandle.USER_ALL
-        )
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR),
-            false, observer, UserHandle.USER_ALL
-        )
-        onDispose {
-            contentResolver.unregisterContentObserver(observer)
-        }
-    }
-
-    return Pair(
-        if (startArgb == 0) null else gradientSettingArgbToColor(startArgb),
-        if (endArgb == 0) null else gradientSettingArgbToColor(endArgb)
-    )
-}
-
-@Composable
-private fun brightnessGradient(): BrightnessGradient? {
-    val gradientEnabled = rememberQsBrightnessGradientEnabled()
-    if (!gradientEnabled) {
-        return null
-    }
-    val (customStart, customEnd) = rememberQsGradientCustomColors()
-    val context = LocalContext.current
-    val resources = LocalResources.current
-    val isDark = isSystemInDarkTheme()
-
-    val defaultStart = remember(isDark, resources, context.theme) {
-        val id = if (isDark) R.color.derpfestui_color_gradient_start_dark
-            else R.color.derpfestui_color_gradient_start_light
-        Color(resources.getColor(id, context.theme))
-    }
-    val defaultEnd = remember(isDark, resources, context.theme) {
-        val id = if (isDark) R.color.derpfestui_color_gradient_end_dark
-            else R.color.derpfestui_color_gradient_end_light
-        Color(resources.getColor(id, context.theme))
-    }
-    val start = customStart ?: defaultStart
-    val end = customEnd ?: defaultEnd
-    // Use opaque colors so track and thumb are never semi-transparent (avoids wrong/invisible look)
-    val startOpaque = start.copy(alpha = 1f)
-    val endOpaque = end.copy(alpha = 1f)
-
-    val colors = remember(startOpaque, endOpaque) {
-        if (startOpaque == endOpaque) {
-            listOf(startOpaque.lighten(0.2f), startOpaque, startOpaque.darken(0.2f))
-        } else {
-            listOf(startOpaque, endOpaque)
-        }
-    }
-
-    val brush = remember(colors) {
-        Brush.linearGradient(colors)
-    }
-
-    return remember(brush, endOpaque) {
-        BrightnessGradient(brush = brush, endColor = endOpaque)
-    }
-}
-
-private fun Color.lighten(amount: Float): Color = blendWith(Color.White, amount)
-
-private fun Color.darken(amount: Float): Color = blendWith(Color.Black, amount)
-
-private fun Color.blendWith(other: Color, ratio: Float): Color {
-    return Color(ColorUtils.blendARGB(this.toArgb(), other.toArgb(), ratio))
-}
-
-@Composable
-private fun colors(
-    gradientEnabled: Boolean,
-    gradientEndColor: Color?,
-    useNewTint: Boolean,
-): SliderColors {
-    val context = LocalContext.current
-    return if (gradientEnabled) {
-        // Track is gradient-tinted in drawWithContent. Thumb and tick use luminance-aware
-        // contrast when gradient end color is available (same as QS tile icons).
-        val tickColor = if (gradientEndColor != null) {
-            Color(BatteryColors.textColorOnBackground(context, gradientEndColor.toArgb()))
-        } else {
-            MaterialTheme.colorScheme.onPrimary
-        }
-        SliderDefaults.colors()
-            .copy(
-                activeTrackColor = Color.Transparent,
-                inactiveTrackColor = Color.Transparent,
-                activeTickColor = tickColor,
-                inactiveTickColor = tickColor,
-            )
-    } else if (useNewTint) {
-        // Accent tint: primary for active track and thumb, primary at 20% for inactive (like QS tiles).
-        val primary = MaterialTheme.colorScheme.primary
-        SliderDefaults.colors()
-            .copy(
-                thumbColor = primary,
-                activeTrackColor = primary,
-                inactiveTrackColor = primary.copy(alpha = 0.2f),
-                activeTickColor = MaterialTheme.colorScheme.onPrimary,
-                inactiveTickColor = MaterialTheme.colorScheme.onSurface,
-            )
-    } else {
-        // Match original appearance exactly when gradient and new tint are disabled
-        SliderDefaults.colors()
-            .copy(
-                inactiveTrackColor = LocalAndroidColorScheme.current.surfaceEffect1,
-                activeTickColor = MaterialTheme.colorScheme.onPrimary,
-                inactiveTickColor = MaterialTheme.colorScheme.onSurface,
-            )
-    }
-}
-
-private data class BrightnessGradient(val brush: Brush, val endColor: Color)
-

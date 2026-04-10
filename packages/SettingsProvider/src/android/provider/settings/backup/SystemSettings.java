@@ -135,6 +135,7 @@ public class SystemSettings {
                 Settings.System.QS_TILE_GRADIENT_ENABLED,
                 Settings.System.QS_BRIGHTNESS_GRADIENT_ENABLED,
                 Settings.System.QS_VOLUME_GRADIENT_ENABLED,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
                 Settings.System.GRADIENT_START_COLOR,
                 Settings.System.GRADIENT_END_COLOR,
                 Settings.System.QS_SHOW_SETTINGS_ICON,

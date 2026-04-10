@@ -37,6 +37,9 @@
     <dimen name="qs_header_image_height">142dp</dimen>
     <dimen name="qs_header_image_fade_size">80dp</dimen>
 
+    <!-- QS brightness / media volume split row -->
+    <dimen name="qs_split_sliders_gap">8dp</dimen>
+
     <!-- Sb Chip: inner drawable corners; outer silhouette is a stadium pill via outline clip. -->
     <dimen name="chip_corner_radius">28dp</dimen>
     <!-- Slightly taller / wider chip so the pill reads clearly in the status bar -->

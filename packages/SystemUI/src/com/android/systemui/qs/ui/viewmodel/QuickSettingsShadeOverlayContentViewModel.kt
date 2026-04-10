@@ -19,6 +19,8 @@ package com.android.systemui.qs.ui.viewmodel
 import android.content.Context
 import android.graphics.Rect
 import android.media.AudioManager
+import android.os.UserHandle
+import android.provider.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import com.android.compose.animation.scene.content.state.TransitionState
@@ -141,7 +143,8 @@ constructor(
 
     private val showVolumeSlider =
         QsDetailedView.isEnabled &&
-            shadeContext.resources.getBoolean(R.bool.config_enableDesktopAudioTileDetailsView)
+            shadeContext.resources.getBoolean(R.bool.config_enableDesktopAudioTileDetailsView) &&
+            !isQsMediaVolumeSliderEnabled(shadeContext)
 
     val volumeSliderViewModel =
         if (showVolumeSlider && volumeSliderCoroutineScope != null)
@@ -227,5 +230,18 @@ constructor(
         fun create(
             volumeSliderCoroutineScope: CoroutineScope? = null
         ): QuickSettingsShadeOverlayContentViewModel
+    }
+}
+
+private fun isQsMediaVolumeSliderEnabled(context: Context): Boolean {
+    return try {
+        Settings.System.getIntForUser(
+            context.contentResolver,
+            Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+            0,
+            UserHandle.USER_CURRENT,
+        ) == 1
+    } catch (_: Throwable) {
+        false
     }
 }

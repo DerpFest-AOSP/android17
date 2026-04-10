@@ -46,6 +46,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -155,19 +157,27 @@ fun Slider(
     val animatable = remember { Animatable(debouncedValue) }
     val coroutineScope = rememberCoroutineScope()
 
+    val isVisible =
+        LocalLifecycleOwner.current.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+
     SideEffect {
         if (sliderState.isDragging) return@SideEffect
         if (animatable.targetValue != debouncedValue && sliderState.value != debouncedValue) {
             coroutineScope.launchTraced("Slider#animateValue") {
-                if (!animatable.isRunning) {
-                    // Set initial value. sliderState.value should equal to the current
-                    // animation value otherwise, so there is no need to update it
-                    animatable.snapTo(sliderState.value)
-                }
-                animatable.animateTo(targetValue = debouncedValue, animationSpec = animationSpec) {
-                    sliderState.value = this.value
-                    if (haptics is Haptics.Enabled && !haptics.isDiscrete()) {
-                        hapticsViewModel?.onValueChange(this.value)
+                if (!isVisible) {
+                    animatable.snapTo(debouncedValue)
+                    sliderState.value = debouncedValue
+                } else {
+                    if (!animatable.isRunning) {
+                        // Set initial value. sliderState.value should equal to the current
+                        // animation value otherwise, so there is no need to update it
+                        animatable.snapTo(sliderState.value)
+                    }
+                    animatable.animateTo(targetValue = debouncedValue, animationSpec = animationSpec) {
+                        sliderState.value = this.value
+                        if (haptics is Haptics.Enabled && !haptics.isDiscrete()) {
+                            hapticsViewModel?.onValueChange(this.value)
+                        }
                     }
                 }
             }

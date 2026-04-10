@@ -16,6 +16,8 @@
 
 package com.android.systemui.qs.ui.composable
 
+import android.os.UserHandle
+import android.provider.Settings
 import android.testing.TestableLooper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.Saver
@@ -79,6 +81,13 @@ class QuickSettingsSceneTest : SysuiTestCase() {
 
         usingMediaInComposeFragment = true
 
+        Settings.System.putIntForUser(
+            context.contentResolver,
+            Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+            1,
+            UserHandle.USER_CURRENT,
+        )
+
         currentTilesInteractor.setTiles(
             listOf(
                 TileSpec.create("internet"),
@@ -113,6 +122,7 @@ class QuickSettingsSceneTest : SysuiTestCase() {
 
         // Verify that the brightness slider exists.
         composeTestRule.onNodeWithTag(resIdToTestTag("brightness_slider")).assertExists()
+        composeTestRule.onNodeWithTag(QS_MEDIA_VOLUME_SLIDER_TAG).assertExists()
 
         // Verify that the tiles exist.
         composeTestRule.onNodeWithTag("element:internet").assertExists()

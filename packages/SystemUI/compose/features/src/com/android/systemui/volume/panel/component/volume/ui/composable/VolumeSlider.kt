@@ -52,6 +52,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -367,11 +369,16 @@ private fun LegacyVolumeSlider(
 @Composable
 private fun valueState(state: SliderState): State<Float> {
     var prevState by remember { mutableStateOf(state) }
+    val isVisible =
+        LocalLifecycleOwner.current.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+
     // Don't animate slider value when receive the first value and when changing isEnabled state
     val shouldSkipAnimation =
-        prevState is SliderState.Empty || prevState.isEnabled != state.isEnabled
+        prevState is SliderState.Empty ||
+            prevState.isEnabled != state.isEnabled ||
+            !isVisible
     val value =
-        if (shouldSkipAnimation) remember { mutableFloatStateOf(state.value) }
+        if (shouldSkipAnimation) remember(state.value) { mutableFloatStateOf(state.value) }
         else animateFloatAsState(targetValue = state.value, label = "VolumeSliderValueAnimation")
     prevState = state
     return value

@@ -153,8 +153,10 @@ import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
 import com.android.systemui.qs.panels.ui.compose.TileGrid
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
+import com.android.systemui.qs.ui.composable.QSMediaVolumeSlider
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
 import com.android.systemui.qs.ui.composable.QuickSettingsShade.systemGestureExclusionInShade
+import com.android.systemui.qs.ui.composable.QuickSettingsSliders
 import com.android.systemui.qs.ui.composable.QuickSettingsTheme
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
@@ -984,18 +986,28 @@ constructor(
                 }
             )
         ) {
-            AlwaysDarkMode {
-                BrightnessSliderContainer(
-                    viewModel =
-                        viewModel.containerViewModel.brightnessSliderViewModel,
-                    containerColors =
-                        ContainerColors(
-                            Color.Transparent,
-                            ContainerColors.defaultContainerColor,
-                        ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            QuickSettingsSliders(
+                brightness = {
+                    AlwaysDarkMode {
+                        BrightnessSliderContainer(
+                            viewModel =
+                                viewModel.containerViewModel.brightnessSliderViewModel,
+                            containerColors =
+                                ContainerColors(
+                                    Color.Transparent,
+                                    ContainerColors.defaultContainerColor,
+                                ),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                },
+                volume = {
+                    QSMediaVolumeSlider(
+                        viewModel.containerViewModel.audioStreamSliderViewModelFactory,
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 

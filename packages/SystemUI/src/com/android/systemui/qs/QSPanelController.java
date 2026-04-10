@@ -23,8 +23,14 @@ import static com.android.systemui.qs.dagger.QSScopeModule.QS_USING_MEDIA_PLAYER
 
 import android.view.MotionEvent;
 import android.view.View;
+import android.database.ContentObserver;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.UserHandle;
+import android.provider.Settings;
 
 import androidx.annotation.Nullable;
+import androidx.compose.ui.platform.ComposeView;
 
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.UiEventLogger;
@@ -48,6 +54,7 @@ import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
 import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.statusbar.policy.SplitShadeStateController;
 import com.android.systemui.tuner.TunerService;
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel;
 
 import kotlinx.coroutines.flow.StateFlow;
 
@@ -77,8 +84,19 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
     private int mLastDensity;
     private final BrightnessSliderController.Factory mBrightnessSliderControllerFactory;
     private final BrightnessController.Factory mBrightnessControllerFactory;
+    private final AudioStreamSliderViewModel.Factory mAudioStreamSliderViewModelFactory;
 
     protected final MediaCarouselInteractor mMediaCarouselInteractor;
+    @Nullable private QSSlidersRowView mSlidersRowView;
+    private boolean mUseQsMediaVolumeSlider;
+
+    private final ContentObserver mQsMediaVolumeSliderObserver = new ContentObserver(
+            new Handler(Looper.getMainLooper())) {
+        @Override
+        public void onChange(boolean selfChange) {
+            maybeReinflateBrightnessSlider();
+        }
+    };
 
     private View.OnTouchListener mTileLayoutTouchListener = new View.OnTouchListener() {
         @Override
@@ -99,6 +117,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
             DumpManager dumpManager, MetricsLogger metricsLogger, UiEventLogger uiEventLogger,
             QSLogger qsLogger, BrightnessController.Factory brightnessControllerFactory,
             BrightnessSliderController.Factory brightnessSliderFactory,
+            AudioStreamSliderViewModel.Factory audioStreamSliderViewModelFactory,
             FalsingManager falsingManager,
             StatusBarKeyguardViewManager statusBarKeyguardViewManager,
             SplitShadeStateController splitShadeStateController,
@@ -114,9 +133,11 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         mFalsingManager = falsingManager;
         mBrightnessSliderControllerFactory = brightnessSliderFactory;
         mBrightnessControllerFactory = brightnessControllerFactory;
+        mAudioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory;
 
         mBrightnessSliderController = brightnessSliderFactory.create(getContext(), mView);
-        mView.setBrightnessView(mBrightnessSliderController.getRootView());
+        mUseQsMediaVolumeSlider = shouldUseQsMediaVolumeSlider();
+        setBrightnessView();
 
         mBrightnessController = brightnessControllerFactory.create(mBrightnessSliderController);
         mBrightnessMirrorHandler = new BrightnessMirrorHandler(mBrightnessController);
@@ -158,6 +179,11 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         PagedTileLayout pagedTileLayout= ((PagedTileLayout) mView.getOrCreateTileLayout());
         pagedTileLayout.setOnTouchListener(mTileLayoutTouchListener);
         maybeReinflateBrightnessSlider();
+        getContext().getContentResolver().registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED),
+                false,
+                mQsMediaVolumeSliderObserver,
+                UserHandle.USER_ALL);
     }
 
     @Override
@@ -168,6 +194,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     @Override
     protected void onViewDetached() {
+        getContext().getContentResolver().unregisterContentObserver(mQsMediaVolumeSliderObserver);
         mTunerService.removeTunable(mView);
         mBrightnessMirrorHandler.onQsPanelDettached();
         super.onViewDetached();
@@ -184,9 +211,13 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     private void maybeReinflateBrightnessSlider() {
         int newDensity = mView.getResources().getConfiguration().densityDpi;
-        if (newDensity != mLastDensity) {
+        boolean useQsMediaVolumeSlider = shouldUseQsMediaVolumeSlider();
+        if (newDensity != mLastDensity || useQsMediaVolumeSlider != mUseQsMediaVolumeSlider) {
             mLastDensity = newDensity;
+            mUseQsMediaVolumeSlider = useQsMediaVolumeSlider;
             reinflateBrightnessSlider();
+        } else if (mSlidersRowView != null) {
+            mSlidersRowView.updateResources();
         }
     }
 
@@ -194,7 +225,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         mBrightnessController.unregisterCallbacks();
         mBrightnessSliderController =
                 mBrightnessSliderControllerFactory.create(getContext(), mView);
-        mView.setBrightnessView(mBrightnessSliderController.getRootView());
+        setBrightnessView();
         mBrightnessController = mBrightnessControllerFactory.create(mBrightnessSliderController);
         mBrightnessMirrorHandler.setBrightnessController(mBrightnessController);
         mBrightnessSliderController.init();
@@ -245,6 +276,28 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
     public void refreshAllTiles() {
         mBrightnessController.checkRestrictionAndSetEnabled();
         super.refreshAllTiles();
+    }
+
+    private void setBrightnessView() {
+        if (!mUseQsMediaVolumeSlider) {
+            mSlidersRowView = null;
+            mView.setBrightnessView(mBrightnessSliderController.getRootView());
+            return;
+        }
+
+        QSSlidersRowView slidersRowView = new QSSlidersRowView(getContext());
+        slidersRowView.setBrightnessView(mBrightnessSliderController.getRootView());
+        slidersRowView.setVolumeView(new ComposeView(getContext()), mAudioStreamSliderViewModelFactory);
+        mSlidersRowView = slidersRowView;
+        mView.setBrightnessView(slidersRowView);
+    }
+
+    private boolean shouldUseQsMediaVolumeSlider() {
+        return Settings.System.getIntForUser(
+                mView.getContext().getContentResolver(),
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+                0,
+                UserHandle.USER_CURRENT) == 1;
     }
 
     /** Start customizing the Quick Settings. */

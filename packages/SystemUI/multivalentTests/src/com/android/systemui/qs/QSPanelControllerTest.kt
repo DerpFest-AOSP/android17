@@ -1,8 +1,12 @@
 package com.android.systemui.qs
 
 import android.content.res.Configuration
+import android.os.UserHandle
+import android.provider.Settings
 import android.testing.TestableResources
+import android.view.View
 import android.view.ContextThemeWrapper
+import androidx.compose.ui.platform.ComposeView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import androidx.test.platform.app.InstrumentationRegistry
@@ -26,6 +30,7 @@ import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.ResourcesSplitShadeStateController
 import com.android.systemui.tuner.TunerService
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
 import com.google.common.truth.Truth.assertThat
 import javax.inject.Provider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,9 +44,12 @@ import org.mockito.Mockito
 import org.mockito.Mockito.any
 import org.mockito.Mockito.never
 import org.mockito.Mockito.reset
+import org.mockito.Mockito.atLeastOnce
+import org.mockito.Mockito.clearInvocations
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when` as whenever
 import org.mockito.MockitoAnnotations
+import org.mockito.kotlin.argumentCaptor
 
 @SmallTest
 @RunWith(AndroidJUnit4::class)
@@ -60,6 +68,8 @@ class QSPanelControllerTest : SysuiTestCase() {
     @Mock private lateinit var brightnessController: BrightnessController
     @Mock private lateinit var brightnessSlider: BrightnessSliderController
     @Mock private lateinit var brightnessSliderFactory: BrightnessSliderController.Factory
+    @Mock
+    private lateinit var audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory
     @Mock private lateinit var falsingManager: FalsingManager
     @Mock private lateinit var mediaHost: MediaHost
     @Mock private lateinit var tile: QSTile
@@ -75,10 +85,12 @@ class QSPanelControllerTest : SysuiTestCase() {
 
     private lateinit var controller: QSPanelController
     private val testableResources: TestableResources = mContext.orCreateTestableResources
+    private lateinit var brightnessRootView: View
 
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
+        clearInvocations(qsPanel)
 
         whenever(brightnessSliderFactory.create(any(), any())).thenReturn(brightnessSlider)
         whenever(brightnessControllerFactory.create(any())).thenReturn(brightnessController)
@@ -86,34 +98,15 @@ class QSPanelControllerTest : SysuiTestCase() {
         whenever(qsPanel.resources).thenReturn(testableResources.resources)
         whenever(qsPanel.context)
             .thenReturn(ContextThemeWrapper(context, R.style.Theme_SystemUI_QuickSettings))
+        brightnessRootView = View(qsPanel.context)
+        whenever(brightnessSlider.rootView).thenReturn(brightnessRootView)
         whenever(qsPanel.getOrCreateTileLayout()).thenReturn(pagedTileLayout)
         whenever(statusBarKeyguardViewManager.isPrimaryBouncerInTransit()).thenReturn(false)
         whenever(qsPanel.setListening(anyBoolean())).then {
             whenever(qsPanel.isListening).thenReturn(it.getArgument(0))
         }
 
-        controller =
-            QSPanelController(
-                qsPanel,
-                tunerService,
-                qsHost,
-                qsCustomizerController,
-                /* usingMediaPlayer= */ usingMediaPlayer,
-                mediaHost,
-                qsTileRevealControllerFactory,
-                dumpManager,
-                metricsLogger,
-                uiEventLogger,
-                qsLogger,
-                brightnessControllerFactory,
-                brightnessSliderFactory,
-                falsingManager,
-                statusBarKeyguardViewManager,
-                ResourcesSplitShadeStateController(),
-                longPressEffectProvider,
-                mediaCarouselInteractor,
-                configurationController,
-            )
+        controller = createController()
     }
 
     @After
@@ -139,6 +132,45 @@ class QSPanelControllerTest : SysuiTestCase() {
 
             verify(mediaHost).expansion = MediaHostState.EXPANDED
         }
+
+    @Test
+    fun settingDisabled_setsBrightnessViewToBrightnessSlider() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            controller.destroy()
+            Settings.System.putIntForUser(
+                context.contentResolver,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+            controller = createController()
+        }
+
+        verify(qsPanel).setBrightnessView(brightnessRootView)
+    }
+
+    @Test
+    fun settingEnabled_setsBrightnessViewToSliderRow() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            controller.destroy()
+            Settings.System.putIntForUser(
+                context.contentResolver,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+                1,
+                UserHandle.USER_CURRENT,
+            )
+            controller = createController()
+        }
+
+        val brightnessViewCaptor = argumentCaptor<View>()
+        verify(qsPanel, atLeastOnce()).setBrightnessView(brightnessViewCaptor.capture())
+        val slidersRowView = brightnessViewCaptor.allValues.last()
+
+        assertThat(slidersRowView).isInstanceOf(QSSlidersRowView::class.java)
+        slidersRowView as QSSlidersRowView
+        assertThat(slidersRowView.getChildAt(0)).isEqualTo(brightnessRootView)
+        assertThat(slidersRowView.getChildAt(1)).isInstanceOf(ComposeView::class.java)
+    }
 
     @Test
     fun testSetListeningDoesntRefreshListeningTiles() {
@@ -204,5 +236,30 @@ class QSPanelControllerTest : SysuiTestCase() {
 
     private fun setShouldUseSplitShade(shouldUse: Boolean) {
         testableResources.addOverride(R.bool.config_use_split_notification_shade, shouldUse)
+    }
+
+    private fun createController(): QSPanelController {
+        return QSPanelController(
+            qsPanel,
+            tunerService,
+            qsHost,
+            qsCustomizerController,
+            /* usingMediaPlayer= */ usingMediaPlayer,
+            mediaHost,
+            qsTileRevealControllerFactory,
+            dumpManager,
+            metricsLogger,
+            uiEventLogger,
+            qsLogger,
+            brightnessControllerFactory,
+            brightnessSliderFactory,
+            audioStreamSliderViewModelFactory,
+            falsingManager,
+            statusBarKeyguardViewManager,
+            ResourcesSplitShadeStateController(),
+            longPressEffectProvider,
+            mediaCarouselInteractor,
+            configurationController,
+        )
     }
 }
