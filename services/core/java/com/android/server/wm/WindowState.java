@@ -205,8 +205,10 @@ import android.os.Build;
 import android.os.Debug;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.PowerManagerInternal;
 import android.os.RemoteCallbackList;
 import android.os.RemoteException;
+import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.os.Trace;
 import android.os.WorkSource;
@@ -1877,6 +1879,17 @@ class WindowState extends WindowContainer<WindowState> implements WindowManagerP
         }
 
         if ((mAttrs.flags & WindowManager.LayoutParams.FLAG_SECURE) != 0) {
+            // Check if AxSandbox allows bypassing secure flag for this app
+            try {
+                IBinder b = ServiceManager.getService(Context.AX_SANDBOX_SERVICE);
+                com.android.internal.app.IAxSandboxManager service =
+                        com.android.internal.app.IAxSandboxManager.Stub.asInterface(b);
+                if (service != null && service.isSpoofSettingEnabled(getOwningPackage(), "bypass_secure_window")) {
+                    return false;
+                }
+            } catch (Exception e) {
+                // Service not ready or other error, fallback to default behavior
+            }
             return true;
         }
 

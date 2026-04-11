@@ -31,6 +31,9 @@ public class SettingsSpoofController {
         SPOOFED_SETTINGS.put("accessibility_enabled", "0");
         SPOOFED_SETTINGS.put("enabled_accessibility_services", "");
         SPOOFED_SETTINGS.put("accessibility_display_inversion_enabled", "0");
+        SPOOFED_SETTINGS.put("wifi_display_on", "0");
+        SPOOFED_SETTINGS.put("wifi_display_certification_on", "0");
+        SPOOFED_SETTINGS.put("wifi_display_wps_config", "0");
     }
 
     public static String getSpoofedValue(String settingName) {
