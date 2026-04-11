@@ -37,10 +37,11 @@
     <dimen name="qs_header_image_height">142dp</dimen>
     <dimen name="qs_header_image_fade_size">80dp</dimen>
 
-    <!-- Sb Chip -->
+    <!-- Sb Chip: inner drawable corners; outer silhouette is a stadium pill via outline clip. -->
     <dimen name="chip_corner_radius">28dp</dimen>
-    <dimen name="status_bar_clock_chip_tb_padding">0dp</dimen>
-    <dimen name="status_bar_clock_chip_lr_padding">8dp</dimen>
+    <!-- Slightly taller / wider chip so the pill reads clearly in the status bar -->
+    <dimen name="status_bar_clock_chip_tb_padding">3dp</dimen>
+    <dimen name="status_bar_clock_chip_lr_padding">10dp</dimen>
 
     <!-- Smartspace -->
     <dimen name="air_quality_chip_corner_radius">7.0dip</dimen>

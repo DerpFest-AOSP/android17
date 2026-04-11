@@ -9,15 +9,17 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
-import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
 import androidx.core.graphics.drawable.toBitmap
-import com.android.systemui.res.R
 
 /**
- * Builds a small rounded background for the status bar clock "wallpaper thumbnail" chip style.
- * Uses the home static image wallpaper when available; live wallpapers fall back to solid black.
+ * Builds the wallpaper bitmap fill for the status bar clock chip. The **stadium (pill) shape** is
+ * applied by [HomeStatusBarViewBinder] via [android.view.ViewOutlineProvider], not here.
+ *
+ * Uses the home static image wallpaper when available; other live wallpapers fall back to solid
+ * black.
  */
 object ClockChipWallpaperThumbnailHelper {
 
@@ -31,23 +33,21 @@ object ClockChipWallpaperThumbnailHelper {
     )
 
     /**
-     * Returns a rounded drawable and a representative color for text contrast.
+     * Returns a drawable and a representative color for text contrast.
      * Must be called from a background thread when loading the wallpaper bitmap.
      */
     fun loadChipBackground(context: Context): ChipBackground {
         val wm = WallpaperManager.getInstance(context)
-        val radius =
-            context.resources.getDimensionPixelSize(R.dimen.chip_corner_radius).toFloat()
         if (!wm.isWallpaperSupported) {
-            return ChipBackground(blackRoundedDrawable(radius), Color.BLACK)
+            return ChipBackground(ColorDrawable(Color.BLACK), Color.BLACK)
         }
         if (!isHomeWallpaperBitmapBacked(wm)) {
-            return ChipBackground(blackRoundedDrawable(radius), Color.BLACK)
+            return ChipBackground(ColorDrawable(Color.BLACK), Color.BLACK)
         }
         return try {
             val full = wm.getDrawable(WallpaperManager.FLAG_SYSTEM)
             if (full == null) {
-                return ChipBackground(blackRoundedDrawable(radius), Color.BLACK)
+                return ChipBackground(ColorDrawable(Color.BLACK), Color.BLACK)
             }
             val maxPx =
                 (MAX_THUMB_EDGE_DP * context.resources.displayMetrics.density)
@@ -64,21 +64,10 @@ object ClockChipWallpaperThumbnailHelper {
                 } else {
                     full.toBitmap(maxPx, maxPx)
                 }
-            val rounded =
-                RoundedBitmapDrawableFactory.create(context.resources, bitmap).apply {
-                    cornerRadius = radius
-                }
             val sample = sampleCenterArgb(bitmap)
-            ChipBackground(rounded, sample)
+            ChipBackground(BitmapDrawable(context.resources, bitmap), sample)
         } catch (_: Exception) {
-            ChipBackground(blackRoundedDrawable(radius), Color.BLACK)
-        }
-    }
-
-    private fun blackRoundedDrawable(cornerRadius: Float): Drawable {
-        return GradientDrawable().apply {
-            setColor(Color.BLACK)
-            this.cornerRadius = cornerRadius
+            ChipBackground(ColorDrawable(Color.BLACK), Color.BLACK)
         }
     }
 

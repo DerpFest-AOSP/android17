@@ -27,13 +27,15 @@ import android.content.IntentFilter
 import android.database.ContentObserver
 import android.net.Uri
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
+import android.graphics.Outline
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.View
+import android.view.ViewOutlineProvider
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -779,6 +781,32 @@ constructor(
         return (dp * context.resources.displayMetrics.density).toInt()
     }
 
+    /** Unified stadium (pill) silhouette for all status bar clock chip styles. */
+    private fun applyCapsuleOutlineToClockChip(clock: Clock) {
+        clock.clipToOutline = true
+        clock.outlineProvider =
+            object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    val w = view.width
+                    val h = view.height
+                    if (w <= 0 || h <= 0) {
+                        outline.setEmpty()
+                        return
+                    }
+                    val r = minOf(w, h) / 2f
+                    outline.setRoundRect(0, 0, w, h, r)
+                }
+            }
+        clock.invalidateOutline()
+        clock.post { clock.invalidateOutline() }
+    }
+
+    private fun clearCapsuleOutlineFromClockChip(clock: Clock) {
+        clock.clipToOutline = false
+        clock.outlineProvider = null
+        clock.invalidateOutline()
+    }
+
     private fun applyClockChip(
         coroutineScope: CoroutineScope,
         wallpaperChipLoadJob: AtomicReference<Job?>,
@@ -797,6 +825,7 @@ constructor(
 
         fun reset(clock: Clock, padding: Padding) {
             if (clock == null || padding == null) return
+            clearCapsuleOutlineFromClockChip(clock)
             clock.setBackgroundResource(0)
             clock.setPaddingRelative(padding.start, padding.top, padding.end, padding.bottom)
             clock.setChipTextColorOverride(null)
@@ -850,6 +879,7 @@ constructor(
                 // so the clock gets the correct color without needing lock/unlock.
                 darkIconDispatcher.applyDark(clock)
             }
+            applyCapsuleOutlineToClockChip(clock)
         }
 
         // Always reset first so the previous active clock loses chip when position changes
@@ -864,8 +894,6 @@ constructor(
                 context.resources.getDimensionPixelSize(R.dimen.status_bar_clock_chip_tb_padding)
             val chipLeftRightPadding =
                 context.resources.getDimensionPixelSize(R.dimen.status_bar_clock_chip_lr_padding)
-            val cornerRadius =
-                context.resources.getDimension(R.dimen.chip_corner_radius)
             activeClock.setPaddingRelative(
                 chipLeftRightPadding,
                 chipTopBottomPadding,
@@ -873,17 +901,13 @@ constructor(
                 chipTopBottomPadding,
             )
             activeClock.setTextAlignment(View.TEXT_ALIGNMENT_CENTER)
-            // Placeholder until IO load completes
-            val placeholderBg =
-                GradientDrawable().apply {
-                    setColor(Color.BLACK)
-                    this.cornerRadius = cornerRadius
-                }
-            activeClock.background = placeholderBg
+            // Placeholder until IO load completes; pill shape from [applyCapsuleOutlineToClockChip].
+            activeClock.background = ColorDrawable(Color.BLACK)
             val placeholderTextColor =
                 BatteryColors.textColorOnBackground(context, Color.BLACK)
             activeClock.setTextColor(placeholderTextColor)
             activeClock.setChipTextColorOverride(placeholderTextColor)
+            applyCapsuleOutlineToClockChip(activeClock)
 
             val job =
                 coroutineScope.launch {
@@ -897,6 +921,7 @@ constructor(
                         BatteryColors.textColorOnBackground(context, chip.contrastSampleArgb)
                     activeClock.setTextColor(textColor)
                     activeClock.setChipTextColorOverride(textColor)
+                    applyCapsuleOutlineToClockChip(activeClock)
                 }
             wallpaperChipLoadJob.set(job)
             return
