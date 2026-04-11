@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -98,6 +99,9 @@ internal const val AlphaSubtle = 0.15f
 internal const val AlphaFaint = 0.1f
 internal const val AlphaBorder = 0.08f
 internal const val AlphaStatusChip = 0.14f
+
+/** How much event accent is mixed into the status bar Dynamic Bar pill (rest is theme surface). */
+internal const val StatusBarDynamicChipAccentBlend = 0.18f
 internal const val AlphaIconBg = 0.16f
 internal const val AlphaTrack = 0.25f
 
@@ -185,6 +189,13 @@ internal fun accentColorFor(event: IslandEvent): Color = eventStyleFor(event).ac
 internal fun chipContentColorOn(background: Color): Color {
     val luminance = ColorUtils.calculateLuminance(background.toArgb())
     return if (luminance > 0.4) ChipContentDark else Color.White
+}
+
+/** Status bar pill: tinted surface instead of a flat accent fill so it sits quietly on the bar. */
+@Composable
+internal fun statusBarDynamicChipFill(accent: Color): Color {
+    val base = MaterialTheme.colorScheme.surfaceContainerHighest
+    return lerp(base, accent, StatusBarDynamicChipAccentBlend)
 }
 
 internal fun darkenColor(color: Color, keep: Float = 0.35f): Color =

@@ -73,6 +73,7 @@ import com.android.systemui.axdynamicbar.shared.TsBadge
 import com.android.systemui.axdynamicbar.shared.chipAccentColorFor
 import com.android.systemui.axdynamicbar.shared.chipContentColorOn
 import com.android.systemui.axdynamicbar.shared.chipProgressFor
+import com.android.systemui.axdynamicbar.shared.statusBarDynamicChipFill
 import com.android.systemui.axdynamicbar.shared.iconKeyFor
 import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
@@ -178,9 +179,14 @@ fun AxDynamicBarChip(
                 label = "chip_event",
             ) { display ->
                 val rawAccent = chipAccentColorFor(display.event)
-                val accent by animateColorAsState(rawAccent, MaterialTheme.motionScheme.fastEffectsSpec(), label = "accent")
+                val targetFill = statusBarDynamicChipFill(rawAccent)
+                val fillColor by animateColorAsState(
+                    targetFill, MaterialTheme.motionScheme.fastEffectsSpec(), label = "chip_fill",
+                )
                 val contentColor by animateColorAsState(
-                    chipContentColorOn(rawAccent), MaterialTheme.motionScheme.fastEffectsSpec(), label = "content",
+                    chipContentColorOn(targetFill),
+                    MaterialTheme.motionScheme.fastEffectsSpec(),
+                    label = "content",
                 )
                 val rawProgress = chipProgressFor(display.event)
                 val progressTarget = rawProgress ?: 0f
@@ -202,12 +208,12 @@ fun AxDynamicBarChip(
                         modifier =
                             Modifier.height(ChipHeight)
                                 .clip(ChipShape)
-                                .background(accent)
+                                .background(fillColor)
                                 .animateContentSize(motionScheme.defaultSpatialSpec())
                                 .then(
                                     if (progress != null) {
-                                        val trackColor = lerp(accent, contentColor, 0.2f)
-                                        val fillColor = lerp(accent, contentColor, 0.6f)
+                                        val trackColor = lerp(fillColor, contentColor, 0.2f)
+                                        val progressFill = lerp(fillColor, contentColor, 0.6f)
                                         Modifier.drawWithContent {
                                             drawContent()
                                             val barH = 2.dp.toPx()
@@ -218,7 +224,7 @@ fun AxDynamicBarChip(
                                                 size = Size(size.width, barH),
                                             )
                                             drawRect(
-                                                fillColor,
+                                                progressFill,
                                                 topLeft = Offset(0f, y),
                                                 size = Size(size.width * progress, barH),
                                             )
@@ -334,7 +340,7 @@ fun AxDynamicBarChip(
                                         .height(SizeBadge)
                                         .widthIn(min = SizeBadge)
                                         .background(
-                                            lerp(accent, contentColor, 0.3f),
+                                            lerp(fillColor, contentColor, 0.3f),
                                             RoundedCornerShape(SizeBadge / 2),
                                         )
                                         .padding(horizontal = 3.dp),

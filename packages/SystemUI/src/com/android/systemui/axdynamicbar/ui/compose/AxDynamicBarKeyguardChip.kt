@@ -208,13 +208,14 @@ fun AxDynamicBarKeyguardChip(
                     label = "keyguard_chip_event",
                 ) { event ->
                     val rawAccent = chipAccentColorFor(event)
-                    val accent by animateColorAsState(
-                        rawAccent,
+                    val targetFill = statusBarDynamicChipFill(rawAccent)
+                    val chipFill by animateColorAsState(
+                        targetFill,
                         MaterialTheme.motionScheme.fastEffectsSpec(),
-                        label = "kg_accent",
+                        label = "kg_chip_fill",
                     )
                     val contentColor by animateColorAsState(
-                        chipContentColorOn(rawAccent),
+                        chipContentColorOn(targetFill),
                         MaterialTheme.motionScheme.fastEffectsSpec(),
                         label = "kg_content",
                     )
@@ -232,7 +233,7 @@ fun AxDynamicBarKeyguardChip(
 
                     KeyguardChipBody(
                         event = event,
-                        accent = accent,
+                        chipFill = chipFill,
                         contentColor = contentColor,
                         progress = progress,
                         eventCount = chipState.eventCount,
@@ -254,7 +255,7 @@ fun AxDynamicBarKeyguardChip(
 @Composable
 private fun KeyguardChipBody(
     event: IslandEvent,
-    accent: Color,
+    chipFill: Color,
     contentColor: Color,
     progress: Float?,
     eventCount: Int,
@@ -269,18 +270,18 @@ private fun KeyguardChipBody(
                 .height(ChipHeight)
                 .widthIn(max = 260.dp)
                 .clip(ChipShape)
-                .background(accent)
+                .background(chipFill)
                 .animateContentSize(motionScheme.defaultSpatialSpec())
                 .then(
                     if (progress != null) {
-                        val trackColor = lerp(accent, contentColor, 0.2f)
-                        val fillColor = lerp(accent, contentColor, 0.6f)
+                        val trackColor = lerp(chipFill, contentColor, 0.2f)
+                        val progressFill = lerp(chipFill, contentColor, 0.6f)
                         Modifier.drawWithContent {
                             drawContent()
                             val barH = SizeStrokeWidth.toPx()
                             val y = size.height - barH
                             drawRect(trackColor, Offset(0f, y), Size(size.width, barH))
-                            drawRect(fillColor, Offset(0f, y), Size(size.width * progress, barH))
+                            drawRect(progressFill, Offset(0f, y), Size(size.width * progress, barH))
                         }
                     } else Modifier
                 )
@@ -369,7 +370,7 @@ private fun KeyguardChipBody(
                 ActionButton(
                     icon = ActionIcon.SKIP_PREV,
                     color = contentColor,
-                    bgColor = lerp(accent, contentColor, AlphaSubtle),
+                    bgColor = lerp(chipFill, contentColor, AlphaSubtle),
                     onClick = { viewModel.skipPrev() },
                     size = ActionSize,
                     iconSize = ActionIconSize,
@@ -379,7 +380,7 @@ private fun KeyguardChipBody(
                     onClick = { viewModel.togglePlayPause() },
                     modifier = Modifier.size(ActionSize),
                     shape = CircleShape,
-                    color = lerp(accent, contentColor, AlphaSubtle),
+                    color = lerp(chipFill, contentColor, AlphaSubtle),
                 ) {
                     Box(contentAlignment = Alignment.Center, modifier = Modifier.size(ActionSize)) {
                         Icon(
@@ -397,7 +398,7 @@ private fun KeyguardChipBody(
                 ActionButton(
                     icon = ActionIcon.SKIP_NEXT,
                     color = contentColor,
-                    bgColor = lerp(accent, contentColor, AlphaSubtle),
+                    bgColor = lerp(chipFill, contentColor, AlphaSubtle),
                     onClick = { viewModel.skipNext() },
                     size = ActionSize,
                     iconSize = ActionIconSize,
@@ -474,7 +475,7 @@ private fun KeyguardChipBody(
                         ActionButton(
                             icon = action.icon,
                             color = contentColor,
-                            bgColor = lerp(accent, contentColor, AlphaSubtle),
+                            bgColor = lerp(chipFill, contentColor, AlphaSubtle),
                             onClick = { action.perform(viewModel, event, context) },
                             size = ActionSize,
                             iconSize = ActionIconSize,
@@ -490,7 +491,7 @@ private fun KeyguardChipBody(
                     modifier = Modifier
                         .height(CountBadgeHeight)
                         .widthIn(min = CountBadgeHeight)
-                        .background(lerp(accent, contentColor, AlphaDisabled), ShapeChip)
+                        .background(lerp(chipFill, contentColor, AlphaDisabled), ShapeChip)
                         .padding(horizontal = SpaceXxs),
                 ) {
                     Text(

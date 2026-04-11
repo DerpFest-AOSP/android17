@@ -48,6 +48,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
@@ -57,7 +58,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.shared.AlphaHint
-import com.android.systemui.axdynamicbar.shared.AlphaTrack
 import com.android.systemui.axdynamicbar.shared.PillPrimary
 import com.android.systemui.axdynamicbar.shared.ShapeXl
 import com.android.systemui.axdynamicbar.shared.SpaceSm
@@ -65,6 +65,7 @@ import com.android.systemui.axdynamicbar.shared.SpaceXs
 import com.android.systemui.axdynamicbar.shared.chipAccentColorFor
 import com.android.systemui.axdynamicbar.shared.chipContentColorOn
 import com.android.systemui.axdynamicbar.shared.chipProgressFor
+import com.android.systemui.axdynamicbar.shared.statusBarDynamicChipFill
 import com.android.systemui.axdynamicbar.shared.iconKeyFor
 import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
@@ -109,9 +110,14 @@ fun AxDynamicBarNowBar(
                 )
 
                 val rawAccent = chipAccentColorFor(display.event)
-                val accent by animateColorAsState(rawAccent, MaterialTheme.motionScheme.fastEffectsSpec(), label = "accent")
+                val targetFill = statusBarDynamicChipFill(rawAccent)
+                val fillColor by animateColorAsState(
+                    targetFill, MaterialTheme.motionScheme.fastEffectsSpec(), label = "nowbar_fill",
+                )
                 val contentColor by animateColorAsState(
-                    chipContentColorOn(rawAccent), MaterialTheme.motionScheme.fastEffectsSpec(), label = "content",
+                    chipContentColorOn(targetFill),
+                    MaterialTheme.motionScheme.fastEffectsSpec(),
+                    label = "content",
                 )
                 val rawProgress = chipProgressFor(display.event)
                 val progressTarget = rawProgress ?: 0f
@@ -176,20 +182,22 @@ fun AxDynamicBarNowBar(
                             }
                             .shadow(6.dp, NowBarShape)
                             .clip(NowBarShape)
-                            .background(accent)
+                            .background(fillColor)
                             .then(
                                 if (progress != null) {
+                                    val trackColor = lerp(fillColor, contentColor, 0.2f)
+                                    val progressFill = lerp(fillColor, contentColor, 0.6f)
                                     Modifier.drawWithContent {
                                         drawContent()
                                         val barH = 3.dp.toPx()
                                         val y = size.height - barH
                                         drawRect(
-                                            contentColor.copy(alpha = AlphaTrack),
+                                            trackColor,
                                             topLeft = Offset(0f, y),
                                             size = Size(size.width, barH),
                                         )
                                         drawRect(
-                                            contentColor.copy(alpha = 0.85f),
+                                            progressFill,
                                             topLeft = Offset(0f, y),
                                             size = Size(size.width * progress, barH),
                                         )
