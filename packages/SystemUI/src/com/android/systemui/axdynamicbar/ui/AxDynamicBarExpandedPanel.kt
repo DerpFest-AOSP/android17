@@ -2,8 +2,11 @@ package com.android.systemui.axdynamicbar.ui
 
 import android.content.Context
 import android.graphics.PixelFormat
+import android.os.Build
 import android.view.Gravity
 import android.view.WindowManager
+import android.window.OnBackInvokedCallback
+import android.window.OnBackInvokedDispatcher
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -33,6 +36,7 @@ import androidx.compose.ui.input.pointer.changedToDownIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.dp
 
@@ -90,6 +94,9 @@ constructor(
     private var panelLifecycleOwner: PanelLifecycleOwner? = null
     private var hideOverlayJob: Job? = null
 
+    private val islandBackInvokedCallback = OnBackInvokedCallback { viewModel.collapsePanel() }
+    private var islandBackCallbackRegistered = false
+
     fun init() {
         viewModel.interactor.onCollapseRequested = { viewModel.collapsePanel() }
         viewModel.interactor.onFocusableRequested = { focusable -> setOverlayFocusable(focusable) }
@@ -124,8 +131,47 @@ constructor(
         viewModel.isExpanded
             .onEach { expanded ->
                 updateOverlay(expanded)
+                syncIslandBackCallback(expanded)
             }
             .launchIn(applicationScope)
+    }
+
+    /**
+     * Registers a window back callback while expanded so the system back gesture / key collapses the
+     * island (same expectation as other focused SystemUI surfaces).
+     */
+    private fun syncIslandBackCallback(expanded: Boolean) {
+        ensureMainThread {
+            val view = overlayView ?: return@ensureMainThread
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return@ensureMainThread
+
+            if (expanded) {
+                if (islandBackCallbackRegistered) return@ensureMainThread
+                val dispatcher = view.findOnBackInvokedDispatcher()
+                if (dispatcher != null) {
+                    dispatcher.registerOnBackInvokedCallback(
+                        OnBackInvokedDispatcher.PRIORITY_OVERLAY,
+                        islandBackInvokedCallback,
+                    )
+                    islandBackCallbackRegistered = true
+                } else {
+                    view.post { syncIslandBackCallback(true) }
+                }
+            } else {
+                if (islandBackCallbackRegistered) {
+                    view.findOnBackInvokedDispatcher()
+                        ?.unregisterOnBackInvokedCallback(islandBackInvokedCallback)
+                    islandBackCallbackRegistered = false
+                }
+            }
+        }
+    }
+
+    private fun unregisterIslandBackCallback() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || !islandBackCallbackRegistered) return
+        overlayView?.findOnBackInvokedDispatcher()
+            ?.unregisterOnBackInvokedCallback(islandBackInvokedCallback)
+        islandBackCallbackRegistered = false
     }
 
     private fun ensureMainThread(action: () -> Unit) {
@@ -182,6 +228,10 @@ constructor(
 
         windowManager.addView(view, params)
         overlayView = view
+
+        val expandedNow = viewModel.isExpanded.value
+        updateOverlay(expandedNow)
+        syncIslandBackCallback(expandedNow)
     }
 
     private fun hideOverlay() {
@@ -192,6 +242,7 @@ constructor(
         shrinkRunnable?.let { mainHandler.removeCallbacks(it) }
         shrinkRunnable = null
         overlayView?.let { view ->
+            unregisterIslandBackCallback()
             panelLifecycleOwner?.apply {
                 handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
                 handleLifecycleEvent(Lifecycle.Event.ON_STOP)
@@ -259,6 +310,8 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
     val lastAlert = remember { mutableStateOf<IslandEvent.Notification?>(null) }
     if (notifAlert != null) lastAlert.value = notifAlert
 
+    val touchSlop = LocalViewConfiguration.current.touchSlop
+
     val expandedVisible = remember { MutableTransitionState(false) }
     val showNotif = !isExpanded && notifAlert != null
     val notifVisible = remember { MutableTransitionState(false) }
@@ -314,18 +367,15 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
-                    val slop = viewConfiguration.touchSlop
+                .pointerInput(touchSlop) {
                     awaitEachGesture {
-                        
                         var ev: PointerEvent
                         do {
                             ev = awaitPointerEvent(PointerEventPass.Final)
                         } while (!ev.changes.any { it.changedToDownIgnoreConsumed() })
                         val downPos = ev.changes[0].position
-                        
                         val downConsumed = ev.changes[0].isConsumed
-                        
+
                         while (true) {
                             val event = awaitPointerEvent(PointerEventPass.Final)
                             val change = event.changes.firstOrNull() ?: break
@@ -333,7 +383,7 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
                                 if (!downConsumed && !change.isConsumed) {
                                     val dx = change.position.x - downPos.x
                                     val dy = change.position.y - downPos.y
-                                    if (dx * dx + dy * dy <= slop * slop) {
+                                    if (dx * dx + dy * dy <= touchSlop * touchSlop) {
                                         viewModel.collapsePanel()
                                     }
                                 }
