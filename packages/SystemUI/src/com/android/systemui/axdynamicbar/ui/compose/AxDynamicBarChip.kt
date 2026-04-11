@@ -80,6 +80,7 @@ import com.android.systemui.axdynamicbar.shared.TsBadge
 import com.android.systemui.axdynamicbar.shared.chipAccentColorFor
 import com.android.systemui.axdynamicbar.shared.chipContentColorOn
 import com.android.systemui.axdynamicbar.shared.chipProgressFor
+import com.android.systemui.axdynamicbar.shared.statusBarDynamicChipFill
 import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
@@ -216,9 +217,14 @@ fun AxDynamicBarChip(
                 ) {
                     val event = displayEvent
                     val rawAccent = chipAccentColorFor(event)
-                    val accent by animateColorAsState(rawAccent, MaterialTheme.motionScheme.fastEffectsSpec(), label = "accent")
+                    val targetFill = statusBarDynamicChipFill(rawAccent)
+                    val fillColor by animateColorAsState(
+                        targetFill, MaterialTheme.motionScheme.fastEffectsSpec(), label = "chip_fill",
+                    )
                     val contentColor by animateColorAsState(
-                        chipContentColorOn(rawAccent), MaterialTheme.motionScheme.fastEffectsSpec(), label = "content",
+                        chipContentColorOn(targetFill),
+                        MaterialTheme.motionScheme.fastEffectsSpec(),
+                        label = "content",
                     )
                 val useCircleStyle = chipStyle == 1 &&
                         !isAlert &&
@@ -232,7 +238,7 @@ fun AxDynamicBarChip(
                 if (useCircleStyle) {
                     CircleChip(
                         event = event,
-                        accent = accent,
+                        accent = fillColor,
                         contentColor = contentColor,
                         progress = progress,
                         modifier = Modifier.squishAnimation(toggleCount),
@@ -247,11 +253,11 @@ fun AxDynamicBarChip(
                             Modifier.height(ChipHeight)
                                 .widthIn(max = 100.dp)
                                 .clip(ChipShape)
-                                .background(accent)
+                                .background(fillColor)
                                 .then(
                                     if (progress != null) {
-                                        val trackColor = lerp(accent, contentColor, 0.2f)
-                                        val fillColor = lerp(accent, contentColor, 0.6f)
+                                        val trackColor = lerp(fillColor, contentColor, 0.2f)
+                                        val progressFill = lerp(fillColor, contentColor, 0.6f)
                                         Modifier.drawWithContent {
                                             drawContent()
                                             val barH = 2.dp.toPx()
@@ -262,7 +268,7 @@ fun AxDynamicBarChip(
                                                 size = Size(size.width, barH),
                                             )
                                             drawRect(
-                                                fillColor,
+                                                progressFill,
                                                 topLeft = Offset(0f, y),
                                                 size = Size(size.width * progress, barH),
                                             )
@@ -369,7 +375,7 @@ fun AxDynamicBarChip(
                                         .height(SizeBadge)
                                         .widthIn(min = SizeBadge)
                                         .background(
-                                            lerp(accent, contentColor, 0.3f),
+                                            lerp(fillColor, contentColor, 0.3f),
                                             RoundedCornerShape(SizeBadge / 2),
                                         )
                                         .padding(horizontal = 3.dp),

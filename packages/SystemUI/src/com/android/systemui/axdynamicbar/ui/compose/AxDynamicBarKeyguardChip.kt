@@ -275,13 +275,14 @@ fun AxDynamicBarKeyguardChip(
                             label = "keyguard_chip_event",
                         ) { event ->
                             val rawAccent = chipAccentColorFor(event)
-                            val accent by animateColorAsState(
-                                rawAccent,
+                            val targetFill = statusBarDynamicChipFill(rawAccent)
+                            val chipFill by animateColorAsState(
+                                targetFill,
                                 MaterialTheme.motionScheme.fastEffectsSpec(),
-                                label = "kg_accent",
+                                label = "kg_chip_fill",
                             )
                             val contentColor by animateColorAsState(
-                                chipContentColorOn(rawAccent),
+                                chipContentColorOn(targetFill),
                                 MaterialTheme.motionScheme.fastEffectsSpec(),
                                 label = "kg_content",
                             )
@@ -304,7 +305,7 @@ fun AxDynamicBarKeyguardChip(
                             ) { expandable ->
                                 KeyguardChipBody(
                                     event = event,
-                                    accent = accent,
+                                    chipFill = chipFill,
                                     contentColor = contentColor,
                                     progress = progress,
                                     eventCount = chipState.eventCount,
@@ -343,7 +344,7 @@ fun AxDynamicBarKeyguardChip(
 @Composable
 private fun KeyguardChipBody(
     event: IslandEvent,
-    accent: Color,
+    chipFill: Color,
     contentColor: Color,
     progress: Float?,
     eventCount: Int,
@@ -380,9 +381,9 @@ private fun KeyguardChipBody(
                 )
                 .background(
                     if (event is IslandEvent.Media)
-                        accent.copy(alpha = 0.55f)
+                        chipFill.copy(alpha = 0.55f)
                     else
-                        accent
+                        chipFill
                 )
                 .animateContentSize(motionScheme.defaultSpatialSpec())
                 .then(
@@ -390,11 +391,11 @@ private fun KeyguardChipBody(
                         val trackColor = if (event is IslandEvent.Media)
                             Color.White.copy(alpha = 0.20f)
                         else
-                            lerp(accent, contentColor, 0.2f)
+                            lerp(chipFill, contentColor, 0.2f)
                         val fillColor = if (event is IslandEvent.Media)
                             Color.White.copy(alpha = 0.65f)
                         else
-                            lerp(accent, contentColor, 0.6f)
+                            lerp(chipFill, contentColor, 0.6f)
                         Modifier.drawWithContent {
                             drawContent()
                             val barH = SizeStrokeWidth.toPx()
@@ -586,7 +587,7 @@ private fun KeyguardChipBody(
                         ActionButton(
                             icon = action.icon,
                             color = contentColor,
-                            bgColor = lerp(accent, contentColor, AlphaSubtle),
+                            bgColor = lerp(chipFill, contentColor, AlphaSubtle),
                             onClick = { action.perform(viewModel, event, context) },
                             size = ActionSize,
                             iconSize = ActionIconSize,
@@ -602,7 +603,7 @@ private fun KeyguardChipBody(
                     modifier = Modifier
                         .height(CountBadgeHeight)
                         .widthIn(min = CountBadgeHeight)
-                        .background(lerp(accent, contentColor, AlphaDisabled), ShapeChip)
+                        .background(lerp(chipFill, contentColor, AlphaDisabled), ShapeChip)
                         .padding(horizontal = SpaceXxs),
                 ) {
                     Text(
