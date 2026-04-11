@@ -598,7 +598,6 @@ android_library {
         "vendor.lineage.powershare-V1-java",
         "VendorSupport-preference",
         "FadingEdgeLayoutLib",
-        "ax_compose",
     ],
     javacflags: [
         "-Aroom.schemaLocation=frameworks/base/packages/SystemUI/schemas",

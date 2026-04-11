@@ -3,7 +3,7 @@ package com.android.systemui.keyguard.ui.view.layout.sections
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import com.android.axion.compose.host.AxComposeView
+import androidx.compose.ui.platform.ComposeView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.lifecycle.Lifecycle
@@ -38,12 +38,12 @@ constructor(
     private var isCurrentlyHiding = false
 
     override fun addViews(constraintLayout: ConstraintLayout) {
-        val composeView = AxComposeView(context).apply { id = chipViewId }
+        val composeView = ComposeView(context).apply { id = chipViewId }
         constraintLayout.addView(composeView)
     }
 
     override fun bindData(constraintLayout: ConstraintLayout) {
-        val composeView: AxComposeView = constraintLayout.requireViewById(chipViewId)
+        val composeView: ComposeView = constraintLayout.requireViewById(chipViewId)
 
         if (viewModel.isEnabled.value && viewModel.isKeyguardEnabled.value && viewModel.isOnKeyguard.value) {
             indicationController.setSuppressIndication(true)
