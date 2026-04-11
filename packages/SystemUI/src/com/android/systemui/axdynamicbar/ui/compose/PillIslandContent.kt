@@ -1106,7 +1106,7 @@ private fun MediaText(event: IslandEvent.Media, modifier: Modifier, overrideColo
     val alpha = if (event.isPlaying) 1f else AlphaHint
     val color = baseColor.copy(alpha = alpha)
     val text = if (event.artist.isNotBlank()) "${event.track} - ${event.artist}" else event.track
-    MarqueeLabel(text, color, modifier.widthIn(max = 66.dp))
+    MarqueeLabel(text, color, modifier.widthIn(max = 90.dp))
 }
 
 @Composable
