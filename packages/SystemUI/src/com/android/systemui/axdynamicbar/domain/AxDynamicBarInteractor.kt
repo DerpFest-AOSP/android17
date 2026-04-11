@@ -142,8 +142,38 @@ constructor(
 
         applicationScope.launch {
             repository.notification.notificationRemovedFlow.collect { key ->
-                val alert = _uiState.value.notificationAlert ?: return@collect
-                if (alert.sbn.key == key) dismissNotificationAlert()
+                var working = _uiState.value
+                val alert = working.notificationAlert
+                if (alert != null && (alert.sbn.key == key || alert.id == key)) {
+                    dismissNotificationAlert()
+                    working = _uiState.value
+                }
+
+                val toRemove = working.events.filter { event ->
+                    event is IslandEvent.Notification &&
+                        (event.sbn.key == key || event.id == key)
+                }
+                if (toRemove.isNotEmpty()) {
+                    val removeSet = toRemove.toSet()
+                    val updatedEvents = working.events.filter { it !in removeSet }
+                    toRemove.forEach { event ->
+                        autoDismissJobs[event.id]?.cancel()
+                        autoDismissJobs.remove(event.id)
+                    }
+                    val newIndex = working.pinnedEventIndex
+                        .coerceAtMost((updatedEvents.size - 1).coerceAtLeast(0))
+                    _uiState.value = working.copy(
+                        events = updatedEvents,
+                        pinnedEventIndex = newIndex,
+                        islandState = if (updatedEvents.isEmpty() &&
+                            working.notificationAlert == null
+                        ) {
+                            IslandState.HIDDEN
+                        } else {
+                            working.islandState
+                        },
+                    )
+                }
             }
         }
 

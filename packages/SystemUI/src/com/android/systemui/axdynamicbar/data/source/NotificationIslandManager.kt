@@ -129,6 +129,9 @@ constructor(
 
     private val seenNotificationPostTimes = mutableMapOf<String, Long>()
 
+    /** Latest island event id per StatusBarNotification key (for removal matching). */
+    private val notifKeyToEventId = mutableMapOf<String, String>()
+
     var onTimerEvent: ((IslandEvent.Timer) -> Unit)? = null
     var onAlarmEvent: ((IslandEvent.Alarm) -> Unit)? = null
     var onNotificationPosted: ((IslandEvent.Notification) -> Unit)? = null
@@ -145,15 +148,16 @@ constructor(
         object : ScrimUtils.ScrimEventListener {
             override fun onNotificationRemoved(sbn: StatusBarNotification) {
                 val pkg = sbn.packageName ?: return
-                seenNotificationPostTimes.remove(sbn.key)
+                val key = sbn.key
+                seenNotificationPostTimes.remove(key)
 
-                if (sbn.key == timerNotificationKey) {
+                if (key == timerNotificationKey) {
                     timerNotificationKey = null
                     timerJob?.cancel()
                     timerJob = null
                     _timerEvent.value = null
                 }
-                if (sbn.key == stopwatchNotificationKey) {
+                if (key == recorderNotifKey) {
                     stopwatchNotificationKey = null
                     _stopwatchEvent.value = null
                 }
@@ -170,19 +174,33 @@ constructor(
                 }
 
                 _promotedOngoingEvents.value =
-                    _promotedOngoingEvents.value.filter { it.sbn.key != sbn.key }
+                    _promotedOngoingEvents.value.filter { it.sbn.key != key }
 
                 _sportsEvents.value =
-                    _sportsEvents.value.filter { it.key != sbn.key }
+                    _sportsEvents.value.filter { it.key != key }
 
-                if (_nowPlayingEvent.value?.key == sbn.key) {
+                if (_nowPlayingEvent.value?.key == key) {
                     _nowPlayingEvent.value = null
                 }
 
-                _notificationEvents.value =
-                    _notificationEvents.value.filter { it.sbn.key != sbn.key }
+                val removedByKey = _notificationEvents.value.filter { it.sbn.key == key }
+                if (removedByKey.isNotEmpty()) {
+                    _notificationEvents.value =
+                        _notificationEvents.value.filter { it.sbn.key != key }
+                    removedByKey.forEach { notificationRemovedFlow.tryEmit(it.id) }
+                } else {
+                    notificationRemovedFlow.tryEmit(key)
+                }
 
-                notificationRemovedFlow.tryEmit(sbn.key)
+                if (pkg in ALARM_PACKAGES ||
+                    sbn.notification?.category == Notification.CATEGORY_ALARM
+                ) {
+                    if (_alarmEvent.value != null) {
+                        _alarmEvent.value = null
+                    }
+                }
+
+                notifKeyToEventId.remove(key)
             }
 
             override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -536,6 +554,7 @@ constructor(
                         groupKey = groupKey,
                         notificationImage = notificationImage,
                     )
+                notifKeyToEventId[sbn.key] = event.id
                 applicationScope.launch { notificationFlow.emit(event) }
                 onNotificationPosted?.invoke(event)
             }
@@ -552,6 +571,7 @@ constructor(
         listening = false
         ScrimUtils.get().removeListener(scrimListener)
         seenNotificationPostTimes.clear()
+        notifKeyToEventId.clear()
         timerJob?.cancel()
         timerJob = null
         _timerEvent.value = null
@@ -578,13 +598,16 @@ constructor(
 
     fun dismissNotification(event: IslandEvent.Notification) {
         _notificationEvents.value = _notificationEvents.value.filter { it.id != event.id }
+        val key = event.sbn.key
+        notifKeyToEventId.remove(key)
     }
 
     fun coalesceNotification(event: IslandEvent.Notification) {
         val current = _notificationEvents.value.toMutableList()
-        current.removeAll { it.id == event.id }
+        current.removeAll { it.id == event.id || it.sbn.key == event.sbn.key }
         current.add(0, event)
         _notificationEvents.value = current
+        notifKeyToEventId[event.sbn.key] = event.id
     }
 
     fun clearTimer() {
@@ -817,6 +840,7 @@ constructor(
                 isConversation = false,
                 callStartTimeMs = callStart,
             )
+        notifKeyToEventId[sbn.key] = event.id
         applicationScope.launch { notificationFlow.emit(event) }
         onNotificationPosted?.invoke(event)
     }
