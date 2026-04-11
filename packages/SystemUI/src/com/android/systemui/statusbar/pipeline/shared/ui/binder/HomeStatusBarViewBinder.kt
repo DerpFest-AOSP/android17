@@ -781,8 +781,13 @@ constructor(
         return (dp * context.resources.displayMetrics.density).toInt()
     }
 
-    /** Unified stadium (pill) silhouette for all status bar clock chip styles. */
+    /**
+     * Same rounded-rect silhouette as [R.drawable.sb_date_bg] (uses [R.dimen.chip_corner_radius]).
+     * A full stadium (`min(w,h)/2`) becomes a **circle** when the view is square — e.g. square
+     * wallpaper thumbnails — so we cap corners to match the XML chips.
+     */
     private fun applyCapsuleOutlineToClockChip(clock: Clock) {
+        val cornerPx = clock.context.resources.getDimension(R.dimen.chip_corner_radius)
         clock.clipToOutline = true
         clock.outlineProvider =
             object : ViewOutlineProvider() {
@@ -793,7 +798,8 @@ constructor(
                         outline.setEmpty()
                         return
                     }
-                    val r = minOf(w, h) / 2f
+                    val maxR = minOf(w, h) / 2f
+                    val r = minOf(cornerPx, maxR)
                     outline.setRoundRect(0, 0, w, h, r)
                 }
             }
@@ -901,7 +907,7 @@ constructor(
                 chipTopBottomPadding,
             )
             activeClock.setTextAlignment(View.TEXT_ALIGNMENT_CENTER)
-            // Placeholder until IO load completes; pill shape from [applyCapsuleOutlineToClockChip].
+            // Placeholder until IO load completes; chip outline from [applyCapsuleOutlineToClockChip].
             activeClock.background = ColorDrawable(Color.BLACK)
             val placeholderTextColor =
                 BatteryColors.textColorOnBackground(context, Color.BLACK)

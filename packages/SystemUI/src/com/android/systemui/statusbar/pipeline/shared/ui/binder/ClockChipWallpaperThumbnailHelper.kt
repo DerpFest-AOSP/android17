@@ -7,16 +7,18 @@ package com.android.systemui.statusbar.pipeline.shared.ui.binder
 
 import android.app.WallpaperManager
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Color
+import kotlin.math.abs
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.toBitmap
 
 /**
- * Builds the wallpaper bitmap fill for the status bar clock chip. The **stadium (pill) shape** is
- * applied by [HomeStatusBarViewBinder] via [android.view.ViewOutlineProvider], not here.
+ * Builds the wallpaper bitmap fill for the status bar clock chip. The **rounded chip outline**
+ * matches other styles via [HomeStatusBarViewBinder] and [@dimen/chip_corner_radius].
  *
  * Uses the home static image wallpaper when available; other live wallpapers fall back to solid
  * black.
@@ -25,6 +27,17 @@ object ClockChipWallpaperThumbnailHelper {
 
     private const val SYSTEMUI_PACKAGE = "com.android.systemui"
     private const val IMAGE_WALLPAPER_SERVICE = "ImageWallpaper"
+
+    /**
+     * Avoids sizing the [Clock] to a square from large intrinsic bitmap dimensions; layout should
+     * follow text + padding like [R.drawable.sb_date_bg] chips.
+     */
+    private class NoIntrinsicSizeBitmapDrawable(res: Resources, bitmap: Bitmap) :
+        BitmapDrawable(res, bitmap) {
+        override fun getIntrinsicWidth(): Int = -1
+
+        override fun getIntrinsicHeight(): Int = -1
+    }
 
     data class ChipBackground(
         val drawable: Drawable,
@@ -58,14 +71,20 @@ object ClockChipWallpaperThumbnailHelper {
             val bitmap: Bitmap =
                 if (w > 0 && h > 0) {
                     val scale = minOf(maxPx.toFloat() / w, maxPx.toFloat() / h)
-                    val nw = (w * scale).toInt().coerceAtLeast(1)
-                    val nh = (h * scale).toInt().coerceAtLeast(1)
+                    var nw = (w * scale).toInt().coerceAtLeast(1)
+                    var nh = (h * scale).toInt().coerceAtLeast(1)
+                    // 1:1 thumbs + rounded clip read as a circle; bias to a landscape strip.
+                    if (nw == nh || abs(nw - nh) <= 1) {
+                        nh = (nw * 9 / 16).coerceAtLeast(8)
+                    }
                     full.toBitmap(nw, nh)
                 } else {
-                    full.toBitmap(maxPx, maxPx)
+                    // Landscape bias when intrinsic size is unknown.
+                    val nh = (maxPx * 9 / 16).coerceAtLeast(8)
+                    full.toBitmap(maxPx, nh)
                 }
             val sample = sampleCenterArgb(bitmap)
-            ChipBackground(BitmapDrawable(context.resources, bitmap), sample)
+            ChipBackground(NoIntrinsicSizeBitmapDrawable(context.resources, bitmap), sample)
         } catch (_: Exception) {
             ChipBackground(ColorDrawable(Color.BLACK), Color.BLACK)
         }
