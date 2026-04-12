@@ -127,7 +127,8 @@ constructor(
 
     var activeMediaPackageProvider: (() -> String?)? = null
 
-    private val seenNotificationPostTimes = mutableMapOf<String, Long>()
+    private val seenNotificationKeys = mutableSetOf<String>()
+    private val seenMessagingTimestamps = mutableMapOf<String, Long>()
 
     /** Latest island event id per StatusBarNotification key (for removal matching). */
     private val notifKeyToEventId = mutableMapOf<String, String>()
@@ -149,7 +150,8 @@ constructor(
             override fun onNotificationRemoved(sbn: StatusBarNotification) {
                 val pkg = sbn.packageName ?: return
                 val key = sbn.key
-                seenNotificationPostTimes.remove(key)
+                seenNotificationKeys.remove(key)
+                seenMessagingTimestamps.remove(key)
 
                 if (key == timerNotificationKey) {
                     timerNotificationKey = null
@@ -418,15 +420,11 @@ constructor(
                         } else 0L
                     } else 0L
 
-                val postTime = sbn.postTime
-                val signature =
-                    if (isMessagingStyle && latestMessageTime > 0L) latestMessageTime
-                    else postTime
-                val lastSignature = seenNotificationPostTimes.put(sbn.key, signature)
-                if (lastSignature != null) {
-                    if (signature == lastSignature) return
-                    if (!isMessagingStyle &&
-                        notifFlags and Notification.FLAG_ONLY_ALERT_ONCE != 0) return
+                if (isMessagingStyle && latestMessageTime > 0L) {
+                    val previous = seenMessagingTimestamps.put(sbn.key, latestMessageTime)
+                    if (previous != null && previous == latestMessageTime) return
+                } else {
+                    if (!seenNotificationKeys.add(sbn.key)) return
                 }
 
                 val icon =
@@ -570,7 +568,8 @@ constructor(
         if (!listening) return
         listening = false
         ScrimUtils.get().removeListener(scrimListener)
-        seenNotificationPostTimes.clear()
+        seenNotificationKeys.clear()
+        seenMessagingTimestamps.clear()
         notifKeyToEventId.clear()
         timerJob?.cancel()
         timerJob = null
