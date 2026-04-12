@@ -21,29 +21,25 @@ import kotlin.math.min
  * Builds the wallpaper bitmap fill for the status bar clock chip. The **rounded chip outline**
  * matches other styles via [HomeStatusBarViewBinder] and `chip_corner_radius`.
  *
- * Uses a **cropped horizontal band** of the home wallpaper (not the whole image squeezed into a
- * tiny bitmap), then scales that region for a clearer strip. Other live wallpapers fall back to
- * solid black.
+ * Uses a cropped horizontal band of the home wallpaper, then scales it. Decoded bitmaps are moved to
+ * **ARGB_8888** so cropping, scaling, and contrast sampling work (hardware bitmaps forbid
+ * [Bitmap.getPixel] and subset [Bitmap.createBitmap] in many cases). Other live wallpapers fall
+ * back to solid black.
  */
 object ClockChipWallpaperThumbnailHelper {
 
     private const val SYSTEMUI_PACKAGE = "com.android.systemui"
     private const val IMAGE_WALLPAPER_SERVICE = "ImageWallpaper"
 
-    /** Target width:height of the region we show (wide strip, similar to the clock chip). */
+    /** Target width:height of the cropped region (wide strip, like the chip). */
     private const val CROP_ASPECT_WIDTH_OVER_HEIGHT = 2.85f
 
-    /** Max edge when decoding wallpaper before crop (px) — enough detail to crop sharply. */
+    /** Max edge when decoding wallpaper before crop (px). */
     private const val DECODE_MAX_EDGE_PX = 1024
 
-    /** Max edge of the final bitmap (dp); layout still follows text ([NoIntrinsicSizeBitmapDrawable]). */
+    /** Max edge of the final bitmap (dp). */
     private const val OUTPUT_MAX_EDGE_DP = 128f
 
-    /**
-     * Avoids sizing the [com.android.systemui.statusbar.policy.Clock] to a square from large
-     * intrinsic bitmap dimensions; layout should follow text + padding like [R.drawable.sb_date_bg]
-     * chips.
-     */
     private class NoIntrinsicSizeBitmapDrawable(res: Resources, bitmap: Bitmap) :
         BitmapDrawable(res, bitmap) {
         override fun getIntrinsicWidth(): Int = -1
@@ -53,14 +49,9 @@ object ClockChipWallpaperThumbnailHelper {
 
     data class ChipBackground(
         val drawable: Drawable,
-        /** ARGB sample used with [com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors.textColorOnBackground]. */
         val contrastSampleArgb: Int,
     )
 
-    /**
-     * Returns a drawable and a representative color for text contrast.
-     * Must be called from a background thread when loading the wallpaper bitmap.
-     */
     fun loadChipBackground(context: Context): ChipBackground {
         val wm = WallpaperManager.getInstance(context)
         if (!wm.isWallpaperSupported) {
@@ -77,25 +68,45 @@ object ClockChipWallpaperThumbnailHelper {
             val density = context.resources.displayMetrics.density
             val outMaxPx = (OUTPUT_MAX_EDGE_DP * density).toInt().coerceAtLeast(48)
 
-            val decoded = decodeWallpaperWorkBitmap(full)
-            val cropped = cropToChipAspect(decoded, CROP_ASPECT_WIDTH_OVER_HEIGHT, alignCropTop = true)
+            var decoded = decodeWallpaperWorkBitmap(full)
+            decoded = ensureArgb8888(decoded)
+
+            var cropped = cropToChipAspect(decoded, CROP_ASPECT_WIDTH_OVER_HEIGHT, alignCropTop = true)
             if (cropped !== decoded && !decoded.isRecycled) {
                 decoded.recycle()
             }
 
-            val finalBmp = scaleToMaxEdgePreservingAspect(cropped, outMaxPx)
+            var finalBmp = scaleToMaxEdgePreservingAspect(cropped, outMaxPx)
             if (finalBmp !== cropped && !cropped.isRecycled) {
                 cropped.recycle()
             }
 
-            val sample = sampleCenterArgb(finalBmp)
+            finalBmp = ensureArgb8888(finalBmp)
+
+            val sample = sampleCenterArgbSafe(finalBmp)
             ChipBackground(NoIntrinsicSizeBitmapDrawable(context.resources, finalBmp), sample)
         } catch (_: Exception) {
             ChipBackground(ColorDrawable(Color.BLACK), Color.BLACK)
         }
     }
 
-    /** Decode wallpaper to a moderately large bitmap for cropping (not the final chip size). */
+    /**
+     * Hardware (and some RGBA) bitmaps cannot be subset-cropped or sampled with [Bitmap.getPixel]
+     * reliably; copy to ARGB for a stable path.
+     */
+    private fun ensureArgb8888(bitmap: Bitmap): Bitmap {
+        if (bitmap.config == Bitmap.Config.HARDWARE) {
+            val copy = bitmap.copy(Bitmap.Config.ARGB_8888, false)
+            if (copy != null) {
+                if (copy !== bitmap && !bitmap.isRecycled) {
+                    bitmap.recycle()
+                }
+                return copy
+            }
+        }
+        return bitmap
+    }
+
     private fun decodeWallpaperWorkBitmap(full: Drawable): Bitmap {
         val w = full.intrinsicWidth
         val h = full.intrinsicHeight
@@ -110,11 +121,6 @@ object ClockChipWallpaperThumbnailHelper {
         return full.toBitmap(dw, dh)
     }
 
-    /**
-     * Crops to a wide strip of aspect [aspectWidthOverHeight]. When the image is taller than that
-     * aspect, keeps the **top** band (closer to what sits behind the status bar). When wider, crops
-     * the sides (centered).
-     */
     private fun cropToChipAspect(
         src: Bitmap,
         aspectWidthOverHeight: Float,
@@ -131,22 +137,15 @@ object ClockChipWallpaperThumbnailHelper {
         val top: Int
 
         if (srcAspect > aspectWidthOverHeight) {
-            // Too wide — take center horizontal slice.
             cropH = H
             cropW = (H * aspectWidthOverHeight).toInt().coerceIn(1, W)
             left = (W - cropW) / 2
             top = 0
         } else {
-            // Too tall — take a horizontal band; prefer upper part of the wallpaper.
             cropW = W
             cropH = (W / aspectWidthOverHeight).toInt().coerceIn(1, H)
             left = 0
-            top =
-                if (alignCropTop) {
-                    0
-                } else {
-                    ((H - cropH) / 2).coerceAtLeast(0)
-                }
+            top = if (alignCropTop) 0 else ((H - cropH) / 2).coerceAtLeast(0)
         }
 
         val safeW = cropW.coerceAtMost(W - left)
@@ -178,9 +177,14 @@ object ClockChipWallpaperThumbnailHelper {
         return cn.packageName == SYSTEMUI_PACKAGE && cn.className.endsWith(IMAGE_WALLPAPER_SERVICE)
     }
 
-    private fun sampleCenterArgb(bitmap: Bitmap): Int {
-        val x = (bitmap.width / 2).coerceIn(0, bitmap.width - 1)
-        val y = (bitmap.height / 2).coerceIn(0, bitmap.height - 1)
-        return bitmap.getPixel(x, y)
+    /** Must not recycle [bitmap] (it is still used by the drawable). */
+    private fun sampleCenterArgbSafe(bitmap: Bitmap): Int {
+        return try {
+            val x = (bitmap.width / 2).coerceIn(0, bitmap.width - 1)
+            val y = (bitmap.height / 2).coerceIn(0, bitmap.height - 1)
+            bitmap.getPixel(x, y)
+        } catch (_: Exception) {
+            Color.DKGRAY
+        }
     }
 }
