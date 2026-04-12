@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import com.android.systemui.clock.ui.viewmodel.AmPmStyle
 import com.android.systemui.clock.ui.viewmodel.ClockViewModel
 import com.android.systemui.lifecycle.rememberViewModel
@@ -35,6 +36,7 @@ fun Clock(
     val clockViewModel = rememberViewModel("Clock-viewModel") { viewModelFactory.create(amPmStyle) }
     Text(
         text = clockViewModel.clockText,
+        fontWeight = if (clockViewModel.useBoldClock) FontWeight.Bold else FontWeight.Normal,
         modifier = modifier.semantics { contentDescription = clockViewModel.contentDescriptionText },
     )
 }

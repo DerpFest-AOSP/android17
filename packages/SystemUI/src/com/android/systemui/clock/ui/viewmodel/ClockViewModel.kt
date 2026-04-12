@@ -102,6 +102,13 @@ constructor(
             source = _clockText,
         )
 
+    val useBoldClock: Boolean by
+        hydrator.hydratedStateOf(
+            traceName = "clockBold",
+            initialValue = false,
+            source = clockInteractor.useBoldStatusBarClock,
+        )
+
     val longerDateText: String by
         hydrator.hydratedStateOf(
             traceName = "longerDateText",

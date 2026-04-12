@@ -79,6 +79,7 @@ public class TunerServiceImpl extends TunerService {
             Clock.STATUS_BAR_CLOCK_DATE_POSITION,
             Clock.STATUS_BAR_CLOCK_DATE_FORMAT,
             Clock.STATUS_BAR_CLOCK_PERIOD_SEPARATOR,
+            Clock.STATUS_BAR_CLOCK_BOLD,
             QSHost.TILES_SETTING,
             Settings.Secure.DOUBLE_TAP_TO_WAKE,
             Settings.Secure.DOZE_ALWAYS_ON,

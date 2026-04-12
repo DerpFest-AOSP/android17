@@ -6887,6 +6887,12 @@ public final class Settings {
                 "status_bar_clock_period_separator";
 
         /**
+         * When non-zero, use bold typeface for the status bar clock.
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_BOLD = "status_bar_clock_bold";
+
+        /**
          * GameSpace: List of added games by user
          * @hide
          */
