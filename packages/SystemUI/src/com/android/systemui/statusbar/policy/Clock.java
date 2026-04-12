@@ -446,10 +446,21 @@ public class Clock extends TextView implements
         updateClock(true);
     }
 
+    /**
+     * Bold applies only to the status bar clock. Quick settings / shade headers use {@link Clock}
+     * without {@code systemui:isStatusBar} and must keep the QS theme typeface.
+     */
     private void applyBoldClockStyle() {
         Typeface tf = getTypeface();
         if (tf == null) {
             tf = Typeface.DEFAULT;
+        }
+        if (!mIsStatusBar) {
+            final int style = tf.getStyle();
+            if ((style & Typeface.BOLD) != 0) {
+                setTypeface(Typeface.create(tf, style & ~Typeface.BOLD));
+            }
+            return;
         }
         final int style = tf.getStyle();
         final Typeface withoutBold = Typeface.create(tf, style & ~Typeface.BOLD);
