@@ -26,6 +26,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Build
 import android.os.Handler
+import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
 import android.graphics.drawable.BitmapDrawable
@@ -73,6 +74,9 @@ object ThemeIconController {
     val themeVersion: StateFlow<Long> = _themeVersion.asStateFlow()
 
     private val refreshCallbacks = CopyOnWriteArrayList<Runnable>()
+
+    private val mainLooper = Looper.getMainLooper()
+    private val mainHandler = Handler(mainLooper)
 
     private val globalResyncHooksInstalled = AtomicBoolean(false)
 
@@ -122,6 +126,14 @@ object ThemeIconController {
      */
     @JvmStatic
     fun refreshStatusBarIconCallbacks() {
+        if (Looper.myLooper() != mainLooper) {
+            mainHandler.post { refreshStatusBarIconCallbacks() }
+            return
+        }
+        doRefreshStatusBarIconCallbacks()
+    }
+
+    private fun doRefreshStatusBarIconCallbacks() {
         _themeVersion.value++
         for (cb in refreshCallbacks) {
             cb.run()
@@ -228,16 +240,16 @@ object ThemeIconController {
 
     @JvmStatic
     fun onThemeChanged(tiles: Collection<com.android.systemui.plugins.qs.QSTile>) {
+        if (Looper.myLooper() != mainLooper) {
+            val snapshot = tiles.toList()
+            mainHandler.post { onThemeChanged(snapshot) }
+            return
+        }
         QSTileImpl.ResourceIcon.clearCache()
         for (tile in tiles) {
             tile.refreshState()
         }
-
-        _themeVersion.value++
-
-        for (cb in refreshCallbacks) {
-            cb.run()
-        }
+        refreshStatusBarIconCallbacks()
     }
 
     @JvmStatic
