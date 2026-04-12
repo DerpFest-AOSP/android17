@@ -23,6 +23,7 @@ import android.icu.text.DateFormat
 import android.icu.text.DisplayContext
 import android.os.UserHandle
 import android.provider.AlarmClock
+import android.provider.Settings
 import androidx.annotation.VisibleForTesting
 import com.android.systemui.broadcast.BroadcastDispatcher
 import com.android.systemui.clock.data.repository.ClockRepository
@@ -79,6 +80,24 @@ constructor(
                         }
                     }
                 tunerService.addTunable(tunable, CLOCK_SECONDS_TUNER_KEY)
+                awaitClose { tunerService.removeTunable(tunable) }
+            }
+            .stateIn(
+                scope = coroutineScope,
+                started = SharingStarted.WhileSubscribed(),
+                initialValue = false,
+            )
+
+    /** [StateFlow] that emits whether hour and minute should be separated by a period. */
+    val usePeriodHourMinuteSeparator: StateFlow<Boolean> =
+        conflatedCallbackFlow {
+                val tunable =
+                    TunerService.Tunable { key, newValue ->
+                        if (key == STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY) {
+                            trySend(TunerService.parseIntegerSwitch(newValue, false))
+                        }
+                    }
+                tunerService.addTunable(tunable, STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY)
                 awaitClose { tunerService.removeTunable(tunable) }
             }
             .stateIn(
@@ -175,5 +194,9 @@ constructor(
 
     companion object {
         @VisibleForTesting const val CLOCK_SECONDS_TUNER_KEY = "clock_seconds"
+
+        @VisibleForTesting
+        const val STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY =
+            "system:" + Settings.System.STATUS_BAR_CLOCK_PERIOD_SEPARATOR
     }
 }
