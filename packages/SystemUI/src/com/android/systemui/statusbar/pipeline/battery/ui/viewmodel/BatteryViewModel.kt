@@ -17,6 +17,7 @@
 package com.android.systemui.statusbar.pipeline.battery.ui.viewmodel
 
 import android.content.Context
+import android.content.res.Resources
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -349,10 +350,54 @@ sealed class BatteryViewModel(
          * icon properly scales when the font size changes (consistent with other status bar icons)
          */
         fun getStatusBarBatteryHeight(context: Context): TextUnit {
+            val slotScale = getBatterySlotScale(context)
+            val composeVisualScale =
+                if (useRroThemedBatteryForComposeSizing(context)) {
+                    getBatteryMeterComposeVisualScale(context)
+                } else {
+                    1f
+                }
             return if (StatusBarConnectedDisplays.isEnabled) {
-                (13 * getScaleFactor(context)).sp
+                (13 * getScaleFactor(context) * slotScale * composeVisualScale).sp
             } else {
-                13.sp
+                (13f * slotScale * composeVisualScale).sp
+            }
+        }
+
+        /**
+         * When true, merged resources are from a battery-shape RRO using [ThemedBatteryBody]. Same
+         * idea as [com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository]
+         * before the Lineage style read — heart vs smiley etc. each ship their own scale integers.
+         */
+        private fun useRroThemedBatteryForComposeSizing(context: Context): Boolean {
+            return try {
+                val res = context.resources
+                res.getBoolean(R.bool.config_batteryMeterPreferLegacyThemedDrawable) ||
+                    res.getInteger(R.integer.config_batteryOverrideStyle) >= 0
+            } catch (e: Resources.NotFoundException) {
+                false
+            }
+        }
+
+        /** Same scale as [com.android.systemui.battery.BatteryMeterView] slot sizing (RRO). */
+        private fun getBatterySlotScale(context: Context): Float {
+            return try {
+                val p = context.resources.getInteger(R.integer.config_batteryMeterSlotScalePercent)
+                val s = p / 100f
+                if (s < 0.5f || s > 4f) 1f else s
+            } catch (e: Resources.NotFoundException) {
+                1f
+            }
+        }
+
+        /** Fine-tune Compose battery size without changing slot math elsewhere (default 1.0). */
+        private fun getBatteryMeterComposeVisualScale(context: Context): Float {
+            return try {
+                val p = context.resources.getInteger(R.integer.config_batteryMeterComposeVisualScalePercent)
+                val s = p / 100f
+                if (s < 0.5f || s > 1.25f) 1f else s
+            } catch (e: Resources.NotFoundException) {
+                1f
             }
         }
 

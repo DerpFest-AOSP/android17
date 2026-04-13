@@ -45,6 +45,7 @@ class BatteryViewModelTest : SysuiTestCase() {
     @DisableFlags(StatusBarConnectedDisplays.FLAG_NAME)
     fun getStatusBarBatteryHeight_flagDisabled_scaleIsOne_returnsDefaultHeight() {
         overrideResource(R.dimen.status_bar_icon_scale_factor, 1.0f)
+        overrideResource(R.integer.config_batteryMeterComposeVisualScalePercent, 100)
 
         val height = BatteryViewModel.getStatusBarBatteryHeight(context)
 
@@ -55,6 +56,7 @@ class BatteryViewModelTest : SysuiTestCase() {
     @DisableFlags(StatusBarConnectedDisplays.FLAG_NAME)
     fun getStatusBarBatteryHeight_flagDisabled_scaleIsTwo_returnsDefaultHeight() {
         overrideResource(R.dimen.status_bar_icon_scale_factor, 2.0f)
+        overrideResource(R.integer.config_batteryMeterComposeVisualScalePercent, 100)
 
         val height = BatteryViewModel.getStatusBarBatteryHeight(context)
 
@@ -65,6 +67,7 @@ class BatteryViewModelTest : SysuiTestCase() {
     @EnableFlags(StatusBarConnectedDisplays.FLAG_NAME)
     fun getStatusBarBatteryHeight_flagEnabled_scaleIsOne_returnsDefaultHeight() {
         overrideResource(R.dimen.status_bar_icon_scale_factor, 1.0f)
+        overrideResource(R.integer.config_batteryMeterComposeVisualScalePercent, 100)
 
         val height = BatteryViewModel.getStatusBarBatteryHeight(context)
 
@@ -75,6 +78,7 @@ class BatteryViewModelTest : SysuiTestCase() {
     @EnableFlags(StatusBarConnectedDisplays.FLAG_NAME)
     fun getStatusBarBatteryHeight_flagEnabled_scaleIsTwo_returnsScaledHeight() {
         overrideResource(R.dimen.status_bar_icon_scale_factor, 2.0f)
+        overrideResource(R.integer.config_batteryMeterComposeVisualScalePercent, 100)
 
         val height = BatteryViewModel.getStatusBarBatteryHeight(context)
 

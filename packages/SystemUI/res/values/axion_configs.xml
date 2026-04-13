@@ -63,6 +63,15 @@
     <integer name="config_batterymeterTextSizePct">0</integer>
     <dimen name="config_batterymeterIconWidth">0dp</dimen>
     <dimen name="config_batterymeterIconHeight">0dp</dimen>
+    <!-- Percent (100 = default). Battery style overlays may raise this to enlarge the icon slot. -->
+    <integer name="config_batteryMeterSlotScalePercent">100</integer>
+    <!-- Compose themed-battery height scale (100 = full height). Only applied when an RRO enables
+         themed battery (see BatteryRepository). Each style overlay (heart, smiley, etc.) should
+         set its own value — shapes need different sizes. -->
+    <integer name="config_batteryMeterComposeVisualScalePercent">100</integer>
+    <!-- When true, use ThemedBatteryDrawable (RRO paths) even if NewStatusBarIcons is enabled. -->
+    <bool name="config_batteryMeterPreferLegacyThemedDrawable">false</bool>
+
     <integer name="config_batteryOverrideStyle">-1</integer>
     <bool name="config_themedBatteryPercentWhileCharging">false</bool>
     <bool name="config_themedBatteryPillStyle">false</bool>

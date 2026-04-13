@@ -37,6 +37,7 @@ import com.android.settingslib.Utils
 import com.android.systemui.res.R as SysUiR
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryGlyph
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) : Drawable() {
 
@@ -181,6 +182,8 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
     )
 
     private val perimeterBoundsF = RectF()
+    /** [perimeterPath] bounds in virtual units (same space as [width] / [height]). */
+    private val perimeterPathVirtualBounds = RectF()
     private val boltBoundsF = RectF()
     private val tmpRect = RectF()
 
@@ -504,8 +507,28 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
         invalidateSelf()
     }
 
-    public fun getBatteryLevel(): Int {
+    public     fun getBatteryLevel(): Int {
         return batteryLevel
+    }
+
+    /** Virtual canvas width/height (from [config_batterymeterWidth] / Height). */
+    fun getVirtualMeterWidth(): Float = width
+
+    fun getVirtualMeterHeight(): Float = height
+
+    /** [perimeterPath] bounds in virtual coordinates; used for tight Compose layout. */
+    fun getPerimeterPathVirtualBounds(): RectF = RectF(perimeterPathVirtualBounds)
+
+    /**
+     * Horizontal size for Compose [FrameThemed] when the path does not use the full canvas (e.g.
+     * heart biased in the virtual box), so the slot does not reserve empty space beside the shape.
+     */
+    fun getTightIntrinsicWidth(): Int {
+        if (width <= 0f || perimeterPathVirtualBounds.isEmpty) {
+            return intrinsicWidth
+        }
+        val frac = (perimeterPathVirtualBounds.width() / width).coerceIn(0.05f, 1f)
+        return (intrinsicWidth * frac).roundToInt().coerceAtLeast(1)
     }
 
     override fun onBoundsChange(bounds: Rect) {
@@ -575,7 +598,7 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
         val pathString = context.resources.getString(
                 SysUiR.string.config_batterymeterPerimeterPath)
         perimeterPath.set(PathParser.createPathFromPathData(pathString))
-        perimeterPath.computeBounds(RectF(), true)
+        perimeterPath.computeBounds(perimeterPathVirtualBounds, true)
 
         val errorPathString = context.resources.getString(
                 SysUiR.string.config_batterymeterErrorPerimeterPath)

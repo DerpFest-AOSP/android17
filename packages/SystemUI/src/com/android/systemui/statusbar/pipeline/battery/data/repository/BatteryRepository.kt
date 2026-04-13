@@ -136,9 +136,13 @@ constructor(
     @BatteryTableLog tableLog: TableLogBuffer,
 ) : BatteryRepository {
     private fun readBatteryIconStyle(context: Context): Int {
-        val overlayActive = context.resources.getInteger(
-            R.integer.config_batteryOverrideStyle
-        ) >= 0
+        val res = context.resources
+        // Compose status bar uses UnifiedBattery + ThemedBatteryBody only for this style; it does
+        // not use BatteryMeterView (hidden when NewStatusBarIcons is on).
+        if (res.getBoolean(R.bool.config_batteryMeterPreferLegacyThemedDrawable)) {
+            return BatteryRepository.ICON_STYLE_THEMED
+        }
+        val overlayActive = res.getInteger(R.integer.config_batteryOverrideStyle) >= 0
         if (overlayActive) return BatteryRepository.ICON_STYLE_THEMED
         return LineageSettings.System.getIntForUser(
             context.contentResolver,

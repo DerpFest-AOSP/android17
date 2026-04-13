@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
@@ -64,7 +65,7 @@ fun ThemedBatteryBody(
         context.resources.getBoolean(R.bool.config_themedBatteryPillStyle)
     }
     val drawable = remember(context, themeVersion) { ThemedBatteryDrawable(context, 0) }
-    val tw = drawable.intrinsicWidth.toFloat().coerceAtLeast(1f)
+    val tw = drawable.getTightIntrinsicWidth().toFloat().coerceAtLeast(1f)
     val th = drawable.intrinsicHeight.toFloat().coerceAtLeast(1f)
     val modifier = Modifier.layoutId(BatteryMeasurePolicy.LayoutId.FrameThemed(tw, th))
 
@@ -128,10 +129,12 @@ private fun PathBatteryBody(
         val left: Float
         val top: Float
         if (iw > 0 && ih > 0) {
-            val s = min(size.width / iw, size.height / ih)
-            dw = (iw * s).toInt()
-            dh = (ih * s).toInt()
-            left = (size.width - dw) / 2f
+            // Fill height so the icon stays large when the layout slot is narrower than full
+            // intrinsic width (tight path bounds). Clip horizontally to remove overflow.
+            val s = size.height / ih
+            dw = (iw * s).toInt().coerceAtLeast(1)
+            dh = (ih * s).toInt().coerceAtLeast(1)
+            left = 0f
             top = (size.height - dh) / 2f
         } else {
             dw = size.width.toInt()
@@ -141,12 +144,20 @@ private fun PathBatteryBody(
         }
         drawable.setBounds(0, 0, dw, dh)
 
-        drawIntoCanvas { canvas ->
-            val native = canvas.nativeCanvas
-            val save = native.save()
-            native.translate(left, top)
-            drawable.draw(native)
-            native.restoreToCount(save)
+        clipRect(0f, 0f, size.width, size.height) {
+            drawIntoCanvas { canvas ->
+                val native = canvas.nativeCanvas
+                val save = native.save()
+                native.translate(left, top)
+                val vb = drawable.getPerimeterPathVirtualBounds()
+                val vw = drawable.getVirtualMeterWidth()
+                val vh = drawable.getVirtualMeterHeight()
+                if (vw > 0f && vh > 0f && !vb.isEmpty) {
+                    native.translate(-vb.left * dw / vw, -vb.top * dh / vh)
+                }
+                drawable.draw(native)
+                native.restoreToCount(save)
+            }
         }
     }
 }
