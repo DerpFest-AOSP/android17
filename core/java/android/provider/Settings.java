@@ -7213,6 +7213,14 @@ public final class Settings {
         public static final String QS_PANEL_BG_USE_NEW_TINT = "qs_panel_bg_use_new_tint";
 
         /**
+         * When {@code qs_panel_style} is classic circular (1), use a stable random accent color
+         * per tile for the active state instead of the theme primary. Ignored when a QS tile
+         * gradient is enabled. 0 = off, 1 = on.
+         * @hide
+         */
+        public static final String QS_TILES_CLASSIC_RANDOM_ACCENT = "qs_tiles_classic_random_accent";
+
+        /**
          * Customize Brightness slider shape.
          * @hide
          */
@@ -7644,6 +7652,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(MOUSE_SCROLLING_SPEED);
             PRIVATE_SETTINGS.add(FORCE_FULLSCREEN_CUTOUT_APPS);
             PRIVATE_SETTINGS.add(QS_PANEL_BG_USE_NEW_TINT);
+            PRIVATE_SETTINGS.add(QS_TILES_CLASSIC_RANDOM_ACCENT);
             PRIVATE_SETTINGS.add(QS_BRIGHTNESS_USE_NEW_TINT);
         }
 

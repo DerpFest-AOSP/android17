@@ -319,7 +319,7 @@ fun ContentScope.Tile(
                 tile.state.collect { value = it.toIconProvider() }
             }
 
-        val colors = TileDefaults.getColorForState(uiState, iconOnly)
+        val colors = TileDefaults.getColorForState(uiState, iconOnly, tile.spec.spec)
         val hapticsViewModel: TileHapticsViewModel? =
             rememberViewModel(traceName = "TileHapticsViewModel") {
                 tileHapticsViewModelFactoryProvider.getHapticsViewModelFactory()?.create(tile)
@@ -631,10 +631,11 @@ fun LargeStaticTile(
     uiState: TileUiState,
     iconProvider: IconProvider,
     modifier: Modifier = Modifier,
+    tileSpec: String = "large_static_tile",
 ) {
     val shapeMode = rememberTileShapeMode()
 
-    val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = false)
+    val colors = TileDefaults.getColorForState(uiState = uiState, iconOnly = false, tileSpec = tileSpec)
 
     Box(
         modifier
@@ -947,31 +948,90 @@ internal fun rememberQsUseNewTint(): Boolean {
     return value == 1
 }
 
+/** Random accent per tile for classic circular style; recomposes when the setting changes. */
+@Composable
+private fun rememberQsClassicRandomAccent(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+    fun read(): Int =
+        try {
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.QS_TILES_CLASSIC_RANDOM_ACCENT,
+                0,
+                UserHandle.USER_CURRENT
+            )
+        } catch (_: Throwable) {
+            0
+        }
+    var value by remember { mutableIntStateOf(read()) }
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(null) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute { value = read() }
+            }
+        }
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_TILES_CLASSIC_RANDOM_ACCENT),
+            false,
+            observer,
+            UserHandle.USER_ALL
+        )
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+    return value == 1
+}
+
 private object TileDefaults {
     val ActiveIconCornerRadius = 16.dp
 
-    /** Luminance-aware foreground so drawables/labels stay visible on gradient. When new tint is on and no gradient, use primary (accent). */
+    /**
+     * Random primary for classic circular + [rememberQsClassicRandomAccent], unless a tile
+     * gradient is active.
+     */
     @Composable
-    private fun activeTileForegroundColor(): Color {
+    private fun rememberClassicRandomPrimaryOrNull(tileSpec: String): Color? {
+        if (LocalQSPanelStyle.current != 1) return null
+        if (!rememberQsClassicRandomAccent()) return null
+        if (tileGradientBrushOrNull() != null) return null
+        val isDark = qsComposeMaterialIsDark()
+        return Color(QsTileClassicRandomAccent.argb(isDark, tileSpec))
+    }
+
+    @Composable
+    private fun activePrimaryColor(tileSpec: String): Color {
+        return rememberClassicRandomPrimaryOrNull(tileSpec) ?: MaterialTheme.colorScheme.primary
+    }
+
+    /**
+     * Luminance-aware foreground so drawables/labels stay visible on gradient. When new tint is on
+     * and no gradient, use primary (accent). With classic random accent, contrast against the random
+     * fill when not using new tint.
+     */
+    @Composable
+    private fun activeTileForegroundColor(tileSpec: String): Color {
         val gradient = tileGradientBrushOrNull()
         val gradientEnd = rememberQsGradientEndColor()
         val useNewTint = rememberQsUseNewTint()
         val context = LocalContext.current
+        val randomPrimary = rememberClassicRandomPrimaryOrNull(tileSpec)
         return when {
             gradient != null && gradientEnd != null ->
                 Color(BatteryColors.textColorOnBackground(context, gradientEnd.toArgb()))
-            useNewTint -> MaterialTheme.colorScheme.primary
+            useNewTint -> activePrimaryColor(tileSpec)
+            randomPrimary != null ->
+                Color(BatteryColors.textColorOnBackground(context, randomPrimary.toArgb()))
             else -> MaterialTheme.colorScheme.onPrimary
         }
     }
 
     /** An active tile uses the active color as background. When new tint is on and no gradient, use primary at 20% for background. */
     @Composable
-    fun activeTileColors(): TileColors {
+    fun activeTileColors(tileSpec: String): TileColors {
         val gradient = tileGradientBrushOrNull()
         val useNewTint = rememberQsUseNewTint()
-        val foreground = activeTileForegroundColor()
-        val primary = MaterialTheme.colorScheme.primary
+        val foreground = activeTileForegroundColor(tileSpec)
+        val primary = activePrimaryColor(tileSpec)
         val bg = when {
             gradient != null -> primary
             useNewTint -> primary.copy(alpha = 0.2f)
@@ -996,11 +1056,11 @@ private object TileDefaults {
 
     /** An active tile with dual target only show the active color on the icon. When new tint and no gradient, icon uses primary at 20%. */
     @Composable
-    fun activeDualTargetTileColors(): TileColors {
+    fun activeDualTargetTileColors(tileSpec: String): TileColors {
         val gradient = tileGradientBrushOrNull()
         val useNewTint = rememberQsUseNewTint()
-        val iconForeground = activeTileForegroundColor()
-        val primary = MaterialTheme.colorScheme.primary
+        val iconForeground = activeTileForegroundColor(tileSpec)
+        val primary = activePrimaryColor(tileSpec)
         val iconBg = when {
             gradient != null -> primary
             useNewTint -> primary.copy(alpha = 0.2f)
@@ -1061,14 +1121,14 @@ private object TileDefaults {
     }
 
     @Composable
-    fun getColorForState(uiState: TileUiState, iconOnly: Boolean): TileColors {
+    fun getColorForState(uiState: TileUiState, iconOnly: Boolean, tileSpec: String): TileColors {
         val useNewTint = rememberQsUseNewTint()
         return when (uiState.state) {
             STATE_ACTIVE -> {
                 if (uiState.handlesSecondaryClick && !iconOnly) {
-                    activeDualTargetTileColors()
+                    activeDualTargetTileColors(tileSpec)
                 } else {
-                    activeTileColors()
+                    activeTileColors(tileSpec)
                 }
             }
 
