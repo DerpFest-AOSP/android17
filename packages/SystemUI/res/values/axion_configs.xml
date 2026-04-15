@@ -78,4 +78,6 @@
     <bool name="config_themedBatteryPillIconLeading">true</bool>
     <bool name="config_themedBatteryPillOutline">false</bool>
     <bool name="config_themedBatteryPillNub">true</bool>
+    <!-- Extra Y offset (px from dp) when drawing themed path battery in Compose; negative nudges up. -->
+    <dimen name="config_batteryMeterThemedComposeDrawOffsetY">0dp</dimen>
 </resources>

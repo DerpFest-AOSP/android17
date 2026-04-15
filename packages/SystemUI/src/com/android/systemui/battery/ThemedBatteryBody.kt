@@ -79,6 +79,9 @@ fun ThemedBatteryBody(
             contentDescription = contentDescription,
         )
     } else {
+        val drawOffsetY = remember(context, themeVersion) {
+            context.resources.getDimension(R.dimen.config_batteryMeterThemedComposeDrawOffsetY)
+        }
         PathBatteryBody(
             drawable = drawable,
             levelProvider = levelProvider,
@@ -87,6 +90,7 @@ fun ThemedBatteryBody(
             attr = attr,
             modifier = modifier,
             contentDescription = contentDescription,
+            drawOffsetY = drawOffsetY,
         )
     }
 }
@@ -100,6 +104,7 @@ private fun PathBatteryBody(
     attr: BatteryGlyph?,
     modifier: Modifier,
     contentDescription: String,
+    drawOffsetY: Float = 0f,
 ) {
     val isCharging = attr is BatteryGlyph.Bolt
 
@@ -135,7 +140,7 @@ private fun PathBatteryBody(
             dw = (iw * s).toInt().coerceAtLeast(1)
             dh = (ih * s).toInt().coerceAtLeast(1)
             left = 0f
-            top = (size.height - dh) / 2f
+            top = (size.height - dh) / 2f + drawOffsetY
         } else {
             dw = size.width.toInt()
             dh = size.height.toInt()
