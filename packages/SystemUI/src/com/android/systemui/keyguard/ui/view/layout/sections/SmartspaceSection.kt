@@ -260,18 +260,34 @@ constructor(
                         context.resources.getDimensionPixelSize(R.dimen.smartspace_padding_vertical),
                     )
 
-                    // Pin the date+weather strip to the large clock's start. Do not use
-                    // clockShouldBeCentered here — that tracks shade/notifications and is often true
-                    // on phones, which used to CHAIN_PACKED-center this strip and left a lone weather
-                    // icon floating in the middle under typography / left-weighted flex clocks.
-                    connect(
-                        sharedR.id.date_smartspace_view_large,
-                        ConstraintSet.START,
-                        smartspaceLargeClockAnchorId(),
-                        ConstraintSet.START,
-                        KeyguardSmartspaceViewModel.getDateWeatherStartMargin(context),
-                    )
-                    clear(sharedR.id.date_smartspace_view_large, ConstraintSet.END)
+                    if (isCustomClockStyleEnabled()) {
+                        // Original ClockStyle behavior: pin to the clock host's start (see clock_ls / flex large).
+                        connect(
+                            sharedR.id.date_smartspace_view_large,
+                            ConstraintSet.START,
+                            smartspaceLargeClockAnchorId(),
+                            ConstraintSet.START,
+                            KeyguardSmartspaceViewModel.getDateWeatherStartMargin(context),
+                        )
+                        clear(sharedR.id.date_smartspace_view_large, ConstraintSet.END)
+                    } else {
+                        // Flex large clock: host is usually full width; center the strip in the parent.
+                        connect(
+                            sharedR.id.date_smartspace_view_large,
+                            ConstraintSet.START,
+                            ConstraintSet.PARENT_ID,
+                            ConstraintSet.START,
+                            dateWeatherPaddingStart,
+                        )
+                        connect(
+                            sharedR.id.date_smartspace_view_large,
+                            ConstraintSet.END,
+                            ConstraintSet.PARENT_ID,
+                            ConstraintSet.END,
+                            dateWeatherPaddingStart,
+                        )
+                        setHorizontalBias(sharedR.id.date_smartspace_view_large, 0.5f)
+                    }
                 } else {
                     if (dateWeatherBelowSmallClock || !dateWeatherBelowLargeClock) {
                         connect(
