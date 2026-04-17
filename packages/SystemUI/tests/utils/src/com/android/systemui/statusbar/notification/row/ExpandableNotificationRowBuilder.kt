@@ -26,6 +26,8 @@ import android.app.userProfileBadgeProvider
 import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
+import android.os.Handler
+import android.os.Looper
 import android.os.UserHandle
 import androidx.core.os.bundleOf
 import com.android.internal.logging.MetricsLogger
@@ -164,6 +166,7 @@ class ExpandableNotificationRowBuilder(
                 mBgCoroutineContext,
                 mMainCoroutineContext,
                 context,
+                Handler(Looper.getMainLooper()),
             )
 
         mSmartReplyConstants = SmartReplyConstants(context)

@@ -160,25 +160,25 @@ public final class MediaCoordinatorTest extends SysuiTestCase {
         mListener.onEntryInit(mMediaEntry);
         mListener.onEntryAdded(mMediaEntry);
         verify(mIconManager, never()).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean());
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean(), anyBoolean());
 
         mFilter.shouldFilterOut(mMediaEntry, 0);
         verify(mIconManager, times(1)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean());
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean(), anyBoolean());
 
         mFilter.shouldFilterOut(mMediaEntry, 0);
         verify(mIconManager, times(1)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, times(1)).updateIcons(eq(mMediaEntry),  /* usingCache = */ eq(false));
+        verify(mIconManager, times(1)).updateIcons(eq(mMediaEntry), eq(false), eq(false));
 
         mListener.onEntryRemoved(mMediaEntry, NotificationListenerService.REASON_CANCEL);
         mListener.onEntryCleanUp(mMediaEntry);
         mListener.onEntryInit(mMediaEntry);
         verify(mIconManager, times(1)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, times(1)).updateIcons(eq(mMediaEntry),  /* usingCache = */ eq(false));
+        verify(mIconManager, times(1)).updateIcons(eq(mMediaEntry), eq(false), eq(false));
 
         mFilter.shouldFilterOut(mMediaEntry, 0);
         verify(mIconManager, times(2)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, times(1)).updateIcons(eq(mMediaEntry), /* usingCache = */ eq(false));
+        verify(mIconManager, times(1)).updateIcons(eq(mMediaEntry), eq(false), eq(false));
     }
 
     @Test
@@ -188,25 +188,25 @@ public final class MediaCoordinatorTest extends SysuiTestCase {
         mListener.onEntryInit(mMediaEntry);
         mListener.onEntryAdded(mMediaEntry);
         verify(mIconManager, never()).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean());
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean(), anyBoolean());
 
         doThrow(InflationException.class).when(mIconManager).createIcons(eq(mMediaEntry));
         mFilter.shouldFilterOut(mMediaEntry, 0);
         verify(mIconManager, times(1)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean());
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean(), anyBoolean());
 
         mFilter.shouldFilterOut(mMediaEntry, 0);
         verify(mIconManager, times(1)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry),  /* usingCache = */ eq(false));
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), eq(false), eq(false));
 
         mListener.onEntryUpdated(mMediaEntry);
         verify(mIconManager, times(1)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean());
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean(), anyBoolean());
 
         doNothing().when(mIconManager).createIcons(eq(mMediaEntry));
         mFilter.shouldFilterOut(mMediaEntry, 0);
         verify(mIconManager, times(2)).createIcons(eq(mMediaEntry));
-        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean());
+        verify(mIconManager, never()).updateIcons(eq(mMediaEntry), anyBoolean(), anyBoolean());
     }
 
     private void finishSetupWithMediaFeatureFlagEnabled(boolean mediaFeatureFlagEnabled) {
