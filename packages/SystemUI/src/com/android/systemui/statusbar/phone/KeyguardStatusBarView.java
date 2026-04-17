@@ -486,22 +486,18 @@ public class KeyguardStatusBarView extends RelativeLayout {
                 R.attr.wallpaperTextColor);
         float luminance = Color.luminance(textColor);
         
-        // Check if accent color tinting is enabled
-        boolean useAccentColor = android.provider.Settings.System.getIntForUser(
-                mContext.getContentResolver(),
-                android.provider.Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT,
-                0,
-                android.os.UserHandle.USER_CURRENT) == 1;
+        int tintMode = StatusBarIconTintHelper.getMode(mContext);
 
         @ColorInt int iconColor;
         @ColorInt int contrastColor;
-        
-        if (useAccentColor) {
-            // Use system accent color for tinting
+
+        if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {
             iconColor = Utils.getColorAccentDefaultColor(mContext);
             contrastColor = iconColor;
+        } else if (tintMode == StatusBarIconTintHelper.MODE_CUSTOM) {
+            iconColor = StatusBarIconTintHelper.getCustomColorArgb(mContext);
+            contrastColor = iconColor;
         } else {
-            // Use default behavior
             iconColor = Utils.getColorStateListDefaultColor(mContext,
                         luminance < 0.5
                             ? com.android.settingslib.R.color.dark_mode_icon_color_single_tone
@@ -516,9 +512,13 @@ public class KeyguardStatusBarView extends RelativeLayout {
 
         TextView userSwitcherName = mUserSwitcherContainer.findViewById(R.id.current_user_name);
         if (userSwitcherName != null) {
-            userSwitcherName.setTextColor(Utils.getColorStateListDefaultColor(
-                    mContext,
-                    com.android.settingslib.R.color.light_mode_icon_color_single_tone));
+            if (tintMode == StatusBarIconTintHelper.MODE_SYSTEM) {
+                userSwitcherName.setTextColor(Utils.getColorStateListDefaultColor(
+                        mContext,
+                        com.android.settingslib.R.color.light_mode_icon_color_single_tone));
+            } else {
+                userSwitcherName.setTextColor(iconColor);
+            }
         }
 
         if (iconManager != null) {

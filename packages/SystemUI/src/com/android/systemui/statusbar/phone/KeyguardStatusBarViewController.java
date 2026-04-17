@@ -523,6 +523,16 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
                 false,
                 mAccentColorSettingObserver,
                 UserHandle.USER_ALL);
+        mSecureSettings.registerContentObserverForUserSync(
+                Settings.System.STATUSBAR_ICON_TINT_MODE,
+                false,
+                mAccentColorSettingObserver,
+                UserHandle.USER_ALL);
+        mSecureSettings.registerContentObserverForUserSync(
+                Settings.System.STATUSBAR_ICON_TINT_CUSTOM_COLOR,
+                false,
+                mAccentColorSettingObserver,
+                UserHandle.USER_ALL);
         updateUserSwitcher();
         onThemeChanged();
         if (!Flags.glanceableHubV2()) {

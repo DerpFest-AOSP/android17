@@ -33,6 +33,7 @@ import com.android.systemui.lifecycle.ExclusiveActivatable
 import com.android.systemui.lifecycle.Hydrator
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays
+import com.android.systemui.statusbar.phone.StatusBarIconTintHelper
 import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
 import com.android.systemui.statusbar.pipeline.battery.domain.interactor.BatteryAttributionModel.Charging
 import com.android.systemui.statusbar.pipeline.battery.domain.interactor.BatteryAttributionModel.Defend
@@ -146,9 +147,10 @@ sealed class BatteryViewModel(
         combine(
             interactor.batteryAttributionType,
             interactor.isCritical,
-            interactor.tintStatusBarIconsWithAccent,
+            interactor.statusBarIconTintMode,
+            interactor.statusBarIconTintCustomColorArgb,
             interactor.themeChanged
-        ) { attr, isCritical, useAccentColor, _ ->
+        ) { attr, isCritical, tintMode, customArgb, _ ->
             val baseProfile = when (attr) {
                 Charging,
                 Defend ->
@@ -176,13 +178,20 @@ sealed class BatteryViewModel(
                         )
                     }
             }
-            
-            if (useAccentColor) {
-                val accentColorInt = Utils.getColorAccentDefaultColor(context)
-                val (accentLight, accentDark) = BatteryColors.createAccentThemes(context, accentColorInt)
-                ColorProfile(dark = accentDark, light = accentLight)
-            } else {
-                baseProfile
+
+            when (tintMode) {
+                StatusBarIconTintHelper.MODE_ACCENT -> {
+                    val accentColorInt = Utils.getColorAccentDefaultColor(context)
+                    val (accentLight, accentDark) =
+                        BatteryColors.createAccentThemes(context, accentColorInt)
+                    ColorProfile(dark = accentDark, light = accentLight)
+                }
+                StatusBarIconTintHelper.MODE_CUSTOM -> {
+                    val (accentLight, accentDark) =
+                        BatteryColors.createAccentThemes(context, customArgb)
+                    ColorProfile(dark = accentDark, light = accentLight)
+                }
+                else -> baseProfile
             }
         }
 

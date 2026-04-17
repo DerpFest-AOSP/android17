@@ -118,8 +118,15 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
         dumpManager.registerNormalDumpable(mDumpableName, this);
         
         // Register ContentObserver to watch for setting changes
-        mContext.getContentResolver().registerContentObserver(
+        ContentResolver cr = mContext.getContentResolver();
+        cr.registerContentObserver(
                 Settings.System.getUriFor(Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT),
+                false, mSettingsObserver, UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_TINT_MODE),
+                false, mSettingsObserver, UserHandle.USER_ALL);
+        cr.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_TINT_CUSTOM_COLOR),
                 false, mSettingsObserver, UserHandle.USER_ALL);
         
         // Register ConfigurationListener to watch for theme changes
@@ -220,20 +227,16 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
         mDarkIntensity = darkIntensity;
         ArgbEvaluator evaluator = ArgbEvaluator.getInstance();
 
-        // Check if accent color tinting is enabled
-        boolean useAccentColor = Settings.System.getIntForUser(
-                mContext.getContentResolver(),
-                Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT,
-                0,
-                UserHandle.USER_CURRENT) == 1;
-
-        if (useAccentColor) {
-            // Use system accent color for tinting
+        int tintMode = StatusBarIconTintHelper.getMode(mContext);
+        if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {
             int accentColor = Utils.getColorAccentDefaultColor(mContext);
             mIconTint = accentColor;
             mContrastTint = accentColor;
+        } else if (tintMode == StatusBarIconTintHelper.MODE_CUSTOM) {
+            int custom = StatusBarIconTintHelper.getCustomColorArgb(mContext);
+            mIconTint = custom;
+            mContrastTint = custom;
         } else {
-            // Use default behavior
             mIconTint = (int) evaluator.evaluate(darkIntensity,
                     mLightModeIconColorSingleTone, mDarkModeIconColorSingleTone);
             mContrastTint = (int) evaluator

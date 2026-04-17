@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import com.android.settingslib.Utils;
 import com.android.systemui.res.R;
+import com.android.systemui.statusbar.phone.StatusBarIconTintHelper;
 import com.android.systemui.statusbar.StatusIconDisplayable;
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors;
 import com.android.systemui.statusbar.StatusBarIconView;
@@ -123,6 +124,12 @@ public class CombinedNotificationCounter extends FrameLayout
             false, mSettingsObserver, UserHandle.USER_CURRENT);
         mContext.getContentResolver().registerContentObserver(
             Settings.System.getUriFor(Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT),
+            false, mAccentColorSettingsObserver, UserHandle.USER_ALL);
+        mContext.getContentResolver().registerContentObserver(
+            Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_TINT_MODE),
+            false, mAccentColorSettingsObserver, UserHandle.USER_ALL);
+        mContext.getContentResolver().registerContentObserver(
+            Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_TINT_CUSTOM_COLOR),
             false, mAccentColorSettingsObserver, UserHandle.USER_ALL);
         
         updateCombinedCountSetting();
@@ -453,19 +460,13 @@ public class CombinedNotificationCounter extends FrameLayout
 
     @Override
     public void onDarkChanged(ArrayList<Rect> areas, float darkIntensity, int tint) {
-        // Check if accent color tinting is enabled
-        boolean useAccentColor = Settings.System.getIntForUser(
-                mContext.getContentResolver(),
-                Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT,
-                0,
-                UserHandle.USER_CURRENT) == 1;
-        
+        int tintMode = StatusBarIconTintHelper.getMode(mContext);
         int circleColor;
-        if (useAccentColor) {
-            // Use system accent color
+        if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {
             circleColor = Utils.getColorAccentDefaultColor(mContext);
+        } else if (tintMode == StatusBarIconTintHelper.MODE_CUSTOM) {
+            circleColor = StatusBarIconTintHelper.getCustomColorArgb(mContext);
         } else {
-            // Use the tint provided by DarkIconDispatcher
             circleColor = tint;
         }
         

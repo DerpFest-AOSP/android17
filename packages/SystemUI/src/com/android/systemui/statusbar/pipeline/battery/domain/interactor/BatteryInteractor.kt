@@ -91,8 +91,11 @@ class BatteryInteractor @Inject constructor(
     /** @see [BatteryRepository.showBatteryPercentMode] */
     val showBatteryPercentMode: StateFlow<Int> = repo.showBatteryPercentMode
 
-    /** @see [BatteryRepository.tintStatusBarIconsWithAccent] */
-    val tintStatusBarIconsWithAccent: StateFlow<Boolean> = repo.tintStatusBarIconsWithAccent
+    /** @see [BatteryRepository.statusBarIconTintMode] */
+    val statusBarIconTintMode: StateFlow<Int> = repo.statusBarIconTintMode
+
+    /** @see [BatteryRepository.statusBarIconTintCustomColorArgb] */
+    val statusBarIconTintCustomColorArgb: StateFlow<Int> = repo.statusBarIconTintCustomColorArgb
 
     /** Flow that emits whenever the theme changes. Emits on first collect so battery color
      * profile uses current tint setting immediately (e.g. after reboot). */

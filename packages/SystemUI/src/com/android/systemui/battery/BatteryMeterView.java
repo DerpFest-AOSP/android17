@@ -59,6 +59,7 @@ import com.android.systemui.plugins.DarkIconDispatcher;
 import com.android.systemui.plugins.DarkIconDispatcher.DarkReceiver;
 import com.android.systemui.res.R;
 import com.android.systemui.statusbar.core.NewStatusBarIcons;
+import com.android.systemui.statusbar.phone.StatusBarIconTintHelper;
 import com.android.systemui.statusbar.policy.BatteryController;
 
 import java.io.PrintWriter;
@@ -723,16 +724,14 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
             return;
         }
 
-        // Check if accent color tinting is enabled (e.g. for lockscreen status bar)
-        boolean useAccentColor = Settings.System.getIntForUser(
-                getContext().getContentResolver(),
-                Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT,
-                0,
-                UserHandle.USER_CURRENT) == 1;
-
-        if (useAccentColor) {
+        int tintMode = StatusBarIconTintHelper.getMode(getContext());
+        if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {
             int accentColor = Utils.getColorAccentDefaultColor(getContext());
             mUnifiedBatteryColors = BatteryColors.createAccentColors(accentColor);
+        } else if (tintMode == StatusBarIconTintHelper.MODE_CUSTOM) {
+            mUnifiedBatteryColors =
+                    BatteryColors.createAccentColors(
+                            StatusBarIconTintHelper.getCustomColorArgb(getContext()));
         } else if (DarkIconDispatcher.isInAreas(areas, this)) {
             if (darkIntensity < 0.5) {
                 mUnifiedBatteryColors = BatteryColors.DARK_THEME_COLORS;
@@ -748,17 +747,13 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
     }
 
     private void onDarkChangedLegacy(ArrayList<Rect> areas, float darkIntensity, int tint) {
-        // Check if accent color tinting is enabled
-        boolean useAccentColor = Settings.System.getIntForUser(
-                getContext().getContentResolver(),
-                Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT,
-                0,
-                UserHandle.USER_CURRENT) == 1;
-
-        if (useAccentColor) {
-            // Use system accent color for battery tinting
+        int tintMode = StatusBarIconTintHelper.getMode(getContext());
+        if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {
             int accentColor = Utils.getColorAccentDefaultColor(getContext());
             updateColors(accentColor, accentColor, accentColor);
+        } else if (tintMode == StatusBarIconTintHelper.MODE_CUSTOM) {
+            int custom = StatusBarIconTintHelper.getCustomColorArgb(getContext());
+            updateColors(custom, custom, custom);
         } else {
             // Use default behavior
             float intensity = DarkIconDispatcher.isInAreas(areas, this) ? darkIntensity : 0;
