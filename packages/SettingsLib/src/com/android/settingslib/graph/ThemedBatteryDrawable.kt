@@ -216,10 +216,15 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
             // Dual tone means we draw the shape again, clipped to the charge level
             c.drawPath(unifiedPath, dualToneBackgroundFill)
             c.save()
-            c.clipRect(0f,
-                    bounds.bottom - bounds.height() * fillFraction,
-                    bounds.right.toFloat(),
-                    bounds.bottom.toFloat())
+            if (!levelRect.isEmpty) {
+                c.clipRect(levelRect.left, levelRect.top, levelRect.right, levelRect.bottom)
+            } else {
+                c.clipRect(
+                        0f,
+                        bounds.bottom - bounds.height() * fillFraction,
+                        bounds.right.toFloat(),
+                        bounds.bottom.toFloat())
+            }
             c.drawPath(unifiedPath, fillPaint)
             c.restore()
         } else {

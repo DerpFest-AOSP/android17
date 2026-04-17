@@ -82,7 +82,8 @@ sealed interface BatteryColors {
 
         companion object {
             private val lowAlphaBg = Color.Black.copy(alpha = 0.20f)
-            private val highAlphaBg = Color.Black.copy(alpha = 0.55f)
+            /** Matches dark_mode_icon_color_dual_tone_background (#3d000000): same alpha as WiFi/signal dual-tone. */
+            private val highAlphaBg = Color.Black.copy(alpha = 61f / 255f)
         }
     }
 
@@ -118,7 +119,8 @@ sealed interface BatteryColors {
 
         companion object {
             private val lowAlphaBg = Color.White.copy(alpha = 0.45f)
-            private val highAlphaBg = Color.White.copy(alpha = 0.55f)
+            /** Matches light_mode_icon_color_dual_tone_background (#4dffffff): same alpha as WiFi/signal dual-tone. */
+            private val highAlphaBg = Color.White.copy(alpha = 77f / 255f)
         }
     }
 
@@ -131,7 +133,8 @@ sealed interface BatteryColors {
         override val glyph = darkerAccentShade(accentColor, useHighEnd)
         override val fill = accentColor
         override val backgroundOnly = accentColor.copy(alpha = 0.20f)
-        override val backgroundWithGlyph = accentColor.copy(alpha = 0.70f)
+        /** Same alpha as [LightTheme] highAlphaBg (dual-tone icon background on light surfaces). */
+        override val backgroundWithGlyph = accentColor.copy(alpha = 61f / 255f)
     }
 
     /** Accent color theme for dark mode */
@@ -143,7 +146,8 @@ sealed interface BatteryColors {
         override val glyph = darkerAccentShade(accentColor, useHighEnd)
         override val fill = accentColor
         override val backgroundOnly = accentColor.copy(alpha = 0.45f)
-        override val backgroundWithGlyph = accentColor.copy(alpha = 0.70f)
+        /** Same alpha as [DarkTheme] highAlphaBg (dual-tone icon background on dark surfaces). */
+        override val backgroundWithGlyph = accentColor.copy(alpha = 77f / 255f)
     }
 
     companion object {
