@@ -7524,6 +7524,14 @@ public final class Settings {
         public static final String STATUSBAR_COLORED_ICONS = "statusbar_colored_icons";
 
         /**
+         * When non-zero and {@link #STATUSBAR_COLORED_ICONS} is enabled, use bundled Pink Bean
+         * theme launcher PNGs for notification status icons when available for that package.
+         * @hide
+         */
+        public static final String STATUSBAR_PINKBEAN_NOTIFICATION_ICONS =
+                "statusbar_pinkbean_notification_icons";
+
+        /**
          * Keys we no longer back up under the current schema, but want to continue to
          * process when restoring historical backup datasets.
          *

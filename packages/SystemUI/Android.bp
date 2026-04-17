@@ -515,6 +515,7 @@ android_library {
         "compose/facade/enabled/src/**/*.kt",
         "pulse/src/**/*.java",
     ],
+    asset_dirs: ["assets"],
     defaults: ["SystemUI-srcs-defaults"],
     static_libs: [
         "//frameworks/libs/systemui:compilelib",
