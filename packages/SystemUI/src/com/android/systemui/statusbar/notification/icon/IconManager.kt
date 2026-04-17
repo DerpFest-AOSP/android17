@@ -19,6 +19,7 @@ package com.android.systemui.statusbar.notification.icon
 import android.app.Notification
 import android.app.Notification.MessagingStyle
 import android.app.Person
+import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.database.ContentObserver
@@ -117,6 +118,12 @@ constructor(
             settingsObserver,
             UserHandle.USER_ALL,
         )
+        shadeContext.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.STATUSBAR_PINKBEAN_NOTIFICATION_ICONS),
+            false,
+            settingsObserver,
+            UserHandle.USER_ALL,
+        )
     }
 
     private val settingsObserver =
@@ -147,6 +154,29 @@ constructor(
     private val sensitivityListener =
         PipelineEntry.OnSensitivityChangedListener { entry -> updateIconsSafe(entry) }
 
+    /**
+     * Colored status bar icons and optional Pink Bean bundled PNGs (second is only true when
+     * colored is enabled and the Pink Bean setting is on).
+     */
+    private fun readColoredAndPinkBeanIconStyle(contentResolver: ContentResolver): Pair<Boolean, Boolean> {
+        val colored =
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.STATUSBAR_COLORED_ICONS,
+                0,
+                UserHandle.USER_CURRENT,
+            ) == 1
+        val pinkBean =
+            colored &&
+                Settings.System.getIntForUser(
+                    contentResolver,
+                    Settings.System.STATUSBAR_PINKBEAN_NOTIFICATION_ICONS,
+                    0,
+                    UserHandle.USER_CURRENT,
+                ) == 1
+        return Pair(colored, pinkBean)
+    }
+
     private fun recalculateForImportantConversationChange() {
         for (entry in notifCollection.allNotifs) {
             val isImportant = isImportantConversation(entry)
@@ -168,14 +198,8 @@ constructor(
             val sbIcon = iconBuilder.createIconView(entry, context)
             sbIcon.scaleType = ImageView.ScaleType.CENTER_INSIDE
             val (normalIconDescriptor, _) = getIconDescriptors(entry)
-            val iconStyle =
-                Settings.System.getIntForUser(
-                    context.contentResolver,
-                    Settings.System.STATUSBAR_COLORED_ICONS,
-                    0,
-                    UserHandle.USER_CURRENT,
-                ) == 1
-            setIcon(entry, normalIconDescriptor, sbIcon, iconStyle, /* forceUpdate = */ true)
+            val (iconStyle, pinkBean) = readColoredAndPinkBeanIconStyle(context.contentResolver)
+            setIcon(entry, normalIconDescriptor, sbIcon, iconStyle, pinkBean, /* forceUpdate = */ true)
             return sbIcon
         }
 
@@ -205,13 +229,7 @@ constructor(
             // Set the icon views' icons
             val (normalIconDescriptor, sensitiveIconDescriptor) = getIconDescriptors(entry)
 
-            val iconStyle =
-                Settings.System.getIntForUser(
-                    shadeContext.contentResolver,
-                    Settings.System.STATUSBAR_COLORED_ICONS,
-                    0,
-                    UserHandle.USER_CURRENT,
-                ) == 1
+            val (iconStyle, pinkBean) = readColoredAndPinkBeanIconStyle(shadeContext.contentResolver)
 
             try {
                 if (
@@ -223,9 +241,9 @@ constructor(
                     Log.i(TAG, "EXTRA_HIDE_STATUS_BAR_NOTIFICATION set, hiding the icon.")
                     sbIcon.visibility = View.GONE
                 }
-                setIcon(entry, normalIconDescriptor, sbIcon, iconStyle, /* forceUpdate = */ false)
-                setIcon(entry, sensitiveIconDescriptor, shelfIcon, iconStyle, /* forceUpdate = */ false)
-                setIcon(entry, sensitiveIconDescriptor, aodIcon, /* iconStyle = */ false, /* forceUpdate = */ false)
+                setIcon(entry, normalIconDescriptor, sbIcon, iconStyle, pinkBean, /* forceUpdate = */ false)
+                setIcon(entry, sensitiveIconDescriptor, shelfIcon, iconStyle, pinkBean, /* forceUpdate = */ false)
+                setIcon(entry, sensitiveIconDescriptor, aodIcon, /* iconStyle = */ false, /* pinkBeanIcons = */ false, /* forceUpdate = */ false)
                 entry.icons =
                     IconPack.buildPack(
                         sbIcon,
@@ -247,14 +265,8 @@ constructor(
             val notificationContentDescription =
                 entry.sbn.notification?.let { iconBuilder.getIconContentDescription(it) }
             iconView.setNotification(entry.sbn, notificationContentDescription)
-            val iconStyle =
-                Settings.System.getIntForUser(
-                    shadeContext.contentResolver,
-                    Settings.System.STATUSBAR_COLORED_ICONS,
-                    0,
-                    UserHandle.USER_CURRENT,
-                ) == 1
-            setIcon(entry, normalIconDescriptor, iconView, iconStyle, /* forceUpdate = */ true)
+            val (iconStyle, pinkBean) = readColoredAndPinkBeanIconStyle(shadeContext.contentResolver)
+            setIcon(entry, normalIconDescriptor, iconView, iconStyle, pinkBean, /* forceUpdate = */ true)
         }
 
     /**
@@ -286,32 +298,26 @@ constructor(
             val notificationContentDescription =
                 entry.sbn.notification?.let { iconBuilder.getIconContentDescription(it) }
 
-            val iconStyle =
-                Settings.System.getIntForUser(
-                    shadeContext.contentResolver,
-                    Settings.System.STATUSBAR_COLORED_ICONS,
-                    0,
-                    UserHandle.USER_CURRENT,
-                ) == 1
+            val (iconStyle, pinkBean) = readColoredAndPinkBeanIconStyle(shadeContext.contentResolver)
 
             entry.icons.statusBarIcon?.let {
                 it.setNotification(entry.sbn, notificationContentDescription)
-                setIcon(entry, normalIconDescriptor, it, iconStyle, forceUpdate)
+                setIcon(entry, normalIconDescriptor, it, iconStyle, pinkBean, forceUpdate)
             }
 
             entry.icons.statusBarChipIcon?.let {
                 it.setNotification(entry.sbn, notificationContentDescription)
-                setIcon(entry, normalIconDescriptor, it, /* iconStyle = */ false, /* forceUpdate = */ false)
+                setIcon(entry, normalIconDescriptor, it, /* iconStyle = */ false, /* pinkBeanIcons = */ false, /* forceUpdate = */ false)
             }
 
             entry.icons.shelfIcon?.let {
                 it.setNotification(entry.sbn, notificationContentDescription)
-                setIcon(entry, sensitiveIconDescriptor, it, iconStyle, forceUpdate)
+                setIcon(entry, sensitiveIconDescriptor, it, iconStyle, pinkBean, forceUpdate)
             }
 
             entry.icons.aodIcon?.let {
                 it.setNotification(entry.sbn, notificationContentDescription)
-                setIcon(entry, sensitiveIconDescriptor, it, /* iconStyle = */ false, /* forceUpdate = */ false)
+                setIcon(entry, sensitiveIconDescriptor, it, /* iconStyle = */ false, /* pinkBeanIcons = */ false, /* forceUpdate = */ false)
             }
         }
 
@@ -466,11 +472,13 @@ constructor(
         iconDescriptor: StatusBarIcon,
         iconView: StatusBarIconView,
         iconStyle: Boolean,
+        pinkBeanIcons: Boolean,
         forceUpdate: Boolean,
     ) {
         iconView.setShowsConversation(showsConversation(entry, iconView, iconDescriptor))
         iconView.setTag(R.id.icon_is_pre_L, entry.targetSdk < Build.VERSION_CODES.LOLLIPOP)
         iconView.setIconStyle(iconStyle)
+        iconView.setPinkBeanIcons(iconStyle && pinkBeanIcons)
         if (!iconView.set(iconDescriptor)) {
             throw InflationException("Couldn't create icon $iconDescriptor")
         }

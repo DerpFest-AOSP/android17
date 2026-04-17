@@ -66,6 +66,7 @@ import com.android.systemui.statusbar.notification.NotificationContentDescriptio
 import com.android.systemui.statusbar.notification.NotificationDozeHelper;
 import com.android.systemui.statusbar.notification.NotificationUtils;
 import com.android.systemui.statusbar.notification.collection.BundleEntry;
+import com.android.systemui.statusbar.notification.icon.PinkBeanNotificationIcons;
 import com.android.systemui.util.drawable.DrawableSize;
 
 import java.lang.annotation.Retention;
@@ -186,6 +187,8 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     private float mDozeAmount;
     private final NotificationDozeHelper mDozer;
     private boolean mNewIconStyle;
+    /** When {@link #mNewIconStyle} is on, prefer bundled Pink Bean PNGs when available. */
+    private boolean mPinkBeanIcons;
 
     public StatusBarIconView(Context context, String slot, StatusBarNotification sbn) {
         this(context, slot, sbn, false);
@@ -413,6 +416,17 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
     }
 
     /**
+     * Enables bundled Pink Bean–style launcher PNGs for this view when {@link #mNewIconStyle} is
+     * true. Has no effect when colored icons are off.
+     */
+    public void setPinkBeanIcons(boolean pinkBeanIcons) {
+        if (mPinkBeanIcons == pinkBeanIcons) return;
+        mPinkBeanIcons = pinkBeanIcons;
+        updateDrawable(true);
+        updateIconColor();
+    }
+
+    /**
      * Returns whether the set succeeded.
      */
     public boolean set(StatusBarIcon icon) {
@@ -490,6 +504,13 @@ public class StatusBarIconView extends AnimatedImageView implements StatusIconDi
                 && icon.pkg != null && !TextUtils.equals(icon.pkg, SYSUI_PKG)) {
             try {
                 StatusBarIcon appIcon = icon.clone();
+                if (mPinkBeanIcons) {
+                    Drawable pinkBean = PinkBeanNotificationIcons.load(getContext(), icon.pkg);
+                    if (pinkBean != null) {
+                        // Avoid loadDrawable() ConstantState clone, which drops setCircular(true).
+                        return pinkBean;
+                    }
+                }
                 appIcon.preloadedIcon = getContext().getPackageManager().getApplicationIcon(icon.pkg);
                 return getIcon(getContext(), notifContext, appIcon);
             } catch (android.content.pm.PackageManager.NameNotFoundException e) {

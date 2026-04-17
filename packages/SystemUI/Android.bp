@@ -484,6 +484,7 @@ android_library {
         true: [":DebugJavaFiles"],
         false: [":ReleaseJavaFiles"],
     }),
+    asset_dirs: ["assets"],
     defaults: ["SystemUI-srcs-defaults"],
     static_libs: [
         "//frameworks/libs/systemui:compilelib",
