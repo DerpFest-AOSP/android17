@@ -26,6 +26,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.os.Looper
 import android.os.UserHandle
 import android.os.UserManager
 import android.provider.DeviceConfig
@@ -179,6 +181,7 @@ class ExpandableNotificationRowBuilder(
                 mBgCoroutineContext,
                 mMainCoroutineContext,
                 context,
+                Handler(Looper.getMainLooper()),
             )
 
         mSmartReplyConstants =

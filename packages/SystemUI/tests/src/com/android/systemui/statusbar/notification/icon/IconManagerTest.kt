@@ -26,6 +26,8 @@ import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Icon
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.os.UserHandle
 import android.platform.test.annotations.DisableFlags
@@ -110,6 +112,7 @@ class IconManagerTest : SysuiTestCase() {
                 bgContext,
                 mainContext,
                 shadeContext,
+                Handler(Looper.getMainLooper()),
             )
     }
 
