@@ -123,7 +123,11 @@ object WifiViewBinder {
                             }
                             else -> {
                                 iconView.setImageResource(lastWifiRes)
-                                ThemeIconController.resetWifiIconSizing(iconView)
+                                if (ThemeIconController.hasWifiIconThemeEnabledInConfig(view.context)) {
+                                    ThemeIconController.applyThemedWifiIconSizing(iconView)
+                                } else {
+                                    ThemeIconController.resetWifiIconSizing(iconView)
+                                }
                             }
                         }
                         groupView.invalidate()
@@ -151,7 +155,12 @@ object WifiViewBinder {
                                     }
                                     else -> {
                                         IconViewBinder.bind(wifiIcon.icon, iconView)
-                                        ThemeIconController.resetWifiIconSizing(iconView)
+                                        if (ThemeIconController
+                                                .hasWifiIconThemeEnabledInConfig(view.context)) {
+                                            ThemeIconController.applyThemedWifiIconSizing(iconView)
+                                        } else {
+                                            ThemeIconController.resetWifiIconSizing(iconView)
+                                        }
                                     }
                                 }
                             }

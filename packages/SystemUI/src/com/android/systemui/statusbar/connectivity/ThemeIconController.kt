@@ -238,6 +238,51 @@ object ThemeIconController {
         return engine.isTargetedResource(name)
     }
 
+    /**
+     * True when a Wi‑Fi or signal icon RRO is still selected in the theme config ([categoryThemes]).
+     *
+     * [ThemeEngine.isTargetedResource] and [getThemed*] can return false or null while caches reload
+     * (e.g. only [ThemeEngine.CATEGORY_BATTERY_STYLE] changed), which used to make status bar
+     * binders run [resetWifiIconSizing] / [resetSignalIconSizing] in their refresh `else` branch.
+     */
+    @JvmStatic
+    fun hasWifiIconThemeEnabledInConfig(context: Context): Boolean =
+        hasAnyEnabledThemeEngineCategory(
+            context,
+            ThemeEngine.CATEGORY_STATUSBAR_WIFI,
+            "android.theme.customization.wifi_icon",
+            "wifi",
+        )
+
+    @JvmStatic
+    fun hasSignalIconThemeEnabledInConfig(context: Context): Boolean =
+        hasAnyEnabledThemeEngineCategory(
+            context,
+            ThemeEngine.CATEGORY_STATUSBAR_SIGNAL,
+            "android.theme.customization.signal_icon",
+            "signal",
+        )
+
+    /**
+     * RAT / data-type row often ships in the same overlay as cellular bars; keep slot height
+     * consistent with [hasSignalIconThemeEnabledInConfig].
+     */
+    @JvmStatic
+    fun hasMobileTypeIconThemingEnabledInConfig(context: Context): Boolean =
+        hasSignalIconThemeEnabledInConfig(context)
+
+    private fun hasAnyEnabledThemeEngineCategory(
+        context: Context,
+        vararg categoryKeys: String,
+    ): Boolean {
+        val engine = ThemeEngine.getInstance(context) ?: return false
+        for (key in categoryKeys) {
+            val pkg = engine.getEnabledPackage(key) ?: continue
+            if (pkg.isNotEmpty()) return true
+        }
+        return false
+    }
+
     @JvmStatic
     fun onThemeChanged(tiles: Collection<com.android.systemui.plugins.qs.QSTile>) {
         if (Looper.myLooper() != mainLooper) {

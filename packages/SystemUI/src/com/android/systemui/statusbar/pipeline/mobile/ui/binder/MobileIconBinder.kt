@@ -145,7 +145,13 @@ object MobileIconBinder {
                                 else -> {
                                     iconView.setImageDrawable(mobileDrawable)
                                     mobileDrawable.level = icon.toSignalDrawableState()
-                                    ThemeIconController.resetSignalIconSizing(iconView)
+                                    if (ThemeIconController
+                                            .hasSignalIconThemeEnabledInConfig(
+                                                view.context)) {
+                                        ThemeIconController.applyThemedSignalIconSizing(iconView)
+                                    } else {
+                                        ThemeIconController.resetSignalIconSizing(iconView)
+                                    }
                                 }
                             }
                         }
@@ -177,7 +183,17 @@ object MobileIconBinder {
                                 }
                                 else -> {
                                     IconViewBinder.bind(dataIcon, networkTypeView)
-                                    ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                                    if (ThemeIconController
+                                            .hasMobileTypeIconThemingEnabledInConfig(
+                                                view.context)) {
+                                        ThemeIconController.applyThemedMobileDataIconSizing(
+                                            networkTypeView,
+                                        )
+                                    } else {
+                                        ThemeIconController.resetMobileDataIconSizing(
+                                            networkTypeView,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -247,7 +263,16 @@ object MobileIconBinder {
                                         else -> {
                                             iconView.setImageDrawable(mobileDrawable)
                                             mobileDrawable.level = packedSignalDrawableState
-                                            ThemeIconController.resetSignalIconSizing(iconView)
+                                            if (ThemeIconController
+                                                    .hasSignalIconThemeEnabledInConfig(
+                                                        view.context,
+                                                    )) {
+                                                ThemeIconController
+                                                    .applyThemedSignalIconSizing(iconView)
+                                            } else {
+                                                ThemeIconController
+                                                    .resetSignalIconSizing(iconView)
+                                            }
                                         }
                                     }
                                     viewModel.verboseLogger?.logBinderSignalIconResult(
@@ -318,7 +343,20 @@ object MobileIconBinder {
                                     }
                                     else -> {
                                         IconViewBinder.bind(icon, networkTypeView)
-                                        ThemeIconController.resetMobileDataIconSizing(networkTypeView)
+                                        if (ThemeIconController
+                                                .hasMobileTypeIconThemingEnabledInConfig(
+                                                    view.context,
+                                                )) {
+                                            ThemeIconController
+                                                .applyThemedMobileDataIconSizing(
+                                                    networkTypeView,
+                                                )
+                                        } else {
+                                            ThemeIconController
+                                                .resetMobileDataIconSizing(
+                                                    networkTypeView,
+                                                )
+                                        }
                                     }
                                 }
                             }
