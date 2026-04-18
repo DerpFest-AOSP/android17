@@ -302,12 +302,17 @@ object ThemeIconController {
         )
 
     /**
-     * RAT / data-type row often ships in the same overlay as cellular bars; keep slot height
-     * consistent with [hasSignalIconThemeEnabledInConfig].
+     * True when a dedicated RAT / data-type overlay (or the same status bar row as signal) is
+     * selected in the theme config.
      */
     @JvmStatic
     fun hasMobileTypeIconThemingEnabledInConfig(context: Context): Boolean =
-        hasSignalIconThemeEnabledInConfig(context)
+        hasAnyEnabledThemeEngineCategory(
+            context,
+            ThemeEngine.CATEGORY_STATUSBAR_DATA,
+            "android.customization.sb_data",
+            "data",
+        ) || hasSignalIconThemeEnabledInConfig(context)
 
     private fun hasAnyEnabledThemeEngineCategory(
         context: Context,

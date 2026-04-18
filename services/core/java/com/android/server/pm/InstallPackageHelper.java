@@ -5022,7 +5022,12 @@ final class InstallPackageHelper {
 
     private static boolean isThemeOverlay(@Nullable String category) {
         if (category == null) return false;
-        return category.startsWith("android.theme.customization.");
+        if (category.startsWith("android.theme.customization.")) {
+            return true;
+        }
+        // OMS "mobile data / RAT type" status bar art (separate namespace from
+        // android.theme.customization.* RROs).
+        return "android.customization.sb_data".equals(category);
     }
 
     private @PackageManagerService.ScanFlags int adjustScanFlags(

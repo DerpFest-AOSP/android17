@@ -54,6 +54,8 @@ public class ThemeEngine {
     public static final String CATEGORY_ICON_PACK = "icon_pack";
     public static final String CATEGORY_STATUSBAR_WIFI = "statusbar_wifi";
     public static final String CATEGORY_STATUSBAR_SIGNAL = "statusbar_signal";
+    /** Network type RAT art (LTE, 5G, etc.) in [com.android.settingslib] / SystemUI. */
+    public static final String CATEGORY_STATUSBAR_DATA = "statusbar_data";
     public static final String CATEGORY_ANDROID = "android";
     public static final String CATEGORY_SYSTEMUI = "systemui";
     public static final String CATEGORY_UI_QS = "ui_qs";

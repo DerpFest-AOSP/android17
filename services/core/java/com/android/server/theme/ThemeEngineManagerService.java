@@ -82,6 +82,31 @@ public class ThemeEngineManagerService extends SystemService {
     private static final String TARGET_ARRAY_ANDROID = "target_android";
     private static final String TARGET_ARRAY_SETTINGS = "target_settings";
 
+    /**
+     * RAT / network-type art from {@code TelephonyIcons} (base + {@code _updated} pipeline).
+     * When an overlay is {@code android.customization.sb_data} and it omits
+     * {@code target_*} string arrays, we still register these names for theme lookup.
+     */
+    private static final String[] MOBILE_DATA_TYPE_KNOWN_NAMES = {
+            "ic_lte_mobiledata", "ic_lte_mobiledata_updated",
+            "ic_lte_plus_mobiledata", "ic_lte_plus_mobiledata_updated",
+            "ic_g_mobiledata", "ic_g_mobiledata_updated",
+            "ic_e_mobiledata", "ic_e_mobiledata_updated",
+            "ic_h_mobiledata", "ic_h_mobiledata_updated",
+            "ic_h_plus_mobiledata", "ic_h_plus_mobiledata_updated",
+            "ic_3g_mobiledata", "ic_3g_mobiledata_updated",
+            "ic_4g_mobiledata", "ic_4g_mobiledata_updated",
+            "ic_4g_plus_mobiledata", "ic_4g_plus_mobiledata_updated",
+            "ic_4g_lte_mobiledata", "ic_4g_lte_mobiledata_updated",
+            "ic_4g_lte_plus_mobiledata", "ic_4g_lte_plus_mobiledata_updated",
+            "ic_5g_e_mobiledata", "ic_5g_e_mobiledata_updated",
+            "ic_1x_mobiledata", "ic_1x_mobiledata_updated",
+            "ic_5g_mobiledata", "ic_5g_mobiledata_updated",
+            "ic_5g_sa_mobiledata", "ic_5g_sa_mobiledata_updated",
+            "ic_5g_plus_mobiledata", "ic_5g_plus_mobiledata_updated",
+            "ic_carrier_wifi", "ic_carrier_wifi_updated",
+    };
+
     private static final int BITMAP_CACHE_SIZE = 5 * 1024 * 1024;
 
     private final Context mContext;
@@ -304,6 +329,7 @@ public class ThemeEngineManagerService extends SystemService {
         arrayCategoryMap.put(TARGET_ARRAY_SETTINGS, "settings");
         arrayCategoryMap.put("target_wifi", CATEGORY_STATUSBAR_WIFI);
         arrayCategoryMap.put("target_signal", CATEGORY_STATUSBAR_SIGNAL);
+        arrayCategoryMap.put("target_data", CATEGORY_STATUSBAR_DATA);
         arrayCategoryMap.put("target_systemui_icons", CATEGORY_SYSTEMUI);
 
         for (Map.Entry<String, String> entry : arrayCategoryMap.entrySet()) {
@@ -338,6 +364,8 @@ public class ThemeEngineManagerService extends SystemService {
                 resCategory = "signal";
             } else if ("android.theme.customization.wifi_icon".equals(overlayCategory)) {
                 resCategory = "wifi";
+            } else if ("android.customization.sb_data".equals(overlayCategory)) {
+                resCategory = "data";
             }
 
             String[] knownNames = {
@@ -354,6 +382,14 @@ public class ThemeEngineManagerService extends SystemService {
                 if (themeResources.getIdentifier(name, "drawable", packageName) != 0) {
                     allTargets.add(name);
                     if (resCategory != null) mResourceCategoryCache.put(name, resCategory);
+                }
+            }
+            if ("data".equals(resCategory)) {
+                for (String name : MOBILE_DATA_TYPE_KNOWN_NAMES) {
+                    if (themeResources.getIdentifier(name, "drawable", packageName) != 0) {
+                        allTargets.add(name);
+                        mResourceCategoryCache.put(name, "data");
+                    }
                 }
             }
         }
