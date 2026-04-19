@@ -83,6 +83,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
 import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.*
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
@@ -194,7 +195,7 @@ fun AxDynamicBarKeyguardChip(
         ) {
             val chipState = state
             if (chipState != null) {
-                val displayEvent = chipState.notificationAlert ?: chipState.event
+                val displayEvent = chipState.event
 
                 AnimatedContent(
                     targetState = displayEvent,
@@ -470,7 +471,7 @@ private fun KeyguardChipBody(
             }
 
             if (event !is IslandEvent.Media) {
-                val actions = actionsFor(event)
+                val actions = actionsFor(event, context)
                 if (actions.isNotEmpty()) {
                     Spacer(Modifier.width(SpaceXs))
                     actions.forEach { action ->
@@ -712,9 +713,6 @@ private fun AnimatedBatteryFillIcon(level: Int, color: Color, iconSize: Dp = Bat
 @Composable
 private fun KeyguardPrimaryText(event: IslandEvent, color: Color, modifier: Modifier) {
     when (event) {
-        is IslandEvent.ScreenRecording ->
-            if (event.isCountdown) MarqueeText(formatCountdownSeconds(event.countdownSeconds), color, modifier)
-            else ElapsedTimeText(event.startTimeMs, color, modifier)
         is IslandEvent.AudioRecording -> when (event.state) {
             RecordingState.RECORDING -> ElapsedTimeText(
                 event.startTimeMs, color, modifier, event.pausedDurationMs,
@@ -739,14 +737,6 @@ private fun KeyguardPrimaryText(event: IslandEvent, color: Color, modifier: Modi
             )
         }
         is IslandEvent.Alarm -> MarqueeText(event.label.ifEmpty { stringResource(R.string.ax_dynamic_bar_alarm) }, color, modifier)
-        is IslandEvent.Call -> {
-            if (event.callStartTimeMs > 0) {
-                CallTimerText(event, modifier, color)
-            } else {
-                MarqueeText(stringResource(R.string.ax_dynamic_bar_call), color, modifier)
-            }
-        }
-        is IslandEvent.Casting -> MarqueeText(event.deviceName.take(12), color, modifier)
         is IslandEvent.Torch -> MarqueeText(
             if (event.supportsLevel) "${(event.level.toFloat() / event.maxLevel * 100).toInt()}%"
             else stringResource(R.string.ax_dynamic_bar_flashlight),
@@ -759,16 +749,6 @@ private fun KeyguardPrimaryText(event: IslandEvent, color: Color, modifier: Modi
         )
         is IslandEvent.BiometricUnlock -> MarqueeText(stringResource(R.string.ax_dynamic_bar_unlocked), color, modifier)
         is IslandEvent.AppSwitch -> MarqueeText(stringResource(R.string.ax_dynamic_bar_recents), color, modifier)
-        is IslandEvent.MicCamActive -> MarqueeText(
-            event.appName.ifEmpty {
-                buildString {
-                    if (event.isCam) append(stringResource(R.string.ax_dynamic_bar_cam_short))
-                    if (event.isMic && event.isCam) append(" · ")
-                    if (event.isMic) append(stringResource(R.string.ax_dynamic_bar_mic_short))
-                }
-            },
-            color, modifier,
-        )
         is IslandEvent.PromotedOngoing -> MarqueeText(
             event.shortText.ifEmpty { event.title.ifEmpty { event.appName } }, color, modifier,
         )
@@ -779,15 +759,16 @@ private fun KeyguardPrimaryText(event: IslandEvent, color: Color, modifier: Modi
             "${event.songTitle} · ${event.artist}".trimEnd(' ', '·', ' '), color, modifier,
         )
         is IslandEvent.KeyguardIndication -> MarqueeText(event.text, color, modifier)
+        is IslandEvent.AospChip -> {
+            val text = (event.active.content as? OngoingActivityChipModel.Content.Text)?.text
+            if (!text.isNullOrEmpty()) MarqueeText(text, color, modifier)
+        }
     }
 }
 
 @Composable
 private fun secondaryTextFor(event: IslandEvent): String? = when (event) {
     is IslandEvent.Media -> event.artist.takeIf { it.isNotBlank() }
-    is IslandEvent.ScreenRecording ->
-        if (event.isCountdown) formatCountdownSeconds(event.countdownSeconds)
-        else stringResource(R.string.ax_dynamic_bar_rec_short)
     is IslandEvent.AudioRecording -> event.appName.takeIf { it.isNotBlank() }
     is IslandEvent.Timer -> event.label.takeIf { it.isNotBlank() }
     is IslandEvent.Stopwatch -> event.label.takeIf { it.isNotBlank() }
@@ -800,8 +781,6 @@ private fun secondaryTextFor(event: IslandEvent): String? = when (event) {
             "%d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
         } else null
     }
-    is IslandEvent.Call -> event.callerName
-    is IslandEvent.Casting -> stringResource(R.string.ax_dynamic_bar_cast_short)
     is IslandEvent.Vpn -> stringResource(R.string.ax_dynamic_bar_active)
     is IslandEvent.BiometricUnlock -> event.sourceName
     is IslandEvent.AppSwitch -> null
@@ -817,26 +796,6 @@ private fun secondaryTextFor(event: IslandEvent): String? = when (event) {
     else -> null
 }
 
-
-@Composable
-private fun CallTimerText(event: IslandEvent.Call, modifier: Modifier, overrideColor: Color? = null) {
-    val isActive = event.callType == "Phone:active"
-    if (isActive) {
-        var elapsedMs by remember(event.callStartTimeMs) {
-            mutableLongStateOf((System.currentTimeMillis() - event.callStartTimeMs).coerceAtLeast(0L))
-        }
-        LaunchedEffect(event.callStartTimeMs) {
-            while (true) {
-                delay(1000)
-                elapsedMs = (System.currentTimeMillis() - event.callStartTimeMs).coerceAtLeast(0L)
-            }
-        }
-        val color = overrideColor ?: GreenAccent
-        Text(formatElapsedTime(elapsedMs), color = color, style = PillMono, modifier = modifier)
-    } else {
-        MarqueeText(stringResource(R.string.ax_dynamic_bar_incoming_call), overrideColor ?: BlueAccent, modifier)
-    }
-}
 
 @Composable
 private fun SportsChipTeamBadge(name: String, icon: Drawable?, contentColor: Color) {
@@ -869,7 +828,7 @@ private data class ChipAction(
     val perform: (AxDynamicBarChipViewModel, IslandEvent, Context) -> Unit,
 )
 
-private fun actionsFor(event: IslandEvent): List<ChipAction> = when (event) {
+private fun actionsFor(event: IslandEvent, context: Context): List<ChipAction> = when (event) {
     is IslandEvent.Media -> listOf(
         ChipAction(ActionIcon.SKIP_PREV) { vm, _, _ -> vm.skipPrev() },
         ChipAction(if (event.isPlaying) ActionIcon.PAUSE else ActionIcon.PLAY) { vm, _, _ ->
@@ -877,18 +836,19 @@ private fun actionsFor(event: IslandEvent): List<ChipAction> = when (event) {
         },
         ChipAction(ActionIcon.SKIP_NEXT) { vm, _, _ -> vm.skipNext() },
     )
-    is IslandEvent.ScreenRecording ->
-        if (event.isCountdown) emptyList()
-        else listOf(ChipAction(ActionIcon.STOP) { vm, _, _ -> vm.stopScreenRecording() })
     is IslandEvent.AudioRecording -> {
-        val pauseResume = event.actions.firstOrNull { a ->
-            val label = a.label.toString().lowercase()
-            label.contains("pause") || label.contains("resume")
+        val classified = event.actions.map {
+            it to it.action.classify(
+                context,
+                it.action.actionIntent?.creatorPackage ?: context.packageName,
+            )
         }
-        val stop = event.actions.firstOrNull { a ->
-            val label = a.label.toString().lowercase()
-            label.contains("stop") || label.contains("delete")
-        }
+        val pauseResume = classified.firstOrNull { (_, k) ->
+            k == NotificationActionType.PAUSE || k == NotificationActionType.RESUME
+        }?.first
+        val stop = classified.firstOrNull { (_, k) ->
+            k == NotificationActionType.STOP || k == NotificationActionType.DELETE
+        }?.first
         listOfNotNull(
             pauseResume?.let { action ->
                 ChipAction(
@@ -924,9 +884,6 @@ private fun actionsFor(event: IslandEvent): List<ChipAction> = when (event) {
     }
     is IslandEvent.Torch -> listOf(
         ChipAction(ActionIcon.STOP) { vm, _, _ -> vm.toggleTorch() },
-    )
-    is IslandEvent.Casting -> listOf(
-        ChipAction(ActionIcon.STOP) { vm, e, _ -> vm.dismissEvent(e) },
     )
     else -> emptyList()
 }

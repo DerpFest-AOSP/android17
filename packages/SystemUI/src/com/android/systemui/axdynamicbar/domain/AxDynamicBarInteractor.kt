@@ -1,9 +1,6 @@
 package com.android.systemui.axdynamicbar.domain
 
-import android.app.Notification
-import android.media.AudioManager
 import android.net.Uri
-import android.provider.Settings.Global
 import com.android.systemui.axdynamicbar.data.IslandEventRepository
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.model.IslandState
@@ -20,8 +17,6 @@ import com.android.systemui.shade.domain.interactor.ShadeInteractor
 import com.android.systemui.statusbar.KeyguardIndicationController
 import com.android.systemui.statusbar.StatusBarState
 import com.android.systemui.statusbar.policy.KeyguardStateController
-import com.android.systemui.statusbar.policy.ZenModeController
-import com.android.systemui.util.settings.GlobalSettings
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -50,15 +45,11 @@ constructor(
     private val indicationController: KeyguardIndicationController,
     private val shadeInteractor: ShadeInteractor,
     private val shadeRepository: ShadeRepository,
-    private val zenModeController: ZenModeController,
-    private val globalSettings: GlobalSettings,
-    private val audioManager: AudioManager,
 ) : IslandActions {
     private val _uiState = MutableStateFlow(IslandUiState())
     val uiState: StateFlow<IslandUiState> = _uiState.asStateFlow()
 
     private val autoDismissJobs = ConcurrentHashMap<String, Job>()
-    @Volatile private var notifAlertJob: Job? = null
 
     private val dismissedEventIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
@@ -94,14 +85,6 @@ constructor(
 
     companion object {
         private const val TAG = "AxDynamicBarInteractor"
-        private const val NOTIF_ALERT_DURATION_MS = 4500L
-
-        private fun IslandEvent.Notification.isActiveCall(): Boolean {
-            val extras = sbn.notification?.extras ?: return false
-            return extras.containsKey(Notification.EXTRA_ANSWER_INTENT) ||
-                extras.containsKey(Notification.EXTRA_DECLINE_INTENT) ||
-                extras.containsKey(Notification.EXTRA_HANG_UP_INTENT)
-        }
     }
 
     fun init() {
@@ -113,8 +96,6 @@ constructor(
         repository.system.onChargingStarted = { scheduleAutoDismiss(it) }
         repository.system.onRingerChanged = { scheduleAutoDismiss(it) }
         repository.system.onClipboardCopied = { scheduleAutoDismiss(it) }
-
-        repository.privacy.onCamStarted = { scheduleAutoDismiss(it, 10_000L) }
 
         repository.notification.activeMediaPackageProvider = { repository.media.activeMediaPackage }
         repository.notification.onAlarmEvent = {
@@ -136,26 +117,16 @@ constructor(
         applicationScope.launch {
             repository.notification.notificationFlow.collect { notification ->
                 repository.notification.coalesceNotification(notification)
-                showNotificationAlert(notification)
             }
         }
 
         applicationScope.launch {
             repository.notification.notificationRemovedFlow.collect { key ->
-                var working = _uiState.value
-                val alert = working.notificationAlert
-                if (alert != null && (alert.sbn.key == key || alert.id == key)) {
-                    dismissNotificationAlert()
-                    working = _uiState.value
-                }
+                val working = _uiState.value
 
                 val toRemove = working.events.filter { event ->
-                    when (event) {
-                        is IslandEvent.Notification ->
-                            event.sbn.key == key || event.id == key
-                        is IslandEvent.Call -> event.sbn.key == key
-                        else -> false
-                    }
+                    event is IslandEvent.Notification &&
+                        (event.sbn.key == key || event.id == key)
                 }
                 if (toRemove.isNotEmpty()) {
                     val removeSet = toRemove.toSet()
@@ -169,9 +140,7 @@ constructor(
                     _uiState.value = working.copy(
                         events = updatedEvents,
                         pinnedEventIndex = newIndex,
-                        islandState = if (updatedEvents.isEmpty() &&
-                            working.notificationAlert == null
-                        ) {
+                        islandState = if (updatedEvents.isEmpty()) {
                             IslandState.HIDDEN
                         } else {
                             working.islandState
@@ -275,12 +244,6 @@ constructor(
         }
 
         applicationScope.launch {
-            settings.isHeadsUpEnabled.collect { enabled ->
-                if (!enabled) dismissNotificationAlert()
-            }
-        }
-
-        applicationScope.launch {
             combine(
                 repository.events,
                 settings.disabledEventTypes,
@@ -367,7 +330,6 @@ constructor(
                         pinnedEventIndex = pinnedIndex,
                         manuallyHidden = if (shouldReset) false else current.manuallyHidden,
                         forceVisible = false,
-                        notificationAlert = current.notificationAlert,
                     )
             }
         }
@@ -414,10 +376,7 @@ constructor(
             )
 
         when (event) {
-            is IslandEvent.ScreenRecording -> repository.screenRecord.stopListening()
-            is IslandEvent.MicCamActive -> {}
             is IslandEvent.AudioRecording -> repository.notification.clearAudioRecording()
-            is IslandEvent.Casting -> repository.connectivity.clearCasting()
             is IslandEvent.Sports -> repository.notification.clearSportsEvent(event.key)
             is IslandEvent.NowPlaying -> {}
             is IslandEvent.PromotedOngoing ->
@@ -427,7 +386,6 @@ constructor(
             is IslandEvent.Hotspot -> repository.connectivity.clearHotspot()
             is IslandEvent.Charging -> repository.system.clearCharging()
             is IslandEvent.Alarm -> repository.notification.clearAlarm()
-            is IslandEvent.Call -> repository.notification.clearCall(event.sbn.key)
             is IslandEvent.Timer -> repository.notification.clearTimer()
             is IslandEvent.Stopwatch -> repository.notification.clearStopwatch()
             is IslandEvent.RingerMode -> repository.system.clearRinger()
@@ -441,6 +399,7 @@ constructor(
             }
             is IslandEvent.BiometricUnlock -> repository.biometric.clear()
             is IslandEvent.KeyguardIndication -> repository.clearIndicationEvent(event.indicationType)
+            is IslandEvent.AospChip -> {}
         }
     }
 
@@ -459,79 +418,6 @@ constructor(
         val event = _uiState.value.events.find { it.id == eventId } ?: return
         scheduleAutoDismiss(event)
     }
-
-    override fun onNotificationAlertInteractionStart() {
-        notifAlertJob?.cancel()
-        notifAlertJob = null
-    }
-
-    override fun onNotificationAlertInteractionEnd() {
-        val current = _uiState.value
-        val alert = current.notificationAlert ?: return
-        if (alert.isActiveCall()) return
-        notifAlertJob = applicationScope.launch {
-            delay(NOTIF_ALERT_DURATION_MS)
-            dismissNotificationAlert()
-        }
-    }
-
-    fun dismissNotificationAlert() {
-        notifAlertJob?.cancel()
-        notifAlertJob = null
-        val current = _uiState.value
-        if (current.notificationAlert != null) {
-            _uiState.value = current.copy(notificationAlert = null)
-        }
-    }
-
-    private fun shouldSuppressForDndOrRinger(notification: IslandEvent.Notification): Boolean {
-        if (notification.isActiveCall()) return false
-        if (!settings.isHeadsUpEnabled.value) return true
-        val category = notification.sbn.notification?.category
-        if (category == Notification.CATEGORY_CALL || category == Notification.CATEGORY_ALARM) return false
-        val zenMode = zenModeController.zen
-        if (zenMode == Global.ZEN_MODE_NO_INTERRUPTIONS ||
-            zenMode == Global.ZEN_MODE_ALARMS) return true
-        val ringerMode = audioManager.ringerMode
-        return ringerMode == AudioManager.RINGER_MODE_SILENT
-    }
-
-    private fun showNotificationAlert(
-        notification: IslandEvent.Notification,
-    ) {
-        if (panelBlocking || statusBlocking || _isOnKeyguard.value) return
-        if (shouldSuppressForDndOrRinger(notification)) return
-        val current = _uiState.value
-        val existingAlert = current.notificationAlert
-        if (existingAlert != null &&
-            existingAlert.isActiveCall() &&
-            !notification.isActiveCall()
-        ) return
-
-        val hasProgress = notification.progress >= 0 || notification.isProgressIndeterminate
-        val isSameKey = existingAlert != null && existingAlert.sbn.key == notification.sbn.key
-
-        if (isSameKey && hasProgress) {
-            _uiState.value = current.copy(notificationAlert = notification)
-            return
-        }
-
-        notifAlertJob?.cancel()
-        _uiState.value = current.copy(notificationAlert = notification)
-
-        if (hasProgress) return
-
-        val duration =
-            if (!notification.isActiveCall()) NOTIF_ALERT_DURATION_MS else null
-        if (duration != null) {
-            notifAlertJob = applicationScope.launch {
-                delay(duration)
-                dismissNotificationAlert()
-            }
-        }
-    }
-
-    override fun stopScreenRecording() = repository.screenRecord.stopRecording()
 
     override fun togglePlayPause() = repository.media.togglePlayPause()
 
@@ -575,7 +461,6 @@ constructor(
     fun onPanelExpandedChanged(expanded: Boolean) {
         panelBlocking = expanded
         _isPanelExpanded.value = expanded
-        if (expanded) dismissNotificationAlert()
         updateChipVisibility()
     }
 

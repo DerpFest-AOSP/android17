@@ -10,6 +10,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -276,6 +277,10 @@ internal fun chipAccentColorFor(event: IslandEvent): Color {
         val color = rememberPaletteColor(event.appIcon!!)
         if (color != null) return ensureContrast(color, isDark)
     }
+    if (event is IslandEvent.AospChip) {
+        val ctx = LocalContext.current
+        return Color(event.active.colors.background(ctx).defaultColor)
+    }
     return accentColorFor(event)
 }
 
@@ -510,6 +515,7 @@ internal fun iconKeyFor(event: IslandEvent): Any =
     when (event) {
         is IslandEvent.Media -> event.albumArt?.hashCode() ?: "media_default"
         is IslandEvent.Notification -> event.appIcon?.hashCode() ?: "notif_default"
+        is IslandEvent.AospChip -> event.active.key
         is IslandEvent.AppSwitch -> {
             val app = event.previousApp ?: event.recentApps.firstOrNull()
             app?.appIcon?.hashCode() ?: "app_default"
@@ -523,6 +529,7 @@ internal fun textKeyFor(event: IslandEvent): Any =
         is IslandEvent.Timer,
         is IslandEvent.Stopwatch,
         is IslandEvent.AudioRecording -> "tick_text"
+        is IslandEvent.AospChip -> "${event.active.key}|${event.active.content.logName}"
         else -> event.id
     }
 

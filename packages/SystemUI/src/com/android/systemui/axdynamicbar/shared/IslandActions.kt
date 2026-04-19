@@ -5,14 +5,10 @@ import com.android.systemui.axdynamicbar.model.IslandEvent
 
 val EVENT_TYPE_IDS: Map<Class<out IslandEvent>, String> =
     mapOf(
-        IslandEvent.ScreenRecording::class.java to "screen_recording",
-        IslandEvent.MicCamActive::class.java to "privacy",
         IslandEvent.AudioRecording::class.java to "audio_recording",
-        IslandEvent.Casting::class.java to "casting",
         IslandEvent.PromotedOngoing::class.java to "promoted_ongoing",
         IslandEvent.Sports::class.java to "sports",
         IslandEvent.Media::class.java to "media",
-        IslandEvent.Call::class.java to "call",
         IslandEvent.Bluetooth::class.java to "bluetooth",
         IslandEvent.Hotspot::class.java to "hotspot",
         IslandEvent.Charging::class.java to "charging",
@@ -26,6 +22,7 @@ val EVENT_TYPE_IDS: Map<Class<out IslandEvent>, String> =
         IslandEvent.AppSwitch::class.java to "app_switch",
         IslandEvent.Torch::class.java to "torch",
         IslandEvent.BiometricUnlock::class.java to "biometric_unlock",
+        IslandEvent.AospChip::class.java to "aosp_chip",
     )
 
 interface IslandActions {
@@ -40,7 +37,6 @@ interface IslandActions {
     fun sendCustomAction(action: String)
     fun openMediaOutputSwitcher()
     fun openMediaApp()
-    fun stopScreenRecording()
     fun disconnectBluetooth(address: String)
     fun setRingerMode(mode: Int)
     fun toggleTorch()
@@ -53,7 +49,5 @@ interface IslandActions {
     fun switchToApp(taskId: Int)
     fun onNotificationInteraction(eventId: String)
     fun onNotificationInteractionEnd(eventId: String)
-    fun onNotificationAlertInteractionStart()
-    fun onNotificationAlertInteractionEnd()
     fun launchNotificationDismissingKeyguard(event: IslandEvent.Notification)
 }
