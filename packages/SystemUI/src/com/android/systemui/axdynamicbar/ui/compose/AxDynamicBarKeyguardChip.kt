@@ -740,8 +740,11 @@ private fun KeyguardPrimaryText(event: IslandEvent, color: Color, modifier: Modi
         }
         is IslandEvent.Alarm -> MarqueeText(event.label.ifEmpty { stringResource(R.string.ax_dynamic_bar_alarm) }, color, modifier)
         is IslandEvent.Call -> {
-                if (event.callStartTimeMs > 0) CallTimerText(event, modifier, color)
-                else MarqueeText(event.callType ?: stringResource(R.string.ax_dynamic_bar_call), color, modifier)
+            if (event.callStartTimeMs > 0) {
+                CallTimerText(event, modifier, color)
+            } else {
+                MarqueeText(stringResource(R.string.ax_dynamic_bar_call), color, modifier)
+            }
         }
         is IslandEvent.Casting -> MarqueeText(event.deviceName.take(12), color, modifier)
         is IslandEvent.Torch -> MarqueeText(

@@ -849,9 +849,10 @@ constructor(
                 callStartTimeMs = callStart,
                 actions = actions,
             )
-        notifKeyToEventId[sbn.key] = event.id
-        applicationScope.launch { notificationFlow.emit(event) }
-        onNotificationPosted?.invoke(event)
+        val current = _callEvents.value.toMutableList()
+        current.removeAll { it.sbn.key == sbn.key }
+        current.add(0, event)
+        _callEvents.value = current
     }
 
     private fun isPromotable(sbn: StatusBarNotification, extras: Bundle): Boolean {

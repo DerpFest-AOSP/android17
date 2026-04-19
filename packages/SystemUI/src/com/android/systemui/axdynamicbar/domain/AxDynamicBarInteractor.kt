@@ -150,8 +150,12 @@ constructor(
                 }
 
                 val toRemove = working.events.filter { event ->
-                    event is IslandEvent.Notification &&
-                        (event.sbn.key == key || event.id == key)
+                    when (event) {
+                        is IslandEvent.Notification ->
+                            event.sbn.key == key || event.id == key
+                        is IslandEvent.Call -> event.sbn.key == key
+                        else -> false
+                    }
                 }
                 if (toRemove.isNotEmpty()) {
                     val removeSet = toRemove.toSet()
