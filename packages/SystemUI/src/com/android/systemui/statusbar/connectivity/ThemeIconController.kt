@@ -80,14 +80,22 @@ object ThemeIconController {
 
     private val globalResyncHooksInstalled = AtomicBoolean(false)
 
+    /**
+     * Incremented whenever we schedule a burst of delayed Wi‑Fi / mobile icon refreshes; stale
+     * runnables skip so rapid theme updates do not stack duplicate work.
+     */
+    @Volatile private var delayedWifiSignalResyncSeq = 0
+
     private val themeEngineChangeListener = ThemeEngine.ThemeChangeListener { _: String? ->
         refreshStatusBarIconCallbacks()
+        scheduleDelayedWifiSignalIconResyncs()
     }
 
     private val themeEngineBroadcastReceiver =
         object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 refreshStatusBarIconCallbacks()
+                scheduleDelayedWifiSignalIconResyncs()
             }
         }
 
@@ -141,6 +149,35 @@ object ThemeIconController {
     }
 
     /**
+     * Re-run status bar Wi‑Fi / mobile binders a few times after a theme-engine update. Applying
+     * overlays such as [ThemeEngine.CATEGORY_BATTERY_STYLE] can leave [ThemeEngine] target / bitmap
+     * state briefly inconsistent with persisted config; the first refresh may still reset icon
+     * slot heights until telephony / Wi‑Fi emits a new sample. Staggered refreshes re-apply sizing
+     * without waiting for that traffic.
+     */
+    private fun scheduleDelayedWifiSignalIconResyncs() {
+        val seq = ++delayedWifiSignalResyncSeq
+        val delays =
+            longArrayOf(
+                100L,
+                250L,
+                500L,
+                1000L,
+                2000L,
+                3500L,
+            )
+        for (delayMs in delays) {
+            mainHandler.postDelayed(
+                {
+                    if (seq != delayedWifiSignalResyncSeq) return@postDelayed
+                    refreshStatusBarIconCallbacks()
+                },
+                delayMs,
+            )
+        }
+    }
+
+    /**
      * Extra posts after boot: [ThemeEngine] binder / target caches can lag, and Wi‑Fi/mobile
      * binders register after [DarkIconDispatcherImpl]'s first posts.
      */
@@ -190,6 +227,7 @@ object ThemeIconController {
             object : ContentObserver(handler) {
                 override fun onChange(selfChange: Boolean) {
                     refreshStatusBarIconCallbacks()
+                    scheduleDelayedWifiSignalIconResyncs()
                 }
             }
         app.contentResolver.registerContentObserver(
