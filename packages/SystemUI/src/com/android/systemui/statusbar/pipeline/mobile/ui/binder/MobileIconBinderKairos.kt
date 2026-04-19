@@ -222,19 +222,7 @@ object MobileIconBinderKairos {
                     }
                     else -> {
                         IconViewBinder.bind(dataIcon, networkTypeView)
-                        if (ThemeIconController
-                                .hasMobileTypeIconThemingEnabledInConfig(
-                                    view.context)) {
-                            ThemeIconController
-                                .applyThemedMobileDataIconSizing(
-                                    networkTypeView,
-                                )
-                        } else {
-                            ThemeIconController
-                                .resetMobileDataIconSizing(
-                                    networkTypeView,
-                                )
-                        }
+                        ThemeIconController.resetMobileDataIconSizing(networkTypeView)
                     }
                 }
             }
@@ -414,20 +402,7 @@ object MobileIconBinderKairos {
                         }
                         else -> {
                             IconViewBinder.bind(icon, networkTypeView)
-                            if (ThemeIconController
-                                    .hasMobileTypeIconThemingEnabledInConfig(
-                                        view.context,
-                                    )) {
-                                ThemeIconController
-                                    .applyThemedMobileDataIconSizing(
-                                        networkTypeView,
-                                    )
-                            } else {
-                                ThemeIconController
-                                    .resetMobileDataIconSizing(
-                                        networkTypeView,
-                                    )
-                            }
+                            ThemeIconController.resetMobileDataIconSizing(networkTypeView)
                         }
                     }
                 }

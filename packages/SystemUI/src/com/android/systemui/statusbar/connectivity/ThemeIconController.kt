@@ -301,19 +301,6 @@ object ThemeIconController {
             "signal",
         )
 
-    /**
-     * True when a dedicated RAT / data-type overlay (or the same status bar row as signal) is
-     * selected in the theme config.
-     */
-    @JvmStatic
-    fun hasMobileTypeIconThemingEnabledInConfig(context: Context): Boolean =
-        hasAnyEnabledThemeEngineCategory(
-            context,
-            ThemeEngine.CATEGORY_STATUSBAR_DATA,
-            "android.customization.sb_data",
-            "data",
-        ) || hasSignalIconThemeEnabledInConfig(context)
-
     private fun hasAnyEnabledThemeEngineCategory(
         context: Context,
         vararg categoryKeys: String,

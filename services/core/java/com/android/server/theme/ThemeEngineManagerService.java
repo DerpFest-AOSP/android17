@@ -104,6 +104,8 @@ public class ThemeEngineManagerService extends SystemService {
             "ic_5g_mobiledata", "ic_5g_mobiledata_updated",
             "ic_5g_sa_mobiledata", "ic_5g_sa_mobiledata_updated",
             "ic_5g_plus_mobiledata", "ic_5g_plus_mobiledata_updated",
+            "ic_5g_uc_mobiledata", "ic_5g_uc_mobiledata_updated",
+            "ic_5g_uw_mobiledata", "ic_5g_uw_mobiledata_updated",
             "ic_carrier_wifi", "ic_carrier_wifi_updated",
     };
 
@@ -321,6 +323,15 @@ public class ThemeEngineManagerService extends SystemService {
         Resources themeResources = getThemeResources(packageName);
         if (themeResources == null) return;
 
+        String overlayCategory = null;
+        try {
+            android.content.pm.PackageInfo pi =
+                    mContext.getPackageManager().getPackageInfo(packageName, 0);
+            overlayCategory = pi.overlayCategory;
+        } catch (Exception e) {
+            Slog.d(TAG, "Failed to get overlay category for " + packageName, e);
+        }
+
         Set<String> allTargets = new HashSet<>();
 
         Map<String, String> arrayCategoryMap = new HashMap<>();
@@ -350,22 +361,11 @@ public class ThemeEngineManagerService extends SystemService {
         }
 
         if (allTargets.isEmpty()) {
-            String overlayCategory = null;
-            try {
-                android.content.pm.PackageInfo pi = mContext.getPackageManager()
-                        .getPackageInfo(packageName, 0);
-                overlayCategory = pi.overlayCategory;
-            } catch (Exception e) {
-                Slog.d(TAG, "Failed to get overlay category for " + packageName, e);
-            }
-
             String resCategory = null;
             if ("android.theme.customization.signal_icon".equals(overlayCategory)) {
                 resCategory = "signal";
             } else if ("android.theme.customization.wifi_icon".equals(overlayCategory)) {
                 resCategory = "wifi";
-            } else if ("android.customization.sb_data".equals(overlayCategory)) {
-                resCategory = "data";
             }
 
             String[] knownNames = {
@@ -384,17 +384,48 @@ public class ThemeEngineManagerService extends SystemService {
                     if (resCategory != null) mResourceCategoryCache.put(name, resCategory);
                 }
             }
-            if ("data".equals(resCategory)) {
-                for (String name : MOBILE_DATA_TYPE_KNOWN_NAMES) {
-                    if (themeResources.getIdentifier(name, "drawable", packageName) != 0) {
-                        allTargets.add(name);
-                        mResourceCategoryCache.put(name, "data");
-                    }
-                }
-            }
         }
 
+        appendMobileDataRatTargets(themeResources, packageName, allTargets, overlayCategory);
+
         mTargetArrayCache.put(packageName, allTargets);
+    }
+
+    /**
+     * LTE/5G/RAT art historically shipped inside {@code signal_icon} RROs alongside bars; register
+     * those drawables under {@code "signal"} so they resolve with the same {@code categoryThemes}
+     * entry as the bars. Dedicated {@code android.customization.sb_data} overlays use {@code
+     * "data"}.
+     */
+    private void appendMobileDataRatTargets(
+            @NonNull Resources themeResources,
+            @NonNull String packageName,
+            @NonNull Set<String> allTargets,
+            @Nullable String overlayCategory) {
+        final String ratCategory;
+        if ("android.customization.sb_data".equals(overlayCategory)) {
+            ratCategory = "data";
+        } else if ("android.theme.customization.signal_icon".equals(overlayCategory)
+                || hasAnySignalCellularDrawableName(allTargets)) {
+            ratCategory = "signal";
+        } else {
+            return;
+        }
+        for (String name : MOBILE_DATA_TYPE_KNOWN_NAMES) {
+            if (themeResources.getIdentifier(name, "drawable", packageName) != 0) {
+                allTargets.add(name);
+                mResourceCategoryCache.put(name, ratCategory);
+            }
+        }
+    }
+
+    private static boolean hasAnySignalCellularDrawableName(@NonNull Set<String> allTargets) {
+        for (String n : allTargets) {
+            if (n.startsWith("ic_signal_cellular_")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void loadIconPack(String packageName) {
