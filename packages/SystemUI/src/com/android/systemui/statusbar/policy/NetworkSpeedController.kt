@@ -183,7 +183,7 @@ class NetworkSpeedController @Inject constructor(
     companion object {
         const val SLOT_NETWORK_SPEED = "network_speed"
         const val ICON_HIDE_LIST = "icon_blacklist"
-        const val REFRESH_INTERVAL_MS = 4000L
+        const val REFRESH_INTERVAL_MS = 1000L
         const val AUTOHIDE_THRESHOLD = 1024L // 1KB
     }
 }
