@@ -150,7 +150,7 @@ fun AxDynamicBarNowBar(
                                             if (totalDragX > 0f) viewModel.cyclePrev()
                                             else viewModel.cycleNext()
                                         } else {
-                                            viewModel.togglePanel()
+                                            viewModel.statusBarExpansion.toggle()
                                         }
                                         break
                                     }

@@ -48,7 +48,6 @@ import androidx.annotation.NonNull;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.logging.UiEvent;
 import com.android.internal.logging.UiEventLogger;
-import com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
@@ -99,7 +98,6 @@ public class NotificationInterruptStateProviderImpl implements NotificationInter
     private final GlobalSettings mGlobalSettings;
     private final EventLog mEventLog;
     private final Optional<Bubbles> mBubbles;
-    private final AxDynamicBarSettings mAxDynamicBarSettings;
 
     ActivityManager mAm;
     private ArrayList<String> mStoplist = new ArrayList<String>();
@@ -160,9 +158,7 @@ public class NotificationInterruptStateProviderImpl implements NotificationInter
             GlobalSettings globalSettings,
             SystemSettings systemSettings,
             EventLog eventLog,
-            Optional<Bubbles> bubbles,
-            AxDynamicBarSettings axDynamicBarSettings) {
-        mAxDynamicBarSettings = axDynamicBarSettings;
+            Optional<Bubbles> bubbles) {
         mContext = context;
         mPowerManager = powerManager;
         mBatteryController = batteryController;
@@ -480,11 +476,6 @@ public class NotificationInterruptStateProviderImpl implements NotificationInter
         }
 
         if (!mUseHeadsUp) {
-            if (log) mLogger.logNoHeadsUpFeatureDisabled();
-            return false;
-        }
-
-        if (mAxDynamicBarSettings.isNotificationEventsActive()) {
             if (log) mLogger.logNoHeadsUpFeatureDisabled();
             return false;
         }

@@ -143,10 +143,10 @@ fun AxDynamicBarChip(
                                             expandableController.expandable,
                                         )
                                     ) {
-                                        viewModel.togglePanel()
+                                        viewModel.statusBarExpansion.toggle()
                                     }
                                 } else {
-                                    viewModel.togglePanel()
+                                    viewModel.statusBarExpansion.toggle()
                                 }
                             }
                             
