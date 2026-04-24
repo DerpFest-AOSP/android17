@@ -201,6 +201,7 @@ sealed class IslandEvent(open val priority: Int, val id: String) : Comparable<Is
         val triggerTimeMs: Long = 0L,
         val isRinging: Boolean = false,
         val appIcon: Drawable? = null,
+        val actions: List<NotificationAction> = emptyList(),
     ) : IslandEvent(priority = 48, id = "alarm") {
         override val behavior = EventBehavior(autoDismissMs = 5000L)
         override fun withoutDrawables() = copy(appIcon = null)

@@ -979,7 +979,13 @@ private fun KeyguardGenericPanel(
             contentColor = colors.onAccent,
             backgroundColor = colors.accent,
             modifier = Modifier.fillMaxWidth(),
-            onClick = { interactor.dismissEvent(event) },
+            onClick = {
+                if (event is IslandEvent.Alarm) {
+                    interactor.dismissAlarmFromOverlay(event)
+                } else {
+                    interactor.dismissEvent(event)
+                }
+            },
         )
     }
 }

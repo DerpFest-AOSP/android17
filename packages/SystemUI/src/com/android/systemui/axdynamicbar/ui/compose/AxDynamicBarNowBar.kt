@@ -56,6 +56,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.android.compose.animation.rememberExpandableController
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.shared.AlphaHint
 import com.android.systemui.axdynamicbar.shared.PillPrimary
@@ -71,7 +72,6 @@ import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipState
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
-import kotlin.math.abs
 
 private val NowBarShape = ShapeXl
 private val NowBarHeight = 32.dp
@@ -85,6 +85,7 @@ fun AxDynamicBarNowBar(
 ) {
     val touchSlop = LocalViewConfiguration.current.touchSlop
     val motionScheme = MaterialTheme.motionScheme
+    val expandableController = rememberExpandableController(color = Color.Transparent, shape = NowBarShape)
 
     AnimatedVisibility(
         visible = state != null,
@@ -134,15 +135,18 @@ fun AxDynamicBarNowBar(
                 Box(
                     modifier = Modifier
                         .padding(top = SpaceXs)
-                        .pointerInput(viewModel, touchSlop) {
+                        .pointerInput(state, viewModel, touchSlop) {
                             awaitEachGesture {
-                                awaitFirstDown(requireUnconsumed = false)
+                                val down = awaitFirstDown(requireUnconsumed = false)
+                                val pointerId = down.id
                                 var totalDragX = 0f
                                 var isDragging = false
 
                                 while (true) {
                                     val event = awaitPointerEvent()
-                                    val change = event.changes.firstOrNull() ?: break
+                                    val change =
+                                        event.changes.firstOrNull { it.id == pointerId }
+                                            ?: event.changes.firstOrNull() ?: break
 
                                     if (!change.pressed) {
                                         change.consume()
@@ -150,7 +154,18 @@ fun AxDynamicBarNowBar(
                                             if (totalDragX > 0f) viewModel.cyclePrev()
                                             else viewModel.cycleNext()
                                         } else {
-                                            viewModel.statusBarExpansion.toggle()
+                                            val e = state?.event
+                                            if (e is IslandEvent.AospChip) {
+                                                if (!viewModel.handleAospChipTap(
+                                                        e,
+                                                        expandableController.expandable,
+                                                    )
+                                                ) {
+                                                    viewModel.statusBarExpansion.toggle()
+                                                }
+                                            } else {
+                                                viewModel.statusBarExpansion.toggle()
+                                            }
                                         }
                                         break
                                     }

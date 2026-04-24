@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,14 +55,31 @@ internal fun AlarmExpanded(event: IslandEvent.Alarm, interactor: IslandActions) 
             }
         },
         actions = {
-            ActionChip(
-                label = stringResource(R.string.ax_dynamic_bar_dismiss),
-                icon = Icons.Filled.Close,
-                color = OrangeAccent,
-                bg = OrangeAccent.copy(alpha = AlphaIconBg),
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { interactor.dismissEvent(event) },
-            )
+            if (event.isRinging && event.actions.isNotEmpty()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(SpaceSm),
+                ) {
+                    for (a in event.actions) {
+                        ActionChip(
+                            label = a.label.toString(),
+                            color = OrangeAccent,
+                            bg = OrangeAccent.copy(alpha = AlphaIconBg),
+                            modifier = Modifier.weight(1f),
+                            onClick = { interactor.triggerAlarmAction(event, a) },
+                        )
+                    }
+                }
+            } else {
+                ActionChip(
+                    label = stringResource(R.string.ax_dynamic_bar_dismiss),
+                    icon = Icons.Filled.Close,
+                    color = OrangeAccent,
+                    bg = OrangeAccent.copy(alpha = AlphaIconBg),
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { interactor.dismissAlarmFromOverlay(event) },
+                )
+            }
         },
     )
 }
@@ -93,7 +111,7 @@ internal fun RowScope.CompactAlarmRow(
     if (event.isRinging) {
         Spacer(Modifier.width(SpaceMd))
         Surface(
-            onClick = { interactor.dismissEvent(event) },
+            onClick = { interactor.dismissAlarmFromOverlay(event) },
             shape = ShapeChip,
             color = OrangeAccent.copy(alpha = AlphaIconBg),
         ) {

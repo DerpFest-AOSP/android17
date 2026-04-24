@@ -717,6 +717,7 @@ constructor(
                 triggerTimeMs = sbn.notification.`when`,
                 isRinging = isRinging,
                 appIcon = icon,
+                actions = extractNotificationActions(sbn),
             )
         _alarmEvent.value = event
         onAlarmEvent?.invoke(event)

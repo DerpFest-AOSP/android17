@@ -82,7 +82,6 @@ import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
 import com.android.systemui.res.R
-import kotlin.math.abs
 
 private val ChipShape = ShapeXl
 private val ChipHeight = 24.dp
@@ -116,26 +115,24 @@ fun AxDynamicBarChip(
         modifier = modifier
             .padding(start = 4.dp, end = 2.dp)
             .widthIn(min = 25.dp, max = 90.dp)
-            .pointerInput(viewModel) {
+            .pointerInput(state, viewModel, touchSlop) {
                 awaitEachGesture {
                     val down = awaitFirstDown(pass = PointerEventPass.Initial)
-                    
+                    val pointerId = down.id
                     val startX = down.position.x
                     val startY = down.position.y
-                    var dragging = false
-                    var totalDx = 0f
-                    var decided = false 
+                    var dragMode: Int = 0 // 0 = unknown, 1 = horizontal cycle, 2 = not horizontal (tap on release)
+                    var lastHorizontalDx = 0f
                     while (true) {
                         val event = awaitPointerEvent(PointerEventPass.Initial)
-                        val change = event.changes.firstOrNull() ?: break
+                        val change =
+                            event.changes.firstOrNull { it.id == pointerId }
+                                ?: event.changes.firstOrNull() ?: break
                         if (!change.pressed) {
-                            
-                            if (dragging) {
-                                change.consume()
-                                if (totalDx > 0) viewModel.cyclePrev()
-                                else viewModel.cycleNext()
-                            } else if (!decided) {
-                                change.consume()
+                            change.consume()
+                            if (dragMode == 1) {
+                                if (lastHorizontalDx > 0f) viewModel.cyclePrev() else viewModel.cycleNext()
+                            } else {
                                 val current = state?.event
                                 if (current is IslandEvent.AospChip) {
                                     if (!viewModel.handleAospChipTap(
@@ -149,25 +146,17 @@ fun AxDynamicBarChip(
                                     viewModel.statusBarExpansion.toggle()
                                 }
                             }
-                            
                             break
                         }
                         val dx = change.position.x - startX
                         val dy = change.position.y - startY
-                        if (!decided && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
-                            if (abs(dx) >= abs(dy)) {
-                                
-                                decided = true
-                                dragging = true
-                                totalDx = dx
-                                change.consume()
-                            } else {
-                                
-                                decided = true
-                                break
+                        if (dragMode == 0) {
+                            if (abs(dx) > touchSlop || abs(dy) > touchSlop) {
+                                dragMode = if (abs(dx) >= abs(dy)) 1 else 2
                             }
-                        } else if (dragging) {
-                            totalDx = dx
+                        }
+                        if (dragMode == 1) {
+                            lastHorizontalDx = dx
                             change.consume()
                         }
                     }

@@ -3,7 +3,11 @@ package com.android.systemui.axdynamicbar.ui
 import com.android.systemui.animation.Expandable
 import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.plugins.ActivityStarter
+import com.android.systemui.statusbar.chips.call.domain.interactor.CallChipInteractor
+import com.android.systemui.statusbar.chips.call.ui.viewmodel.CallChipViewModel
 import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
+import com.android.systemui.statusbar.phone.ongoingcall.shared.model.OngoingCallModel
 import com.android.systemui.biometrics.AuthController
 import com.android.systemui.biometrics.domain.interactor.UdfpsOverlayInteractor
 import com.android.systemui.dagger.SysUISingleton
@@ -51,6 +55,8 @@ constructor(
     val interactor: AxDynamicBarInteractor,
     val keyguardExpansion: AxDynamicBarKeyguardExpansion,
     val statusBarExpansion: AxDynamicBarStatusBarExpansion,
+    private val activityStarter: ActivityStarter,
+    private val callChipInteractor: CallChipInteractor,
     batteryInteractor: BatteryInteractor,
     private val batteryController: BatteryController,
     authController: AuthController,
@@ -191,8 +197,21 @@ constructor(
                 behavior.onClick(expandable)
                 true
             }
-            is OngoingActivityChipModel.ClickBehavior.None -> false
+            is OngoingActivityChipModel.ClickBehavior.None ->
+                tryStartInCallFromOngoingState(active)
         }
+    }
+
+    private fun tryStartInCallFromOngoingState(active: OngoingActivityChipModel.Active): Boolean {
+        if (!active.key.startsWith(CallChipViewModel.KEY_PREFIX)) return false
+        val notifKey = active.key.removePrefix(CallChipViewModel.KEY_PREFIX)
+        val state = callChipInteractor.ongoingCallState.value
+        if (state !is OngoingCallModel.InCall || state.notificationKey != notifKey) {
+            return false
+        }
+        val intent = state.intent ?: return false
+        activityStarter.postStartActivityDismissingKeyguard(intent, null)
+        return true
     }
 
     companion object {

@@ -50,4 +50,13 @@ interface IslandActions {
     fun onNotificationInteraction(eventId: String)
     fun onNotificationInteractionEnd(eventId: String)
     fun launchNotificationDismissingKeyguard(event: IslandEvent.Notification)
+
+    /** Dismiss the alarm from the island; if ringing, fires a [Notification] action when available. */
+    fun dismissAlarmFromOverlay(event: IslandEvent.Alarm)
+
+    /**
+     * Fires a specific [Notification] action (e.g. snooze) from the posted alarm, then dismisses
+     * the event from the island.
+     */
+    fun triggerAlarmAction(event: IslandEvent.Alarm, action: IslandEvent.NotificationAction)
 }

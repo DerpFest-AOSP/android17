@@ -1,5 +1,6 @@
 package com.android.systemui.axdynamicbar.domain
 
+import android.content.Context
 import android.net.Uri
 import com.android.systemui.axdynamicbar.data.IslandEventRepository
 import com.android.systemui.axdynamicbar.model.IslandEvent
@@ -9,6 +10,7 @@ import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.IslandActions
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
+import com.android.systemui.axdynamicbar.shared.sendWithBal
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.plugins.statusbar.StatusBarStateController
@@ -35,6 +37,7 @@ import kotlinx.coroutines.launch
 class AxDynamicBarInteractor
 @Inject
 constructor(
+    @Application private val applicationContext: Context,
     @Application private val applicationScope: CoroutineScope,
     private val repository: IslandEventRepository,
     val settings: AxDynamicBarSettings,
@@ -444,6 +447,37 @@ constructor(
     override fun launchNotificationDismissingKeyguard(event: IslandEvent.Notification) {
         val intent = event.sbn.notification?.contentIntent ?: return
         activityStarter.startPendingIntentDismissingKeyguard(intent)
+    }
+
+    override fun dismissAlarmFromOverlay(event: IslandEvent.Alarm) {
+        if (event.isRinging) {
+            trySendAlarmUserDismissAction(event)
+        }
+        dismissEvent(event)
+    }
+
+    override fun triggerAlarmAction(
+        event: IslandEvent.Alarm,
+        action: IslandEvent.NotificationAction,
+    ) {
+        try {
+            action.action.actionIntent?.sendWithBal(applicationContext)
+        } catch (_: Exception) {
+        }
+        dismissEvent(event)
+    }
+
+    private fun trySendAlarmUserDismissAction(event: IslandEvent.Alarm) {
+        if (event.actions.isEmpty()) return
+        val action =
+            event.actions.find { a ->
+                val t = a.label.toString().lowercase()
+                t.contains("dismiss") || t.contains("stop") || t.contains("close")
+            } ?: event.actions[0]
+        try {
+            action.action.actionIntent?.sendWithBal(applicationContext)
+        } catch (_: Exception) {
+        }
     }
 
     override fun setTorchLevel(level: Int) = repository.torch.setLevel(level)
