@@ -82,6 +82,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.android.compose.animation.rememberExpandableController
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
 import com.android.systemui.axdynamicbar.model.RecordingState
@@ -286,6 +287,7 @@ private fun KeyguardChipBody(
 ) {
     val context = LocalContext.current
     val motionScheme = MaterialTheme.motionScheme
+    val expandableController = rememberExpandableController(color = Color.Transparent, shape = ChipShape)
 
     Box(contentAlignment = Alignment.Center) {
         Row(
@@ -315,6 +317,11 @@ private fun KeyguardChipBody(
 
                         is IslandEvent.KeyguardIndication,
                         is IslandEvent.AppSwitch -> { }
+                        is IslandEvent.AospChip -> {
+                            if (!viewModel.handleAospChipTap(event, expandableController.expandable)) {
+                                viewModel.togglePanel()
+                            }
+                        }
                         else -> viewModel.togglePanel()
                     }
                 }
