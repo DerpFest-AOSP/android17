@@ -102,6 +102,12 @@ public class DateSmartspaceView extends LinearLayout implements BcSmartspaceData
         mDateView = findViewById(R.id.date);
         mNextAlarmTextView = findViewById(R.id.alarm_text_view);
         mDndImageView = findViewById(R.id.dnd_icon);
+        if (mDndImageView != null) {
+            int canvasSize = mDndIconDrawable.getIntrinsicWidth();
+            LinearLayout.LayoutParams params =
+                    new LinearLayout.LayoutParams(canvasSize, canvasSize);
+            mDndImageView.setLayoutParams(params);
+        }
     }
 
     @Override
@@ -120,9 +126,17 @@ public class DateSmartspaceView extends LinearLayout implements BcSmartspaceData
         if (image == null) {
             BcSmartspaceTemplateDataUtils.updateVisibility(mDndImageView, View.GONE);
         } else {
-            mDndIconDrawable.setIcon(image.mutate());
+            int iconSize =
+                    getContext().getResources()
+                            .getDimensionPixelSize(R.dimen.enhanced_smartspace_icon_size);
+            Drawable.ConstantState state = image.getConstantState();
+            Drawable freshIcon =
+                    state != null ? state.newDrawable().mutate() : image.mutate();
+            freshIcon.setBounds(0, 0, iconSize, iconSize);
+            mDndIconDrawable.setIcon(freshIcon);
             mDndImageView.setImageDrawable(mDndIconDrawable);
             mDndImageView.setContentDescription(description);
+            mDndImageView.requestLayout();
             BcSmartspaceTemplateDataUtils.updateVisibility(mDndImageView, View.VISIBLE);
         }
         updateColorForExtras();
