@@ -568,6 +568,21 @@ public class ComputerEngine implements Computer {
         return SPOOF_INSTALL_USER;
     }
 
+    private final boolean isCallerSystem(int callingUid) {
+        if (isSystemOrRootOrShell(callingUid)) {
+            return true;
+        }
+        final SettingBase callingPs = mSettings.getSettingBase(UserHandle.getAppId(callingUid));
+        if (callingPs == null) return false;
+        final int callingFlags = callingPs.getFlags();
+        if (((callingFlags & ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
+                || ((callingFlags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)
+                        == ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) {
+            return true;
+        }
+        return false;
+    }
+
     private final boolean isAppDetached(String packageName) {
         if (!android.os.SystemProperties.getBoolean(
             "sys.boot_completed", false)) {
@@ -1792,7 +1807,7 @@ public class ComputerEngine implements Computer {
 
     public final PackageInfo getPackageInfo(String packageName,
             @PackageManager.PackageInfoFlagsBits long flags, int userId) {
-        if (shouldHideFromCaller(filterCallingUid, packageName)) return null;
+        if (shouldHideFromCaller(Binder.getCallingUid(), packageName)) return null;
         return getPackageInfoInternal(packageName, PackageManager.VERSION_CODE_HIGHEST,
                 flags, Binder.getCallingUid(), userId);
     }
