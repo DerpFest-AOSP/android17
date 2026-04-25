@@ -138,6 +138,9 @@ private const val QS_TILE_LABEL_HIDE = "qs_tile_label_hide"
 /** [Settings.Secure] key naming the [QSTileIconShapes] shape used by classic tiles. */
 private const val QS_TILE_ICON_SHAPE = "qs_tile_icon_shape"
 
+/** [Settings.Secure] key selecting the tile toggle animation style (0 = off). */
+private const val QS_TILE_ANIMATION_STYLE = "qs_tile_animation_style"
+
 /**
  * This composable function is responsible for rendering a tile based on the provided
  * [TileViewModel]. It handles different states of the tile (e.g., available, unavailable),
@@ -207,6 +210,7 @@ fun ContentScope.Tile(
         val classicStyle = rememberQSPanelStyle()
         val iconShapeKey = rememberQSTileIconShapeKey()
         val labelHide = classicStyle && rememberQSTileLabelHide()
+        val tileAnimationStyle = rememberQSTileAnimationStyle()
         val tileHeight = if (classicStyle && !labelHide) TileHeight + 8.dp else TileHeight
 
         val shapeMode = rememberTileShapeMode()
@@ -289,6 +293,7 @@ fun ContentScope.Tile(
                         }
                         .sysuiResTag("tile_expandable")
                         .fillMaxWidth()
+                        .tileToggleAnimation(uiState.state, tileAnimationStyle)
                         // Pin height for circle/classic; otherwise QQS max-height stretches rows.
                         .thenIf(classicStyle || wantCircle) { Modifier.height(tileHeight) }
                         .bounceable(
@@ -840,6 +845,53 @@ fun rememberQSTileIconShapeKey(): String {
     }
 
     return iconShapeKey
+}
+
+/**
+ * Reads and observes [Settings.Secure] `qs_tile_animation_style`, which selects the animation
+ * played when a quick settings tile toggles between active and inactive.
+ */
+@Composable
+fun rememberQSTileAnimationStyle(): Int {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readAnimationStyle(): Int {
+        return try {
+            Settings.Secure.getIntForUser(
+                contentResolver,
+                QS_TILE_ANIMATION_STYLE,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        } catch (_: Throwable) {
+            0
+        }
+    }
+
+    var animationStyle by remember { mutableStateOf(readAnimationStyle()) }
+
+    DisposableEffect(contentResolver) {
+        // Scene-container QS can compose before Settings is ready; re-read on subscribe.
+        animationStyle = readAnimationStyle()
+        val observer =
+            object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    context.mainExecutor.execute { animationStyle = readAnimationStyle() }
+                }
+            }
+
+        contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(QS_TILE_ANIMATION_STYLE),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+
+    return animationStyle
 }
 
 @Composable
