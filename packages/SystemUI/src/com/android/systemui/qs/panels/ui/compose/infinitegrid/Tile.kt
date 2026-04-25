@@ -147,6 +147,8 @@ val LocalQSTileLabelHide = compositionLocalOf { false }
 /** Resolved shape key for classic QS tiles; see [QSTileIconShapes]. */
 val LocalQSTileIconShapeKey = compositionLocalOf { QSTileIconShapes.DEFAULT_KEY }
 
+val LocalQSTileAnimationStyle = compositionLocalOf { 0 }
+
 @Composable
 fun rememberQSPanelStyle(): Int = rememberSecureIntSetting("qs_panel_style")
 
@@ -159,6 +161,9 @@ fun rememberQSTileIconShapeKey(): String {
         rememberSecureStringSetting(QSTileIconShapes.SETTINGS_KEY, defaultValue = null)
     return remember(raw) { QSTileIconShapes.normalizeKey(raw) }
 }
+
+@Composable
+fun rememberQSTileAnimationStyle(): Int = rememberSecureIntSetting("qs_tile_animation_style")
 
 @Composable
 private fun rememberSecureIntSetting(key: String, defaultValue: Int = 0): Int {
@@ -326,6 +331,7 @@ fun ContentScope.Tile(
             }
 
         val isClassicPanelStyle = LocalQSPanelStyle.current == 1
+        val tileAnimationStyle = LocalQSTileAnimationStyle.current
 
         if (tile.spec.spec == "sound" && !iconOnly) {
             QSTileRingerSlider()
@@ -391,6 +397,7 @@ fun ContentScope.Tile(
                         modifier.borderOnFocus(color = focusBorderColor, outerShape.topEnd)
                     }
                     .fillMaxWidth()
+                    .tileToggleAnimation(uiState.state, tileAnimationStyle)
                     .height(
                         when {
                             isClassicPanelStyle && LocalQSTileLabelHide.current ->

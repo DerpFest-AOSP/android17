@@ -92,6 +92,7 @@ constructor(
         val isClassicStyle = panelStyle == 1
         val hideTileLabels = rememberQSTileLabelHide()
         val qsTileIconShapeKey = rememberQSTileIconShapeKey()
+        val tileAnimationStyle = rememberQSTileAnimationStyle()
         val classicColumns by qsColumnsRepository.classicColumns.collectAsStateWithLifecycle(
             initialValue = integerResource(R.integer.quick_settings_num_columns_classic)
         )
@@ -121,6 +122,7 @@ constructor(
             LocalQSPanelStyle provides panelStyle,
             LocalQSTileLabelHide provides hideTileLabels,
             LocalQSTileIconShapeKey provides qsTileIconShapeKey,
+            LocalQSTileAnimationStyle provides tileAnimationStyle,
         ) {
         if (QSMaterialExpressiveTiles.isEnabled) {
             ButtonGroupGrid(
