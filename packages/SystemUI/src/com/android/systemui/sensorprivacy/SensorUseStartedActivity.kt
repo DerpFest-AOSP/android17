@@ -30,6 +30,7 @@ import android.hardware.SensorPrivacyManager.EXTRA_SENSOR
 import android.hardware.SensorPrivacyManager.Sources.DIALOG
 import android.os.Bundle
 import android.os.Handler
+import android.provider.Settings
 import android.window.OnBackInvokedDispatcher
 import androidx.annotation.OpenForTesting
 import com.android.internal.camera.flags.Flags
@@ -38,6 +39,7 @@ import com.android.internal.util.FrameworkStatsLog.PRIVACY_TOGGLE_DIALOG_INTERAC
 import com.android.internal.util.FrameworkStatsLog.PRIVACY_TOGGLE_DIALOG_INTERACTION__ACTION__ENABLE
 import com.android.internal.util.FrameworkStatsLog.write
 import com.android.systemui.dagger.qualifiers.Background
+import com.android.systemui.settings.UserTracker
 import com.android.systemui.statusbar.phone.KeyguardDismissUtil
 import com.android.systemui.statusbar.policy.IndividualSensorPrivacyController
 import com.android.systemui.statusbar.policy.KeyguardStateController
@@ -56,6 +58,7 @@ constructor(
     private val sensorPrivacyController: IndividualSensorPrivacyController,
     private val keyguardStateController: KeyguardStateController,
     private val keyguardDismissUtil: KeyguardDismissUtil,
+    private val userTracker: UserTracker,
     @Background private val bgHandler: Handler,
     private val sensorUseDialogDelegateFactory: SensorUseDialogDelegate.Factory,
 ) : Activity(), DialogInterface.OnClickListener, DialogInterface.OnDismissListener {
@@ -162,11 +165,7 @@ constructor(
     override fun onClick(dialog: DialogInterface?, which: Int) {
         when (which) {
             BUTTON_POSITIVE -> {
-                if (
-                    sensorPrivacyController.requiresAuthentication() &&
-                        keyguardStateController.isMethodSecure &&
-                        keyguardStateController.isShowing
-                ) {
+                if (shouldRequireAuthenticationBeforeUnblock()) {
                     keyguardDismissUtil.executeWhenUnlocked(
                         {
                             bgHandler.postDelayed(
@@ -236,6 +235,28 @@ constructor(
     override fun onNewIntent(intent: Intent?) {
         setIntent(intent)
         recreate()
+    }
+
+    private fun shouldRequireAuthenticationBeforeUnblock(): Boolean {
+        return sensorPrivacyController.requiresAuthentication() &&
+            keyguardStateController.isMethodSecure &&
+            keyguardStateController.isShowing &&
+            !canUnblockMicDialogWhenLocked()
+    }
+
+    private fun canUnblockMicDialogWhenLocked(): Boolean {
+        if (sensor != MICROPHONE) {
+            return false
+        }
+        if (sensorPrivacyController.isSensorBlockedByHardwareToggle(MICROPHONE)) {
+            return false
+        }
+        return Settings.Secure.getIntForUser(
+            contentResolver,
+            Settings.Secure.MIC_UNBLOCK_DIALOG_WHEN_LOCKED,
+            0,
+            userTracker.userId
+        ) != 0
     }
 
     private fun isAutomotive(): Boolean {

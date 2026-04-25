@@ -20,6 +20,7 @@ class SensorUseStartedActivityTest : SysuiTestCase() {
             sensorPrivacyController = mock(),
             keyguardStateController = mock(),
             keyguardDismissUtil = mock(),
+            userTracker = mock(),
             bgHandler = mock(),
             sensorUseDialogDelegateFactory = mock(),
         )

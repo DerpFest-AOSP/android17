@@ -544,6 +544,7 @@ public class SecureSettingsValidators {
                         "14400000",
                         "28800000"
                 }));
+        VALIDATORS.put(Secure.MIC_UNBLOCK_DIALOG_WHEN_LOCKED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.CONTENT_SAFETY_SANDBOXED_IDLE_TIMEOUT_MS,
                 NONE_NEGATIVE_LONG_VALIDATOR);
         VALIDATORS.put(Secure.CONTENT_SAFETY_IDLE_TIMEOUT_MS, NONE_NEGATIVE_LONG_VALIDATOR);

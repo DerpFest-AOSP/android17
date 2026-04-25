@@ -14191,6 +14191,17 @@ public final class Settings {
         public static final String MIC_OFF_TIMEOUT = "mic_off_timeout";
 
         /**
+         * Whether the microphone sensor-use dialog can unblock the microphone while the device is
+         * locked. Default is disabled.
+         *
+         * Type: int (0 to disable, 1 to enable)
+         *
+         * @hide
+         */
+        public static final String MIC_UNBLOCK_DIALOG_WHEN_LOCKED =
+                "mic_unblock_dialog_when_locked";
+
+        /**
          * Toggle for whether to redact OTP notification while connected to wifi. Defaults to
          * false/0.
          * @hide

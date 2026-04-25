@@ -831,7 +831,8 @@ public final class SensorPrivacyService extends SystemService {
             // Enforce valid calling user on devices that enable visible background users.
             enforceValidCallingUser(userId);
 
-            if (!canChangeToggleSensorPrivacy(userId, sensor, enable ? ENABLED : DISABLED)) {
+            if (!canChangeToggleSensorPrivacy(userId, source, sensor,
+                    enable ? ENABLED : DISABLED)) {
                 return;
             }
             if (enable && !supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor)) {
@@ -865,7 +866,7 @@ public final class SensorPrivacyService extends SystemService {
             // Enforce valid calling user on devices that enable visible background users.
             enforceValidCallingUser(userId);
 
-            if (!canChangeToggleSensorPrivacy(userId, sensor, state)) {
+            if (!canChangeToggleSensorPrivacy(userId, source, sensor, state)) {
                 return;
             }
             if (!supportsSensorToggle(TOGGLE_TYPE_SOFTWARE, sensor)) {
@@ -1087,8 +1088,8 @@ public final class SensorPrivacyService extends SystemService {
             });
         }
 
-        private boolean canChangeToggleSensorPrivacy(@UserIdInt int userId, int sensor,
-                int newState) {
+        private boolean canChangeToggleSensorPrivacy(@UserIdInt int userId, int source,
+                int sensor, int newState) {
             if (sensor == MICROPHONE && mCallStateHelper.isInEmergencyCall()) {
                 // During emergency call the microphone toggle managed automatically
                 Log.i(TAG, "Can't change mic toggle during an emergency call");
@@ -1097,7 +1098,9 @@ public final class SensorPrivacyService extends SystemService {
 
             if (requiresAuthentication() && mKeyguardManager != null
                     && mKeyguardManager.isDeviceLocked(userId)
-                    && newState != ENABLED) {
+                    && newState != ENABLED
+                    && !canBypassAuthenticationForMicDialogWhenLocked(userId, source, sensor,
+                            newState)) {
                 Log.i(TAG, "Can't change mic/cam toggle for less privacy while device is locked");
                 return false;
             }
@@ -1114,6 +1117,41 @@ public final class SensorPrivacyService extends SystemService {
                 return false;
             }
             return true;
+        }
+
+        private boolean canBypassAuthenticationForMicDialogWhenLocked(@UserIdInt int userId,
+                int source, int sensor, int newState) {
+            if (source != DIALOG || sensor != MICROPHONE || newState != DISABLED) {
+                return false;
+            }
+            if (isToggleSensorPrivacyEnabledInternal(userId, TOGGLE_TYPE_HARDWARE, sensor)) {
+                return false;
+            }
+            if (!isCallerSensorUseStartedActivityPackage()) {
+                return false;
+            }
+
+            final int settingsUserId = mUserManagerInternal.getProfileParentId(userId);
+            final long token = Binder.clearCallingIdentity();
+            try {
+                return Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                        Settings.Secure.MIC_UNBLOCK_DIALOG_WHEN_LOCKED, 0, settingsUserId) != 0;
+            } finally {
+                Binder.restoreCallingIdentity(token);
+            }
+        }
+
+        private boolean isCallerSensorUseStartedActivityPackage() {
+            ComponentName componentName = ComponentName.unflattenFromString(
+                    mContext.getResources().getString(R.string.config_sensorUseStartedActivity));
+            if (componentName == null) {
+                return false;
+            }
+
+            String[] packages = mContext.getPackageManager().getPackagesForUid(
+                    Binder.getCallingUid());
+            return packages != null && Arrays.asList(packages).contains(
+                    componentName.getPackageName());
         }
 
         private void logSensorPrivacyToggle(int source, int sensor, boolean enabled,
