@@ -31,23 +31,34 @@ import com.android.systemui.volume.dialog.sliders.domain.interactor.VolumeDialog
 import com.android.systemui.volume.dialog.sliders.domain.model.VolumeDialogSliderType
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @VolumeDialogScope
 class SamsungVolumePanelViewModel
 @Inject
 constructor(
     @Application private val context: Context,
-    @VolumeDialog coroutineScope: CoroutineScope,
+    @VolumeDialog private val coroutineScope: CoroutineScope,
     slidersInteractor: VolumeDialogSlidersInteractor,
     private val sliderComponentFactory: VolumeDialogSliderComponent.Factory,
     private val visibilityInteractor: VolumeDialogVisibilityInteractor,
 ) {
     val isExpanded: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    /**
+     * See [com.android.systemui.volume.dialog.oneplus.ui.viewmodel.OnePlusVolumePanelViewModel
+     * .windowBlurEnabled].
+     */
+    val windowBlurEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
+
+    private var clearWindowBlurJob: Job? = null
 
     val ringerMode: MutableStateFlow<Int> = MutableStateFlow(
         context.getSystemService(AudioManager::class.java).ringerMode
@@ -86,13 +97,22 @@ constructor(
         AudioManager.STREAM_ALARM,
     ).map { sliderComponentFactory.create(VolumeDialogSliderType.Stream(it)) }
 
+    fun resetForDialogShow() {
+        clearWindowBlurJob?.cancel()
+        isExpanded.value = false
+        windowBlurEnabled.value = false
+    }
+
     fun onExpandClicked() {
+        clearWindowBlurJob?.cancel()
         isExpanded.value = true
+        windowBlurEnabled.value = true
         visibilityInteractor.resetDismissTimeout()
     }
 
     fun onCollapseRequested() {
         isExpanded.value = false
+        scheduleClearWindowBlurAfterExitAnimation()
         visibilityInteractor.resetDismissTimeout()
     }
 
@@ -118,15 +138,35 @@ constructor(
     }
 
     fun onDismissRequested() {
+        clearWindowBlurJob?.cancel()
         isExpanded.value = false
+        windowBlurEnabled.value = false
         visibilityInteractor.dismissDialog(Events.DISMISS_REASON_TOUCH_OUTSIDE)
     }
 
     fun onSettingsClicked() {
+        clearWindowBlurJob?.cancel()
+        isExpanded.value = false
+        windowBlurEnabled.value = false
         val intent = Intent(Settings.ACTION_SOUND_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
         visibilityInteractor.dismissDialog(Events.DISMISS_REASON_SETTINGS_CLICKED)
+    }
+
+    private fun scheduleClearWindowBlurAfterExitAnimation() {
+        clearWindowBlurJob?.cancel()
+        clearWindowBlurJob =
+            coroutineScope.launch {
+                delay(EXPANDED_EXIT_MS)
+                if (!isExpanded.value) {
+                    windowBlurEnabled.value = false
+                }
+            }
+    }
+
+    private companion object {
+        private const val EXPANDED_EXIT_MS = 350L
     }
 }

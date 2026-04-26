@@ -76,9 +76,9 @@ constructor(
         val blurBehindPx = dialog.context.resources
             .getDimensionPixelSize(R.dimen.volume_dialog_samsung_blur_radius)
         launchTraced("SamsungVDB#expandState") {
-            samsungViewModel.isExpanded.collect { expanded ->
+            samsungViewModel.windowBlurEnabled.collect { blurOn ->
                 val window = dialog.window ?: return@collect
-                if (expanded) {
+                if (blurOn) {
                     window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
                     window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
                     window.attributes = window.attributes.apply {
@@ -118,7 +118,7 @@ constructor(
             .onEach {
                 when (it) {
                     is VolumeDialogVisibilityModel.Visible -> {
-                        samsungViewModel.isExpanded.value = false
+                        samsungViewModel.resetForDialogShow()
                         animation.suspendAnimate(FRACTION_SHOW)
                     }
                     is VolumeDialogVisibilityModel.Dismissed -> {
