@@ -19,6 +19,7 @@ package com.android.systemui.volume.dialog.samsung.ui.compose
 import android.media.AudioManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -74,6 +75,10 @@ fun SamsungExpandedPanel(
     val sliderHeight = dimensionResource(R.dimen.volume_dialog_samsung_expanded_slider_height)
     val sliderSpacing = dimensionResource(R.dimen.volume_dialog_samsung_slider_spacing)
 
+    val isDark = isSystemInDarkTheme()
+    val cardBackground =
+        if (isDark) Color.White.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.4f)
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -87,7 +92,7 @@ fun SamsungExpandedPanel(
                 .fillMaxWidth()
                 .padding(horizontal = cardHorizontalPadding, vertical = cardVerticalPadding)
                 .clip(RoundedCornerShape(28.dp))
-                .background(Color.White.copy(alpha = 0.25f))
+                .background(cardBackground)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -146,6 +151,7 @@ fun SamsungExpandedPanel(
                         sliderHeight = sliderHeight,
                         showIcon = true,
                         modifier = Modifier.weight(1f),
+                        styling = SamsungPillStyling.InExpandedFrost,
                     )
                 }
             }

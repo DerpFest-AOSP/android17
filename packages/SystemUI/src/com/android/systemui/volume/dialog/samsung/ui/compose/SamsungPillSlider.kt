@@ -21,6 +21,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -50,6 +52,53 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
 
+/**
+ * [OnWallpaper] = collapsed single pill (needs contrast on bright wallpapers in light mode).
+ * [InExpandedFrost] = sliders in the frosted card; keep the light frosted pill look.
+ */
+enum class SamsungPillStyling {
+    OnWallpaper,
+    InExpandedFrost,
+}
+
+private data class SamsungPillStyleColors(
+    val track: Color,
+    val fill: Color,
+    val streamIconTint: Color,
+    val moreVertTint: Color,
+)
+
+@Composable
+private fun samsungPillStyleColors(
+    styling: SamsungPillStyling,
+): SamsungPillStyleColors {
+    if (styling == SamsungPillStyling.InExpandedFrost) {
+        return SamsungPillStyleColors(
+            track = Color.White.copy(alpha = 0.15f),
+            fill = Color.White.copy(alpha = 0.65f),
+            streamIconTint = Color.White,
+            moreVertTint = Color.White,
+        )
+    }
+    val isDark = isSystemInDarkTheme()
+    return if (isDark) {
+        SamsungPillStyleColors(
+            track = Color.White.copy(alpha = 0.15f),
+            fill = Color.White.copy(alpha = 0.65f),
+            streamIconTint = Color(0.1f, 0.1f, 0.1f, 1f),
+            moreVertTint = Color(0.1f, 0.1f, 0.1f, 1f),
+        )
+    } else {
+        val onSurface = MaterialTheme.colorScheme.onSurface
+        SamsungPillStyleColors(
+            track = Color.Black.copy(alpha = 0.32f),
+            fill = onSurface.copy(alpha = 0.7f),
+            streamIconTint = Color.White,
+            moreVertTint = onSurface,
+        )
+    }
+}
+
 @Composable
 fun SamsungPillSlider(
     viewModel: VolumeDialogSliderViewModel,
@@ -58,6 +107,7 @@ fun SamsungPillSlider(
     showIcon: Boolean = true,
     onExpandClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    styling: SamsungPillStyling = SamsungPillStyling.OnWallpaper,
 ) {
     val collectedState by viewModel.state.collectAsStateWithLifecycle(null)
     val state = collectedState ?: return
@@ -79,8 +129,9 @@ fun SamsungPillSlider(
         label = "sliderFill",
     )
 
-    val trackColor = Color.White.copy(alpha = 0.15f)
-    val fillColor = Color.White.copy(alpha = 0.65f)
+    val colors = samsungPillStyleColors(styling)
+    val trackColor = colors.track
+    val fillColor = colors.fill
     val pillShape = RoundedCornerShape(50)
 
     Column(
@@ -140,7 +191,7 @@ fun SamsungPillSlider(
                 androidx.compose.material3.Icon(
                     imageVector = Icons.Default.MoreVert,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = colors.moreVertTint,
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 6.dp)
@@ -152,7 +203,7 @@ fun SamsungPillSlider(
             if (showIcon) {
                 Icon(
                     icon = state.icon,
-                    tint = null,
+                    tint = { colors.streamIconTint },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 10.dp)
