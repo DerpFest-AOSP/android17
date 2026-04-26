@@ -104,6 +104,7 @@ fun OnePlusExpandedPanel(
                         viewModel = component.sliderViewModel(),
                         sliderHeight = sliderHeight,
                         modifier = Modifier.weight(1f),
+                        styling = OnePlusPillStyling.OnDarkScrim,
                     )
                 }
             }

@@ -18,6 +18,7 @@ package com.android.systemui.volume.dialog.oneplus.ui.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -49,12 +50,63 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.common.ui.compose.Icon
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
 
+/**
+ * Drives how the track/fill pick colors. [OnWallpaper] is for the single collapsed pill over the
+ * live wallpaper, where a frosted-white pill is nearly invisible in light mode. [OnDarkScrim] is
+ * for the expanded full-screen dim where light pills and labels are always correct.
+ */
+enum class OnePlusPillStyling {
+    OnWallpaper,
+    OnDarkScrim,
+}
+
+private data class OnePlusPillStyleColors(
+    val track: Color,
+    val fill: Color,
+    val iconTint: Color,
+    val label: Color,
+)
+
+@Composable
+private fun onePlusPillStyleColors(
+    styling: OnePlusPillStyling,
+): OnePlusPillStyleColors {
+    if (styling == OnePlusPillStyling.OnDarkScrim) {
+        return OnePlusPillStyleColors(
+            track = Color.White.copy(alpha = 0.15f),
+            fill = Color.White,
+            iconTint = Color.White,
+            label = Color.White,
+        )
+    }
+    val isDark = isSystemInDarkTheme()
+    return if (isDark) {
+        // Frosted light pill on a typically dark / busy background.
+        OnePlusPillStyleColors(
+            track = Color.White.copy(alpha = 0.2f),
+            fill = Color.White,
+            iconTint = Color(0.1f, 0.1f, 0.1f, 1f),
+            label = MaterialTheme.colorScheme.onBackground,
+        )
+    } else {
+        // Solid dark-surface pill: visible on bright wallpapers in light mode.
+        val onSurface = MaterialTheme.colorScheme.onSurface
+        OnePlusPillStyleColors(
+            track = Color.Black.copy(alpha = 0.32f),
+            fill = onSurface,
+            iconTint = Color.White,
+            label = onSurface,
+        )
+    }
+}
+
 @Composable
 fun OnePlusPillSlider(
     viewModel: VolumeDialogSliderViewModel,
     sliderWidth: Dp = 64.dp,
     sliderHeight: Dp = 200.dp,
     modifier: Modifier = Modifier,
+    styling: OnePlusPillStyling = OnePlusPillStyling.OnWallpaper,
 ) {
     val collectedState by viewModel.state.collectAsStateWithLifecycle(null)
     val state = collectedState ?: return
@@ -71,6 +123,7 @@ fun OnePlusPillSlider(
     }
 
     val sliderShape = RoundedCornerShape(24.dp)
+    val colors = onePlusPillStyleColors(styling)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -82,7 +135,7 @@ fun OnePlusPillSlider(
                 .width(sliderWidth)
                 .height(sliderHeight)
                 .clip(sliderShape)
-                .background(Color.White.copy(alpha = 0.15f))
+                .background(colors.track)
                 .pointerInput(range) {
                     detectVerticalDragGestures(
                         onDragStart = {
@@ -113,12 +166,12 @@ fun OnePlusPillSlider(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(sliderHeight * currentFraction)
-                    .background(Color.White),
+                    .background(colors.fill),
             )
 
             Icon(
                 icon = state.icon,
-                tint = null,
+                tint = { colors.iconTint },
                 modifier = Modifier
                     .padding(bottom = 12.dp)
                     .size(24.dp),
@@ -129,7 +182,7 @@ fun OnePlusPillSlider(
 
         Text(
             text = state.label,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = colors.label,
             fontSize = 11.sp,
             textAlign = TextAlign.Center,
             maxLines = 1,
