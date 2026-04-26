@@ -198,6 +198,12 @@ public class KeyguardStatusBarView extends RelativeLayout {
                 getResources().getDimensionPixelSize(R.dimen.status_bar_icons_padding_bottom)
         );
 
+        // Respect font size setting.
+        mCarrierLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX,
+                getResources().getDimensionPixelSize(
+                        com.android.internal.R.dimen.text_size_small_material));
+        updateCarrierLabelMargin();
+
         updateKeyguardStatusBarHeight();
     }
 
@@ -209,6 +215,15 @@ public class KeyguardStatusBarView extends RelativeLayout {
         ViewGroup.LayoutParams lp = (ViewGroup.LayoutParams) getLayoutParams();
         lp.height = getStatusBarHeaderHeightKeyguard(mContext);
         setLayoutParams(lp);
+    }
+
+    private void updateCarrierLabelMargin() {
+        MarginLayoutParams lp = (MarginLayoutParams) mCarrierLabel.getLayoutParams();
+        int marginStart = calculateMargin(
+                getResources().getDimensionPixelSize(R.dimen.keyguard_carrier_text_margin),
+                mPadding.left);
+        lp.setMarginStart(marginStart);
+        mCarrierLabel.setLayoutParams(lp);
     }
 
     void loadDimens() {
@@ -346,11 +361,15 @@ public class KeyguardStatusBarView extends RelativeLayout {
             mCutoutSpace.setVisibility(View.GONE);
         }
 
-        RelativeLayout.LayoutParams lp = (LayoutParams) mStatusIconArea.getLayoutParams();
+        RelativeLayout.LayoutParams lp = (LayoutParams) mCarrierLabel.getLayoutParams();
+        lp.addRule(RelativeLayout.START_OF, R.id.status_icon_area);
+        updateCarrierLabelMargin();
+
+        lp = (LayoutParams) mStatusIconArea.getLayoutParams();
         lp.removeRule(RelativeLayout.RIGHT_OF);
         lp.width = LayoutParams.WRAP_CONTENT;
         lp.setMarginStart(getResources().getDimensionPixelSize(
-        R.dimen.system_icons_super_container_margin_start));
+                R.dimen.system_icons_super_container_margin_start));
         return true;
     }
 
@@ -377,6 +396,7 @@ public class KeyguardStatusBarView extends RelativeLayout {
 
         lp = (LayoutParams) mCarrierLabel.getLayoutParams();
         lp.addRule(RelativeLayout.START_OF, R.id.cutout_space_view);
+        updateCarrierLabelMargin();
 
         lp = (LayoutParams) mStatusIconArea.getLayoutParams();
         lp.addRule(RelativeLayout.RIGHT_OF, R.id.cutout_space_view);
