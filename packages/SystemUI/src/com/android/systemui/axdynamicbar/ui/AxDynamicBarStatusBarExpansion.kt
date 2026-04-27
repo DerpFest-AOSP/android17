@@ -68,6 +68,12 @@ constructor(
             .onEach { if (it) collapse() }
             .launchIn(applicationScope)
 
+        interactor.legacyShadeExpansion
+            .map { it > 0f }
+            .distinctUntilChanged()
+            .onEach { if (it) collapse() }
+            .launchIn(applicationScope)
+
         interactor.isBouncerShowing
             .onEach { if (it) collapse() }
             .launchIn(applicationScope)
