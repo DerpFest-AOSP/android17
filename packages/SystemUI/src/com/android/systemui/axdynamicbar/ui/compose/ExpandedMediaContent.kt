@@ -1,5 +1,7 @@
 package com.android.systemui.axdynamicbar.ui.compose
 
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
@@ -54,6 +56,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
@@ -62,6 +65,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,9 +82,108 @@ private val PlayPauseSize = 56.dp
 private val ControlButtonSize = 44.dp
 private val ControlIconSize = 22.dp
 private val SeekBarHeight = 28.dp
-private val MediaPopupCardShape = RoundedCornerShape(24.dp)
-private val CinematicArtBoxSize = 58.dp
-private val CinematicArtInnerRadius = RoundedCornerShape(10.dp)
+private val MediaPopupCardShape = RoundedCornerShape(28.dp)
+private val CinematicArtBoxSize = 64.dp
+private val CinematicArtInnerRadius = RoundedCornerShape(11.dp)
+
+private val CinematicTimeSlotWidth = 50.dp
+
+/**
+ * Inspired by Accord `BlendView`: saturate art, blur, then translucent scrims — see
+ * `uk.akane.cupertino.widget.special.BlendView` (blur radius, `enhanceBitmap` saturation).
+ */
+private const val MEDIA_BACKDROP_BLUR_RADIUS_PX = 72f
+
+/**
+ * Accord uses 2× saturation on the source bitmap; dial down slightly for compact SystemUI chrome.
+ */
+private const val MEDIA_BACKDROP_SATURATION = 1.55f
+
+/** Accord BlendView overlay: `colors.xml` `frontShadeColor` (#59000000). */
+private val AccordFrontShadeColor = Color(0x59000000)
+
+private fun createMediaBackdropRenderEffect(): RenderEffect {
+    val saturation =
+        RenderEffect.createColorFilterEffect(
+            ColorMatrixColorFilter(
+                ColorMatrix().apply {
+                    setSaturation(MEDIA_BACKDROP_SATURATION)
+                },
+            ),
+        )
+    val blur =
+        RenderEffect.createBlurEffect(
+            MEDIA_BACKDROP_BLUR_RADIUS_PX,
+            MEDIA_BACKDROP_BLUR_RADIUS_PX,
+            Shader.TileMode.MIRROR,
+        )
+
+    return RenderEffect.createChainEffect(
+        blur,
+        saturation,
+    )
+}
+
+@Composable
+private fun rememberMediaBackdropRenderEffect(): androidx.compose.ui.graphics.RenderEffect? =
+    remember {
+        if (Build.VERSION.SDK_INT < 31) {
+            null
+        } else {
+            createMediaBackdropRenderEffect().asComposeRenderEffect()
+        }
+    }
+
+private data class MediaGlassBrushes(
+    val albumWash: Brush,
+    val vignette: Brush,
+    val vignetteSides: Brush,
+    val frostSheen: Brush,
+)
+
+/**
+ * iOS-like frosted stack: blurred art + dynamic accent wash + soft vignette + top light edge.
+ */
+@Composable
+private fun rememberMediaGlassBackgroundLayers(accent: Color, hasArt: Boolean): MediaGlassBrushes {
+    val warmTint = remember(accent) { lerp(accent, Color(0xFFFFB74D), 0.42f) }
+    val coolTint = remember(accent) { lerp(accent, IndigoAccent.copy(alpha = 1f), 0.38f) }
+    val albumWash =
+        remember(accent, warmTint, coolTint, hasArt) {
+            Brush.linearGradient(
+                0f to coolTint.copy(alpha = if (hasArt) 0.22f else 0.28f),
+                0.45f to accent.copy(alpha = if (hasArt) 0.14f else 0.20f),
+                1f to warmTint.copy(alpha = if (hasArt) 0.20f else 0.24f),
+            )
+        }
+    val vignette =
+        remember(hasArt) {
+            Brush.verticalGradient(
+                0f to Color.Black.copy(alpha = 0f),
+                0.55f to Color.Transparent,
+                1f to Color.Black.copy(alpha = if (hasArt) 0.28f else 0.14f),
+            )
+        }
+    val vignetteSides =
+        remember(hasArt) {
+            Brush.horizontalGradient(
+                0f to Color.Black.copy(alpha = if (hasArt) 0.12f else 0.06f),
+                0.14f to Color.Transparent,
+                0.86f to Color.Transparent,
+                1f to Color.Black.copy(alpha = if (hasArt) 0.12f else 0.06f),
+            )
+        }
+    val frostSheen =
+        remember {
+            Brush.verticalGradient(
+                0f to Color.White.copy(alpha = 0.14f),
+                0.18f to Color.White.copy(alpha = 0.04f),
+                0.42f to Color.Transparent,
+                1f to Color.Transparent,
+            )
+        }
+    return MediaGlassBrushes(albumWash, vignette, vignetteSides, frostSheen)
+}
 
 @Composable
 internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
@@ -90,15 +193,8 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
     val cardBgBase = MaterialTheme.colorScheme.surfaceVariant
     val onCard = Color.White
     val onCardSub = onCard.copy(alpha = 0.55f)
-
-    val blurEffect =
-        remember {
-            if (Build.VERSION.SDK_INT >= 31) {
-                RenderEffect.createBlurEffect(28f, 28f, Shader.TileMode.MIRROR).asComposeRenderEffect()
-            } else {
-                null
-            }
-        }
+    val glassBrushes = rememberMediaGlassBackgroundLayers(accent, hasArt)
+    val backdropEffect = rememberMediaBackdropRenderEffect()
 
     Box(
         modifier =
@@ -109,19 +205,19 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
     ) {
         if (hasArt) {
             Image(
-                bitmap = event.albumArt!!.toScaledBitmap(240.dp),
+                bitmap = event.albumArt!!.toScaledBitmap(260.dp),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier =
                     Modifier.matchParentSize().graphicsLayer {
-                        if (blurEffect != null) {
-                            renderEffect = blurEffect
+                        if (backdropEffect != null) {
+                            renderEffect = backdropEffect
                         }
-                        scaleX = 1.15f
-                        scaleY = 1.15f
+                        scaleX = 1.22f
+                        scaleY = 1.22f
                     },
             )
-            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.52f)))
+            Box(Modifier.matchParentSize().background(AccordFrontShadeColor))
         } else {
             Box(
                 Modifier.matchParentSize().background(
@@ -136,59 +232,56 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
             )
         }
 
-        Box(
-            Modifier.matchParentSize().background(
-                Brush.verticalGradient(
-                    0f to onCard.copy(alpha = 0.06f),
-                    0.35f to Color.Transparent,
-                    1f to Color.Transparent,
-                ),
-            ),
-        )
+        Box(Modifier.matchParentSize().background(glassBrushes.albumWash))
+        Box(Modifier.matchParentSize().background(glassBrushes.vignette))
+        Box(Modifier.matchParentSize().background(glassBrushes.vignetteSides))
+        Box(Modifier.matchParentSize().background(glassBrushes.frostSheen))
 
-        Row(
+        Column(
             modifier =
-                Modifier.fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 16.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier =
-                    Modifier.size(CinematicArtBoxSize)
-                        .clip(CinematicArtInnerRadius)
-                        .background(Color.White.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                when {
-                    event.albumArt != null ->
-                        Image(
-                            bitmap = event.albumArt!!.toScaledBitmap(CinematicArtBoxSize),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize().clip(CinematicArtInnerRadius),
-                        )
-                    event.appIcon != null ->
-                        Image(
-                            bitmap = event.appIcon!!.toScaledBitmap(36.dp),
-                            contentDescription = null,
-                            modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop,
-                        )
-                    else ->
-                        Icon(
-                            Icons.Filled.MusicNote,
-                            null,
-                            tint = onCard.copy(alpha = 0.50f),
-                            modifier = Modifier.size(26.dp),
-                        )
+                Box(
+                    modifier =
+                        Modifier.size(CinematicArtBoxSize)
+                            .clip(CinematicArtInnerRadius)
+                            .background(Color.White.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    when {
+                        event.albumArt != null ->
+                            Image(
+                                bitmap = event.albumArt!!.toScaledBitmap(CinematicArtBoxSize),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize().clip(CinematicArtInnerRadius),
+                            )
+                        event.appIcon != null ->
+                            Image(
+                                bitmap = event.appIcon!!.toScaledBitmap(42.dp),
+                                contentDescription = null,
+                                modifier = Modifier.size(42.dp).clip(RoundedCornerShape(9.dp)),
+                                contentScale = ContentScale.Crop,
+                            )
+                        else ->
+                            Icon(
+                                Icons.Filled.MusicNote,
+                                null,
+                                tint = onCard.copy(alpha = 0.50f),
+                                modifier = Modifier.size(30.dp),
+                            )
+                    }
                 }
-            }
 
-            Column(modifier = Modifier.weight(1f)) {
                 Column(
                     modifier =
-                        Modifier.fillMaxWidth().clickable {
+                        Modifier.weight(1f).clickable {
                             interactor.openMediaApp()
                             interactor.collapseIsland()
                         },
@@ -199,7 +292,7 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                         style =
                             TextStyle(
                                 color = onCard,
-                                fontSize = 13.sp,
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = (-0.2).sp,
                             ),
@@ -213,7 +306,7 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                             style =
                                 TextStyle(
                                     color = onCardSub,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                 ),
                             maxLines = 1,
@@ -222,19 +315,20 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                         )
                     }
                 }
+            }
 
-                if (event.duration > 0L) {
-                    Spacer(Modifier.height(6.dp))
-                    MediaSeekBar(
-                        event = event,
-                        interactor = interactor,
-                        accent = accent,
-                        cinematic = true,
-                    )
-                }
+            Spacer(Modifier.height(14.dp))
 
-                Spacer(Modifier.height(10.dp))
-                MediaControls(
+            MediaControls(
+                event = event,
+                interactor = interactor,
+                accent = accent,
+                cinematic = true,
+            )
+
+            if (event.duration > 0L) {
+                Spacer(Modifier.height(12.dp))
+                MediaSeekBar(
                     event = event,
                     interactor = interactor,
                     accent = accent,
@@ -336,7 +430,7 @@ private fun MediaControls(
         val playSurface = onCard.copy(alpha = 0.15f)
         Row(
             modifier = modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (event.customActions.isNotEmpty()) {
@@ -513,6 +607,76 @@ private fun MediaControls(
 }
 
 @Composable
+private fun MediaSquiggleSeekBarView(
+    displayFraction: Float,
+    isPlaying: Boolean,
+    isScrubbing: Boolean,
+    accentArgb: Int,
+    trackAlphaArgb: Int,
+    secondaryProgressArgb: Int,
+    modifier: Modifier = Modifier,
+) {
+    AndroidView(
+        factory = { context ->
+            SeekBar(context).apply {
+                max = 10_000
+                splitTrack = false
+                setPadding(0, 0, 0, 0)
+                isEnabled = false
+                thumb = createSeekBarThumb(context, accentArgb)
+                thumbOffset = thumb.intrinsicWidth / 2
+                val layer = (progressDrawable?.mutate() as? LayerDrawable)
+                if (layer != null) {
+                    layer.findDrawableByLayerId(android.R.id.background)
+                        ?.mutate()?.setTint(trackAlphaArgb)
+                    layer.findDrawableByLayerId(android.R.id.secondaryProgress)
+                        ?.mutate()?.setTint(secondaryProgressArgb)
+                    val squiggle = SquigglyProgress().apply {
+                        waveLength = context.resources.getDimensionPixelSize(
+                            R.dimen.qs_media_seekbar_progress_wavelength
+                        ).toFloat()
+                        lineAmplitude = context.resources.getDimensionPixelSize(
+                            R.dimen.qs_media_seekbar_progress_amplitude
+                        ).toFloat()
+                        phaseSpeed = context.resources.getDimensionPixelSize(
+                            R.dimen.qs_media_seekbar_progress_phase
+                        ).toFloat()
+                        strokeWidth = context.resources.getDimensionPixelSize(
+                            R.dimen.qs_media_seekbar_progress_stroke_width
+                        ).toFloat()
+                        setTint(accentArgb)
+                        drawRemainingLine = false
+                        transitionEnabled = false
+                        animate = false
+                    }
+                    layer.setDrawableByLayerId(android.R.id.progress, squiggle)
+                    progressDrawable = layer
+                }
+            }
+        },
+        update = { bar ->
+            val target = (displayFraction * 10_000f).toInt().coerceIn(0, 10_000)
+            bar.progress = target
+            (bar.thumb as? GradientDrawable)?.setColor(accentArgb)
+            val alpha = if (isPlaying) 255 else (255 * 0.55f).toInt()
+            bar.thumb?.alpha = alpha
+            val layer = bar.progressDrawable as? LayerDrawable
+            layer?.findDrawableByLayerId(android.R.id.background)?.setTint(trackAlphaArgb)
+            layer?.findDrawableByLayerId(android.R.id.secondaryProgress)
+                ?.setTint(secondaryProgressArgb)
+            val squiggle = layer?.findDrawableByLayerId(android.R.id.progress) as? SquigglyProgress
+            squiggle?.apply {
+                setTint(accentArgb)
+                setAlpha(alpha)
+                animate = isPlaying && !isScrubbing
+            }
+            layer?.alpha = alpha
+        },
+        modifier = modifier.fillMaxWidth().height(SeekBarHeight),
+    )
+}
+
+@Composable
 private fun MediaSeekBar(
     event: IslandEvent.Media,
     interactor: IslandActions,
@@ -574,14 +738,54 @@ private fun MediaSeekBar(
         if (cinematic) {
             TextStyle(
                 color = labelColor,
-                fontSize = 9.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
             )
         } else {
             MaterialTheme.typography.labelSmall.copy(color = labelColor)
         }
 
-    Column(verticalArrangement = Arrangement.spacedBy(SpaceXs)) {
+    fun Modifier.mediaSeekBarGestures(): Modifier =
+        this.pointerInput(swipeLock) {
+                awaitEachGesture {
+                    awaitPointerEvent() // DOWN
+                    swipeLock.value = true
+                    try {
+                        do {
+                            val event = awaitPointerEvent()
+                        } while (event.changes.any { it.pressed })
+                    } finally {
+                        swipeLock.value = false
+                    }
+                }
+            }
+            .pointerInput("tap") {
+                detectTapGestures { offset ->
+                    val fraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                    displayFraction = fraction
+                    interactorRef.value.seekTo((fraction * durationMs).toLong())
+                }
+            }
+            .pointerInput("drag") {
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        isScrubbing = true
+                        displayFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                    },
+                    onDragEnd = {
+                        interactorRef.value.seekTo((displayFraction * durationMs).toLong())
+                        isScrubbing = false
+                    },
+                    onDragCancel = { isScrubbing = false },
+                    onHorizontalDrag = { change, _ ->
+                        displayFraction =
+                            (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        change.consume()
+                    },
+                )
+            }
+
+    val timeRow: @Composable () -> Unit = {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = if (cinematic) 4.dp else 0.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -592,137 +796,74 @@ private fun MediaSeekBar(
                 style = timeStyle,
             )
             Text(
-                text =
-                    if (cinematic && durationMs > 0) {
-                        "-${formatElapsedTime((durationMs - displayMs).coerceAtLeast(0))}"
-                    } else {
-                        formatElapsedTime(durationMs)
-                    },
+                text = formatElapsedTime(durationMs),
                 color = labelColor,
                 style = timeStyle,
             )
         }
+    }
 
+    fun Modifier.seekAreaBase(): Modifier = this.fillMaxWidth().height(SeekBarHeight)
+
+    val seekBox: @Composable () -> Unit = {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(SeekBarHeight)
-                .pointerInput(swipeLock) {
-                    awaitEachGesture {
-                        awaitPointerEvent() // DOWN
-                        swipeLock.value = true
-                        try {
-                            do {
-                                val event = awaitPointerEvent()
-                            } while (event.changes.any { it.pressed })
-                        } finally {
-                            swipeLock.value = false
-                        }
-                    }
-                }
-                .pointerInput("tap") {
-                    detectTapGestures { offset ->
-                        val fraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
-                        displayFraction = fraction
-                        interactorRef.value.seekTo((fraction * durationMs).toLong())
-                    }
-                }
-                .pointerInput("drag") {
-                    detectHorizontalDragGestures(
-                        onDragStart = { offset ->
-                            isScrubbing = true
-                            displayFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
-                        },
-                        onDragEnd = {
-                            interactorRef.value.seekTo((displayFraction * durationMs).toLong())
-                            isScrubbing = false
-                        },
-                        onDragCancel = { isScrubbing = false },
-                        onHorizontalDrag = { change, _ ->
-                            displayFraction =
-                                (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
-                            change.consume()
-                        },
-                    )
-                },
+            modifier = Modifier.seekAreaBase().mediaSeekBarGestures(),
             contentAlignment = Alignment.Center,
         ) {
-            AndroidView(
-                factory = { context ->
-                    SeekBar(context).apply {
-                        max = 10_000
-                        splitTrack = false
-                        setPadding(0, 0, 0, 0)
-                        // Disable direct touch — Compose handles all gestures above
-                        isEnabled = false
-
-                        // Pill-shaped thumb
-                        thumb = createSeekBarThumb(context, accentArgb)
-                        thumbOffset = thumb.intrinsicWidth / 2
-
-                        // Set up SquigglyProgress on the progress layer
-                        val layer = (progressDrawable?.mutate() as? LayerDrawable)
-                        if (layer != null) {
-                            layer.findDrawableByLayerId(android.R.id.background)
-                                ?.mutate()?.setTint(trackAlphaArgb)
-
-                            layer.findDrawableByLayerId(android.R.id.secondaryProgress)
-                                ?.mutate()?.setTint(secondaryProgressArgb)
-
-                            val squiggle = SquigglyProgress().apply {
-                                waveLength = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_wavelength
-                                ).toFloat()
-                                lineAmplitude = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_amplitude
-                                ).toFloat()
-                                phaseSpeed = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_phase
-                                ).toFloat()
-                                strokeWidth = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_stroke_width
-                                ).toFloat()
-                                setTint(accentArgb)
-                                drawRemainingLine = false
-                                transitionEnabled = false
-                                animate = false
-                            }
-                            layer.setDrawableByLayerId(android.R.id.progress, squiggle)
-                            progressDrawable = layer
-                        }
-                    }
-                },
-                update = { bar ->
-                    val target = (displayFraction * 10_000f).toInt().coerceIn(0, 10_000)
-                    bar.progress = target
-
-                    // Re-tint thumb for accent color changes (e.g. track switch)
-                    (bar.thumb as? GradientDrawable)?.setColor(accentArgb)
-
-                    val alpha = if (isPlaying) 255 else (255 * 0.55f).toInt()
-                    bar.thumb?.alpha = alpha
-
-                    val layer = bar.progressDrawable as? LayerDrawable
-
-                    // Re-tint track colors
-                    layer?.findDrawableByLayerId(android.R.id.background)
-                        ?.setTint(trackAlphaArgb)
-                    layer?.findDrawableByLayerId(android.R.id.secondaryProgress)
-                        ?.setTint(secondaryProgressArgb)
-
-                    val squiggle = layer
-                        ?.findDrawableByLayerId(android.R.id.progress) as? SquigglyProgress
-
-                    squiggle?.apply {
-                        setTint(accentArgb)
-                        setAlpha(alpha)
-                        animate = isPlaying && !isScrubbing
-                    }
-
-                    layer?.alpha = alpha
-                },
-                modifier = Modifier.fillMaxWidth().height(SeekBarHeight),
+            MediaSquiggleSeekBarView(
+                displayFraction = displayFraction,
+                isPlaying = isPlaying,
+                isScrubbing = isScrubbing,
+                accentArgb = accentArgb,
+                trackAlphaArgb = trackAlphaArgb,
+                secondaryProgressArgb = secondaryProgressArgb,
             )
+        }
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(SpaceXs)) {
+        if (cinematic) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(SpaceMd),
+            ) {
+                Text(
+                    text = formatElapsedTime(displayMs),
+                    color = labelColor,
+                    style = timeStyle,
+                    textAlign = TextAlign.Start,
+                    maxLines = 1,
+                    modifier = Modifier.width(CinematicTimeSlotWidth),
+                )
+                Box(
+                    modifier =
+                        Modifier.weight(1f, fill = true)
+                            .seekAreaBase()
+                            .mediaSeekBarGestures(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    MediaSquiggleSeekBarView(
+                        displayFraction = displayFraction,
+                        isPlaying = isPlaying,
+                        isScrubbing = isScrubbing,
+                        accentArgb = accentArgb,
+                        trackAlphaArgb = trackAlphaArgb,
+                        secondaryProgressArgb = secondaryProgressArgb,
+                    )
+                }
+                Text(
+                    text = formatElapsedTime(durationMs),
+                    color = labelColor,
+                    style = timeStyle,
+                    textAlign = TextAlign.End,
+                    maxLines = 1,
+                    modifier = Modifier.width(CinematicTimeSlotWidth),
+                )
+            }
+        } else {
+            timeRow()
+            seekBox()
         }
     }
 }
