@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.android.systemui.axdynamicbar.shared.IslandActions
 import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.axdynamicbar.ui.widget.MediaBlendBackdropView
 import com.android.systemui.axdynamicbar.shared.*
 import com.android.systemui.media.controls.ui.drawable.SquigglyProgress
 import com.android.systemui.res.R
@@ -194,7 +195,9 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
     val onCard = Color.White
     val onCardSub = onCard.copy(alpha = 0.55f)
     val glassBrushes = rememberMediaGlassBackgroundLayers(accent, hasArt)
-    val backdropEffect = rememberMediaBackdropRenderEffect()
+    val useAlbumBlendBackdrop =
+        hasArt && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val composeBackdropEffect = rememberMediaBackdropRenderEffect()
 
     Box(
         modifier =
@@ -203,33 +206,44 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                 .shadow(20.dp, MediaPopupCardShape)
                 .clip(MediaPopupCardShape),
     ) {
-        if (hasArt) {
-            Image(
-                bitmap = event.albumArt!!.toScaledBitmap(260.dp),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier =
-                    Modifier.matchParentSize().graphicsLayer {
-                        if (backdropEffect != null) {
-                            renderEffect = backdropEffect
-                        }
-                        scaleX = 1.22f
-                        scaleY = 1.22f
-                    },
-            )
-            Box(Modifier.matchParentSize().background(AccordFrontShadeColor))
-        } else {
-            Box(
-                Modifier.matchParentSize().background(
-                    Brush.linearGradient(
-                        colors =
-                            listOf(
-                                cardBgBase,
-                                cardBgBase.copy(alpha = 0.80f),
-                            ),
+        when {
+            useAlbumBlendBackdrop -> {
+                AndroidView(
+                    factory = { MediaBlendBackdropView(it) },
+                    modifier = Modifier.matchParentSize(),
+                    update = { view -> view.bindAlbumArt(event.albumArt) },
+                    onRelease = { view -> view.releaseBackdrop() },
+                )
+            }
+            hasArt -> {
+                Image(
+                    bitmap = event.albumArt!!.toScaledBitmap(260.dp),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier =
+                        Modifier.matchParentSize().graphicsLayer {
+                            if (composeBackdropEffect != null) {
+                                renderEffect = composeBackdropEffect
+                            }
+                            scaleX = 1.22f
+                            scaleY = 1.22f
+                        },
+                )
+                Box(Modifier.matchParentSize().background(AccordFrontShadeColor))
+            }
+            else -> {
+                Box(
+                    Modifier.matchParentSize().background(
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    cardBgBase,
+                                    cardBgBase.copy(alpha = 0.80f),
+                                ),
+                        ),
                     ),
-                ),
-            )
+                )
+            }
         }
 
         Box(Modifier.matchParentSize().background(glassBrushes.albumWash))

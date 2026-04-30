@@ -299,4 +299,7 @@
     <color name="rippleDark">#1F000000</color>
     <color name="neumorph_outline_start">#FFFFFFFF</color>
     <color name="neumorph_outline_end">#00FFFFFF</color>
+
+    <!-- AxDynamicBar Accord-style BlendView overlay (matches Cupertino frontShadeColor #59000000) -->
+    <color name="ax_blend_front_shade">#59000000</color>
 </resources>
