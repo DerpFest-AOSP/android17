@@ -301,4 +301,9 @@
         <item>#1AA64A</item>
         <item>#D37B00</item>
     </array>
+
+    <!-- Opaque floor under cinematic media art so a translucent overlay never shows wallpaper. -->
+    <color name="ax_blend_card_base">#FF161616</color>
+    <!-- Darker than Accord frontShadeColor (#59000000) so white media text stays readable. -->
+    <color name="ax_blend_front_shade">#80000000</color>
 </resources>

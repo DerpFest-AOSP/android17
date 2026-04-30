@@ -39,4 +39,6 @@ data class MediaControlChipModel(
     val lyrics: String? = null,
     val syncedLyrics: String? = null,
     val isDynamicIslandLyricsEnabled: Boolean = false,
+    val customAction0: MediaAction? = null,
+    val customAction1: MediaAction? = null,
 )

@@ -140,7 +140,7 @@ class MediaSessionTrackHelper private constructor(context: Context) {
                 ?: it.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
         }
 
-    fun getCurrentMediaController(): MediaController? = currentController
+    fun getCurrentMediaController(): MediaController? = currentController ?: pickController()
 
     companion object {
         @Volatile private var instance: MediaSessionTrackHelper? = null

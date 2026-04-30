@@ -210,6 +210,8 @@ private fun MediaDataModel.toMediaControlState(
                 playOrPause = playbackStateActions?.getActionById(R.id.actionPlayPause),
                 nextAction = playbackStateActions?.getActionById(R.id.actionNext),
                 previousAction = playbackStateActions?.getActionById(R.id.actionPrev),
+                customAction0 = playbackStateActions?.custom0,
+                customAction1 = playbackStateActions?.custom1,
                 openApp =
                     clickIntent.toAction(
                         activityStarter = activityStarter,
@@ -246,6 +248,8 @@ private fun MediaData.toMediaControlState(
                 playOrPause = semanticActions?.getActionById(R.id.actionPlayPause),
                 nextAction = semanticActions?.getActionById(R.id.actionNext),
                 previousAction = semanticActions?.getActionById(R.id.actionPrev),
+                customAction0 = semanticActions?.custom0,
+                customAction1 = semanticActions?.custom1,
                 openApp =
                     clickIntent.toAction(
                         activityStarter = activityStarter,

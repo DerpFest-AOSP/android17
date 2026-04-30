@@ -44,7 +44,6 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Stop
@@ -85,6 +84,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -488,22 +488,19 @@ private fun KeyguardMediaPanel(event: IslandEvent.Media, interactor: IslandActio
                     ) {
                         val ca = event.customActions.firstOrNull()
                         if (ca != null) {
-                            if (ca.isShuffleAction()) {
-                                Icon(
-                                    Icons.Filled.Shuffle,
-                                    ca.label,
-                                    tint = OnCardSecondary,
-                                    modifier = Modifier.size(SizeIconMd),
-                                )
-                            } else {
-                                CustomActionIcon(
-                                    ca,
-                                    tint = OnCardSecondary,
-                                    modifier = Modifier.size(SizeIconMd),
-                                )
-                            }
+                            CustomActionIcon(
+                                ca,
+                                tint = OnCardSecondary,
+                                modifier = Modifier.size(SizeIconMd),
+                            )
                         } else {
-                            Icon(Icons.Filled.Shuffle, stringResource(R.string.ax_dynamic_bar_shuffle), tint = OnCardSecondary, modifier = Modifier.size(SizeIconMd))
+                            Icon(
+                                painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
+                                contentDescription =
+                                    stringResource(R.string.ax_dynamic_bar_shuffle),
+                                tint = OnCardSecondary,
+                                modifier = Modifier.size(SizeIconMd),
+                            )
                         }
                     }
 
@@ -564,22 +561,19 @@ private fun KeyguardMediaPanel(event: IslandEvent.Media, interactor: IslandActio
                     ) {
                         val ca = event.customActions.getOrNull(1)
                         if (ca != null) {
-                            if (ca.isShuffleAction()) {
-                                Icon(
-                                    Icons.Filled.Shuffle,
-                                    ca.label,
-                                    tint = OnCardSecondary,
-                                    modifier = Modifier.size(SizeIconMd),
-                                )
-                            } else {
-                                CustomActionIcon(
-                                    ca,
-                                    tint = OnCardSecondary,
-                                    modifier = Modifier.size(SizeIconMd),
-                                )
-                            }
+                            CustomActionIcon(
+                                ca,
+                                tint = OnCardSecondary,
+                                modifier = Modifier.size(SizeIconMd),
+                            )
                         } else {
-                            Icon(Icons.Filled.Shuffle, stringResource(R.string.ax_dynamic_bar_shuffle), tint = OnCardSecondary, modifier = Modifier.size(SizeIconMd))
+                            Icon(
+                                painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
+                                contentDescription =
+                                    stringResource(R.string.ax_dynamic_bar_shuffle),
+                                tint = OnCardSecondary,
+                                modifier = Modifier.size(SizeIconMd),
+                            )
                         }
                     }
                 }

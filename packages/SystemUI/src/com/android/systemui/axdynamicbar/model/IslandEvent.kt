@@ -264,6 +264,7 @@ sealed class IslandEvent(open val priority: Int, val id: String) : Comparable<Is
         val label: String,
         val action: String,
         val icon: Drawable? = null,
+        val onClick: (() -> Unit)? = null,
     )
 
     data class Call(

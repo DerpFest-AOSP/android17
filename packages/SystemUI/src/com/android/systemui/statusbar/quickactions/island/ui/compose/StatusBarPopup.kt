@@ -74,6 +74,8 @@ import com.android.systemui.statusbar.quickactions.island.alarm.ui.compose.Alarm
 import com.android.systemui.statusbar.quickactions.island.media.ui.compose.LyricsCard
 import com.android.systemui.statusbar.quickactions.island.screenrecord.ui.compose.ScreenRecordPopup
 import com.android.systemui.statusbar.quickactions.island.stopwatch.ui.compose.StopwatchPopup
+import com.android.systemui.media.controls.shared.model.MediaAction
+import com.android.systemui.statusbar.quickactions.island.media.shared.model.MediaControlChipModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupContentModel
 import com.android.systemui.statusbar.util.MediaSessionTrackHelper
@@ -229,8 +231,10 @@ fun StatusBarPopup(
             }
         }
 
+        val mediaModel =
+            (viewModel.popupContent as? PopupContentModel.Media)?.model
         val popupActions =
-            remember(islandActions, viewModel) {
+            remember(islandActions, viewModel, mediaModel) {
                 object : IslandActions by islandActions {
                     override fun collapseIsland() {
                         viewModel.hidePopup()
@@ -249,6 +253,36 @@ fun StatusBarPopup(
                         if (!turnOffFlashlightIfShown()) {
                             islandActions.toggleTorch()
                         }
+                    }
+
+                    override fun togglePlayPause() {
+                        mediaModel?.playOrPause?.action?.run()
+                            ?: islandActions.togglePlayPause()
+                    }
+
+                    override fun skipNext() {
+                        mediaModel?.nextAction?.action?.run()
+                            ?: islandActions.skipNext()
+                    }
+
+                    override fun skipPrev() {
+                        mediaModel?.previousAction?.action?.run()
+                            ?: islandActions.skipPrev()
+                    }
+
+                    override fun seekTo(position: Long) {
+                        mediaModel?.seekTo?.invoke(position)
+                            ?: islandActions.seekTo(position)
+                    }
+
+                    override fun openMediaApp() {
+                        mediaModel?.openApp?.invoke()
+                            ?: islandActions.openMediaApp()
+                    }
+
+                    override fun sendCustomAction(action: String) {
+                        mediaModel?.customActionFor(action)?.action?.run()
+                            ?: islandActions.sendCustomAction(action)
                     }
 
                     private fun turnOffFlashlightIfShown(): Boolean {
@@ -324,6 +358,7 @@ fun StatusBarPopup(
                                     packageName = model.packageName.orEmpty(),
                                     appIcon = appIconDrawable,
                                     mediaColor = mediaColor,
+                                    customActions = model.toIslandCustomActions(),
                                 )
                             }
                         val hasLyrics =
@@ -415,6 +450,27 @@ fun StatusBarPopup(
                 }
             }
         }
+    }
+}
+
+private fun MediaControlChipModel.toIslandCustomActions(): List<IslandEvent.MediaCustomAction> {
+    return listOfNotNull(customAction0?.toIslandCustomAction(), customAction1?.toIslandCustomAction())
+}
+
+private fun MediaAction.toIslandCustomAction(): IslandEvent.MediaCustomAction? {
+    if (action == null && icon == null) return null
+    val label = contentDescription?.toString().orEmpty()
+    return IslandEvent.MediaCustomAction(
+        label = label,
+        action = label,
+        icon = icon,
+        onClick = action?.let { runnable -> { runnable.run() } },
+    )
+}
+
+private fun MediaControlChipModel.customActionFor(action: String): MediaAction? {
+    return listOfNotNull(customAction0, customAction1).firstOrNull {
+        it.contentDescription?.toString() == action
     }
 }
 
