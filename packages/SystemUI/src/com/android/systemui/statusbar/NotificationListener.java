@@ -142,10 +142,10 @@ public class NotificationListener extends NotificationListenerWithPlugins implem
         if (DEBUG) Log.d(TAG, "onNotificationPosted: " + sbn);
         if (sbn != null && !onPluginNotificationPosted(sbn, rankingMap)) {
             mMainExecutor.execute(() -> {
-                ScrimUtils.get().onNotificationPosted(sbn);
                 for (NotificationHandler handler : mNotificationHandlers) {
                     handler.onNotificationPosted(sbn, rankingMap);
                 }
+                ScrimUtils.get().onNotificationPosted(sbn);
             });
         }
     }
@@ -156,10 +156,10 @@ public class NotificationListener extends NotificationListenerWithPlugins implem
         if (DEBUG) Log.d(TAG, "onNotificationRemoved: " + sbn + " reason: " + reason);
         if (sbn != null && !onPluginNotificationRemoved(sbn, rankingMap)) {
             mMainExecutor.execute(() -> {
-                ScrimUtils.get().onNotificationRemoved(sbn);
                 for (NotificationHandler handler : mNotificationHandlers) {
                     handler.onNotificationRemoved(sbn, rankingMap, reason);
                 }
+                ScrimUtils.get().onNotificationRemoved(sbn);
             });
         }
     }
