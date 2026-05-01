@@ -87,16 +87,17 @@ internal class SolidLineStyleRenderer(
         val path = roundedPath
         val radii = cornerRadii
 
+        val bottomY = viewHeight.toFloat()
         for (i in 0 until count) {
             val rect = barRects[i]
             val target = targetHeights.getOrElse(i) { 2f }
             val current = currentHeights.getOrElse(i) { 2f }
             var h = current + smoothing * (target - current)
             if (h < 2f) h = 2f
-            val maxH = rect.bottom
-            if (h > maxH) h = maxH
+            if (h > bottomY) h = bottomY
             currentHeights[i] = h
-            rect.top = rect.bottom - h
+            rect.bottom = bottomY
+            rect.top = bottomY - h
 
             if (useRounded && path != null && radii != null) {
                 path.reset()

@@ -66,8 +66,11 @@ class PulseView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        if (renderer != null && isVisible) {
-            renderer?.onDraw(canvas, width, height)
+        // Match drawable/canvas clip: View's canvas is already translated by padding.
+        val contentW = width - paddingLeft - paddingRight
+        val contentH = height - paddingTop - paddingBottom
+        if (renderer != null && isVisible && contentW > 0 && contentH > 0) {
+            renderer?.onDraw(canvas, contentW, contentH)
         }
 
         if (isAttached) {

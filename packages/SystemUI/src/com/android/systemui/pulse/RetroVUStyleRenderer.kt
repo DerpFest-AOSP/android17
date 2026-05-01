@@ -134,18 +134,17 @@ internal class RetroVUStyleRenderer(
         val unlitSegments = (0.5f * segmentCount).toInt()
 
         for (i in 0 until count) {
-            val rect = barRects[i]
             val target = targetHeights.getOrElse(i) { 2f }
             val current = currentHeights.getOrElse(i) { 2f }
 
             var h = current + smoothing * (target - current)
             if (h < 2f) h = 2f
-            val maxH = rect.bottom
-            if (h > maxH) h = maxH
+            val maxBar = viewHeight.toFloat()
+            if (h > maxBar) h = maxBar
 
             currentHeights[i] = h
 
-            val heightPercent = if (maxH > 0f) h / maxH else 0f
+            val heightPercent = if (maxBar > 0f) h / maxBar else 0f
             val litSegments = (heightPercent * segmentCount).toInt()
 
             for (seg in 0 until segmentCount) {
