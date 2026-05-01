@@ -7335,12 +7335,6 @@ public final class Settings {
         public static final String QS_MEDIA_RESPECT_HALVING = "qs_media_respect_halving";
 
         /**
-         * Whether to use tiny taskbar on phones
-         * @hide
-         */
-        public static final String ENABLE_TINY_TASKBAR = "enable_tiny_taskbar";
-
-        /**
          * Lockscreen Media Art
          * @hide
          */
