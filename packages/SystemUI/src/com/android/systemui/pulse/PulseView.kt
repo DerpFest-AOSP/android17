@@ -46,14 +46,13 @@ class PulseView @JvmOverloads constructor(
         renderer = PulseRenderer(context, settingsRepo)
         engine = PulseEngine(context, settingsRepo) { processedHeights ->
             renderer?.updateHeights(processedHeights)
-            postInvalidateOnAnimation()
+            postInvalidate()
         }
     }
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         isAttached = true
-        postInvalidateOnAnimation()
     }
 
     override fun onDetachedFromWindow() {
@@ -65,21 +64,17 @@ class PulseView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
-        // Match drawable/canvas clip: View's canvas is already translated by padding.
-        val contentW = width - paddingLeft - paddingRight
-        val contentH = height - paddingTop - paddingBottom
-        if (renderer != null && isVisible && contentW > 0 && contentH > 0) {
-            renderer?.onDraw(canvas, contentW, contentH)
-        }
-
-        if (isAttached) {
+        // Use full width/height like view coordinates: Android does not translate the canvas by
+        // padding before onDraw(). Passing (width - padding*) without canvas.translate() anchored
+        // bars incorrectly and could shrink the drawable extent to ~1px when insets add padding.
+        if (isAttached && isVisible) {
+            renderer?.onDraw(canvas, width, height)
             postInvalidateOnAnimation()
         }
     }
 
     fun updateVisualizerData(data: PulseData) {
-        if (data.isDataValid) {
+        if (isAttached && isVisible && data.isDataValid) {
             engine?.processFFT(data.fftBytes!!)
         }
     }
@@ -89,10 +84,7 @@ class PulseView @JvmOverloads constructor(
     }
 
     fun setVisibility(visible: Boolean) {
-        if (visible == isVisible) return
-
         isVisible = visible
-
-        visibility = if (visible) VISIBLE else INVISIBLE
+        visibility = if (visible) VISIBLE else GONE
     }
 }

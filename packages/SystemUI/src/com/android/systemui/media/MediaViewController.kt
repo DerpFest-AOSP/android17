@@ -88,7 +88,6 @@ class MediaViewController @Inject constructor(
     private var mediaArtJob: Job? = null
     private var isAlbumArtVisible = false
     private var dismissingKeyguard = false
-    private var retryRunnable: Runnable? = null
     private var coalesceJob: Job? = null
 
     private val sharedTypedValue = TypedValue()
@@ -399,8 +398,6 @@ class MediaViewController @Inject constructor(
     fun cleanupResources(animate: Boolean) {
         if (dismissingKeyguard) return
         dismissingKeyguard = true
-        retryRunnable?.let { mediaScrim.removeCallbacks(it) }
-        retryRunnable = null
         mediaArtJob?.cancel()
         cancelScrimAnim()
         if (!animate) {
@@ -534,8 +531,6 @@ class MediaViewController @Inject constructor(
         mediaScrim.colorFilter = null
         artworkDrawable = null
         isAlbumArtVisible = false
-        retryRunnable?.let { mediaScrim.removeCallbacks(it) }
-        retryRunnable = null
         coalesceJob?.cancel()
         coroutineScope.cancel()
     }
