@@ -336,5 +336,6 @@ public class SecureSettings {
         Settings.Secure.HIGH_TOUCH_RATE_ENABLED,
         Settings.Secure.PULSE_QS_ENABLED,
         Settings.Secure.PULSE_NAVBAR_ENABLED,
+        Settings.Secure.PULSE_HAPTICS_ENABLED,
     };
 }

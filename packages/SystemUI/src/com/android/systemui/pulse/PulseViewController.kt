@@ -43,6 +43,9 @@ class PulseViewController @Inject constructor(
     private val settingsRepository: PulseSettingsRepository =
         PulseSettingsRepository(context)
 
+    private val bassHaptics: PulseBassHaptics =
+        PulseBassHaptics(context, settingsRepository)
+
     /** Lock screen / shade overlay (see [CentralSurfacesImpl.attachCustomOverlays]). */
     private val view: PulseView =
         PulseView(context)
@@ -106,6 +109,7 @@ class PulseViewController @Inject constructor(
     private fun updateState() {
         if (!pulseEnabled) {
             pulseRunning = false
+            bassHaptics.reset()
             mainScope.launch {
                 view.setVisibility(false)
                 navbarPulseView.setVisibility(false)
@@ -120,8 +124,12 @@ class PulseViewController @Inject constructor(
         mainScope.launch {
             view.setVisibility(overlay && run)
             navbarPulseView.setVisibility(navbar && run)
-            if (run) audioProcessor.startCapture()
-            else audioProcessor.stopCapture()
+            if (run) {
+                audioProcessor.startCapture()
+            } else {
+                bassHaptics.reset()
+                audioProcessor.stopCapture()
+            }
         }
     }
 
@@ -136,6 +144,7 @@ class PulseViewController @Inject constructor(
             MediaSessionManager.get().removeListener(this)
             listenersRegistered = false
             pulseRunning = false
+            bassHaptics.reset()
             mainScope.launch {
                 view.setVisibility(false)
                 navbarPulseView.setVisibility(false)
@@ -148,6 +157,9 @@ class PulseViewController @Inject constructor(
     override fun onDataUpdate(data: PulseData) {
         if (pulseRunning) {
             mainScope.launch {
+                if (data.isDataValid) {
+                    bassHaptics.onFft(data.fftBytes)
+                }
                 view.updateVisualizerData(data)
                 navbarPulseView.updateVisualizerData(data)
             }
@@ -205,6 +217,7 @@ class PulseViewController @Inject constructor(
 
     override fun onScreenTurnedOff() {
         pulseRunning = false
+        bassHaptics.reset()
         mainScope.launch {
             view.setVisibility(false)
             navbarPulseView.setVisibility(false)
@@ -223,6 +236,7 @@ class PulseViewController @Inject constructor(
 
     fun destroy() {
         pulseRunning = false
+        bassHaptics.reset()
         settingsRepository.stopObserving()
         if (listenersRegistered) {
             ScrimUtils.get().removeListener(this)

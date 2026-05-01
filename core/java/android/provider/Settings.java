@@ -14507,6 +14507,12 @@ public final class Settings {
         public static final String PULSE_NAVBAR_ENABLED = "pulse_navbar_enabled";
 
         /**
+         * Light haptic ticks on strong bass beats while Pulse is active (opt-in).
+         * @hide
+         */
+        public static final String PULSE_HAPTICS_ENABLED = "pulse_haptics_enabled";
+
+        /**
          * @hide
          */
         public static final String PULSE_BAR_COUNT = "pulse_bar_count";
