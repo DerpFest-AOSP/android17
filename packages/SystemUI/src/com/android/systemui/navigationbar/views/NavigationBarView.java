@@ -671,7 +671,7 @@ public class NavigationBarView extends FrameLayout {
         getBackButton().setVisibility(disableBack       ? View.INVISIBLE : View.VISIBLE);
         getHomeButton().setVisibility(disableHome       ? View.INVISIBLE : View.VISIBLE);
         getRecentsButton().setVisibility(disableRecent  ? View.INVISIBLE : View.VISIBLE);
-        getHomeHandle().setVisibility(disableHomeHandle || mHomeHandleForceHidden ? View.INVISIBLE : View.VISIBLE);
+        getHomeHandle().setVisibility(disableHomeHandle ? View.INVISIBLE : View.VISIBLE);
         notifyActiveTouchRegions();
     }
 
