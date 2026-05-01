@@ -31,6 +31,7 @@ class PulseSettingsRepository(private val context: Context) {
         private const val PULSE_ENABLED = Settings.Secure.LOCKSCREEN_PULSE_ENABLED
         private const val PULSE_AMBIENT_ENABLED = Settings.Secure.AMBIENT_PULSE_ENABLED
         private const val PULSE_QS_ENABLED = Settings.Secure.PULSE_QS_ENABLED
+        private const val PULSE_NAVBAR_ENABLED = Settings.Secure.PULSE_NAVBAR_ENABLED
         private const val PULSE_BAR_COUNT = Settings.Secure.PULSE_BAR_COUNT
         private const val PULSE_ROUNDED_BARS = Settings.Secure.PULSE_ROUNDED_BARS
         private const val PULSE_COLOR = Settings.Secure.PULSE_COLOR
@@ -59,6 +60,7 @@ class PulseSettingsRepository(private val context: Context) {
     private var cachedEnabled: Boolean? = null
     private var cachedAmbientEnabled: Boolean? = null
     private var cachedQsEnabled: Boolean? = null
+    private var cachedNavbarEnabled: Boolean? = null
     private var cachedBarCount: Int? = null
     private var cachedRoundedBars: Boolean? = null
     private var cachedColorMode: String? = null
@@ -74,6 +76,7 @@ class PulseSettingsRepository(private val context: Context) {
             Settings.Secure.getUriFor(PULSE_ENABLED),
             Settings.Secure.getUriFor(PULSE_AMBIENT_ENABLED),
             Settings.Secure.getUriFor(PULSE_QS_ENABLED),
+            Settings.Secure.getUriFor(PULSE_NAVBAR_ENABLED),
             Settings.Secure.getUriFor(PULSE_BAR_COUNT),
             Settings.Secure.getUriFor(PULSE_ROUNDED_BARS),
             Settings.Secure.getUriFor(PULSE_COLOR),
@@ -116,6 +119,13 @@ class PulseSettingsRepository(private val context: Context) {
             cachedQsEnabled = getSecureSetting(PULSE_QS_ENABLED, DEFAULT_QS_ENABLED)
         }
         return cachedQsEnabled!!
+    }
+
+    fun isPulseNavbarEnabled(): Boolean {
+        if (cachedNavbarEnabled == null) {
+            cachedNavbarEnabled = getSecureSetting(PULSE_NAVBAR_ENABLED, DEFAULT_NAVBAR_ENABLED)
+        }
+        return cachedNavbarEnabled!!
     }
 
     fun getBarCount(): Int {
@@ -171,6 +181,7 @@ class PulseSettingsRepository(private val context: Context) {
         cachedEnabled = null
         cachedAmbientEnabled = null
         cachedQsEnabled = null
+        cachedNavbarEnabled = null
         cachedBarCount = null
         cachedRoundedBars = null
         cachedColorMode = null

@@ -43,7 +43,12 @@ class PulseViewController @Inject constructor(
     private val settingsRepository: PulseSettingsRepository =
         PulseSettingsRepository(context)
 
+    /** Lock screen / shade overlay (see [CentralSurfacesImpl.attachCustomOverlays]). */
     private val view: PulseView =
+        PulseView(context)
+
+    /** Optional duplicate visualizer drawn behind nav bar buttons. */
+    private val navbarPulseView: PulseView =
         PulseView(context)
 
     private val audioProcessor: PulseAudioDataProcessor =
@@ -60,20 +65,20 @@ class PulseViewController @Inject constructor(
     val pulseQsEnabled: Boolean
         get() = settingsRepository.isPulseQsEnabled()
 
+    val pulseNavbarEnabled: Boolean
+        get() = settingsRepository.isPulseNavbarEnabled()
+
     private val isCollapsed: Boolean
         get() = ScrimUtils.get().isPanelFullyCollapsed()
 
     var pulseRunning: Boolean = false
-        set(value) {
-            if (value == field) return
-            field = value
-            updatePulse(value)
-        }
+        private set
 
     init {
         INSTANCE = this
 
         view.initialize(settingsRepository)
+        navbarPulseView.initialize(settingsRepository)
         settingsRepository.setOnSettingsChangedListener { onSettingsChanged() }
         settingsRepository.startObserving()
         onSettingsChanged()
@@ -81,19 +86,42 @@ class PulseViewController @Inject constructor(
 
     fun getPulseView(): PulseView = view
 
+    fun getNavbarPulseView(): PulseView = navbarPulseView
+
+    /** Shade / lockscreen overlay: collapsed panel + keyguard / ambient rules or QS mode. */
+    private fun overlayWantsPulse(): Boolean {
+        if (!isMediaPlaying) return false
+        if (pulseQsEnabled) return true
+        return !bouncerShowingOrKeyguardDismissing
+                && isCollapsed
+                && ((keyguardShowing && !isDozing)
+                || (isDozing && ambientEnabled))
+    }
+
+    /** Nav bar uses only media + [pulse_navbar_enabled] (independent of lockscreen visibility). */
+    private fun navbarWantsPulse(): Boolean {
+        return isMediaPlaying && settingsRepository.isPulseNavbarEnabled()
+    }
+
     private fun updateState() {
         if (!pulseEnabled) {
             pulseRunning = false
+            mainScope.launch {
+                view.setVisibility(false)
+                navbarPulseView.setVisibility(false)
+                audioProcessor.stopCapture()
+            }
             return
         }
-        if (pulseQsEnabled) {
-            pulseRunning = isMediaPlaying
-        } else {
-            pulseRunning = isMediaPlaying
-                    && !bouncerShowingOrKeyguardDismissing
-                    && isCollapsed
-                    && ((keyguardShowing && !isDozing)
-                    || (isDozing && ambientEnabled))
+        val overlay = overlayWantsPulse()
+        val navbar = navbarWantsPulse()
+        val run = overlay || navbar
+        pulseRunning = run
+        mainScope.launch {
+            view.setVisibility(overlay && run)
+            navbarPulseView.setVisibility(navbar && run)
+            if (run) audioProcessor.startCapture()
+            else audioProcessor.stopCapture()
         }
     }
 
@@ -110,24 +138,18 @@ class PulseViewController @Inject constructor(
             pulseRunning = false
             mainScope.launch {
                 view.setVisibility(false)
+                navbarPulseView.setVisibility(false)
                 audioProcessor.stopCapture()
             }
         }
         updateState()
     }
 
-    private fun updatePulse(show: Boolean) {
-        mainScope.launch {
-            view.setVisibility(show)
-            if (show) audioProcessor.startCapture()
-            else audioProcessor.stopCapture()
-        }
-    }
-
     override fun onDataUpdate(data: PulseData) {
         if (pulseRunning) {
-            mainScope.launch { 
-                view.updateVisualizerData(data) 
+            mainScope.launch {
+                view.updateVisualizerData(data)
+                navbarPulseView.updateVisualizerData(data)
             }
         }
     }
@@ -138,7 +160,10 @@ class PulseViewController @Inject constructor(
     }
 
     override fun onMediaColorsChanged(color: Int) {
-        if (pulseEnabled) view.onMediaColorsChanged(color)
+        if (pulseEnabled) {
+            view.onMediaColorsChanged(color)
+            navbarPulseView.onMediaColorsChanged(color)
+        }
     }
 
     override fun onKeyguardShowingChanged(showing: Boolean) {
@@ -180,6 +205,11 @@ class PulseViewController @Inject constructor(
 
     override fun onScreenTurnedOff() {
         pulseRunning = false
+        mainScope.launch {
+            view.setVisibility(false)
+            navbarPulseView.setVisibility(false)
+            audioProcessor.stopCapture()
+        }
     }
 
     override fun onStartedWakingUp() {
