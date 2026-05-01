@@ -15000,16 +15000,6 @@ public final class Settings {
         public static final String LOCATION_PRIVACY_INDICATOR_ENABLED = "location_privacy_indicator_enabled";
 
         /**
-         * @hide
-         */
-        public static final String PULSE_PARTICLE_COUNT = "pulse_particle_count";
-
-        /**
-         * @hide
-         */
-        public static final String PULSE_PARTICLE_SIZE = "pulse_particle_size";
-
-        /**
          * Data usage cycle type in QS footer.
          * 0 Daily   1 Weekly
          * Default 0.
