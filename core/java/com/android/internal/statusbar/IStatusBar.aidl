@@ -415,8 +415,6 @@ oneway interface IStatusBar
     */
     void moveFocusedTaskToDesktop(int displayId);
 
-    void screenPinningStateChanged(boolean enabled);
-
     /**
      * DerpFest extensions
      */

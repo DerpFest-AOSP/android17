@@ -189,7 +189,6 @@ public class CommandQueue extends IStatusBar.Stub implements
     private static final int MSG_WALLET_ACTION_LAUNCH_GESTURE = 83 << MSG_SHIFT;
     private static final int MSG_DISPLAY_REMOVE_SYSTEM_DECORATIONS = 85 << MSG_SHIFT;
     private static final int MSG_DISABLE_ALL  = 86 << MSG_SHIFT;
-    private static final int MSG_SCREEN_PINNING_STATE_CHANGED = 87 << MSG_SHIFT;
     private static final int MSG_TOGGLE_CAMERA_FLASH = 88 << MSG_SHIFT;
     private static final int MSG_TOGGLE_SETTINGS_PANEL = 89 << MSG_SHIFT;
     private static final int MSG_RESTART_SYSTEMUI = 90 << MSG_SHIFT;
@@ -599,8 +598,6 @@ public class CommandQueue extends IStatusBar.Stub implements
          * @see IStatusBar#moveFocusedTaskToDesktop(int)
          */
         default void moveFocusedTaskToDesktop(int displayId) {}
-
-        default void screenPinningStateChanged(boolean enabled) {}
 
         default void toggleCameraFlash() { }
 
@@ -1569,15 +1566,6 @@ public class CommandQueue extends IStatusBar.Stub implements
     }
 
     @Override
-    public void screenPinningStateChanged(boolean enabled) {
-        synchronized (mLock) {
-            mHandler.removeMessages(MSG_SCREEN_PINNING_STATE_CHANGED);
-            mHandler.obtainMessage(MSG_SCREEN_PINNING_STATE_CHANGED,
-                    enabled ? 1 : 0, 0, null).sendToTarget();
-        }
-    }
-
-    @Override
     public void toggleCameraFlash() {
         synchronized (mLock) {
             if (mHandler.hasMessages(MSG_TOGGLE_CAMERA_FLASH)) {
@@ -2153,12 +2141,6 @@ public class CommandQueue extends IStatusBar.Stub implements
                     }
                     break;
                 }
-
-                case MSG_SCREEN_PINNING_STATE_CHANGED:
-                    for (int i = 0; i < mCallbacks.size(); i++) {
-                        mCallbacks.get(i).screenPinningStateChanged(msg.arg1 != 0);
-                    }
-                    break;
             }
         }
     }

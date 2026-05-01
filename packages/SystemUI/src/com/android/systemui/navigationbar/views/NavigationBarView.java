@@ -166,8 +166,6 @@ public class NavigationBarView extends FrameLayout {
     private RotationButtonController mRotationButtonController;
     private FloatingRotationButton mFloatingRotationButton;
 
-    private boolean mHomeHandleForceHidden;
-
     /**
      * Helper that is responsible for showing the right toast when a disallowed activity operation
      * occurred. In pinned mode, we show instructions on how to break out of this mode, whilst in
@@ -685,24 +683,6 @@ public class NavigationBarView extends FrameLayout {
         notifyActiveTouchRegions();
     }
 
-    public void hideHomeHandle(boolean hide) {
-        mHomeHandleForceHidden = hide;
-        boolean disableRecent = isRecentsButtonDisabled() | !QuickStepContract.isLegacyMode(mNavBarMode);
-        boolean disableHomeHandle = disableRecent
-                && ((mDisabledFlags & View.STATUS_BAR_DISABLE_HOME) != 0);
-        
-        // Check if user has disabled navbar hint in settings
-        boolean navbarHintEnabled = LineageSettings.System.getInt(
-                mContext.getContentResolver(),
-                LineageSettings.System.NAVIGATION_BAR_HINT, 1) == 1;
-        
-        getHomeHandle().setVisibility(disableHomeHandle || hide || !navbarHintEnabled ? View.INVISIBLE : View.VISIBLE);
-    }
-
-    public boolean isHomeHandleForceHidden() {
-        return mHomeHandleForceHidden;
-    }
-
     /**
      * Returns whether the IME is currently visible and drawing the nav buttons.
      */
@@ -1006,10 +986,6 @@ public class NavigationBarView extends FrameLayout {
 
     public boolean isVertical() {
         return mIsVertical;
-    }
-
-    public NavigationBarFrame getNavbarFrame() {
-        return ((NavigationBarFrame) getRootView());
     }
 
     public void reorient() {

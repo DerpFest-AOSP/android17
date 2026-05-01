@@ -81,7 +81,6 @@ import com.android.systemui.Flags;
 import com.android.systemui.animation.ActivityTransitionAnimator;
 import com.android.systemui.animation.GhostedViewTransitionAnimatorController;
 import com.android.systemui.broadcast.BroadcastSender;
-import com.android.systemui.colorextraction.SysuiColorExtractor;
 import com.android.systemui.communal.domain.interactor.CommunalSceneInteractor;
 import com.android.systemui.communal.widgets.CommunalTransitionAnimatorController;
 import com.android.systemui.dagger.qualifiers.Background;
@@ -239,8 +238,6 @@ public class MediaControlPanel {
     @Nullable
     private Runnable mOnSuggestionSpaceVisibleRunnable = null;
 
-    private final SysuiColorExtractor mSysuiColorExtractor;
-
     private final PaintDrawCallback mNoiseDrawCallback =
             new PaintDrawCallback() {
                 @Override
@@ -290,8 +287,7 @@ public class MediaControlPanel {
             ActivityIntentHelper activityIntentHelper,
             CommunalSceneInteractor communalSceneInteractor,
             NotificationLockscreenUserManager lockscreenUserManager,
-            GlobalSettings globalSettings,
-            SysuiColorExtractor colorExtractor
+            GlobalSettings globalSettings
     ) {
         mContext = context;
         mBackgroundExecutor = backgroundExecutor;
@@ -309,7 +305,6 @@ public class MediaControlPanel {
         mActivityIntentHelper = activityIntentHelper;
         mLockscreenUserManager = lockscreenUserManager;
         mCommunalSceneInteractor = communalSceneInteractor;
-        mSysuiColorExtractor = colorExtractor;
 
         mSeekBarViewModel.setLogSeek(() -> {
             if (mPackageName != null && mInstanceId != null) {
@@ -973,10 +968,9 @@ public class MediaControlPanel {
                 // App icon - use notification icon
                 ImageView appIconView = mMediaViewHolder.getAppIcon();
                 appIconView.clearColorFilter();
-                int mediaBackgroundColor = mColorSchemeTransition.getAppIconColor();
                 if (data.getAppIcon() != null && !data.getResumption()) {
                     appIconView.setImageIcon(data.getAppIcon());
-                    appIconView.setColorFilter(mediaBackgroundColor);
+                    appIconView.setColorFilter(mColorSchemeTransition.getAppIconColor());
                 } else {
                     // Resume players use launcher icon
                     appIconView.setColorFilter(getGrayscaleFilter());
@@ -989,7 +983,6 @@ public class MediaControlPanel {
                         appIconView.setImageResource(R.drawable.ic_music_note);
                     }
                 }
-                mSysuiColorExtractor.setMediaBackgroundColor(mediaBackgroundColor);
                 Trace.endAsyncSection(traceName, traceCookie);
             });
         });

@@ -847,11 +847,4 @@ interface IAudioService {
     @EnforcePermission("BLUETOOTH_PRIVILEGED")
     @JavaPassthrough(annotation="@android.annotation.RequiresPermission(android.Manifest.permission.BLUETOOTH_PRIVILEGED)")
     boolean isScoManagedByAudio();
-
-    /**
-     * Internal api to protect Pulse
-     * @hide
-     */
-    void setVisualizerLocked(boolean doLock);
-    boolean isVisualizerLocked(String callingPackage);
 }
