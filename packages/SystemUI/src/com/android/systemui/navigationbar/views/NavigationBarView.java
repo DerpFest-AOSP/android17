@@ -92,8 +92,6 @@ import com.android.systemui.utils.windowmanager.WindowManagerUtils;
 import com.android.wm.shell.back.BackAnimation;
 import com.android.wm.shell.pip.Pip;
 
-import lineageos.providers.LineageSettings;
-
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Optional;
@@ -673,13 +671,7 @@ public class NavigationBarView extends FrameLayout {
         getBackButton().setVisibility(disableBack       ? View.INVISIBLE : View.VISIBLE);
         getHomeButton().setVisibility(disableHome       ? View.INVISIBLE : View.VISIBLE);
         getRecentsButton().setVisibility(disableRecent  ? View.INVISIBLE : View.VISIBLE);
-        
-        // Check if user has disabled navbar hint in settings
-        boolean navbarHintEnabled = LineageSettings.System.getInt(
-                mContext.getContentResolver(),
-                LineageSettings.System.NAVIGATION_BAR_HINT, 1) == 1;
-        
-        getHomeHandle().setVisibility(disableHomeHandle || mHomeHandleForceHidden || !navbarHintEnabled ? View.INVISIBLE : View.VISIBLE);
+        getHomeHandle().setVisibility(disableHomeHandle || mHomeHandleForceHidden ? View.INVISIBLE : View.VISIBLE);
         notifyActiveTouchRegions();
     }
 
