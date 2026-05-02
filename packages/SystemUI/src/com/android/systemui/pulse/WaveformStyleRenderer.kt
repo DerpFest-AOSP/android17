@@ -30,7 +30,10 @@ internal class WaveformStyleRenderer(
     private val waveformPath = Path()
     private val fillPath = Path()
 
-    private var barCenters = FloatArray(0)
+    /** Distance between consecutive bar **left** edges (`barWidth + gap`). */
+    private var barStepPx = 0f
+    private var waveformBarCount = 0
+
     private var currentHeights = FloatArray(0)
     private var targetHeights = FloatArray(0)
     private var lastColor = 0
@@ -43,8 +46,8 @@ internal class WaveformStyleRenderer(
 
     override fun onSizeChanged(viewWidth: Int, viewHeight: Int) {
         val count = settings.getBarCount()
+        waveformBarCount = count
 
-        barCenters = FloatArray(count)
         if (currentHeights.size != count) {
             currentHeights = FloatArray(count) { 2f }
             targetHeights = FloatArray(count) { 2f }
@@ -53,16 +56,12 @@ internal class WaveformStyleRenderer(
         val gap = settings.getBarGapPx()
         val totalGap = (count - 1).coerceAtLeast(0) * gap
         val barWidth = if (count > 0) max(1f, (viewWidth - totalGap) / count) else 0f
-        val step = barWidth + gap
+        barStepPx = barWidth + gap
 
         waveformPaint.strokeCap =
             if (settings.isRoundedBarsEnabled()) Paint.Cap.ROUND else Paint.Cap.BUTT
         waveformPaint.strokeWidth =
             max(3f * settings.displayDensity(), viewHeight * 0.003f)
-
-        for (i in 0 until count) {
-            barCenters[i] = i * step + barWidth * 0.5f
-        }
 
         strokeColorFromPulseColor()
         fillPaint.color = fadeFillFromOutline(lastColor)
@@ -95,28 +94,34 @@ internal class WaveformStyleRenderer(
     }
 
     override fun draw(canvas: Canvas, viewWidth: Int, viewHeight: Int) {
-        val count = barCenters.size
+        val count = waveformBarCount
         if (count == 0 || viewHeight <= 0) return
 
         val bottom = viewHeight.toFloat()
+        val right = viewWidth.toFloat()
         waveformPath.reset()
         fillPath.reset()
 
-        val firstLift = smoothedLift(0, bottom)
-        waveformPath.moveTo(barCenters[0], bottom - firstLift)
-        fillPath.moveTo(barCenters[0], bottom)
-        fillPath.lineTo(barCenters[0], bottom - firstLift)
+        // Sample at each bar's **left** edge (x = i * step), then close the polyline at x = right
+        // so the wave fills the full width. Using bar centers left half-bar gaps on both sides.
+        val y0 = bottom - smoothedLift(0, bottom)
+        var yTopRight = y0
+
+        waveformPath.moveTo(0f, y0)
+        fillPath.moveTo(0f, bottom)
+        fillPath.lineTo(0f, y0)
 
         for (i in 1 until count) {
-            val lift = smoothedLift(i, bottom)
-            val x = barCenters[i]
-            val y = bottom - lift
+            val x = i * barStepPx
+            val y = bottom - smoothedLift(i, bottom)
             waveformPath.lineTo(x, y)
             fillPath.lineTo(x, y)
+            yTopRight = y
         }
 
-        val lastCenter = barCenters[count - 1]
-        fillPath.lineTo(lastCenter, bottom)
+        waveformPath.lineTo(right, yTopRight)
+        fillPath.lineTo(right, yTopRight)
+        fillPath.lineTo(right, bottom)
         fillPath.close()
 
         if (showFill) {
@@ -125,13 +130,7 @@ internal class WaveformStyleRenderer(
         if (showOutline && count >= 2) {
             canvas.drawPath(waveformPath, waveformPaint)
         } else if (showOutline && count == 1) {
-            canvas.drawLine(
-                barCenters[0],
-                bottom,
-                barCenters[0],
-                bottom - firstLift,
-                waveformPaint
-            )
+            canvas.drawLine(0f, yTopRight, right, yTopRight, waveformPaint)
         }
     }
 
@@ -146,7 +145,8 @@ internal class WaveformStyleRenderer(
     }
 
     override fun cleanup() {
-        barCenters = FloatArray(0)
+        waveformBarCount = 0
+        barStepPx = 0f
         currentHeights = FloatArray(0)
         targetHeights = FloatArray(0)
         waveformPath.reset()
