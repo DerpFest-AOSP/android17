@@ -34,10 +34,19 @@ class PulseView @JvmOverloads constructor(
     private var settingsRepo: PulseSettingsRepository? = null
 
     init {
+        setWillNotDraw(false)
         layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        // Re-sync renderer if we first laid out at ~0 height then got real bounds.
+        if (w > 0 && h > 0 && (oldw <= 0 || oldh <= 0)) {
+            postInvalidateOnAnimation()
+        }
     }
 
     fun initialize(settingsRepo: PulseSettingsRepository) {

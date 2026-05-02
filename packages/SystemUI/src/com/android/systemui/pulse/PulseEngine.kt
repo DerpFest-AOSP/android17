@@ -41,8 +41,9 @@ class PulseEngine(
                 val realIndex = i * 2 + 2
                 val imagIndex = i * 2 + 3
                 if (realIndex >= data.size || imagIndex >= data.size) continue
-                val rfk = data[realIndex].toInt()
-                val ifk = data[imagIndex].toInt()
+                // Visualizer FFT bins are unsigned 8-bit; sign-extend would trash magnitudes.
+                val rfk = data[realIndex].toInt() and 0xFF
+                val ifk = data[imagIndex].toInt() and 0xFF
                 val magnitude = (rfk * rfk + ifk * ifk).toFloat()
                 var dbValue = if (magnitude > 0) (10 * log10(magnitude.toDouble())).toInt() else 0
                 dbValue = fftAverage!![i].average(dbValue)
