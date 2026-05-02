@@ -17,8 +17,16 @@ import kotlin.math.min
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-private const val PARTICLE_SPAWN_DEFAULT = 0.42f
-private const val PARTICLE_SPAWN_SMOOTHING = 0.55f
+/** Base probability scale per FFT tick (raised so particles are not overly rare). */
+private const val PARTICLE_SPAWN_DEFAULT = 0.62f
+/** Stronger response when pulse FFT smoothing is enabled in settings. */
+private const val PARTICLE_SPAWN_SMOOTHING = 0.92f
+/** Minimum audio gate — below this we skip spawning (was 0.08; lower = more life at quiet levels). */
+private const val SPAWN_INTENSITY_GATE = 0.04f
+/** Lift normalized intensity so quiet passages still spawn (additive before clamp). */
+private const val SPAWN_INTENSITY_FLOOR = 0.10f
+/** Extra particles per [onData] when smoothing is on (scales with intensity). */
+private const val SMOOTH_BURST_MAX = 4
 
 internal class ParticleStyleRenderer(
     private val settings: PulseSettingsRepository
@@ -100,14 +108,39 @@ internal class ParticleStyleRenderer(
         if (heights.isEmpty()) return
         analyze(heights)
 
-        val spawnRate =
-            if (settings.isPulseFftSmoothingEnabled()) PARTICLE_SPAWN_SMOOTHING else PARTICLE_SPAWN_DEFAULT
+        val smoothing = settings.isPulseFftSmoothingEnabled()
+        val spawnRate = if (smoothing) PARTICLE_SPAWN_SMOOTHING else PARTICLE_SPAWN_DEFAULT
 
-        if (audioIntensity > 0.08f &&
-            random.nextFloat() < spawnRate * audioIntensity &&
-            particles.size < MAX_PARTICLES
+        // Boost low-level response: raw intensity undershoots for sparse FFT / quiet tracks.
+        val effectiveIntensity =
+            (audioIntensity + SPAWN_INTENSITY_FLOOR).coerceAtMost(1f)
+
+        if (audioIntensity <= SPAWN_INTENSITY_GATE) return
+
+        val pPrimary = (spawnRate * effectiveIntensity).coerceIn(0f, 1f)
+        if (particles.size < MAX_PARTICLES && random.nextFloat() < pPrimary) {
+            spawnParticle()
+        }
+
+        // Second independent roll when smoothing: noticeably denser field without flooding default mode.
+        if (smoothing &&
+            particles.size < MAX_PARTICLES &&
+            random.nextFloat() < pPrimary * 0.72f
         ) {
             spawnParticle()
+        }
+
+        // Short bursts on strong beats when smoothing is enabled (crDroid-style, capped).
+        if (smoothing && audioIntensity > 0.18f && particles.size < MAX_PARTICLES) {
+            val burst =
+                minOf(SMOOTH_BURST_MAX, (audioIntensity * 5.5f).toInt().coerceAtLeast(0))
+            var b = 0
+            while (b < burst && particles.size < MAX_PARTICLES) {
+                if (random.nextFloat() < 0.62f) {
+                    spawnParticle()
+                }
+                b++
+            }
         }
     }
 
@@ -205,15 +238,15 @@ internal class ParticleStyleRenderer(
         for (particle in particles) {
             particle.vy += gravity
 
-            if (particle.bassReactive && bassIntensity > 0.08f) {
+            if (particle.bassReactive && bassIntensity > SPAWN_INTENSITY_GATE) {
                 particle.vy -= bassIntensity * 2f
                 particle.vx += (random.nextFloat() - 0.5f) * bassIntensity
             }
-            if (particle.midReactive && midIntensity > 0.08f) {
+            if (particle.midReactive && midIntensity > SPAWN_INTENSITY_GATE) {
                 particle.vx += (random.nextFloat() - 0.5f) * midIntensity
                 particle.vy += (random.nextFloat() - 0.5f) * midIntensity
             }
-            if (particle.trebleReactive && trebleIntensity > 0.08f) {
+            if (particle.trebleReactive && trebleIntensity > SPAWN_INTENSITY_GATE) {
                 particle.vx *= 1f + trebleIntensity * 0.1f
                 particle.vy *= 1f + trebleIntensity * 0.1f
             }
