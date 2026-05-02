@@ -33,7 +33,7 @@ class PulseSettingsRepository(private val context: Context) {
         private const val PULSE_ROUNDED_BARS = Settings.Secure.PULSE_ROUNDED_BARS
         private const val PULSE_COLOR = Settings.Secure.PULSE_COLOR
         private const val PULSE_RENDERER = Settings.Secure.PULSE_RENDERER
-        private const val PULSE_BASS_HAPTICS = Settings.Secure.PULSE_BASS_HAPTICS
+        private const val PULSE_HAPTICS_ENABLED = Settings.Secure.PULSE_HAPTICS_ENABLED
 
         private const val DEFAULT_ENABLED = false
         private const val DEFAULT_AMBIENT_ENABLED = true
@@ -41,7 +41,7 @@ class PulseSettingsRepository(private val context: Context) {
         private const val DEFAULT_ROUNDED_BARS = false
         private const val DEFAULT_COLOR = "lavalamp"
         private const val DEFAULT_RENDERER = "solid"
-        private const val DEFAULT_HAPTICS_ENABLED = false
+        private const val DEFAULT_HAPTICS_MODE = 0
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -54,7 +54,7 @@ class PulseSettingsRepository(private val context: Context) {
     private var cachedRoundedBars: Boolean? = null
     private var cachedColorMode: String? = null
     private var cachedRenderer: String? = null
-    private var cachedHapticsEnabled: Boolean? = null
+    private var cachedHapticsMode: Int? = null
 
     fun startObserving() {
         if (settingsObserver != null) return
@@ -68,7 +68,7 @@ class PulseSettingsRepository(private val context: Context) {
             Settings.Secure.getUriFor(PULSE_ROUNDED_BARS),
             Settings.Secure.getUriFor(PULSE_COLOR),
             Settings.Secure.getUriFor(PULSE_RENDERER),
-            Settings.Secure.getUriFor(PULSE_BASS_HAPTICS)
+            Settings.Secure.getUriFor(PULSE_HAPTICS_ENABLED)
         ).forEach { uri ->
             context.contentResolver.registerContentObserver(uri, false,
                 settingsObserver!!, UserHandle.USER_ALL)
@@ -135,11 +135,11 @@ class PulseSettingsRepository(private val context: Context) {
         return cachedRenderer!!
     }
 
-    fun isPulseHapticsEnabled(): Boolean {
-        if (cachedHapticsEnabled == null) {
-            cachedHapticsEnabled = getSecureSetting(PULSE_BASS_HAPTICS, DEFAULT_HAPTICS_ENABLED)
+    fun getPulseHapticsMode(): Int {
+        if (cachedHapticsMode == null) {
+            cachedHapticsMode = getSecureSetting(PULSE_HAPTICS_ENABLED, DEFAULT_HAPTICS_MODE)
         }
-        return cachedHapticsEnabled!!
+        return cachedHapticsMode!!
     }
 
     fun invalidateCache() {
@@ -149,7 +149,7 @@ class PulseSettingsRepository(private val context: Context) {
         cachedRoundedBars = null
         cachedColorMode = null
         cachedRenderer = null
-        cachedHapticsEnabled = null
+        cachedHapticsMode = null
         onSettingsChangedListener?.invoke()
     }
 
