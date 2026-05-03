@@ -172,7 +172,6 @@ import com.android.systemui.plugins.PluginManager;
 import com.android.systemui.plugins.qs.QS;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
 import com.android.systemui.power.domain.interactor.PowerInteractor;
-import com.android.systemui.pulse.PulseView;
 import com.android.systemui.pulse.PulseViewController;
 import com.android.systemui.qs.QSFragmentLegacy;
 import com.android.systemui.qs.QSPanelController;
@@ -1276,26 +1275,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         }
     }
 
-    /**
-     * Places the navbar pulse layer behind navigation buttons (first child of {@link
-     * NavigationBarView}).
-     */
-    private void attachPulseToNavigationBar() {
-        mMainExecutor.execute(() -> {
-            NavigationBarView nav = getNavigationBarView();
-            if (nav == null) {
-                return;
-            }
-            PulseView pulseNav = mPulseViewController.getNavbarPulseView();
-            detachFromParent(pulseNav);
-            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT);
-            nav.addView(pulseNav, 0, lp);
-            pulseNav.setClickable(false);
-        });
-    }
-
     @VisibleForTesting
     /** Registers listeners/callbacks with external dependencies. */
     void registerCallbacks() {
@@ -1445,7 +1424,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
 
         if (!StatusBarConnectedDisplays.isEnabled()) {
             createNavigationBar(result);
-            attachPulseToNavigationBar();
         }
 
         mAmbientIndicationContainer = getNotificationShadeWindowView().findViewById(

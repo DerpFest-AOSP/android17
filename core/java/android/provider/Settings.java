@@ -14501,12 +14501,6 @@ public final class Settings {
         public static final String PULSE_QS_ENABLED = "pulse_qs_enabled";
 
         /**
-         * Pulse music visualizer on the navigation bar.
-         * @hide
-         */
-        public static final String PULSE_NAVBAR_ENABLED = "pulse_navbar_enabled";
-
-        /**
          * Light haptic ticks on strong bass beats while Pulse is active (opt-in).
          * @hide
          */
