@@ -109,7 +109,11 @@ class PulseViewController @Inject constructor(
     private fun updatePulse(show: Boolean) {
         mainScope.launch {
             view.setVisibility(show)
-            if (pulseEnabled && (show || hapticsMode > 1)) {
+            // Never run FFT capture while the screen is off (saves power; avoids haptics-only
+            // mode keeping the visualizer pipeline awake in pocket / sleep).
+            val wantCapture =
+                pulseEnabled && !isScreenOff && (show || hapticsMode > 1)
+            if (wantCapture) {
                 audioProcessor.startCapture()
             } else {
                 bassHaptics.reset()
@@ -200,11 +204,13 @@ class PulseViewController @Inject constructor(
     override fun onScreenTurnedOff() {
         isScreenOff = true
         updateState()
+        updatePulse(pulseRunning)
     }
 
     override fun onStartedWakingUp() {
         isScreenOff = false
         updateState()
+        updatePulse(pulseRunning)
     }
 
     override fun onUserChanged() {
