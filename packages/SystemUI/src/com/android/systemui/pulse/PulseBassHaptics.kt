@@ -39,7 +39,7 @@ internal class PulseBassHaptics(
 
     fun onFft(fft: ByteArray?) {
         if (fft == null || fft.size < BASS_BINS * 2 + 2) return
-        if (!settings.isPulseHapticsEnabled()) return
+        if (settings.getPulseHapticsMode() <= 0) return
         val v = vibrator ?: return
         if (!v.hasVibrator()) return
 

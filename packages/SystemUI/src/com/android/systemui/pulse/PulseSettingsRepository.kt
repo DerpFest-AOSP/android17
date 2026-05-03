@@ -42,7 +42,8 @@ class PulseSettingsRepository(private val context: Context) {
         private const val DEFAULT_ENABLED = false
         private const val DEFAULT_AMBIENT_ENABLED = true
         private const val DEFAULT_QS_ENABLED = false
-        private const val DEFAULT_HAPTICS_ENABLED = false
+        /** Default for [Settings.Secure.PULSE_HAPTICS_ENABLED] (0 = off). */
+        private const val DEFAULT_HAPTICS_MODE = 0
         private const val DEFAULT_BAR_COUNT = 32
         private const val DEFAULT_ROUNDED_BARS = false
         private const val DEFAULT_COLOR = "lavalamp"
@@ -61,7 +62,7 @@ class PulseSettingsRepository(private val context: Context) {
     private var cachedEnabled: Boolean? = null
     private var cachedAmbientEnabled: Boolean? = null
     private var cachedQsEnabled: Boolean? = null
-    private var cachedHapticsEnabled: Boolean? = null
+    private var cachedHapticsMode: Int? = null
     private var cachedBarCount: Int? = null
     private var cachedRoundedBars: Boolean? = null
     private var cachedColorMode: String? = null
@@ -122,11 +123,12 @@ class PulseSettingsRepository(private val context: Context) {
         return cachedQsEnabled!!
     }
 
-    fun isPulseHapticsEnabled(): Boolean {
-        if (cachedHapticsEnabled == null) {
-            cachedHapticsEnabled = getSecureSetting(PULSE_HAPTICS_ENABLED, DEFAULT_HAPTICS_ENABLED)
+    fun getPulseHapticsMode(): Int {
+        if (cachedHapticsMode == null) {
+            cachedHapticsMode =
+                getSecureSetting(PULSE_HAPTICS_ENABLED, DEFAULT_HAPTICS_MODE).coerceIn(0, 2)
         }
-        return cachedHapticsEnabled!!
+        return cachedHapticsMode!!
     }
 
     fun getBarCount(): Int {
@@ -182,7 +184,7 @@ class PulseSettingsRepository(private val context: Context) {
         cachedEnabled = null
         cachedAmbientEnabled = null
         cachedQsEnabled = null
-        cachedHapticsEnabled = null
+        cachedHapticsMode = null
         cachedBarCount = null
         cachedRoundedBars = null
         cachedColorMode = null

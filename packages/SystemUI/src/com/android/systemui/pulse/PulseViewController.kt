@@ -39,6 +39,7 @@ class PulseViewController @Inject constructor(
     private var bouncerShowingOrKeyguardDismissing = false
     private var keyguardShowing = false
     private var isDozing = false
+    private var isScreenOff = false
 
     private val settingsRepository: PulseSettingsRepository =
         PulseSettingsRepository(context)
@@ -66,6 +67,9 @@ class PulseViewController @Inject constructor(
     private val isCollapsed: Boolean
         get() = ScrimUtils.get().isPanelFullyCollapsed()
 
+    private val hapticsMode: Int
+        get() = settingsRepository.getPulseHapticsMode()
+
     var pulseRunning: Boolean = false
         set(value) {
             if (value == field) return
@@ -91,11 +95,12 @@ class PulseViewController @Inject constructor(
             return
         }
         if (pulseQsEnabled) {
-            pulseRunning = isMediaPlaying
+            pulseRunning = isMediaPlaying && !isScreenOff
         } else {
             pulseRunning = isMediaPlaying
                     && !bouncerShowingOrKeyguardDismissing
                     && isCollapsed
+                    && !isScreenOff
                     && ((keyguardShowing && !isDozing)
                     || (isDozing && ambientEnabled))
         }
@@ -104,7 +109,7 @@ class PulseViewController @Inject constructor(
     private fun updatePulse(show: Boolean) {
         mainScope.launch {
             view.setVisibility(show)
-            if (show) {
+            if (pulseEnabled && (show || hapticsMode > 1)) {
                 audioProcessor.startCapture()
             } else {
                 bassHaptics.reset()
@@ -131,14 +136,16 @@ class PulseViewController @Inject constructor(
             }
         }
         updateState()
+        // Re-apply capture / visibility when haptics mode etc. changes without pulseRunning toggling.
+        updatePulse(pulseRunning)
     }
 
     override fun onDataUpdate(data: PulseData) {
+        if (hapticsMode > 0 && data.isDataValid) {
+            bassHaptics.onFft(data.fftBytes)
+        }
         if (pulseRunning) {
             mainScope.launch {
-                if (data.isDataValid) {
-                    bassHaptics.onFft(data.fftBytes)
-                }
                 view.updateVisualizerData(data)
             }
         }
@@ -191,11 +198,12 @@ class PulseViewController @Inject constructor(
     }
 
     override fun onScreenTurnedOff() {
-        pulseRunning = false
-        bassHaptics.reset()
+        isScreenOff = true
+        updateState()
     }
 
     override fun onStartedWakingUp() {
+        isScreenOff = false
         updateState()
     }
 

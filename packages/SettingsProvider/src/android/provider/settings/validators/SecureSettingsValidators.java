@@ -548,6 +548,6 @@ public class SecureSettingsValidators {
         VALIDATORS.put(Secure.DOZE_PICK_UP_GESTURE_VIBRATE, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.HIGH_TOUCH_RATE_ENABLED, BOOLEAN_VALIDATOR);
         VALIDATORS.put(Secure.PULSE_QS_ENABLED, BOOLEAN_VALIDATOR);
-        VALIDATORS.put(Secure.PULSE_HAPTICS_ENABLED, BOOLEAN_VALIDATOR);
+        VALIDATORS.put(Secure.PULSE_HAPTICS_ENABLED, new InclusiveIntegerRangeValidator(0, 2));
     }
 }

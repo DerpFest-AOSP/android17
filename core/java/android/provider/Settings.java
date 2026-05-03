@@ -14501,7 +14501,9 @@ public final class Settings {
         public static final String PULSE_QS_ENABLED = "pulse_qs_enabled";
 
         /**
-         * Light haptic ticks on strong bass beats while Pulse is active (opt-in).
+         * Bass-beat haptic feedback for Pulse, stored as an integer:
+         * {@code 0} off, {@code 1} on while the visualizer is shown,
+         * {@code 2} on whenever Pulse is enabled (keeps FFT capture for haptics only).
          * @hide
          */
         public static final String PULSE_HAPTICS_ENABLED = "pulse_haptics_enabled";
