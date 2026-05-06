@@ -17,10 +17,12 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,6 +64,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -88,6 +91,46 @@ private val CinematicArtBoxSize = 64.dp
 private val CinematicArtInnerRadius = RoundedCornerShape(11.dp)
 
 private val CinematicTimeSlotWidth = 50.dp
+
+/**
+ * Accord `BottomNavigation.BottomSheet.ActionButton.Preview`: 54 dp pads, icon 28 dp — slightly tighter
+ * for the Dynamic Bar card width. `@drawable/ax_accord_ic_prop_*` vectors: 123Duo3
+ * (@@Duo3_123), 123duo3@gmail.com.
+ */
+private val AccordPreviewTransportTouchDp = 48.dp
+
+private val AccordPreviewSideIconDp = 26.dp
+private val AccordPreviewMainIconDp = 24.dp
+
+/**
+ * Thin progress line echoing Accord full-player `OverlaySlider` (without vendoring Cupertino).
+ */
+@Composable
+private fun AccordCinematicLinearSeekVisual(
+    displayFraction: Float,
+    isPlaying: Boolean,
+    isScrubbing: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val trackAlpha = if (isPlaying || isScrubbing) 0.30f else 0.20f
+    val fillAlpha = if (isPlaying || isScrubbing) 0.92f else 0.50f
+    BoxWithConstraints(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color.White.copy(alpha = trackAlpha)),
+    ) {
+        val frac = displayFraction.coerceIn(0f, 1f)
+        Box(
+            Modifier
+                .width(maxWidth * frac)
+                .fillMaxHeight()
+                .background(Color.White.copy(alpha = fillAlpha)),
+        )
+    }
+}
 
 /**
  * Inspired by Accord `BlendView`: saturate art, blur, then translucent scrims — see
@@ -445,8 +488,11 @@ private fun MediaControls(
     modifier: Modifier = Modifier,
 ) {
     if (cinematic) {
+        /** Accord preview player: Material 54 dp `@drawable/ic_prop_*`; prev = next @ 180° in full UI. */
         val onCard = Color.White
-        val playSurface = onCard.copy(alpha = 0.15f)
+        val iconTint = ColorFilter.tint(onCard)
+        val sideTargets = AccordPreviewTransportTouchDp
+        val sideIcon = AccordPreviewSideIconDp
         Row(
             modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -456,7 +502,7 @@ private fun MediaControls(
                 val ca = event.customActions.first()
                 Box(
                     modifier =
-                        Modifier.size(36.dp)
+                        Modifier.size(sideTargets)
                             .clip(CircleShape)
                             .clickable { interactor.sendCustomAction(ca.action) },
                     contentAlignment = Alignment.Center,
@@ -464,71 +510,80 @@ private fun MediaControls(
                     CustomActionIcon(
                         ca = ca,
                         tint = onCard,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(sideIcon),
                     )
                 }
             } else {
-                Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.size(sideTargets),
+                    contentAlignment = Alignment.Center,
+                ) {
                     Icon(
                         Icons.Filled.Shuffle,
                         null,
                         tint = onCard.copy(alpha = 0.35f),
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(sideIcon),
                     )
                 }
             }
             Box(
                 modifier =
-                    Modifier.size(36.dp)
+                    Modifier.size(sideTargets)
                         .clip(CircleShape)
                         .clickable { interactor.skipPrev() },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    Icons.Filled.SkipPrevious,
-                    null,
-                    tint = onCard,
-                    modifier = Modifier.size(20.dp),
+                Image(
+                    painter = painterResource(R.drawable.ax_accord_ic_prop_next),
+                    contentDescription = stringResource(R.string.ax_dynamic_bar_previous),
+                    colorFilter = iconTint,
+                    contentScale = ContentScale.Fit,
+                    modifier =
+                        Modifier.size(sideIcon).graphicsLayer { rotationZ = 180f },
                 )
             }
             Box(
                 modifier =
-                    Modifier.width(64.dp)
-                        .height(40.dp)
-                        .clip(RoundedCornerShape(44.dp))
-                        .background(playSurface)
+                    Modifier.size(AccordPreviewTransportTouchDp)
+                        .clip(CircleShape)
+                        .background(onCard.copy(alpha = 0.15f))
                         .clickable { interactor.togglePlayPause() },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    if (event.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    if (event.isPlaying)
-                        stringResource(R.string.ax_dynamic_bar_pause)
-                    else
-                        stringResource(R.string.ax_dynamic_bar_play),
-                    tint = onCard,
-                    modifier = Modifier.size(22.dp),
+                Image(
+                    painter =
+                        painterResource(
+                            if (event.isPlaying) R.drawable.ax_accord_ic_prop_pause
+                            else R.drawable.ax_accord_ic_prop_play,
+                        ),
+                    contentDescription =
+                        if (event.isPlaying) stringResource(R.string.ax_dynamic_bar_pause)
+                        else stringResource(R.string.ax_dynamic_bar_play),
+                    colorFilter = iconTint,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(AccordPreviewMainIconDp),
                 )
             }
             Box(
                 modifier =
-                    Modifier.size(36.dp)
+                    Modifier.size(sideTargets)
                         .clip(CircleShape)
                         .clickable { interactor.skipNext() },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    Icons.Filled.SkipNext,
-                    null,
-                    tint = onCard,
-                    modifier = Modifier.size(20.dp),
+                Image(
+                    painter = painterResource(R.drawable.ax_accord_ic_prop_next),
+                    contentDescription = stringResource(R.string.ax_dynamic_bar_next),
+                    colorFilter = iconTint,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.size(sideIcon),
                 )
             }
             if (event.customActions.size > 1) {
                 val ca = event.customActions[1]
                 Box(
                     modifier =
-                        Modifier.size(36.dp)
+                        Modifier.size(sideTargets)
                             .clip(CircleShape)
                             .clickable { interactor.sendCustomAction(ca.action) },
                     contentAlignment = Alignment.Center,
@@ -536,13 +591,13 @@ private fun MediaControls(
                     CustomActionIcon(
                         ca = ca,
                         tint = onCard,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(sideIcon),
                     )
                 }
             } else {
                 Box(
                     modifier =
-                        Modifier.size(36.dp)
+                        Modifier.size(sideTargets)
                             .clip(CircleShape)
                             .clickable {
                                 interactor.openMediaOutputSwitcher()
@@ -552,9 +607,9 @@ private fun MediaControls(
                 ) {
                     Icon(
                         Icons.Filled.VolumeUp,
-                        null,
+                        stringResource(R.string.ax_dynamic_bar_media_output),
                         tint = onCard,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(sideIcon),
                     )
                 }
             }
@@ -862,13 +917,11 @@ private fun MediaSeekBar(
                             .mediaSeekBarGestures(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    MediaSquiggleSeekBarView(
+                    AccordCinematicLinearSeekVisual(
                         displayFraction = displayFraction,
                         isPlaying = isPlaying,
                         isScrubbing = isScrubbing,
-                        accentArgb = accentArgb,
-                        trackAlphaArgb = trackAlphaArgb,
-                        secondaryProgressArgb = secondaryProgressArgb,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 Text(
