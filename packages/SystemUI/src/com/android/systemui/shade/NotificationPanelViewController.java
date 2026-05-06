@@ -68,6 +68,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.Trace;
+import android.os.UserHandle;
+import android.provider.Settings;
 import android.util.IndentingPrintWriter;
 import android.util.Log;
 import android.util.MathUtils;
@@ -295,6 +297,7 @@ public final class NotificationPanelViewController implements
             new ShadeHeadsUpChangedListener();
     private final ConfigurationListener mConfigurationListener = new ConfigurationListener();
     private final ContentObserver mDoubleTapToSleepObserver;
+    private final ContentObserver mBrightnessControlObserver;
     private final StatusBarStateListener mStatusBarStateListener = new StatusBarStateListener();
     private final NotificationPanelView mView;
     private final VibratorHelper mVibratorHelper;
@@ -482,6 +485,8 @@ public final class NotificationPanelViewController implements
     private final int mDisplayId;
     private boolean mDoubleTapToSleepEnabled;
     private GestureDetector mDoubleTapGesture;
+    private boolean mBrightnessControl;
+    private boolean mBrightnessControlLockscreen;
 
     private final KeyguardIndicationController mKeyguardIndicationController;
     private int mHeadsUpInset;
@@ -804,6 +809,17 @@ public final class NotificationPanelViewController implements
                         LineageSettings.System.DOUBLE_TAP_SLEEP_GESTURE,
                         mResources.getBoolean(org.lineageos.platform.internal.R.bool.
                                 config_dt2sGestureEnabledByDefault) ? 1 : 0) != 0;
+            }
+        };
+        mBrightnessControlObserver = new ContentObserver(handler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                mBrightnessControl = Settings.System.getIntForUser(mContentResolver,
+                        Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL,
+                        0, UserHandle.USER_CURRENT) != 0;
+                mBrightnessControlLockscreen = Settings.System.getIntForUser(mContentResolver,
+                        Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL_LOCKSCREEN,
+                        0, UserHandle.USER_CURRENT) != 0;
             }
         };
         mConversationNotificationManager = conversationNotificationManager;
@@ -3693,6 +3709,13 @@ public final class NotificationPanelViewController implements
                     LineageSettings.System.DOUBLE_TAP_SLEEP_GESTURE), false,
                     mDoubleTapToSleepObserver);
             mDoubleTapToSleepObserver.onChange(true);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL), false,
+                    mBrightnessControlObserver);
+            mContentResolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL_LOCKSCREEN), false,
+                    mBrightnessControlObserver);
+            mBrightnessControlObserver.onChange(true);
             // Theme might have changed between inflating this view and attaching it to the
             // window, so
             // force a call to onThemeChanged
@@ -3704,6 +3727,7 @@ public final class NotificationPanelViewController implements
         @Override
         public void onViewDetachedFromWindow(View v) {
             mContentResolver.unregisterContentObserver(mDoubleTapToSleepObserver);
+            mContentResolver.unregisterContentObserver(mBrightnessControlObserver);
             mFragmentService.getFragmentHostManager(mView)
                     .removeTagListener(QS.TAG, mQsController.getQsFragmentListener());
             mStatusBarStateController.removeCallback(mStatusBarStateListener);
@@ -4081,6 +4105,20 @@ public final class NotificationPanelViewController implements
                     && event.getDownTime() == mStatusBarLongPressDowntime) {
                 mShadeLog.d("Touch has same down time as Status Bar long press. Ignoring.");
                 return false;
+            }
+            if (mBrightnessControl) {
+                final int actionIndex = event.getActionIndex();
+                final float swipeY = event.getY(actionIndex);
+                if (swipeY < mStatusBarMinHeight &&
+                        (mBarState != KEYGUARD || mBrightnessControlLockscreen)) {
+                    mCentralSurfaces.brightnessControl(event);
+                    final int action = event.getActionMasked();
+                    if (action == MotionEvent.ACTION_UP
+                            || action == MotionEvent.ACTION_CANCEL) {
+                        mCentralSurfaces.onBrightnessChanged(true);
+                    }
+                    return true;
+                }
             }
             if (!mHeadsUpTouchHelper.isTrackingHeadsUp() && mQsController.handleTouch(
                     event, isFullyCollapsed(), isShadeOrQsHeightAnimationRunning())) {

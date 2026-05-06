@@ -48,7 +48,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.database.ContentObserver;
 import android.graphics.Point;
 import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.display.DisplayManager;
@@ -545,7 +544,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
     private int mLinger;
     private int mQuickQsOffsetHeight;
     private boolean mBrightnessChanged;
-    private boolean mBrightnessControl;
     private float mCurrentBrightness;
 
     /**
@@ -808,27 +806,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mKeyguardIndicationController.init();
 
         mColorExtractor.addOnColorsChangedListener(mOnColorsChangedListener);
-
-        Uri statusbarBrightnessControl = Settings.System.getUriFor(
-                Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL);
-        ContentObserver contentObserver = new ContentObserver(null) {
-            @Override
-            public void onChange(boolean selfChange, Uri uri) {
-                if (uri.equals(statusbarBrightnessControl)) {
-                    mBrightnessControl = Settings.System.getIntForUser(
-                            mContext.getContentResolver(),
-                            Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL,
-                            0, UserHandle.USER_CURRENT) != 0;
-                    if (mPhoneStatusBarViewController != null) {
-                        mPhoneStatusBarViewController.setBrightnessControlEnabled(
-                                mBrightnessControl);
-                    }
-                }
-            }
-        };
-        mContext.getContentResolver().registerContentObserver(
-                statusbarBrightnessControl, false, contentObserver);
-        contentObserver.onChange(true, statusbarBrightnessControl);
 
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
@@ -2236,7 +2213,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
         mKeyguardBypassController.setBouncerShowing(bouncerShowing);
         mPulseExpansionHandler.setBouncerShowing(bouncerShowing);
         setBouncerShowingForStatusBarComponents(bouncerShowing);
-        mPhoneStatusBarViewController.setBrightnessControlEnabled(mBrightnessControl);
         mStatusBarHideIconsForBouncerManager.setBouncerShowingAndTriggerUpdate(bouncerShowing);
         mCommandQueue.recomputeDisableFlags(mDisplayId, true /* animate */);
         if (mBouncerShowing) {
