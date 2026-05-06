@@ -46,6 +46,7 @@ import com.android.systemui.statusbar.data.repository.StatusBarConfigurationCont
 import com.android.systemui.statusbar.data.repository.StatusBarContentInsetsProviderStore
 import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.statusbar.policy.ConfigurationController
+import com.android.systemui.statusbar.policy.StatusBarBrightnessGesture
 import com.android.systemui.statusbar.window.StatusBarWindowControllerStore
 import com.android.systemui.statusbar.window.StatusBarWindowStateController
 import com.android.systemui.unfold.UNFOLD_STATUS_BAR
@@ -279,10 +280,6 @@ private constructor(
         mView.importantForAccessibility = mode
     }
 
-    fun setBrightnessControlEnabled(enabled: Boolean) {
-        mView.brightnessControlEnabled = enabled
-    }
-
     /**
      * Sends a touch event to the status bar view.
      *
@@ -304,7 +301,7 @@ private constructor(
 
     /** Called when a touch event occurred on {@link PhoneStatusBarView}. */
     fun onTouch(event: MotionEvent) {
-        if (mView.brightnessControlEnabled) {
+        if (StatusBarBrightnessGesture.isEnabled(mView.context.contentResolver)) {
             centralSurfaces.brightnessControl(event)
             if (!centralSurfaces.commandQueuePanelsEnabled) return
         }

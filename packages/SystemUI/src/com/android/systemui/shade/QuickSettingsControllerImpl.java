@@ -110,6 +110,7 @@ import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager;
 import com.android.systemui.statusbar.policy.CastController;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.policy.SplitShadeStateController;
+import com.android.systemui.statusbar.policy.StatusBarBrightnessGesture;
 import com.android.systemui.user.domain.interactor.SelectedUserInteractor;
 import com.android.systemui.util.LargeScreenUtils;
 import com.android.systemui.util.ScrimUtils;
@@ -1712,7 +1713,11 @@ public class QuickSettingsControllerImpl implements QuickSettingsController, Dum
             return false;
         }
         boolean isInStatusBar = event.getY(event.getActionIndex()) < mStatusBarMinHeight;
-        if (ShadeExpandsOnStatusBarLongPress.isEnabled() && isInStatusBar) {
+        // Suppress the shade-expand long press when the user has opted into
+        // the status-bar brightness gesture; the two share the same gesture.
+        if (ShadeExpandsOnStatusBarLongPress.isEnabled() && isInStatusBar
+                && !StatusBarBrightnessGesture.isEnabled(
+                        mPanelView.getContext().getContentResolver())) {
             mStatusBarLongPressGestureDetector.get().handleTouch(event);
         }
         final int action = event.getActionMasked();

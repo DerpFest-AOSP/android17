@@ -45,6 +45,7 @@ import com.android.systemui.res.R;
 import com.android.systemui.shade.ShadeExpandsOnStatusBarLongPress;
 import com.android.systemui.shade.StatusBarLongPressGestureDetector;
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays;
+import com.android.systemui.statusbar.policy.StatusBarBrightnessGesture;
 import com.android.systemui.statusbar.phone.userswitcher.StatusBarUserSwitcherContainer;
 import com.android.systemui.statusbar.policy.Offset;
 import com.android.systemui.statusbar.window.StatusBarWindowControllerStore;
@@ -87,8 +88,6 @@ public class PhoneStatusBarView extends FrameLayout {
      * Draw this many pixels into the left/right side of the cutout to optimally use the space
      */
     private int mCutoutSideNudge = 0;
-
-    private boolean mBrightnessControlEnabled;
 
     public PhoneStatusBarView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -276,8 +275,13 @@ public class PhoneStatusBarView extends FrameLayout {
             return false;
         }
 
+        // Suppress the shade-expand long press when the user has opted into
+        // the status-bar brightness gesture; the two share the same gesture
+        // and the brightness handler will receive the touch via the touch
+        // event handler below.
         if (ShadeExpandsOnStatusBarLongPress.isEnabled()
-                && mStatusBarLongPressGestureDetector != null) {
+                && mStatusBarLongPressGestureDetector != null
+                && !StatusBarBrightnessGesture.isEnabled(getContext().getContentResolver())) {
             mStatusBarLongPressGestureDetector.handleTouch(event);
         }
         if (mTouchEventHandler == null) {
@@ -297,14 +301,6 @@ public class PhoneStatusBarView extends FrameLayout {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
         return mTouchEventHandler.onInterceptTouchEvent(event);
-    }
-
-    public boolean getBrightnessControlEnabled() {
-        return mBrightnessControlEnabled;
-    }
-
-    public void setBrightnessControlEnabled(boolean enabled) {
-        mBrightnessControlEnabled = enabled;
     }
 
     public void updateResources() {
