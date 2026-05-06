@@ -36,7 +36,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeUp
@@ -95,7 +94,8 @@ private val CinematicTimeSlotWidth = 50.dp
 /**
  * Accord `BottomNavigation.BottomSheet.ActionButton.Preview`: 54 dp pads, icon 28 dp — slightly tighter
  * for the Dynamic Bar card width. `@drawable/ax_accord_ic_prop_*` vectors: 123Duo3
- * (@@Duo3_123), 123duo3@gmail.com.
+ * (@@Duo3_123), 123duo3@gmail.com. Shuffle/repeat: `@drawable/ax_accord_ic_nowplaying_*`
+ * (123Duo3 / @@Duo3_123).
  */
 private val AccordPreviewTransportTouchDp = 48.dp
 
@@ -518,10 +518,12 @@ private fun MediaControls(
                     modifier = Modifier.size(sideTargets),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Icon(
-                        Icons.Filled.Shuffle,
-                        null,
-                        tint = onCard.copy(alpha = 0.35f),
+                    Image(
+                        painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
+                        contentDescription =
+                            stringResource(R.string.ax_dynamic_bar_shuffle),
+                        colorFilter = ColorFilter.tint(onCard.copy(alpha = 0.35f)),
+                        contentScale = ContentScale.Fit,
                         modifier = Modifier.size(sideIcon),
                     )
                 }
@@ -989,9 +991,11 @@ private fun MediaCustomActionButton(
             enabled = false,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Icon(
-                    Icons.Filled.Shuffle, null,
-                    tint = accent.copy(alpha = AlphaDisabled),
+                Image(
+                    painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
+                    contentDescription = stringResource(R.string.ax_dynamic_bar_shuffle),
+                    colorFilter = ColorFilter.tint(accent.copy(alpha = AlphaDisabled)),
+                    contentScale = ContentScale.Fit,
                     modifier = Modifier.size(ControlIconSize),
                 )
             }

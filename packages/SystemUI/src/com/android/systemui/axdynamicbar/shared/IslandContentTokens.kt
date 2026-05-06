@@ -24,7 +24,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.ThumbUp
@@ -57,7 +56,11 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.palette.graphics.Palette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.Image
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
 
 internal val SpaceXxs = 2.dp
@@ -533,11 +536,28 @@ internal fun textKeyFor(event: IslandEvent): Any =
         else -> event.id
     }
 
-internal fun resolveLabelIcon(label: String): ImageVector {
+/**
+ * Returns SF-style `@drawable/ax_accord_ic_nowplaying_*` (vector artwork: 123Duo3, @@Duo3_123) for
+ * shuffle / repeat when the media session’s custom-action label matches; otherwise null (use
+ * [resolveLabelIconVector]).
+ */
+internal fun resolveNowPlayingStyleActionDrawableRes(label: String): Int? {
     val lower = label.lowercase()
     return when {
-        lower.contains("shuffle") -> Icons.Filled.Shuffle
-        lower.contains("repeat") -> Icons.Filled.Repeat
+        lower.contains("shuffle") -> R.drawable.ax_accord_ic_nowplaying_shuffle
+        lower.contains("repeat one") ||
+            lower.contains("repeat_one") ||
+            lower.contains("repeat single") ||
+            lower.contains("repeatsingle") ->
+            R.drawable.ax_accord_ic_nowplaying_repeat_one
+        lower.contains("repeat") -> R.drawable.ax_accord_ic_nowplaying_repeat
+        else -> null
+    }
+}
+
+internal fun resolveLabelIconVector(label: String): ImageVector {
+    val lower = label.lowercase()
+    return when {
         lower.contains("thumb") && lower.contains("up") -> Icons.Filled.ThumbUp
         lower.contains("thumb") && lower.contains("down") -> Icons.Filled.ThumbDown
         lower.contains("like") || lower.contains("love") || lower.contains("favorite") -> Icons.Filled.Favorite
@@ -559,7 +579,18 @@ internal fun CustomActionIcon(
     if (appBitmap != null) {
         Icon(appBitmap, ca.label, tint = tint, modifier = modifier)
     } else {
-        Icon(resolveLabelIcon(ca.label), ca.label, tint = tint, modifier = modifier)
+        val vectorGlyphRes = resolveNowPlayingStyleActionDrawableRes(ca.label)
+        if (vectorGlyphRes != null) {
+            Image(
+                painter = painterResource(vectorGlyphRes),
+                contentDescription = ca.label,
+                colorFilter = ColorFilter.tint(tint),
+                contentScale = ContentScale.Fit,
+                modifier = modifier,
+            )
+        } else {
+            Icon(resolveLabelIconVector(ca.label), ca.label, tint = tint, modifier = modifier)
+        }
     }
 }
 

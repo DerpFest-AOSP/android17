@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Stop
@@ -76,6 +75,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -443,7 +443,14 @@ private fun KeyguardMediaPanel(event: IslandEvent.Media, interactor: IslandActio
                             if (ca != null) {
                                 CustomActionIcon(ca, tint = traySecondary, modifier = Modifier.size(SizeIconMd))
                             } else {
-                                Icon(Icons.Filled.Shuffle, stringResource(R.string.ax_dynamic_bar_shuffle), tint = traySecondary, modifier = Modifier.size(SizeIconMd))
+                                Image(
+                                    painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
+                                    contentDescription =
+                                        stringResource(R.string.ax_dynamic_bar_shuffle),
+                                    colorFilter = ColorFilter.tint(traySecondary),
+                                    contentScale = ContentScale.Fit,
+                                    modifier = Modifier.size(SizeIconMd),
+                                )
                             }
                         }
 
