@@ -21,6 +21,7 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import com.android.settingslib.Utils
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -197,8 +198,31 @@ class DerpFestChargingAnimationView @JvmOverloads constructor(
         if (animationProgress > 0.3f) {
             val textAlpha = ((animationProgress - 0.3f) / 0.35f).coerceIn(0f, 1f)
             textPaint.alpha = (textAlpha * 255).toInt()
-            textPaint.textSize = batteryH * 0.3f
-            canvas.drawText("${batteryLevel}%", cx, cy + textPaint.textSize / 3, textPaint)
+
+            val text = "${batteryLevel}%"
+            val innerPad = max(strokeW, batteryW * 0.06f)
+            val maxWidth = innerRight - innerLeft - 2f * innerPad
+            val maxByHeight = innerH * 0.72f
+
+            var textSize = min(batteryH * 0.26f, maxByHeight)
+            textPaint.textSize = textSize
+            while (textPaint.measureText(text) > maxWidth && textSize > 8f) {
+                textSize -= 0.5f
+                textPaint.textSize = textSize
+            }
+
+            val fm = textPaint.fontMetrics
+            val verticalCenter = (innerTop + innerBottom) / 2f
+            val textBaseline = verticalCenter - (fm.ascent + fm.descent) / 2f
+
+            canvas.save()
+            canvas.clipRect(
+                    innerLeft + innerPad,
+                    innerTop + innerPad * 0.35f,
+                    innerRight - innerPad,
+                    innerBottom - innerPad * 0.35f)
+            canvas.drawText(text, cx, textBaseline, textPaint)
+            canvas.restore()
         }
     }
 
