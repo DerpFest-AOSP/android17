@@ -18,8 +18,13 @@ package com.android.systemui.charging
 
 import android.content.Context
 import android.content.res.Configuration
+import android.database.ContentObserver
 import android.graphics.PixelFormat
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemProperties
+import android.os.UserHandle
+import android.provider.Settings
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
@@ -29,8 +34,7 @@ import com.android.internal.logging.UiEventLogger
 import com.android.settingslib.Utils
 import com.android.systemui.res.R
 import com.android.systemui.dagger.SysUISingleton
-import com.android.systemui.flags.FeatureFlags
-import com.android.systemui.flags.Flags
+import com.android.systemui.derpfest.charging.DerpFestChargingAnimationView
 import com.android.systemui.surfaceeffects.ripple.RippleView
 import com.android.systemui.statusbar.commandline.Command
 import com.android.systemui.statusbar.commandline.CommandRegistry
@@ -46,7 +50,7 @@ private const val MAX_DEBOUNCE_LEVEL = 3
 private const val BASE_DEBOUNCE_TIME = 2000
 
 /***
- * Controls the ripple effect that shows when wired charging begins.
+ * Controls the effect that shows when wired charging begins (stock ripple or custom styles).
  * The ripple uses the accent color of the current theme.
  */
 @SysUISingleton
@@ -54,15 +58,22 @@ class WiredChargingRippleController @Inject constructor(
     commandRegistry: CommandRegistry,
     private val batteryController: BatteryController,
     private val configurationController: ConfigurationController,
-    featureFlags: FeatureFlags,
     private val context: Context,
     private val windowManager: WindowManager,
     private val systemClock: SystemClock,
     private val uiEventLogger: UiEventLogger
 ) {
     private var pluggedIn: Boolean = false
-    private val rippleEnabled: Boolean = featureFlags.isEnabled(Flags.CHARGING_RIPPLE) &&
+    private var chargingAnimStyle: Int = Settings.System.getIntForUser(
+            context.contentResolver,
+            Settings.System.CHARGING_ANIMATION_STYLE,
+            0,
+            UserHandle.USER_CURRENT)
+
+    private val rippleEnabled: Boolean
+        get() = chargingAnimStyle > 0 &&
             !SystemProperties.getBoolean("persist.debug.suppress-charging-ripple", false)
+
     private var normalizedPortPosX: Float = context.resources.getFloat(
             R.dimen.physical_charger_port_location_normalized_x)
     private var normalizedPortPosY: Float = context.resources.getFloat(
@@ -89,6 +100,19 @@ class WiredChargingRippleController @Inject constructor(
         pluggedIn = batteryController.isPluggedIn
         commandRegistry.registerCommand("charging-ripple") { ChargingRippleCommand() }
         updateRippleColor()
+        context.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.CHARGING_ANIMATION_STYLE),
+            false,
+            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    chargingAnimStyle = Settings.System.getIntForUser(
+                        context.contentResolver,
+                        Settings.System.CHARGING_ANIMATION_STYLE,
+                        0,
+                        UserHandle.USER_CURRENT)
+                }
+            },
+            UserHandle.USER_ALL)
     }
 
     fun registerCallbacks() {
@@ -98,18 +122,18 @@ class WiredChargingRippleController @Inject constructor(
                 nowPluggedIn: Boolean,
                 charging: Boolean
             ) {
-                // Suppresses the ripple when it's disabled, or when the state change comes
-                // from wireless charging.
+                // Suppress when disabled, wireless, or dock.
                 if (!rippleEnabled ||
                         batteryController.isPluggedInWireless ||
                         batteryController.isChargingSourceDock) {
+                    pluggedIn = nowPluggedIn
                     return
                 }
 
-               /* if (!pluggedIn && nowPluggedIn) {
+                if (!pluggedIn && nowPluggedIn && rippleEnabled) {
                     startRippleWithDebounce()
                 }
-                pluggedIn = nowPluggedIn */
+                pluggedIn = nowPluggedIn
             }
         }
         batteryController.addCallback(batteryStateChangeCallback)
@@ -152,10 +176,15 @@ class WiredChargingRippleController @Inject constructor(
         if (!rippleEnabled) {
             return
         }
+        if (chargingAnimStyle == 1) {
+            startStockRipple()
+        } else if (chargingAnimStyle >= 2) {
+            startDerpFestAnimation()
+        }
+    }
+
+    private fun startStockRipple() {
         if (rippleView.rippleInProgress() || rippleView.parent != null) {
-            // Skip if ripple is still playing, or not playing but already added the parent
-            // (which might happen just before the animation starts or right after
-            // the animation ends.)
             return
         }
         windowLayoutParams.packageName = context.opPackageName
@@ -171,6 +200,38 @@ class WiredChargingRippleController @Inject constructor(
             }
         })
         windowManager.addView(rippleView, windowLayoutParams)
+        uiEventLogger.log(WiredChargingRippleEvent.CHARGING_RIPPLE_PLAYED)
+    }
+
+    private fun startDerpFestAnimation() {
+        val animView = DerpFestChargingAnimationView(context)
+        val params = WindowManager.LayoutParams().apply {
+            width = WindowManager.LayoutParams.MATCH_PARENT
+            height = WindowManager.LayoutParams.MATCH_PARENT
+            layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            format = PixelFormat.TRANSLUCENT
+            type = WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG
+            fitInsetsTypes = 0
+            title = "DerpFest Charging Animation"
+            flags = (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                    or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+            setTrustedOverlay()
+            packageName = context.opPackageName
+        }
+        val bm = context.getSystemService(android.os.BatteryManager::class.java)
+        val level = bm?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: 50
+        animView.configure(chargingAnimStyle, level) {
+            windowManager.removeView(animView)
+        }
+        animView.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+            override fun onViewDetachedFromWindow(view: View) {}
+            override fun onViewAttachedToWindow(view: View) {
+                animView.startAnimation()
+                animView.removeOnAttachStateChangeListener(this)
+            }
+        })
+        windowManager.addView(animView, params)
         uiEventLogger.log(WiredChargingRippleEvent.CHARGING_RIPPLE_PLAYED)
     }
 

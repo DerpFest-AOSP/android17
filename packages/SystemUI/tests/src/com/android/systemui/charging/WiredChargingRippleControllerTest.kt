@@ -17,6 +17,8 @@
 package com.android.systemui.charging
 
 import android.graphics.Rect
+import android.os.UserHandle
+import android.provider.Settings
 import android.view.Surface
 import android.view.View
 import android.view.WindowManager
@@ -26,8 +28,6 @@ import androidx.test.filters.SmallTest
 import com.android.internal.logging.UiEventLogger
 import com.android.systemui.res.R
 import com.android.systemui.SysuiTestCase
-import com.android.systemui.flags.FeatureFlags
-import com.android.systemui.flags.Flags
 import com.android.systemui.statusbar.commandline.CommandRegistry
 import com.android.systemui.statusbar.policy.BatteryController
 import com.android.systemui.statusbar.policy.ConfigurationController
@@ -57,7 +57,6 @@ class WiredChargingRippleControllerTest : SysuiTestCase() {
     private lateinit var controller: WiredChargingRippleController
     @Mock private lateinit var commandRegistry: CommandRegistry
     @Mock private lateinit var batteryController: BatteryController
-    @Mock private lateinit var featureFlags: FeatureFlags
     @Mock private lateinit var configurationController: ConfigurationController
     @Mock private lateinit var rippleView: RippleView
     @Mock private lateinit var windowManager: WindowManager
@@ -68,10 +67,14 @@ class WiredChargingRippleControllerTest : SysuiTestCase() {
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
-        `when`(featureFlags.isEnabled(Flags.CHARGING_RIPPLE)).thenReturn(true)
+        Settings.System.putIntForUser(
+                context.contentResolver,
+                Settings.System.CHARGING_ANIMATION_STYLE,
+                1,
+                UserHandle.USER_CURRENT)
         controller = WiredChargingRippleController(
                 commandRegistry, batteryController, configurationController,
-                featureFlags, context, windowManager, systemClock, uiEventLogger)
+                context, windowManager, systemClock, uiEventLogger)
         rippleView.setupShader()
         controller.rippleView = rippleView // Replace the real ripple view with a mock instance
         controller.registerCallbacks()
