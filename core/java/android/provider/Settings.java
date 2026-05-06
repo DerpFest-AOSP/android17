@@ -7586,6 +7586,13 @@ public final class Settings {
         public static final String HEADS_UP_TIMEOUT = "heads_up_timeout";
 
         /**
+         * Charging animation style
+         * 0 = None, 1 = Ripple, 2 = Flash, 3 = Glow Pulse, 4 = Battery Fill
+         * @hide
+         */
+        public static final String CHARGING_ANIMATION_STYLE = "charging_animation_style";
+
+        /**
          * Defines the global heads up notification snooze
          * @hide
          */
