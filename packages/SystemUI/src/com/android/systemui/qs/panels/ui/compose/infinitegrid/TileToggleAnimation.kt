@@ -12,6 +12,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.android.compose.theme.LocalAndroidColorScheme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -125,13 +127,16 @@ private fun Modifier.rippleAnimation(toggleCount: Int, toActive: Boolean): Modif
         (1f - progress.value).coerceIn(0f, 0.5f)
     } else 0f
 
+    val rippleColor =
+        if (toActive) MaterialTheme.colorScheme.primary
+        else LocalAndroidColorScheme.current.surfaceEffect1
+
     return drawWithContent {
         drawContent()
         if (rippleAlpha > 0f) {
             val radius = size.maxDimension * progress.value
-            val color = if (toActive) Color.White else Color.Black
             drawCircle(
-                color = color.copy(alpha = rippleAlpha),
+                color = rippleColor.copy(alpha = rippleAlpha),
                 radius = radius,
                 center = Offset(size.width / 2f, size.height / 2f),
             )
