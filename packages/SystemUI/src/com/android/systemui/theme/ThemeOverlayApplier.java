@@ -139,9 +139,6 @@ public class ThemeOverlayApplier implements Dumpable {
     static final String OVERLAY_CATEGORY_BACK_GESTURE =
             "android.theme.customization.back_gesture";
 
-    static final String OVERLAY_CATEGORY_CHARGING_ANIMATION =
-            "android.theme.customization.charging_animation";
-
     static final String OVERLAY_CATEGORY_BATTERY_STYLE =
             "android.theme.customization.battery_style";
 
@@ -165,7 +162,6 @@ public class ThemeOverlayApplier implements Dumpable {
             OVERLAY_CATEGORY_ICON_THEME_PICKER,
             OVERLAY_CATEGORY_DISPLAY_CUTOUT,
             OVERLAY_CATEGORY_BACK_GESTURE,
-            OVERLAY_CATEGORY_CHARGING_ANIMATION,
             OVERLAY_CATEGORY_BATTERY_STYLE);
 
     /* Categories that need to be applied to the current user as well as the system user. */
@@ -182,7 +178,6 @@ public class ThemeOverlayApplier implements Dumpable {
             OVERLAY_CATEGORY_ICON_SYSUI,
             OVERLAY_CATEGORY_DISPLAY_CUTOUT,
             OVERLAY_CATEGORY_BACK_GESTURE,
-            OVERLAY_CATEGORY_CHARGING_ANIMATION,
             OVERLAY_CATEGORY_BATTERY_STYLE);
 
     /* Allowed overlay categories for each target package. */
@@ -215,7 +210,7 @@ public class ThemeOverlayApplier implements Dumpable {
                 OVERLAY_CATEGORY_ICON_ANDROID, OVERLAY_CATEGORY_DISPLAY_CUTOUT));
         mTargetPackageToCategories.put(SYSUI_PACKAGE,
                 Sets.newHashSet(OVERLAY_CATEGORY_ICON_SYSUI, OVERLAY_CATEGORY_UI_STYLE_SYSUI, OVERLAY_CATEGORY_BACK_GESTURE,
-                        OVERLAY_CATEGORY_CHARGING_ANIMATION, OVERLAY_CATEGORY_BATTERY_STYLE));
+                        OVERLAY_CATEGORY_BATTERY_STYLE));
         mTargetPackageToCategories.put(SETTINGS_PACKAGE,
                 Sets.newHashSet(OVERLAY_CATEGORY_ICON_SETTINGS, OVERLAY_CATEGORY_UI_STYLE_SETTINGS));
         mTargetPackageToCategories.put(mLauncherPackage,
@@ -233,7 +228,6 @@ public class ThemeOverlayApplier implements Dumpable {
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_DISPLAY_CUTOUT, ANDROID_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_SYSUI, SYSUI_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_BACK_GESTURE, SYSUI_PACKAGE);
-        mCategoryToTargetPackage.put(OVERLAY_CATEGORY_CHARGING_ANIMATION, SYSUI_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_BATTERY_STYLE, SYSUI_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_SETTINGS, SETTINGS_PACKAGE);
         mCategoryToTargetPackage.put(OVERLAY_CATEGORY_ICON_LAUNCHER, mLauncherPackage);

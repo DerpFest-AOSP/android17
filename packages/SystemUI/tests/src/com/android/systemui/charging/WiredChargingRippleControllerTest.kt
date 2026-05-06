@@ -21,7 +21,6 @@ import android.view.Surface
 import android.view.View
 import android.view.WindowManager
 import android.view.WindowMetrics
-import android.widget.FrameLayout
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.android.internal.logging.UiEventLogger
@@ -93,15 +92,15 @@ class WiredChargingRippleControllerTest : SysuiTestCase() {
                 /* charging= */ false)
         val addViewCaptor = ArgumentCaptor.forClass(View::class.java)
         verify(windowManager).addView(addViewCaptor.capture(), any<WindowManager.LayoutParams>())
-        val container = addViewCaptor.value as FrameLayout
-        assertSame(rippleView, container.getChildAt(0))
+        val addedView = addViewCaptor.value
+        assertSame(rippleView, addedView)
 
         val runnableCaptor = ArgumentCaptor.forClass(Runnable::class.java)
-        dispatchAttachedToWindowForTest(container)
+        dispatchAttachedToWindowForTest(addedView)
         verify(rippleView).startRipple(runnableCaptor.capture())
 
         runnableCaptor.value.run()
-        verify(windowManager).removeView(eq(container))
+        verify(windowManager).removeView(eq(rippleView))
 
         verify(uiEventLogger).log(
                 WiredChargingRippleController.WiredChargingRippleEvent.CHARGING_RIPPLE_PLAYED)
@@ -181,10 +180,10 @@ class WiredChargingRippleControllerTest : SysuiTestCase() {
 
         val addViewCaptor = ArgumentCaptor.forClass(View::class.java)
         verify(windowManager).addView(addViewCaptor.capture(), any<WindowManager.LayoutParams>())
-        val container = addViewCaptor.value as FrameLayout
+        val addedView = addViewCaptor.value
 
         val runnableCaptor = ArgumentCaptor.forClass(Runnable::class.java)
-        dispatchAttachedToWindowForTest(container)
+        dispatchAttachedToWindowForTest(addedView)
         verify(rippleView).startRipple(runnableCaptor.capture())
 
         val maxSize = 400f
