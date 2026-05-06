@@ -92,8 +92,12 @@ private val CinematicTimeSlotWidth = 50.dp
 /**
  * Inspired by Accord `BlendView`: saturate art, blur, then translucent scrims — see
  * `uk.akane.cupertino.widget.special.BlendView` (blur radius, `enhanceBitmap` saturation).
+ * Softer “mesh” when the source is downscaled and blur is strong (Compose Image fallback path).
  */
-private const val MEDIA_BACKDROP_BLUR_RADIUS_PX = 72f
+private const val MEDIA_BACKDROP_BLUR_RADIUS_PX = 120f
+
+/** Max side for album-art bitmap before blur (fallback when [MediaBlendBackdropView] is unused). */
+private val MediaBackdropAlbumArtMaxDp = 196.dp
 
 /**
  * Accord uses 2× saturation on the source bitmap; dial down slightly for compact SystemUI chrome.
@@ -217,7 +221,7 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
             }
             hasArt -> {
                 Image(
-                    bitmap = event.albumArt!!.toScaledBitmap(260.dp),
+                    bitmap = event.albumArt!!.toScaledBitmap(MediaBackdropAlbumArtMaxDp),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier =
@@ -225,8 +229,9 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                             if (composeBackdropEffect != null) {
                                 renderEffect = composeBackdropEffect
                             }
-                            scaleX = 1.22f
-                            scaleY = 1.22f
+                            // Smaller draw + stronger blur: keep scale modest so detail stays diffuse.
+                            scaleX = 1.08f
+                            scaleY = 1.08f
                         },
                 )
                 Box(Modifier.matchParentSize().background(AccordFrontShadeColor))

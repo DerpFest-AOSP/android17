@@ -71,14 +71,15 @@ constructor(
     private val frameIntervalNanos = 1_000_000_000L / 30
 
     companion object {
-        /** Downscaled from Accord 120 — card-sized surface, less halo when clipped */
-        private const val BLUR_RADIUS_PX = 96f
+        /** Stronger wash than before; pairs with a smaller decoded bitmap for a softer mesh. */
+        private const val BLUR_RADIUS_PX = 128f
 
         /** Accord matches [uk.akane.cupertino.widget.special.BlendView.SATURATION_FACTOR] */
         private const val SATURATION_FACTOR = 2f
         private const val ROTATION_CYCLE = 360
         private const val IMAGE_TRANSITION_MS = 400L
-        private const val MAX_ALBUM_BITMAP_SIDE_PX = 768
+        /** Tighter cap so CenterCrop + blur reads as color haze, not sharp linework. */
+        private const val MAX_ALBUM_BITMAP_SIDE_PX = 512
         private val decodeLock = Any()
     }
 
