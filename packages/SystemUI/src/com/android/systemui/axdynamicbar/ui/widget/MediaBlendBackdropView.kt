@@ -6,12 +6,14 @@
 package com.android.systemui.axdynamicbar.ui.widget
 
 import android.content.Context
+import android.graphics.BlendMode
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
+import android.graphics.RectF
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.graphics.drawable.Drawable
@@ -30,6 +32,7 @@ import androidx.core.graphics.drawable.toDrawable
 import com.android.systemui.res.R
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.min
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,7 +45,8 @@ import kotlinx.coroutines.withContext
  * Accord/Cupertino [BlendView]-style layered album backdrop: saturated art, blurred stack, two slow
  * rotating corner crops plus full-bleed, and `#59000000` veil on top ([R.color.ax_blend_front_shade]).
  * Built for embedding behind the Dynamic Bar expanded media card (narrow height); omits Accord’s
- * fullscreen blur-edge scale hack.
+ * fullscreen blur-edge scale hack. After the solid `#59000000` veil, draws a small aspect-fit curve
+ * veil ([R.drawable.ax_blend_curve_veil]) with [BlendMode.SOFT_LIGHT] (Accord-style plastic shimmer).
  */
 class MediaBlendBackdropView
 @JvmOverloads
@@ -80,8 +84,28 @@ constructor(
         private const val IMAGE_TRANSITION_MS = 400L
         /** Tighter cap so CenterCrop + blur reads as color haze, not sharp linework. */
         private const val MAX_ALBUM_BITMAP_SIDE_PX = 512
+
+        /** Raster size for [R.drawable.ax_blend_curve_veil] (kept moderate for one-time allocation). */
+        private const val CURVE_VEIL_RASTER_PX = 384
+
+        /**
+         * Accord uses ~30 + animation; static layer alpha for the gloss pass (SOFT_LIGHT blends down
+         * visually).
+         */
+        private const val CURVE_VEIL_LAYER_ALPHA = 42
         private val decodeLock = Any()
     }
+
+    private var curveVeilBitmap: Bitmap? = null
+
+    private val curveOverlayPaint =
+        Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+            isDither = true
+            alpha = CURVE_VEIL_LAYER_ALPHA
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                blendMode = BlendMode.SOFT_LIGHT
+            }
+        }
 
     init {
         inflate(context, R.layout.ax_media_blend_backdrop, this)
@@ -98,6 +122,42 @@ constructor(
 
         initSwitchers(imageCornerTl, imageCornerBr, imageBg)
         installBlurEffect()
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        ensureCurveVeilBitmap()
+    }
+
+    private fun ensureCurveVeilBitmap() {
+        if (curveVeilBitmap != null) return
+        val drawable =
+            ContextCompat.getDrawable(context, R.drawable.ax_blend_curve_veil)?.mutate()
+                ?: return
+        curveVeilBitmap =
+            drawable.toBitmap(CURVE_VEIL_RASTER_PX, CURVE_VEIL_RASTER_PX, Bitmap.Config.ARGB_8888)
+    }
+
+    private fun recycleCurveVeilBitmap() {
+        curveVeilBitmap?.recycle()
+        curveVeilBitmap = null
+    }
+
+    private fun drawCurveVeilIfReady(canvas: Canvas) {
+        val bmp = curveVeilBitmap ?: return
+        val viewWidth = width.toFloat()
+        val viewHeight = height.toFloat()
+        if (viewWidth < 1f || viewHeight < 1f) return
+
+        val bmpWidth = bmp.width.toFloat()
+        val bmpHeight = bmp.height.toFloat()
+        val scale = min(viewWidth / bmpWidth, viewHeight / bmpHeight)
+        val scaledWidth = bmpWidth * scale
+        val scaledHeight = bmpHeight * scale
+        val left = (viewWidth - scaledWidth) / 2f
+        val top = (viewHeight - scaledHeight) / 2f
+        val dstRect = RectF(left, top, left + scaledWidth, top + scaledHeight)
+        canvas.drawBitmap(bmp, null, dstRect, curveOverlayPaint)
     }
 
     private fun initSwitchers(vararg switchers: ImageSwitcher) {
@@ -144,6 +204,7 @@ constructor(
         super.dispatchDraw(canvas)
 
         canvas.drawColor(overlayColorInt)
+        drawCurveVeilIfReady(canvas)
     }
 
     /**
@@ -289,6 +350,7 @@ constructor(
         stopRotationLoop()
         enhanceJob?.cancel()
         supervisor.cancelChildren()
+        recycleCurveVeilBitmap()
         super.onDetachedFromWindow()
     }
 
