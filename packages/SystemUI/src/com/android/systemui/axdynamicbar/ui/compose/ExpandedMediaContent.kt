@@ -9,9 +9,18 @@ import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.LayerDrawable
 import android.util.TypedValue
 import android.widget.SeekBar
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -85,6 +94,11 @@ private val PlayPauseSize = 56.dp
 private val ControlButtonSize = 44.dp
 private val ControlIconSize = 22.dp
 private val SeekBarHeight = 28.dp
+
+/** Taller scrub hit-area + thicker bar for expanded cinematic media (was 28 dp / 4 dp track). */
+private val CinematicSeekGestureHeightDp = 44.dp
+
+private val CinematicSeekTrackThicknessDp = 8.dp
 private val MediaPopupCardShape = RoundedCornerShape(28.dp)
 private val CinematicArtBoxSize = 64.dp
 private val CinematicArtInnerRadius = RoundedCornerShape(11.dp)
@@ -114,12 +128,13 @@ private fun AccordCinematicLinearSeekVisual(
 ) {
     val trackAlpha = if (isPlaying || isScrubbing) 0.30f else 0.20f
     val fillAlpha = if (isPlaying || isScrubbing) 0.92f else 0.50f
+    val radius = CinematicSeekTrackThicknessDp / 2
     BoxWithConstraints(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
+                .height(CinematicSeekTrackThicknessDp)
+                .clip(RoundedCornerShape(radius))
                 .background(Color.White.copy(alpha = trackAlpha)),
     ) {
         val frac = displayFraction.coerceIn(0f, 1f)
@@ -341,40 +356,69 @@ internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
                     }
                 }
 
-                Column(
-                    modifier =
-                        Modifier.weight(1f).clickable {
-                            interactor.openMediaApp()
-                            interactor.collapseIsland()
-                        },
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                ) {
-                    Text(
-                        text = event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_now_playing) },
-                        style =
-                            TextStyle(
-                                color = onCard,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-0.2).sp,
-                            ),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    if (event.artist.isNotEmpty()) {
+                val openApp = {
+                    interactor.openMediaApp()
+                    interactor.collapseIsland()
+                }
+                val titleTarget =
+                    event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_now_playing) }
+                AnimatedContent(
+                    targetState = titleTarget to event.artist,
+                    modifier = Modifier.weight(1f),
+                    transitionSpec = {
+                        (
+                            fadeIn(
+                                animationSpec = tween(240, easing = FastOutSlowInEasing),
+                            ) + slideInVertically(
+                                animationSpec = tween(240, easing = FastOutSlowInEasing),
+                                initialOffsetY = { fullHeight -> fullHeight / 10 },
+                            )
+                        ) togetherWith (
+                            fadeOut(
+                                animationSpec = tween(200, easing = FastOutSlowInEasing),
+                            ) + slideOutVertically(
+                                animationSpec = tween(200, easing = FastOutSlowInEasing),
+                                targetOffsetY = { fullHeight -> -fullHeight / 10 },
+                            )
+                        )
+                    },
+                    label = "cinematic_media_metadata",
+                ) { (trackLine, artistLine) ->
+                    Column(
+                        modifier =
+                            Modifier.fillMaxWidth().clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { openApp() },
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
                         Text(
-                            text = event.artist,
+                            text = trackLine,
                             style =
                                 TextStyle(
-                                    color = onCardSub,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
+                                    color = onCard,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = (-0.2).sp,
                                 ),
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.fillMaxWidth(),
                         )
+                        if (artistLine.isNotEmpty()) {
+                            Text(
+                                text = artistLine,
+                                style =
+                                    TextStyle(
+                                        color = onCardSub,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                    ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
             }
@@ -879,7 +923,9 @@ private fun MediaSeekBar(
         }
     }
 
-    fun Modifier.seekAreaBase(): Modifier = this.fillMaxWidth().height(SeekBarHeight)
+    fun Modifier.seekAreaBase(): Modifier =
+        this.fillMaxWidth()
+            .height(if (cinematic) CinematicSeekGestureHeightDp else SeekBarHeight)
 
     val seekBox: @Composable () -> Unit = {
         Box(
