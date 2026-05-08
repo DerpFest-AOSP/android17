@@ -11,6 +11,10 @@ import android.util.TypedValue
 import android.widget.SeekBar
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -22,6 +26,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -71,6 +76,7 @@ import androidx.compose.ui.graphics.asComposeRenderEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -99,6 +105,9 @@ private val SeekBarHeight = 28.dp
 private val CinematicSeekGestureHeightDp = 44.dp
 
 private val CinematicSeekTrackThicknessDp = 8.dp
+
+/** Accord full-player `OverlaySlider` `app:resizeFactor` — track thickens while touched. */
+private const val AccordOverlaySeekResizeFactor = 2.5f
 private val MediaPopupCardShape = RoundedCornerShape(28.dp)
 private val CinematicArtBoxSize = 64.dp
 private val CinematicArtInnerRadius = RoundedCornerShape(11.dp)
@@ -117,23 +126,56 @@ private val AccordPreviewSideIconDp = 26.dp
 private val AccordPreviewMainIconDp = 24.dp
 
 /**
- * Thin progress line echoing Accord full-player `OverlaySlider` (without vendoring Cupertino).
+ * Thin progress line echoing Accord full-player `OverlaySlider` (without vendoring Cupertino):
+ * spring-thickened track ([AccordOverlaySeekResizeFactor]) and brighter fill while the pointer
+ * is down, matching `resizeFactor` + emphasize styling; progress still follows [displayFraction].
  */
 @Composable
 private fun AccordCinematicLinearSeekVisual(
     displayFraction: Float,
     isPlaying: Boolean,
     isScrubbing: Boolean,
+    seekPointerDown: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val trackAlpha = if (isPlaying || isScrubbing) 0.30f else 0.20f
-    val fillAlpha = if (isPlaying || isScrubbing) 0.92f else 0.50f
-    val radius = CinematicSeekTrackThicknessDp / 2
+    val interaction = seekPointerDown || isScrubbing
+    val trackHeight by animateDpAsState(
+        targetValue =
+            CinematicSeekTrackThicknessDp *
+                if (interaction) AccordOverlaySeekResizeFactor else 1f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+        label = "accordSeekTrackH",
+    )
+    val trackAlphaRest = if (isPlaying || isScrubbing) 0.30f else 0.20f
+    val fillAlphaRest = if (isPlaying || isScrubbing) 0.92f else 0.50f
+    val trackAlpha by animateFloatAsState(
+        targetValue = if (interaction) (trackAlphaRest + 0.10f).coerceAtMost(0.45f) else trackAlphaRest,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+        label = "accordSeekTrackA",
+    )
+    val fillAlpha by animateFloatAsState(
+        targetValue = if (interaction) 1f else fillAlphaRest,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+        label = "accordSeekFillA",
+    )
+    val radius = trackHeight / 2
     BoxWithConstraints(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(CinematicSeekTrackThicknessDp)
+                .height(trackHeight)
                 .clip(RoundedCornerShape(radius))
                 .background(Color.White.copy(alpha = trackAlpha)),
     ) {
@@ -811,6 +853,22 @@ private fun MediaSeekBar(
 
     var isScrubbing by remember { mutableStateOf(false) }
     var displayFraction by remember { mutableStateOf(serverFraction) }
+    var seekPointerDown by remember { mutableStateOf(false) }
+
+    val density = LocalDensity.current
+    val cinematicSeekEmphasis by animateFloatAsState(
+        targetValue = if (seekPointerDown || isScrubbing) 1f else 0f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+        label = "accordSeekEmphasis",
+    )
+    val cinematicLabelParallaxPx =
+        (displayFraction - 0.5f).coerceIn(-0.5f, 0.5f) *
+            with(density) { 26.dp.toPx() } *
+            cinematicSeekEmphasis
 
     val interactorRef = rememberUpdatedState(interactor)
 
@@ -956,12 +1014,30 @@ private fun MediaSeekBar(
                     style = timeStyle,
                     textAlign = TextAlign.Start,
                     maxLines = 1,
-                    modifier = Modifier.width(CinematicTimeSlotWidth),
+                    modifier =
+                        Modifier.width(CinematicTimeSlotWidth).graphicsLayer {
+                            translationX = -cinematicLabelParallaxPx
+                            translationY = cinematicSeekEmphasis * 4.dp.toPx()
+                        },
                 )
                 Box(
                     modifier =
                         Modifier.weight(1f, fill = true)
                             .seekAreaBase()
+                            .pointerInput(Unit) {
+                                awaitEachGesture {
+                                    awaitFirstDown(requireUnconsumed = false)
+                                    seekPointerDown = true
+                                    try {
+                                        while (true) {
+                                            val event = awaitPointerEvent()
+                                            if (event.changes.all { !it.pressed }) break
+                                        }
+                                    } finally {
+                                        seekPointerDown = false
+                                    }
+                                }
+                            }
                             .mediaSeekBarGestures(),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -969,6 +1045,7 @@ private fun MediaSeekBar(
                         displayFraction = displayFraction,
                         isPlaying = isPlaying,
                         isScrubbing = isScrubbing,
+                        seekPointerDown = seekPointerDown,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -978,7 +1055,11 @@ private fun MediaSeekBar(
                     style = timeStyle,
                     textAlign = TextAlign.End,
                     maxLines = 1,
-                    modifier = Modifier.width(CinematicTimeSlotWidth),
+                    modifier =
+                        Modifier.width(CinematicTimeSlotWidth).graphicsLayer {
+                            translationX = cinematicLabelParallaxPx
+                            translationY = cinematicSeekEmphasis * 4.dp.toPx()
+                        },
                 )
             }
         } else {
