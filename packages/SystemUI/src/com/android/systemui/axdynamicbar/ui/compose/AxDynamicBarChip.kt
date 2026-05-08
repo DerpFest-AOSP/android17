@@ -2,13 +2,7 @@ package com.android.systemui.axdynamicbar.ui.compose
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.LaunchedEffect
 import kotlin.math.abs
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +28,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -77,7 +70,6 @@ import com.android.systemui.axdynamicbar.shared.chipAccentColorFor
 import com.android.systemui.axdynamicbar.shared.chipContentColorOn
 import com.android.systemui.axdynamicbar.shared.chipProgressFor
 import com.android.systemui.axdynamicbar.shared.statusBarDynamicChipFill
-import com.android.systemui.axdynamicbar.shared.iconKeyFor
 import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
@@ -179,196 +171,191 @@ fun AxDynamicBarChip(
                 onClick = null,
                 defaultMinSize = false,
             ) { _ ->
-            AnimatedContent(
-                targetState = ChipDisplay(displayEvent, isAlert),
-                transitionSpec = {
-                    (fadeIn(motionScheme.defaultEffectsSpec()) + scaleIn(initialScale = 0.92f, animationSpec = motionScheme.defaultSpatialSpec())) togetherWith
-                        (fadeOut(motionScheme.fastEffectsSpec()) + scaleOut(targetScale = 0.92f, animationSpec = motionScheme.fastSpatialSpec())) using
-                        SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() })
-                },
-                contentKey = { if (it.isAlert) "alert" else it.event::class.simpleName },
-                label = "chip_event",
-            ) { display ->
-                val rawAccent = chipAccentColorFor(display.event)
-                val targetFill = statusBarDynamicChipFill(rawAccent)
-                val fillColor by animateColorAsState(
-                    targetFill, MaterialTheme.motionScheme.fastEffectsSpec(), label = "chip_fill",
-                )
-                val contentColor by animateColorAsState(
-                    chipContentColorOn(targetFill),
-                    MaterialTheme.motionScheme.fastEffectsSpec(),
-                    label = "content",
-                )
-                val rawProgress = chipProgressFor(display.event)
-                val progressTarget = rawProgress ?: 0f
-                val progressAnim = remember { Animatable(progressTarget) }
-                LaunchedEffect(progressTarget) {
-                    if (abs(progressTarget - progressAnim.value) > 0.05f) {
-                        progressAnim.animateTo(progressTarget, tween(300, easing = FastOutSlowInEasing))
-                    } else {
-                        progressAnim.snapTo(progressTarget)
-                    }
-                }
-                val progress = if (rawProgress != null) progressAnim.value else null
-
-                Box(
-                    modifier = Modifier.fillMaxHeight(),
-                    contentAlignment = Alignment.Center,
+                AnimatedContent(
+                    targetState = chipDisplayKey(displayEvent, isAlert),
+                    transitionSpec = {
+                        ((
+                            fadeIn(motionScheme.defaultEffectsSpec()) +
+                                scaleIn(
+                                    initialScale = 0.92f,
+                                    animationSpec = motionScheme.defaultSpatialSpec(),
+                                )
+                            ) togetherWith (
+                            fadeOut(motionScheme.fastEffectsSpec()) +
+                                scaleOut(
+                                    targetScale = 0.92f,
+                                    animationSpec = motionScheme.fastSpatialSpec(),
+                                )
+                            ))
+                            .using(sizeTransform = null)
+                    },
+                    label = "chip_event",
                 ) {
-                    Row(
-                        modifier =
-                            Modifier.height(ChipHeight)
-                                .widthIn(max = 100.dp)
-                                .clip(ChipShape)
-                                .background(fillColor)
-                                .animateContentSize(motionScheme.defaultSpatialSpec())
-                                .then(
-                                    if (progress != null) {
-                                        val trackColor = lerp(fillColor, contentColor, 0.2f)
-                                        val progressFill = lerp(fillColor, contentColor, 0.6f)
-                                        Modifier.drawWithContent {
-                                            drawContent()
-                                            val barH = 2.dp.toPx()
-                                            val y = size.height - barH
-                                            drawRect(
-                                                trackColor,
-                                                topLeft = Offset(0f, y),
-                                                size = Size(size.width, barH),
-                                            )
-                                            drawRect(
-                                                progressFill,
-                                                topLeft = Offset(0f, y),
-                                                size = Size(size.width * progress, barH),
-                                            )
-                                        }
-                                    } else Modifier
-                                )
-                                .padding(start = SpaceSm, end = SpaceMd),
-                        verticalAlignment = Alignment.CenterVertically,
+                    val rawAccent = chipAccentColorFor(displayEvent)
+                    val targetFill = statusBarDynamicChipFill(rawAccent)
+                    val fillColor by animateColorAsState(
+                        targetFill, MaterialTheme.motionScheme.fastEffectsSpec(), label = "chip_fill",
+                    )
+                    val contentColor by animateColorAsState(
+                        chipContentColorOn(targetFill),
+                        MaterialTheme.motionScheme.fastEffectsSpec(),
+                        label = "content",
+                    )
+                    val progress = chipProgressFor(displayEvent)
+
+                    Box(
+                        modifier = Modifier.fillMaxHeight(),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        if (carrierName != null) {
-                            Text(
-                                text = carrierName,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = contentColor.copy(alpha = AlphaSecondary),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.widthIn(max = 56.dp),
-                            )
-                            Text(
-                                text = " · ",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = contentColor.copy(alpha = AlphaTertiary),
-                            )
-                        }
-                        if (display.isAlert && display.event is IslandEvent.Notification) {
-                            AnimatedContent(
-                                targetState = display.event,
-                                transitionSpec = {
-                                    (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith fadeOut(motionScheme.fastEffectsSpec()))
-                                        .using(sizeTransform = null)
-                                },
-                                contentKey = {
-                                    (it as? IslandEvent.Notification)?.sbn?.key
-                                },
-                                label = "alert_content",
-                            ) { event ->
-                                val notif = event as IslandEvent.Notification
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    notif.appIcon?.let { icon ->
-                                        Image(
-                                            bitmap = icon.toScaledBitmap(16.dp),
-                                            contentDescription = null,
+                        Row(
+                            modifier =
+                                Modifier.height(ChipHeight)
+                                    .widthIn(max = 100.dp)
+                                    .clip(ChipShape)
+                                    .background(fillColor)
+                                    .then(
+                                        if (progress != null) {
+                                            val trackColor = lerp(fillColor, contentColor, 0.2f)
+                                            val progressFill = lerp(fillColor, contentColor, 0.6f)
+                                            Modifier.drawWithContent {
+                                                drawContent()
+                                                val barH = 2.dp.toPx()
+                                                val y = size.height - barH
+                                                drawRect(
+                                                    trackColor,
+                                                    topLeft = Offset(0f, y),
+                                                    size = Size(size.width, barH),
+                                                )
+                                                drawRect(
+                                                    progressFill,
+                                                    topLeft = Offset(0f, y),
+                                                    size = Size(size.width * progress, barH),
+                                                )
+                                            }
+                                        } else {
+                                            Modifier
+                                        },
+                                    )
+                                    .padding(start = SpaceSm, end = SpaceMd),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (carrierName != null) {
+                                Text(
+                                    text = carrierName,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = contentColor.copy(alpha = AlphaSecondary),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 56.dp),
+                                )
+                                Text(
+                                    text = " · ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = contentColor.copy(alpha = AlphaTertiary),
+                                )
+                            }
+                            if (isAlert && displayEvent is IslandEvent.Notification) {
+                                val notif = displayEvent
+                                AnimatedContent(
+                                    targetState = notif.sbn.key,
+                                    transitionSpec = {
+                                        (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                                            fadeOut(motionScheme.fastEffectsSpec()))
+                                            .using(sizeTransform = null)
+                                    },
+                                    label = "alert_content",
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        notif.appIcon?.let { icon ->
+                                            Image(
+                                                bitmap = icon.toScaledBitmap(16.dp),
+                                                contentDescription = null,
+                                                modifier =
+                                                    Modifier.size(16.dp)
+                                                        .clip(ShapeXs),
+                                                contentScale = ContentScale.Crop,
+                                            )
+                                            Spacer(Modifier.width(SpaceXs))
+                                        }
+                                        Text(
+                                            text = notif.appName ?: "",
+                                            style = PillPrimary,
+                                            color = contentColor,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             modifier =
-                                                Modifier.size(16.dp)
-                                                    .clip(ShapeXs),
-                                            contentScale = ContentScale.Crop,
+                                                Modifier.widthIn(max = chipTextMaxWidth)
+                                                    .basicMarquee(iterations = 1),
                                         )
-                                        Spacer(Modifier.width(SpaceXs))
                                     }
-                                    Text(
-                                        text = notif.appName ?: "",
-                                        style = PillPrimary,
-                                        color = contentColor,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.widthIn(max = chipTextMaxWidth).basicMarquee(iterations = 1),
+                                }
+                            } else if (displayEvent is IslandEvent.Sports && displayEvent.team2Name.isNotEmpty()) {
+                                val sport = displayEvent
+                                StatusBarSportsTeamBadge(sport.team1Name, sport.team1Icon, contentColor)
+                                Spacer(Modifier.width(SpaceXs))
+                                Text(
+                                    if (sport.score1.isNotEmpty()) "${sport.score1} - ${sport.score2}"
+                                    else stringResource(R.string.ax_dynamic_bar_sports_vs),
+                                    style = PillPrimary,
+                                    color = contentColor,
+                                    maxLines = 1,
+                                )
+                                Spacer(Modifier.width(SpaceXs))
+                                StatusBarSportsTeamBadge(sport.team2Name, sport.team2Icon, contentColor)
+                            } else {
+                                AnimatedContent(
+                                    targetState = chipIconKey(displayEvent),
+                                    transitionSpec = {
+                                        (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                                            fadeOut(motionScheme.fastEffectsSpec()))
+                                            .using(sizeTransform = null)
+                                    },
+                                    label = "chip_icon",
+                                ) {
+                                    PillEventIcon(displayEvent, tint = contentColor, animated = false)
+                                }
+                                Spacer(Modifier.width(SpaceXs))
+                                AnimatedContent(
+                                    targetState = textKeyFor(displayEvent),
+                                    transitionSpec = {
+                                        (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                                            fadeOut(motionScheme.fastEffectsSpec()))
+                                            .using(sizeTransform = null)
+                                    },
+                                    label = "chip_text",
+                                    modifier = Modifier.weight(1f, fill = false).widthIn(max = chipTextMaxWidth),
+                                ) {
+                                    PillEventText(
+                                        displayEvent,
+                                        Modifier.widthIn(max = chipTextMaxWidth),
+                                        overrideColor = contentColor,
                                     )
                                 }
-                            }
-                        } else if (display.event is IslandEvent.Sports && (display.event as IslandEvent.Sports).team2Name.isNotEmpty()) {
-                            val sport = display.event as IslandEvent.Sports
-                            StatusBarSportsTeamBadge(sport.team1Name, sport.team1Icon, contentColor)
-                            Spacer(Modifier.width(SpaceXs))
-                            Text(
-                                if (sport.score1.isNotEmpty()) "${sport.score1} - ${sport.score2}"
-                                    else stringResource(R.string.ax_dynamic_bar_sports_vs),
-                                style = PillPrimary,
-                                color = contentColor,
-                                maxLines = 1,
-                            )
-                            Spacer(Modifier.width(SpaceXs))
-                            StatusBarSportsTeamBadge(sport.team2Name, sport.team2Icon, contentColor)
-                        } else {
-                            AnimatedContent(
-                                targetState = display.event,
-                                transitionSpec = {
-                                    (fadeIn(motionScheme.defaultEffectsSpec()) +
-                                        scaleIn(initialScale = 0.85f, animationSpec = motionScheme.defaultSpatialSpec())) togetherWith
-                                        (fadeOut(motionScheme.fastEffectsSpec()) +
-                                            scaleOut(targetScale = 0.85f, animationSpec = motionScheme.fastSpatialSpec())) using
-                                        SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() })
-                                },
-                                contentKey = { iconKeyFor(it) },
-                                label = "chip_icon",
-                            ) { event ->
-                                PillEventIcon(event, tint = contentColor)
-                            }
-                            Spacer(Modifier.width(SpaceXs))
-                            AnimatedContent(
-                                targetState = display.event,
-                                transitionSpec = {
-                                    (fadeIn(motionScheme.defaultEffectsSpec()) +
-                                        scaleIn(initialScale = 0.85f, animationSpec = motionScheme.defaultSpatialSpec())) togetherWith
-                                        (fadeOut(motionScheme.fastEffectsSpec()) +
-                                            scaleOut(targetScale = 0.85f, animationSpec = motionScheme.fastSpatialSpec())) using
-                                        SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() })
-                                },
-                                contentKey = { textKeyFor(it) },
-                                label = "chip_text",
-                                modifier = Modifier.weight(1f, fill = false).widthIn(max = chipTextMaxWidth),
-                            ) { event ->
-                                PillEventText(
-                                    event,
-                                    Modifier.widthIn(max = chipTextMaxWidth),
-                                    overrideColor = contentColor,
-                                )
-                            }
-                            if (chipState.eventCount > 1) {
-                                Spacer(Modifier.width(SpaceXs))
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .height(SizeBadge)
-                                        .widthIn(min = SizeBadge)
-                                        .background(
-                                            lerp(fillColor, contentColor, 0.3f),
-                                            RoundedCornerShape(SizeBadge / 2),
+                                if (chipState.eventCount > 1) {
+                                    Spacer(Modifier.width(SpaceXs))
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .height(SizeBadge)
+                                            .widthIn(min = SizeBadge)
+                                            .background(
+                                                lerp(fillColor, contentColor, 0.3f),
+                                                RoundedCornerShape(SizeBadge / 2),
+                                            )
+                                            .padding(horizontal = 3.dp),
+                                    ) {
+                                        Text(
+                                            text = "${chipState.eventCount}",
+                                            style = TsBadge,
+                                            color = contentColor,
+                                            maxLines = 1,
                                         )
-                                        .padding(horizontal = 3.dp),
-                                ) {
-                                    Text(
-                                        text = "${chipState.eventCount}",
-                                        style = TsBadge,
-                                        color = contentColor,
-                                        maxLines = 1,
-                                    )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
             }
         }
     }
@@ -399,5 +386,16 @@ private fun StatusBarSportsTeamBadge(name: String, icon: Drawable?, contentColor
     }
 }
 
-private data class ChipDisplay(val event: IslandEvent, val isAlert: Boolean)
+private fun chipDisplayKey(event: IslandEvent, isAlert: Boolean): String =
+    if (isAlert) "alert:${event.id}" else event.id
 
+private fun chipIconKey(event: IslandEvent): Any =
+    when (event) {
+        is IslandEvent.AppSwitch -> {
+            val app = event.previousApp ?: event.recentApps.firstOrNull()
+            app?.taskId ?: app?.packageName ?: event.id
+        }
+        is IslandEvent.Media -> event.albumArt ?: event.packageName
+        is IslandEvent.Notification -> event.sbn.key
+        else -> event.id
+    }
