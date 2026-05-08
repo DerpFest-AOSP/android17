@@ -42,6 +42,11 @@
     <!-- CPUInfo tile -->
     <string name="quick_settings_cpuinfo_label">CPU-Info</string>
 
+    <!-- Blur QS tile -->
+    <string name="quick_settings_blur_label">Unschärfe</string>
+    <string name="accessibility_quick_settings_blur_off">Unschärfe aus.</string>
+    <string name="accessibility_quick_settings_blur_on">Unschärfe an.</string>
+
     <!-- Compass QS Tile -->
     <string name="quick_settings_compass_label">Kompass</string>
     <string name="quick_settings_compass_value"><xliff:g id="degrees">%1$.0f</xliff:g>\u00b0<xliff:g id="direction">%2$s</xliff:g></string>
