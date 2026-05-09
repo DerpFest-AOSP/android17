@@ -73,13 +73,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -104,10 +105,13 @@ private val SeekBarHeight = 28.dp
 /** Taller scrub hit-area + thicker bar for expanded cinematic media (was 28 dp / 4 dp track). */
 private val CinematicSeekGestureHeightDp = 44.dp
 
-private val CinematicSeekTrackThicknessDp = 8.dp
+private val CinematicSeekTrackThicknessDp = 7.dp
 
-/** Accord full-player `OverlaySlider` `app:resizeFactor` — track thickens while touched. */
-private const val AccordOverlaySeekResizeFactor = 2.5f
+/** Accord full-player `OverlaySlider` `app:resizeFactor` — track thickens while touched (tuned down vs stock 2.5). */
+private const val AccordOverlaySeekResizeFactor = 1.55f
+
+/** Elapsed/duration labels: light emphasis on scrub (track grows more than text). */
+private const val CinematicSeekTimeScaleFactor = 1.08f
 private val MediaPopupCardShape = RoundedCornerShape(28.dp)
 private val CinematicArtBoxSize = 64.dp
 private val CinematicArtInnerRadius = RoundedCornerShape(11.dp)
@@ -854,21 +858,29 @@ private fun MediaSeekBar(
     var isScrubbing by remember { mutableStateOf(false) }
     var displayFraction by remember { mutableStateOf(serverFraction) }
     var seekPointerDown by remember { mutableStateOf(false) }
+    var cinematicOverscrollPx by remember { mutableStateOf(0f) }
 
-    val density = LocalDensity.current
-    val cinematicSeekEmphasis by animateFloatAsState(
-        targetValue = if (seekPointerDown || isScrubbing) 1f else 0f,
+    val cinematicOverscrollAnimatedPx by animateFloatAsState(
+        targetValue = cinematicOverscrollPx,
         animationSpec =
             spring(
                 dampingRatio = Spring.DampingRatioNoBouncy,
                 stiffness = Spring.StiffnessMedium,
             ),
-        label = "accordSeekEmphasis",
+        label = "accordSeekEdgeOverscroll",
     )
-    val cinematicLabelParallaxPx =
-        (displayFraction - 0.5f).coerceIn(-0.5f, 0.5f) *
-            with(density) { 26.dp.toPx() } *
-            cinematicSeekEmphasis
+
+    val cinematicSeekEmphasized = cinematic && (seekPointerDown || isScrubbing)
+    val cinematicTimeScale by animateFloatAsState(
+        targetValue =
+            if (cinematicSeekEmphasized) CinematicSeekTimeScaleFactor else 1f,
+        animationSpec =
+            spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMedium,
+            ),
+        label = "accordSeekTimeScale",
+    )
 
     val interactorRef = rememberUpdatedState(interactor)
 
@@ -918,6 +930,7 @@ private fun MediaSeekBar(
                 color = labelColor,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Medium,
+                platformStyle = PlatformTextStyle(includeFontPadding = false),
             )
         } else {
             MaterialTheme.typography.labelSmall.copy(color = labelColor)
@@ -948,16 +961,48 @@ private fun MediaSeekBar(
                 detectHorizontalDragGestures(
                     onDragStart = { offset ->
                         isScrubbing = true
-                        displayFraction = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        val width = size.width.toFloat().coerceAtLeast(1f)
+                        val rawFraction = offset.x / width
+                        displayFraction = rawFraction.coerceIn(0f, 1f)
+                        cinematicOverscrollPx =
+                            if (cinematic) {
+                                val overshootFraction =
+                                    when {
+                                        rawFraction < 0f -> rawFraction
+                                        rawFraction > 1f -> rawFraction - 1f
+                                        else -> 0f
+                                    }
+                                // Match Accord edge-pull feel: damp motion at 0%/100%.
+                                (overshootFraction * width * 0.18f).coerceIn(-28f, 28f)
+                            } else {
+                                0f
+                            }
                     },
                     onDragEnd = {
                         interactorRef.value.seekTo((displayFraction * durationMs).toLong())
                         isScrubbing = false
+                        cinematicOverscrollPx = 0f
                     },
-                    onDragCancel = { isScrubbing = false },
+                    onDragCancel = {
+                        isScrubbing = false
+                        cinematicOverscrollPx = 0f
+                    },
                     onHorizontalDrag = { change, _ ->
-                        displayFraction =
-                            (change.position.x / size.width.toFloat()).coerceIn(0f, 1f)
+                        val width = size.width.toFloat().coerceAtLeast(1f)
+                        val rawFraction = change.position.x / width
+                        displayFraction = rawFraction.coerceIn(0f, 1f)
+                        cinematicOverscrollPx =
+                            if (cinematic) {
+                                val overshootFraction =
+                                    when {
+                                        rawFraction < 0f -> rawFraction
+                                        rawFraction > 1f -> rawFraction - 1f
+                                        else -> 0f
+                                    }
+                                (overshootFraction * width * 0.18f).coerceIn(-28f, 28f)
+                            } else {
+                                0f
+                            }
                         change.consume()
                     },
                 )
@@ -1004,22 +1049,32 @@ private fun MediaSeekBar(
     Column(verticalArrangement = Arrangement.spacedBy(SpaceXs)) {
         if (cinematic) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                    Modifier.fillMaxWidth().graphicsLayer {
+                        translationX = cinematicOverscrollAnimatedPx
+                    },
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(SpaceMd),
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
             ) {
-                Text(
-                    text = formatElapsedTime(displayMs),
-                    color = labelColor,
-                    style = timeStyle,
-                    textAlign = TextAlign.Start,
-                    maxLines = 1,
+                Box(
                     modifier =
-                        Modifier.width(CinematicTimeSlotWidth).graphicsLayer {
-                            translationX = -cinematicLabelParallaxPx
-                            translationY = cinematicSeekEmphasis * 4.dp.toPx()
-                        },
-                )
+                        Modifier.width(CinematicTimeSlotWidth).seekAreaBase(),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    Text(
+                        text = formatElapsedTime(displayMs),
+                        color = labelColor,
+                        style = timeStyle,
+                        textAlign = TextAlign.Start,
+                        maxLines = 1,
+                        modifier =
+                            Modifier.graphicsLayer {
+                                transformOrigin = TransformOrigin(0f, 0.5f)
+                                scaleX = cinematicTimeScale
+                                scaleY = cinematicTimeScale
+                            },
+                    )
+                }
                 Box(
                     modifier =
                         Modifier.weight(1f, fill = true)
@@ -1049,18 +1104,25 @@ private fun MediaSeekBar(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                Text(
-                    text = formatElapsedTime(durationMs),
-                    color = labelColor,
-                    style = timeStyle,
-                    textAlign = TextAlign.End,
-                    maxLines = 1,
+                Box(
                     modifier =
-                        Modifier.width(CinematicTimeSlotWidth).graphicsLayer {
-                            translationX = cinematicLabelParallaxPx
-                            translationY = cinematicSeekEmphasis * 4.dp.toPx()
-                        },
-                )
+                        Modifier.width(CinematicTimeSlotWidth).seekAreaBase(),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    Text(
+                        text = formatElapsedTime(durationMs),
+                        color = labelColor,
+                        style = timeStyle,
+                        textAlign = TextAlign.End,
+                        maxLines = 1,
+                        modifier =
+                            Modifier.graphicsLayer {
+                                transformOrigin = TransformOrigin(1f, 0.5f)
+                                scaleX = cinematicTimeScale
+                                scaleY = cinematicTimeScale
+                            },
+                    )
+                }
             }
         } else {
             timeRow()
