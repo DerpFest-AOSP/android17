@@ -20,6 +20,7 @@ import android.content.Context
 import com.android.systemui.animation.DialogTransitionAnimator
 import com.android.systemui.broadcast.BroadcastDispatcher
 import com.android.systemui.dagger.qualifiers.Application
+import com.android.systemui.statusbar.BlurUtils
 import com.android.systemui.util.Assert
 import javax.inject.Inject
 
@@ -31,6 +32,7 @@ constructor(
     private val dialogManager: SystemUIDialogManager,
     private val broadcastDispatcher: BroadcastDispatcher,
     private val dialogTransitionAnimator: DialogTransitionAnimator,
+    val blurUtils: BlurUtils,
 ) {
     /**
      * Create a new [ComponentSystemUIDialog].
