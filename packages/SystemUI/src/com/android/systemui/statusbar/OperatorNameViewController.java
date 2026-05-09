@@ -122,23 +122,15 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
                 mView.getContext().getContentResolver(),
                 Settings.System.LOCKSCREEN_SHOW_CARRIER, 1, UserHandle.USER_CURRENT);
         // 2 = status bar only, 3 = both
-        boolean showCarrierInStatusBar = (carrierMode == 2 || carrierMode == 3);
-        boolean showOperatorName =
-                showCarrierInStatusBar
-                        && mCarrierConfigTracker
-                                .getShowOperatorNameInStatusBarConfig(defaultSubInfo.getSubId())
-                        && (mTunerService.getValue(
-                                KEY_SHOW_OPERATOR_NAME,
-                                mView.getResources()
-                                        .getInteger(
-                                                com.android.internal.R.integer
-                                                        .config_showOperatorNameDefault))
-                                != 0);
+        // The user's choice is the source of truth; carrier-config / Tuner gates are intentionally
+        // bypassed since they default to false for nearly all carriers and would otherwise
+        // override the user setting.
+        boolean showOperatorName = (carrierMode == 2 || carrierMode == 3);
         mView.update(
                 showOperatorName,
                 mTelephonyManager.isDataCapable(),
                 mAirplaneModeInteractor.isAirplaneMode().getValue(),
-                getDefaultSubInfo()
+                defaultSubInfo
         );
     }
 

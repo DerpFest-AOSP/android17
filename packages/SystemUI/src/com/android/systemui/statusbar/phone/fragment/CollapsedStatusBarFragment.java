@@ -998,19 +998,19 @@ public class CollapsedStatusBarFragment extends Fragment implements CommandQueue
     }
 
     private void initOperatorName() {
-        int subId = SubscriptionManager.getDefaultDataSubscriptionId();
-        if (mCarrierConfigTracker.getShowOperatorNameInStatusBarConfig(subId)) {
-            View view = mStatusBar.findViewById(R.id.operator_name);
-            mOperatorNameViewController =
-                    mOperatorNameViewControllerFactory.create(
-                            (OperatorNameView) view,
-                            mHomeStatusBarComponent.getDarkIconDispatcher());
-            mOperatorNameViewController.init();
-            // This view should not be visible on lock-screen
-            if (mKeyguardStateController.isShowing()) {
-                if (!StatusBarRootModernization.isEnabled()) {
-                    hideOperatorName(false);
-                }
+        // Always create the controller so the user-controlled
+        // Settings.System#LOCKSCREEN_SHOW_CARRIER preference can drive visibility, regardless of
+        // the carrier-config default (which is `false` for nearly all carriers).
+        View view = mStatusBar.findViewById(R.id.operator_name);
+        mOperatorNameViewController =
+                mOperatorNameViewControllerFactory.create(
+                        (OperatorNameView) view,
+                        mHomeStatusBarComponent.getDarkIconDispatcher());
+        mOperatorNameViewController.init();
+        // This view should not be visible on lock-screen
+        if (mKeyguardStateController.isShowing()) {
+            if (!StatusBarRootModernization.isEnabled()) {
+                hideOperatorName(false);
             }
         }
     }

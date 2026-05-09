@@ -21,13 +21,10 @@ import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent.PerDispla
 import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
 import com.android.systemui.statusbar.disableflags.domain.interactor.DisableFlagsInteractor
 import com.android.systemui.statusbar.pipeline.airplane.domain.interactor.AirplaneModeInteractor
-import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.CarrierConfigInteractor
 import com.android.systemui.statusbar.pipeline.shared.domain.model.StatusBarDisableFlagsVisibilityModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /**
@@ -39,7 +36,6 @@ class HomeStatusBarInteractor
 @Inject
 constructor(
     airplaneModeInteractor: AirplaneModeInteractor,
-    carrierConfigInteractor: CarrierConfigInteractor,
     disableFlagsInteractor: DisableFlagsInteractor,
     systemSettingsRepository: SystemSettingsRepository,
 ) {
@@ -57,26 +53,25 @@ constructor(
             )
         }
 
-    private val defaultDataSubConfigShowOperatorView =
-        carrierConfigInteractor.defaultDataSubscriptionCarrierConfig.flatMapLatest {
-            it?.showOperatorNameInStatusBar ?: flowOf(false)
-        }
-
     // 2 = status bar only, 3 = both
     private val showCarrierInStatusBar: Flow<Boolean> =
-        systemSettingsRepository.intSetting(Settings.System.LOCKSCREEN_SHOW_CARRIER, 1).map { it == 2 || it == 3 }
+        systemSettingsRepository
+            .intSetting(Settings.System.LOCKSCREEN_SHOW_CARRIER, 1)
+            .map { it == 2 || it == 3 }
 
     /**
-     * True if the carrier config for the default data subscription has
-     * [SystemUiCarrierConfig.showOperatorNameInStatusBar] set, the device is not in airplane
-     * mode, and the user has enabled showing carrier in the status bar (Settings).
+     * True if the user has enabled showing the carrier in the status bar (via
+     * [Settings.System.LOCKSCREEN_SHOW_CARRIER]) and the device is not in airplane mode.
+     *
+     * Note: The original carrier-config gate
+     * ([SystemUiCarrierConfig.showOperatorNameInStatusBar]) is intentionally bypassed: the
+     * user-controlled setting is treated as the source of truth so the toggle works regardless of
+     * carrier defaults (which are `false` for nearly all carriers).
      */
     val shouldShowOperatorName: Flow<Boolean> =
-        combine(
-            defaultDataSubConfigShowOperatorView,
-            airplaneModeInteractor.isAirplaneMode,
-            showCarrierInStatusBar,
-        ) { showOperatorName, isAirplaneMode, showCarrier ->
-            showOperatorName && !isAirplaneMode && showCarrier
-        }
+        combine(airplaneModeInteractor.isAirplaneMode, showCarrierInStatusBar) {
+                isAirplaneMode,
+                showCarrier ->
+                !isAirplaneMode && showCarrier
+            }
 }

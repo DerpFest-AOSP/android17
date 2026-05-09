@@ -17,6 +17,8 @@
 package com.android.systemui.statusbar
 
 import android.content.res.Resources
+import android.os.UserHandle
+import android.provider.Settings
 import android.telephony.ServiceState
 import android.telephony.SubscriptionInfo
 import android.telephony.TelephonyManager
@@ -82,6 +84,15 @@ class OperatorNameViewControllerTest : SysuiTestCase() {
         testableResources.addOverride(
             com.android.internal.R.integer.config_showOperatorNameDefault,
             1,
+        )
+
+        // Visibility is gated by the user-controlled LOCKSCREEN_SHOW_CARRIER setting; enable the
+        // status-bar option so the tests exercise the actual operator-name rendering paths.
+        Settings.System.putIntForUser(
+            mContext.contentResolver,
+            Settings.System.LOCKSCREEN_SHOW_CARRIER,
+            2, // 2 = status bar only
+            UserHandle.USER_CURRENT,
         )
 
         airplaneModeInteractor =

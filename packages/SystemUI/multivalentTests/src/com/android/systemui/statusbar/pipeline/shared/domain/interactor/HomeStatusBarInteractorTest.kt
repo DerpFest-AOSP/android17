@@ -21,7 +21,6 @@ import android.app.StatusBarManager.DISABLE_CLOCK
 import android.app.StatusBarManager.DISABLE_NONE
 import android.app.StatusBarManager.DISABLE_NOTIFICATION_ICONS
 import android.app.StatusBarManager.DISABLE_SYSTEM_INFO
-import android.telephony.CarrierConfigManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.android.systemui.SysuiTestCase
@@ -32,10 +31,6 @@ import com.android.systemui.statusbar.disableflags.data.repository.fakeDisableFl
 import com.android.systemui.statusbar.disableflags.shared.model.DisableFlagsModel
 import com.android.systemui.statusbar.pipeline.airplane.data.repository.airplaneModeRepository
 import com.android.systemui.statusbar.pipeline.airplane.data.repository.fake
-import com.android.systemui.statusbar.pipeline.mobile.data.model.SystemUiCarrierConfig
-import com.android.systemui.statusbar.pipeline.mobile.data.repository.carrierConfigRepository
-import com.android.systemui.statusbar.pipeline.mobile.data.repository.configWithOverride
-import com.android.systemui.statusbar.pipeline.mobile.data.repository.fake
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.fakeMobileIconsInteractor
 import com.android.systemui.statusbar.pipeline.shared.connectivityConstants
 import com.android.systemui.statusbar.pipeline.shared.fake
@@ -106,25 +101,17 @@ class HomeStatusBarInteractorTest : SysuiTestCase() {
         }
 
     @Test
-    fun shouldShowOperatorName_trueIfCarrierConfigSaysSoAndDeviceHasData() =
+    fun shouldShowOperatorName_trueIfUserEnabledAndNotInAirplaneMode() =
         kosmos.runTest {
             // GIVEN default data subId is 1
             fakeMobileIconsInteractor.defaultDataSubId.value = 1
-            // GIVEN Config is enabled
-            carrierConfigRepository.fake.configsById[1] =
-                SystemUiCarrierConfig(
-                    1,
-                    configWithOverride(
-                        CarrierConfigManager.KEY_SHOW_OPERATOR_NAME_IN_STATUSBAR_BOOL,
-                        true,
-                    ),
-                )
-
             // GIVEN airplane mode is off
             airplaneModeRepository.fake.isAirplaneMode.value = false
-
             // GIVEN hasDataCapabilities is true
             connectivityConstants.fake.hasDataCapabilities = true
+
+            // GIVEN the user has chosen to show the carrier in the status bar
+            setHomeStatusBarInteractorShowOperatorName(true)
 
             val latest by collectLastValue(underTest.shouldShowOperatorName)
 
@@ -133,49 +120,15 @@ class HomeStatusBarInteractorTest : SysuiTestCase() {
         }
 
     @Test
-    fun shouldShowOperatorName_falseNoDataCapabilities() =
-        kosmos.runTest {
-            // GIVEN default data subId is 1
-            fakeMobileIconsInteractor.defaultDataSubId.value = 1
-            // GIVEN Config is enabled
-            carrierConfigRepository.fake.configsById[1] =
-                SystemUiCarrierConfig(
-                    1,
-                    configWithOverride(
-                        CarrierConfigManager.KEY_SHOW_OPERATOR_NAME_IN_STATUSBAR_BOOL,
-                        true,
-                    ),
-                )
-
-            // GIVEN airplane mode is off
-            airplaneModeRepository.fake.isAirplaneMode.value = true
-
-            // WHEN hasDataCapabilities is false
-            connectivityConstants.fake.hasDataCapabilities = false
-
-            val latest by collectLastValue(underTest.shouldShowOperatorName)
-
-            // THEN we should not show the operator name
-            assertThat(latest).isFalse()
-        }
-
-    @Test
-    fun shouldShowOperatorName_falseWhenConfigIsOff() =
+    fun shouldShowOperatorName_falseWhenUserDisabled() =
         kosmos.runTest {
             // GIVEN default data subId is 1
             fakeMobileIconsInteractor.defaultDataSubId.value = 1
             // GIVEN airplane mode is off
             airplaneModeRepository.fake.isAirplaneMode.value = false
 
-            // WHEN Config is disabled
-            carrierConfigRepository.fake.configsById[1] =
-                SystemUiCarrierConfig(
-                    1,
-                    configWithOverride(
-                        CarrierConfigManager.KEY_SHOW_OPERATOR_NAME_IN_STATUSBAR_BOOL,
-                        false,
-                    ),
-                )
+            // WHEN the user has chosen to NOT show the carrier in the status bar
+            setHomeStatusBarInteractorShowOperatorName(false)
 
             val latest by collectLastValue(underTest.shouldShowOperatorName)
 
@@ -188,15 +141,8 @@ class HomeStatusBarInteractorTest : SysuiTestCase() {
         kosmos.runTest {
             // GIVEN default data subId is 1
             fakeMobileIconsInteractor.defaultDataSubId.value = 1
-            // GIVEN Config is enabled
-            carrierConfigRepository.fake.configsById[1] =
-                SystemUiCarrierConfig(
-                    1,
-                    configWithOverride(
-                        CarrierConfigManager.KEY_SHOW_OPERATOR_NAME_IN_STATUSBAR_BOOL,
-                        true,
-                    ),
-                )
+            // GIVEN the user has enabled the carrier in the status bar
+            setHomeStatusBarInteractorShowOperatorName(true)
 
             // WHEN airplane mode is on
             airplaneModeRepository.fake.isAirplaneMode.value = true

@@ -16,33 +16,23 @@
 
 package com.android.systemui.statusbar.pipeline.shared.domain.interactor
 
-import android.telephony.CarrierConfigManager
+import android.provider.Settings
 import com.android.systemui.kosmos.Kosmos
+import com.android.systemui.shared.settings.data.repository.systemSettingsRepository
 import com.android.systemui.statusbar.disableflags.domain.interactor.disableFlagsInteractor
 import com.android.systemui.statusbar.pipeline.airplane.domain.interactor.airplaneModeInteractor
-import com.android.systemui.statusbar.pipeline.mobile.data.model.SystemUiCarrierConfig
-import com.android.systemui.statusbar.pipeline.mobile.data.repository.carrierConfigRepository
-import com.android.systemui.statusbar.pipeline.mobile.data.repository.configWithOverride
-import com.android.systemui.statusbar.pipeline.mobile.data.repository.fake
-import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.carrierConfigInteractor
-import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.fakeMobileIconsInteractor
 
 val Kosmos.homeStatusBarInteractor: HomeStatusBarInteractor by
     Kosmos.Fixture {
         HomeStatusBarInteractor(
             airplaneModeInteractor,
-            carrierConfigInteractor,
             disableFlagsInteractor,
             systemSettingsRepository,
         )
     }
 
-/** Set the default data subId to 1, and sets the carrier config setting to [show] */
-fun Kosmos.setHomeStatusBarInteractorShowOperatorName(show: Boolean) {
-    fakeMobileIconsInteractor.defaultDataSubId.value = 1
-    carrierConfigRepository.fake.configsById[1] =
-        SystemUiCarrierConfig(
-            1,
-            configWithOverride(CarrierConfigManager.KEY_SHOW_OPERATOR_NAME_IN_STATUSBAR_BOOL, show),
-        )
+/** Set [Settings.System.LOCKSCREEN_SHOW_CARRIER] so the carrier shows on the status bar. */
+suspend fun Kosmos.setHomeStatusBarInteractorShowOperatorName(show: Boolean) {
+    // 2 = status bar only, 1 = lockscreen only (hidden in status bar)
+    systemSettingsRepository.setInt(Settings.System.LOCKSCREEN_SHOW_CARRIER, if (show) 2 else 1)
 }
