@@ -51,7 +51,7 @@ class PulseSettingsRepository(private val context: Context) {
 
         private val VALID_RENDER_STYLE_STRINGS = setOf(
             "solid", "fading", "neon", "retro", "minimal", "sparkle", "matrix",
-            "particle", "waveform"
+            "particle", "waveform", "qs_gradient_waveform"
         )
     }
 
@@ -84,7 +84,9 @@ class PulseSettingsRepository(private val context: Context) {
             Settings.Secure.getUriFor(PULSE_COLOR),
             Settings.Secure.getUriFor(PULSE_RENDERER),
             Settings.Secure.getUriFor(PULSE_RENDER_STYLE_LEGACY),
-            Settings.Secure.getUriFor(PULSE_SMOOTHING_ENABLED)
+            Settings.Secure.getUriFor(PULSE_SMOOTHING_ENABLED),
+            Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
+            Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR)
         ).forEach { uri ->
             context.contentResolver.registerContentObserver(uri, false,
                 settingsObserver!!, UserHandle.USER_ALL)
