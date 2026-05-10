@@ -112,6 +112,23 @@ private const val AccordOverlaySeekResizeFactor = 1.55f
 
 /** Elapsed/duration labels: light emphasis on scrub (track grows more than text). */
 private const val CinematicSeekTimeScaleFactor = 1.08f
+
+/**
+ * Softer than [Spring.StiffnessMedium] so seek emphasize (track height / alphas) eases like Accord’s
+ * OverlaySlider resize instead of snapping.
+ */
+private val AccordSeekEmphasizeSpringFloat =
+    spring<Float>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessLow,
+    )
+
+private val AccordSeekEmphasizeSpringDp =
+    spring<Dp>(
+        dampingRatio = Spring.DampingRatioNoBouncy,
+        stiffness = Spring.StiffnessLow,
+    )
+
 private val MediaPopupCardShape = RoundedCornerShape(28.dp)
 private val CinematicArtBoxSize = 64.dp
 private val CinematicArtInnerRadius = RoundedCornerShape(11.dp)
@@ -147,31 +164,19 @@ private fun AccordCinematicLinearSeekVisual(
         targetValue =
             CinematicSeekTrackThicknessDp *
                 if (interaction) AccordOverlaySeekResizeFactor else 1f,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMedium,
-            ),
+        animationSpec = AccordSeekEmphasizeSpringDp,
         label = "accordSeekTrackH",
     )
     val trackAlphaRest = if (isPlaying || isScrubbing) 0.30f else 0.20f
     val fillAlphaRest = if (isPlaying || isScrubbing) 0.92f else 0.50f
     val trackAlpha by animateFloatAsState(
         targetValue = if (interaction) (trackAlphaRest + 0.10f).coerceAtMost(0.45f) else trackAlphaRest,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMedium,
-            ),
+        animationSpec = AccordSeekEmphasizeSpringFloat,
         label = "accordSeekTrackA",
     )
     val fillAlpha by animateFloatAsState(
         targetValue = if (interaction) 1f else fillAlphaRest,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMedium,
-            ),
+        animationSpec = AccordSeekEmphasizeSpringFloat,
         label = "accordSeekFillA",
     )
     val radius = trackHeight / 2
@@ -874,11 +879,7 @@ private fun MediaSeekBar(
     val cinematicTimeScale by animateFloatAsState(
         targetValue =
             if (cinematicSeekEmphasized) CinematicSeekTimeScaleFactor else 1f,
-        animationSpec =
-            spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMedium,
-            ),
+        animationSpec = AccordSeekEmphasizeSpringFloat,
         label = "accordSeekTimeScale",
     )
 
