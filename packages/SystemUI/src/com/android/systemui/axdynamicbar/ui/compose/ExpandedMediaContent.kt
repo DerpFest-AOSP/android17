@@ -15,6 +15,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -85,6 +86,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -115,16 +117,16 @@ private const val CinematicSeekTimeScaleFactor = 1.08f
 
 /**
  * Softer than [Spring.StiffnessMedium] so seek emphasize (track height / alphas) eases like Accord’s
- * OverlaySlider resize instead of snapping.
+ * OverlaySlider resize instead of snapping. Use [SpringSpec] so [Dp] resolves on all Compose snapshots.
  */
 private val AccordSeekEmphasizeSpringFloat =
-    spring<Float>(
+    SpringSpec<Float>(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessLow,
     )
 
 private val AccordSeekEmphasizeSpringDp =
-    spring<Dp>(
+    SpringSpec<Dp>(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness = Spring.StiffnessLow,
     )
