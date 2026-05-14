@@ -23,6 +23,7 @@ import android.provider.Settings
 import com.android.systemui.Flags
 import com.android.systemui.res.R
 import kotlin.math.max
+import kotlin.math.min
 
 internal class QsGradientLayeredWaveformStyleRenderer(
     private val settings: PulseSettingsRepository,
@@ -30,13 +31,15 @@ internal class QsGradientLayeredWaveformStyleRenderer(
 ) : PulseStyleRenderer {
 
     private companion object {
-        /** Same layering intent as QS tile horizontal gradient: stacked depths of the same curve. */
+        /** Stacked waveforms; larger vertical gaps so all three read clearly. */
         const val NUM_LAYERS = 3
-        val LAYER_ALPHA = floatArrayOf(0.42f, 0.68f, 0.92f)
-        val LAYER_SMOOTHING = floatArrayOf(0.10f, 0.16f, 0.22f)
-        val LAYER_STROKE_SCALE = floatArrayOf(0.78f, 0.9f, 1f)
-        /** Extra lift from the baseline for back layers (dp). */
-        val LAYER_BASE_OFFSET_DP = floatArrayOf(12f, 6f, 0f)
+        /** Catmull–Rom → cubic tension divisor (higher = gentler curves). */
+        const val CURVE_TENSION = 6f
+        val LAYER_ALPHA = floatArrayOf(0.52f, 0.74f, 0.96f)
+        val LAYER_SMOOTHING = floatArrayOf(0.08f, 0.14f, 0.22f)
+        val LAYER_STROKE_SCALE = floatArrayOf(0.72f, 0.88f, 1f)
+        /** Vertical gap between layer baselines (~14dp between neighbors). */
+        val LAYER_BASE_OFFSET_DP = floatArrayOf(28f, 14f, 0f)
     }
 
     private val strokePaints = Array(NUM_LAYERS) {
@@ -63,6 +66,9 @@ internal class QsGradientLayeredWaveformStyleRenderer(
     private var viewWidthPx = 0
     private var viewHeightPx = 0
 
+    /** Per-frame sampled Y (top of wave); avoids reallocating in [draw]. */
+    private val scratchY = Array(NUM_LAYERS) { FloatArray(0) }
+
     /** Unused for drawing; pulse still calls [onColor]. */
     private var lastPulseColor = 0
 
@@ -80,6 +86,11 @@ internal class QsGradientLayeredWaveformStyleRenderer(
         }
         if (targetHeights.size != count) {
             targetHeights = FloatArray(count) { 2f }
+        }
+        for (layer in 0 until NUM_LAYERS) {
+            if (scratchY[layer].size < count) {
+                scratchY[layer] = FloatArray(count)
+            }
         }
 
         val gap = settings.getBarGapPx()
@@ -109,11 +120,20 @@ internal class QsGradientLayeredWaveformStyleRenderer(
             }
         }
         System.arraycopy(heights, 0, targetHeights, 0, heights.size)
+        val need = maxOf(heights.size, waveformBarCount)
+        for (layer in 0 until NUM_LAYERS) {
+            if (scratchY[layer].size < need) {
+                scratchY[layer] = FloatArray(need)
+            }
+        }
     }
 
     override fun draw(canvas: Canvas, viewWidth: Int, viewHeight: Int) {
         val count = waveformBarCount
         if (count == 0 || viewHeight <= 0) return
+
+        val n = minOf(count, targetHeights.size).coerceAtLeast(0)
+        if (n == 0) return
 
         val bottom = viewHeight.toFloat()
         val right = viewWidth.toFloat()
@@ -126,34 +146,98 @@ internal class QsGradientLayeredWaveformStyleRenderer(
             areaPath.reset()
 
             val baseOffsetPx = LAYER_BASE_OFFSET_DP[layer] * density
+            val effectiveBottom = bottom - baseOffsetPx
 
-            val y0 = bottom - baseOffsetPx - smoothedLift(layer, 0, bottom - baseOffsetPx)
-            var yTopRight = y0
+            val ys = scratchY[layer]
+            for (i in 0 until n) {
+                ys[i] = bottom - baseOffsetPx - smoothedLift(layer, i, effectiveBottom)
+            }
+            val yTopRight = ys[n - 1]
 
-            wavePath.moveTo(0f, y0)
-            areaPath.moveTo(0f, bottom)
-            areaPath.lineTo(0f, y0)
-
-            for (i in 1 until count) {
-                val x = i * barStepPx
-                val y = bottom - baseOffsetPx - smoothedLift(layer, i, bottom - baseOffsetPx)
-                wavePath.lineTo(x, y)
-                areaPath.lineTo(x, y)
-                yTopRight = y
+            appendSmoothedWaveStroke(wavePath, ys, n, right)
+            // Filled area only on the front layer so rear/mid strokes stay visible.
+            if (layer == NUM_LAYERS - 1) {
+                appendSmoothedWaveFillTop(areaPath, ys, n, right, bottom)
+                areaPath.lineTo(right, bottom)
+                areaPath.close()
+                canvas.drawPath(areaPath, fillPaints[layer])
             }
 
-            wavePath.lineTo(right, yTopRight)
-            areaPath.lineTo(right, yTopRight)
-            areaPath.lineTo(right, bottom)
-            areaPath.close()
-
-            canvas.drawPath(areaPath, fillPaints[layer])
-            if (count >= 2) {
+            if (n >= 2) {
                 canvas.drawPath(wavePath, strokePaints[layer])
-            } else if (count == 1) {
+            } else if (n == 1) {
                 canvas.drawLine(0f, yTopRight, right, yTopRight, strokePaints[layer])
             }
         }
+    }
+
+    /**
+     * Smooth cubic curve through sample points (Catmull–Rom style), closed with a flat run to [right].
+     */
+    private fun appendSmoothedWaveStroke(path: Path, ys: FloatArray, count: Int, right: Float) {
+        val step = barStepPx
+        path.moveTo(0f, ys[0])
+        if (count == 1) {
+            path.lineTo(right, ys[0])
+            return
+        }
+        fun xAt(i: Int) = i * step
+        fun yAt(i: Int) = ys[i.coerceIn(0, count - 1)]
+
+        for (i in 0 until count - 1) {
+            val p0y = if (i > 0) yAt(i - 1) else 2f * yAt(0) - yAt(1)
+            val p1x = xAt(i)
+            val p1y = yAt(i)
+            val p2x = xAt(i + 1)
+            val p2y = yAt(i + 1)
+            val p3y = if (i + 2 < count) yAt(i + 2) else 2f * yAt(count - 1) - yAt(count - 2)
+
+            val p0x = xAt(i - 1)
+            val p3x = xAt(i + 2)
+
+            val cp1x = p1x + (p2x - p0x) / CURVE_TENSION
+            val cp1y = p1y + (p2y - p0y) / CURVE_TENSION
+            val cp2x = p2x - (p3x - p1x) / CURVE_TENSION
+            val cp2y = p2y - (p3y - p1y) / CURVE_TENSION
+            path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2x, p2y)
+        }
+        path.lineTo(right, ys[count - 1])
+    }
+
+    /** Top edge of the filled region (same curve as stroke), starting at (0, [ys][0]). */
+    private fun appendSmoothedWaveFillTop(
+        path: Path,
+        ys: FloatArray,
+        count: Int,
+        right: Float,
+        bottom: Float
+    ) {
+        path.moveTo(0f, bottom)
+        path.lineTo(0f, ys[0])
+        if (count == 1) {
+            path.lineTo(right, ys[0])
+            return
+        }
+        val step = barStepPx
+        fun xAt(i: Int) = i * step
+        fun yAt(i: Int) = ys[i.coerceIn(0, count - 1)]
+
+        for (i in 0 until count - 1) {
+            val p0y = if (i > 0) yAt(i - 1) else 2f * yAt(0) - yAt(1)
+            val p1x = xAt(i)
+            val p1y = yAt(i)
+            val p2x = xAt(i + 1)
+            val p2y = yAt(i + 1)
+            val p3y = if (i + 2 < count) yAt(i + 2) else 2f * yAt(count - 1) - yAt(count - 2)
+            val p0x = xAt(i - 1)
+            val p3x = xAt(i + 2)
+            val cp1x = p1x + (p2x - p0x) / CURVE_TENSION
+            val cp1y = p1y + (p2y - p0y) / CURVE_TENSION
+            val cp2x = p2x - (p3x - p1x) / CURVE_TENSION
+            val cp2y = p2y - (p3y - p1y) / CURVE_TENSION
+            path.cubicTo(cp1x, cp1y, cp2x, cp2y, p2x, p2y)
+        }
+        path.lineTo(right, ys[count - 1])
     }
 
     private fun smoothedLift(layer: Int, i: Int, effectiveBottom: Float): Float {
@@ -173,6 +257,7 @@ internal class QsGradientLayeredWaveformStyleRenderer(
         targetHeights = FloatArray(0)
         for (layer in 0 until NUM_LAYERS) {
             currentHeights[layer] = FloatArray(0)
+            scratchY[layer] = FloatArray(0)
             waveformPaths[layer].reset()
             fillPaths[layer].reset()
             strokePaints[layer].shader = null
