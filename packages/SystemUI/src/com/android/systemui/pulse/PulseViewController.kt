@@ -19,6 +19,10 @@ import android.content.Context
 import android.media.session.PlaybackState
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.media.MediaSessionManager
+import com.android.systemui.statusbar.notification.collection.NotificationEntry
+import com.android.systemui.statusbar.notification.headsup.HeadsUpManager
+import com.android.systemui.statusbar.notification.headsup.OnHeadsUpChangedListener
+import com.android.systemui.statusbar.notification.headsup.OnHeadsUpPhoneListenerChange
 import com.android.systemui.util.ScrimUtils
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -27,13 +31,16 @@ import javax.inject.Inject
 
 @SysUISingleton
 class PulseViewController @Inject constructor(
-    private val context: Context
+    private val context: Context,
+    private val headsUpManager: HeadsUpManager,
 ) : PulseAudioDataProcessor.DataListener,
     MediaSessionManager.MediaDataListener,
     ScrimUtils.ScrimEventListener {
 
     private val mainScope = MainScope()
     private var listenersRegistered = false
+    /** [HeadsUpManager] has no remove for phone listeners; register at most once. */
+    private var headsUpPhoneListenerRegistered = false
 
     private var isMediaPlaying = false
     private var bouncerShowingOrKeyguardDismissing = false
@@ -70,6 +77,42 @@ class PulseViewController @Inject constructor(
     private val hapticsMode: Int
         get() = settingsRepository.getPulseHapticsMode()
 
+    private val headsUpChangedListener =
+        object : OnHeadsUpChangedListener {
+            override fun onHeadsUpPinnedModeChanged(inPinnedMode: Boolean) {
+                updateState()
+            }
+
+            override fun onHeadsUpPinned(entry: NotificationEntry) {
+                updateState()
+            }
+
+            override fun onHeadsUpUnPinned(entry: NotificationEntry) {
+                updateState()
+            }
+
+            override fun onHeadsUpStateChanged(entry: NotificationEntry, isHeadsUp: Boolean) {
+                updateState()
+            }
+
+            override fun onHeadsUpAnimatingAwayEnded(entry: NotificationEntry) {
+                updateState()
+            }
+        }
+
+    private val headsUpPhoneListener =
+        object : OnHeadsUpPhoneListenerChange {
+            override fun onHeadsUpAnimatingAwayStateChanged(headsUpAnimatingAway: Boolean) {
+                updateState()
+            }
+        }
+
+    /** True while a heads-up is on screen or finishing its exit animation. */
+    private fun isHeadsUpShowing(): Boolean =
+        headsUpManager.hasPinnedHeadsUp() ||
+            headsUpManager.isHeadsUpAnimatingAwayValue() ||
+            headsUpManager.getTopEntry() != null
+
     var pulseRunning: Boolean = false
         set(value) {
             if (value == field) return
@@ -95,12 +138,14 @@ class PulseViewController @Inject constructor(
             return
         }
         if (pulseQsEnabled) {
-            pulseRunning = isMediaPlaying && !isScreenOff
+            pulseRunning =
+                isMediaPlaying && !isScreenOff && !isHeadsUpShowing()
         } else {
             pulseRunning = isMediaPlaying
                     && !bouncerShowingOrKeyguardDismissing
                     && isCollapsed
                     && !isScreenOff
+                    && !isHeadsUpShowing()
                     && ((keyguardShowing && !isDozing)
                     || (isDozing && ambientEnabled))
         }
@@ -127,10 +172,16 @@ class PulseViewController @Inject constructor(
         if (enabled && !listenersRegistered) {
             ScrimUtils.get().addListener(this)
             MediaSessionManager.get().addListener(this)
+            headsUpManager.addListener(headsUpChangedListener)
+            if (!headsUpPhoneListenerRegistered) {
+                headsUpManager.addHeadsUpPhoneListener(headsUpPhoneListener)
+                headsUpPhoneListenerRegistered = true
+            }
             listenersRegistered = true
         } else if (!enabled && listenersRegistered) {
             ScrimUtils.get().removeListener(this)
             MediaSessionManager.get().removeListener(this)
+            headsUpManager.removeListener(headsUpChangedListener)
             listenersRegistered = false
             pulseRunning = false
             bassHaptics.reset()
@@ -225,6 +276,7 @@ class PulseViewController @Inject constructor(
         if (listenersRegistered) {
             ScrimUtils.get().removeListener(this)
             MediaSessionManager.get().removeListener(this)
+            headsUpManager.removeListener(headsUpChangedListener)
             listenersRegistered = false
         }
         audioProcessor.cleanup()
