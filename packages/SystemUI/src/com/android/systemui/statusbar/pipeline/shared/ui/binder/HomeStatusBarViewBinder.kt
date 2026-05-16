@@ -358,6 +358,12 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
                 }
 
                 launch {
+                    viewModel.isLyricTranslationEnabled.collect {
+                        lyricController.setShowTranslation(it)
+                    }
+                }
+
+                launch {
                     viewModel.isLyricVisible.collect { lyricController.adjustVisibility(it) }
                 }
 
@@ -526,7 +532,7 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
     }
 
     inner class LyricController(val statusBar: View) :
-        LyricViewController(statusBar.context, statusBar) {
+        LyricViewController(statusBar.context, statusBar, statusBar.findViewById(R.id.clock)) {
         private val leftSide: View by lazy {
             statusBar.findViewById(R.id.status_bar_start_side_except_heads_up)
         }
