@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.android.internal.util.derp.derpUtils;
 import com.android.settingslib.fuelgauge.Estimate;
+import com.android.settingslib.fuelgauge.EstimateKt;
 import com.android.settingslib.utils.PowerUtil;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.util.settings.GlobalSettings;
@@ -24,7 +25,10 @@ public final class EnhancedEstimatesImpl implements EnhancedEstimates {
     private static final String TURBO_PACKAGE = "com.google.android.apps.turbo";
     private static final String TURBO_AUTHORITY = TURBO_PACKAGE + ".estimated_time_remaining";
 
-    private static final Estimate EMPTY_ESTIMATE = new Estimate(-1L, false, -1L);
+    private static final Estimate EMPTY_ESTIMATE = new Estimate(
+            EstimateKt.ESTIMATE_MILLIS_UNKNOWN,
+            false,
+            EstimateKt.AVERAGE_TIME_TO_DISCHARGE_UNKNOWN);
 
     private static final Duration DAY = Duration.ofDays(1L);
     private static final long HOUR = Duration.ofHours(1L).toMillis();
@@ -59,33 +63,29 @@ public final class EnhancedEstimatesImpl implements EnhancedEstimates {
                 .appendPath("time_remaining")
                 .build();
         try (Cursor query = mContext.getContentResolver().query(uri, null, null, null, null)) {
-            if (query == null) {
+            if (query == null || !query.moveToFirst()) {
                 return EMPTY_ESTIMATE;
             }
             try {
-                if (query.moveToFirst()) {
-                    long timeRemaining = -1L;
-                    final int usageColumnIndex = query.getColumnIndex("is_based_on_usage");
-                    final boolean isBasedOnUsage =
-                            usageColumnIndex != -1 && query.getInt(usageColumnIndex) != 0;
-                    final int batteryLifeColumnIndex =
-                            query.getColumnIndex("average_battery_life");
-                    if (batteryLifeColumnIndex != -1) {
-                        final long averageBatteryLife = query.getLong(batteryLifeColumnIndex);
-                        if (averageBatteryLife != -1L) {
-                            final long duration = Duration.ofMillis(averageBatteryLife)
-                                            .compareTo(DAY) >= 0
-                                    ? HOUR
-                                    : FIFTEEN_MINUTES;
-                            timeRemaining = PowerUtil.roundTimeToNearestThreshold(
-                                    averageBatteryLife, duration);
-                        }
+                long timeRemaining = -1L;
+                final int usageColumnIndex = query.getColumnIndex("is_based_on_usage");
+                final boolean isBasedOnUsage = usageColumnIndex != -1
+                        && query.getInt(usageColumnIndex) != 0;
+                final int batteryLifeColumnIndex = query.getColumnIndex("average_battery_life");
+                if (batteryLifeColumnIndex != -1) {
+                    final long averageBatteryLife = query.getLong(batteryLifeColumnIndex);
+                    if (averageBatteryLife != -1L) {
+                        final long duration = Duration.ofMillis(averageBatteryLife)
+                                .compareTo(DAY) >= 0 ? HOUR : FIFTEEN_MINUTES;
+                        timeRemaining = PowerUtil.roundTimeToNearestThreshold(
+                                averageBatteryLife, duration);
                     }
-                    return new Estimate(
-                            query.getLong(query.getColumnIndex("battery_estimate")),
-                            isBasedOnUsage,
-                            timeRemaining);
                 }
+                final int estimateColumnIndex = query.getColumnIndex("battery_estimate");
+                return new Estimate(
+                        query.getLong(estimateColumnIndex),
+                        isBasedOnUsage,
+                        timeRemaining);
             } catch (Exception ex) {
                 // Catch and release
             }
@@ -114,9 +114,8 @@ public final class EnhancedEstimatesImpl implements EnhancedEstimates {
     }
 
     private void updateFlags() {
-        final String string = mGlobalSettings.getString("hybrid_sysui_battery_warning_flags");
         try {
-            mParser.setString(string);
+            mParser.setString(mGlobalSettings.getString("hybrid_sysui_battery_warning_flags"));
         } catch (IllegalArgumentException ex) {
             Log.e(TAG, "Bad hybrid sysui warning flags");
         }
