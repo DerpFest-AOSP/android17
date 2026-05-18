@@ -20,6 +20,7 @@ import static android.app.admin.DevicePolicyResources.Strings.SystemUi.QS_WORK_P
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Intent;
+import android.database.ContentObserver;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -53,10 +54,15 @@ public class WorkModeTile extends QSTileImpl<BooleanState> implements
 
     public static final String TILE_SPEC = "work";
 
+    // Settings.Secure key written by SetupWizard's ProfileSwitchTileService.
+    private static final String SETTING_ACTIVE_PROFILE = "suw_active_profile";
+    private static final int PROFILE_WORK = 1;
+
     @Nullable
     private Icon mIcon = null;
 
     private final ManagedProfileController mProfileController;
+    private final ContentObserver mActiveProfileObserver;
 
     @Inject
     public WorkModeTile(
@@ -75,6 +81,17 @@ public class WorkModeTile extends QSTileImpl<BooleanState> implements
                 statusBarStateController, activityStarter, qsLogger);
         mProfileController = managedProfileController;
         mProfileController.observe(getLifecycle(), this);
+        mActiveProfileObserver = new ContentObserver(mHandler) {
+            @Override
+            public void onChange(boolean selfChange) {
+                // Auto-sync quiet mode whenever the SUW active profile setting changes.
+                boolean enableWork = isWorkProfileModeActive();
+                if (mProfileController.isWorkModeEnabled() != enableWork) {
+                    mProfileController.setWorkModeEnabled(enableWork);
+                }
+                refreshState();
+            }
+        };
     }
 
     @Override
@@ -88,7 +105,26 @@ public class WorkModeTile extends QSTileImpl<BooleanState> implements
     }
 
     @Override
+    protected void handleSetListening(boolean listening) {
+        super.handleSetListening(listening);
+        if (listening) {
+            mContext.getContentResolver().registerContentObserver(
+                    Settings.Secure.getUriFor(SETTING_ACTIVE_PROFILE),
+                    false /* notifyForDescendants */,
+                    mActiveProfileObserver);
+        } else {
+            mContext.getContentResolver().unregisterContentObserver(mActiveProfileObserver);
+        }
+    }
+
+    private boolean isWorkProfileModeActive() {
+        return Settings.Secure.getInt(mContext.getContentResolver(),
+                SETTING_ACTIVE_PROFILE, 0 /* PROFILE_USER */) == PROFILE_WORK;
+    }
+
+    @Override
     public void handleClick(@Nullable Expandable expandable) {
+        if (!isWorkProfileModeActive()) return;
         mProfileController.setWorkModeEnabled(!mState.value);
     }
 
@@ -134,10 +170,15 @@ public class WorkModeTile extends QSTileImpl<BooleanState> implements
         state.label = getTileLabel();
         state.contentDescription = state.label;
         state.expandedAccessibilityClassName = Switch.class.getName();
-        state.state = state.value ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE;
-        state.secondaryLabel = state.value
-                ? ""
-                : mContext.getString(R.string.quick_settings_work_mode_paused_state);
+        if (!isWorkProfileModeActive()) {
+            state.state = Tile.STATE_UNAVAILABLE;
+            state.secondaryLabel = "";
+        } else {
+            state.state = state.value ? Tile.STATE_ACTIVE : Tile.STATE_INACTIVE;
+            state.secondaryLabel = state.value
+                    ? ""
+                    : mContext.getString(R.string.quick_settings_work_mode_paused_state);
+        }
     }
 
     @Override
