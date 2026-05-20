@@ -642,7 +642,7 @@ private fun addBatteryComposable(
         if (batteryViewParent is ViewGroup) {
             batteryViewParent.removeView(batteryComposeView)
         }
-        addView(batteryComposeView, -1)
+        addView(batteryComposeView, getChildCount() - 1)
     }
 
     batteryComposeView.repeatWhenAttached {
