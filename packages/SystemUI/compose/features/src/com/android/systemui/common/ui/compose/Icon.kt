@@ -16,6 +16,8 @@
 
 package com.android.systemui.common.ui.compose
 
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.BitmapDrawable
 import androidx.compose.foundation.Image
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -29,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import com.android.compose.ui.graphics.painter.rememberDrawablePainter
 import com.android.systemui.common.shared.model.Icon
+import com.android.systemui.common.shared.model.asImageBitmap
 
 /**
  * Icon composable that draws [icon] using [tint].
@@ -44,7 +47,15 @@ fun Icon(icon: Icon, modifier: Modifier = Modifier, tint: Color = LocalContentCo
     val contentDescription = icon.contentDescription?.load()
     when (icon) {
         is Icon.Loaded -> {
-            Icon(rememberDrawablePainter(icon.drawable), contentDescription, modifier, tint)
+            if (icon.shouldRenderAsBitmap()) {
+                Image(
+                    bitmap = remember(icon.drawable) { icon.asImageBitmap() },
+                    contentDescription = contentDescription,
+                    modifier = modifier,
+                )
+            } else {
+                Icon(rememberDrawablePainter(icon.drawable), contentDescription, modifier, tint)
+            }
         }
         is Icon.Resource -> {
             val drawable = remember(icon.resId) { ContextCompat.getDrawable(context, icon.resId) }
@@ -77,12 +88,20 @@ fun Icon(icon: Icon, tint: (() -> Color)?, modifier: Modifier = Modifier) {
     val tintColor = tint ?: { localContentColor }
     when (icon) {
         is Icon.Loaded -> {
-            Icon(
-                rememberDrawablePainter(icon.drawable),
-                tintColor,
-                contentDescription,
-                modifier,
-            )
+            if (icon.shouldRenderAsBitmap()) {
+                Image(
+                    bitmap = remember(icon.drawable) { icon.asImageBitmap() },
+                    contentDescription = contentDescription,
+                    modifier = modifier,
+                )
+            } else {
+                Icon(
+                    rememberDrawablePainter(icon.drawable),
+                    tintColor,
+                    contentDescription,
+                    modifier,
+                )
+            }
         }
         is Icon.Resource -> {
             val drawable = remember(icon.resId) { ContextCompat.getDrawable(context, icon.resId) }
@@ -96,4 +115,9 @@ fun Icon(icon: Icon, tint: (() -> Color)?, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/** App icons and other bitmap-backed drawables do not work well with [rememberDrawablePainter]. */
+private fun Icon.Loaded.shouldRenderAsBitmap(): Boolean {
+    return drawable is BitmapDrawable || drawable is AdaptiveIconDrawable
 }

@@ -16,6 +16,7 @@
 
 package com.android.systemui.volume.data.repository
 
+import android.media.AppVolume
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.view.KeyEvent
@@ -49,6 +50,10 @@ class FakeAudioRepository : AudioRepository {
     private val mutableVolumeControllerEvents = MutableSharedFlow<VolumeControllerEvent>(replay = 1)
     override val volumeControllerEvents: Flow<VolumeControllerEvent>
         get() = mutableVolumeControllerEvents.asSharedFlow()
+
+    private val mutableAppVolumeSessions = MutableStateFlow<List<AppVolume>>(emptyList())
+    override val appVolumeSessions: StateFlow<List<AppVolume>> =
+        mutableAppVolumeSessions.asStateFlow()
 
     private val models: MutableMap<AudioStream, MutableStateFlow<AudioStreamModel>> = mutableMapOf()
     private val lastAudibleVolumes: MutableMap<AudioStream, Int> = mutableMapOf()
@@ -99,6 +104,14 @@ class FakeAudioRepository : AudioRepository {
             modelState.update { it.copy(isMuted = isMuted) }
             true
         }
+    }
+
+    override suspend fun setAppVolume(packageName: String, volume: Float) {}
+
+    override suspend fun setAppMuted(packageName: String, mute: Boolean) {}
+
+    fun setAppVolumeSessions(sessions: List<AppVolume>) {
+        mutableAppVolumeSessions.value = sessions
     }
 
     override suspend fun getLastAudibleVolume(audioStream: AudioStream): Int =
