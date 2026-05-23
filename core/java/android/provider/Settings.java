@@ -6230,6 +6230,14 @@ public final class Settings {
         public static final String HAPTIC_FEEDBACK_ENABLED = "haptic_feedback_enabled";
 
         /**
+         * Haptic feedback when a fling scroll reaches the edge of a view.
+         *
+         * @hide
+         */
+        @Readable
+        public static final String SCROLL_FLING_HAPTIC_FEEDBACK = "scroll_fling_haptic_feedback";
+
+        /**
          * @deprecated Each application that shows web suggestions should have its own
          * setting for this.
          */
