@@ -26,6 +26,7 @@ import android.compat.annotation.ChangeId;
 import android.compat.annotation.EnabledSince;
 import android.compat.annotation.UnsupportedAppUsage;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.TypedArray;
 import android.graphics.BlendMode;
 import android.graphics.Canvas;
@@ -35,6 +36,10 @@ import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RenderNode;
 import android.os.Build;
+import android.os.VibrationAttributes;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
@@ -218,6 +223,9 @@ public class EdgeEffect {
     private float mDisplacement = 0.5f;
     private float mTargetDisplacement = 0.5f;
 
+    private final Context mContext;
+    private Vibrator mVibrator;
+
     /**
      * Current edge effect type, consumers should always query
      * {@link #getCurrentEdgeEffectBehavior()} instead of this parameter
@@ -241,6 +249,7 @@ public class EdgeEffect {
      * @param attrs The attributes of the XML tag that is inflating the view
      */
     public EdgeEffect(@NonNull Context context, @Nullable AttributeSet attrs) {
+        mContext = context;
         final TypedArray a = context.obtainStyledAttributes(
                 attrs, com.android.internal.R.styleable.EdgeEffect);
         final int themeColor = a.getColor(
@@ -497,6 +506,7 @@ public class EdgeEffect {
             mState = STATE_RECEDE;
             mVelocity = velocity * ON_ABSORB_VELOCITY_ADJUSTMENT;
             mStartTime = AnimationUtils.currentAnimationTimeMillis();
+            maybeVibrateOnFlingAbsorb();
         } else if (edgeEffectBehavior == TYPE_GLOW) {
             mState = STATE_ABSORB;
             mVelocity = 0;
@@ -521,9 +531,33 @@ public class EdgeEffect {
                     mGlowAlphaStart,
                     Math.min(velocity * VELOCITY_GLOW_FACTOR * .00001f, MAX_ALPHA));
             mTargetDisplacement = 0.5f;
+            maybeVibrateOnFlingAbsorb();
         } else {
             finish();
         }
+    }
+
+    private void maybeVibrateOnFlingAbsorb() {
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.SCROLL_FLING_HAPTIC_FEEDBACK, 0) == 0) {
+            return;
+        }
+        if (Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) == 0) {
+            return;
+        }
+        if (mContext.checkCallingOrSelfPermission(android.Manifest.permission.VIBRATE)
+                != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        if (mVibrator == null) {
+            mVibrator = mContext.getSystemService(Vibrator.class);
+        }
+        if (mVibrator == null || !mVibrator.hasVibrator()) {
+            return;
+        }
+        mVibrator.vibrate(VibrationEffect.get(VibrationEffect.EFFECT_CLICK),
+                VibrationAttributes.createForUsage(VibrationAttributes.USAGE_TOUCH));
     }
 
     /**
