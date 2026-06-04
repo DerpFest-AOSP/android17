@@ -10,6 +10,7 @@ import com.android.systemui.SysuiTestCase
 import com.android.systemui.battery.BatteryMeterView
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.data.repository.fakeStatusBarContentInsetsProviderStore
+import com.android.systemui.statusbar.pipeline.battery.data.repository.batteryRepository
 import com.android.systemui.testKosmos
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
@@ -53,7 +54,7 @@ class QsBatteryModeControllerTest : SysuiTestCase() {
         whenever(mockedResources.getInteger(R.integer.fade_in_start_frame)).thenReturn(QS_END_FRAME)
         whenever(mockedResources.getInteger(R.integer.fade_out_complete_frame))
             .thenReturn(QQS_START_FRAME)
-        controller = QsBatteryModeController(mockedContext, insetsProviderStore)
+        controller = QsBatteryModeController(mockedContext, insetsProviderStore, kosmos.batteryRepository)
     }
 
     @Test

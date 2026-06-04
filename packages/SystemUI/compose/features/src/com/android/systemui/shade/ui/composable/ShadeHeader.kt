@@ -574,7 +574,7 @@ private fun BatteryInfo(
             viewModelFactory = viewModel.batteryViewModelFactory,
             isDarkProvider = { viewModel.isShadeAreaDark },
             showIcon = showIcon,
-            showEstimate = useExpandedFormat,
+            showEstimate = useExpandedFormat && viewModel.showBatteryEstimateEnabled,
             textColor = textColor,
             modifier = modifier.sysuiResTag(ShadeHeader.TestTags.BatteryTestTag),
         )
@@ -582,6 +582,7 @@ private fun BatteryInfo(
         BatteryIconLegacy(
             createBatteryMeterViewController = viewModel.createBatteryMeterViewController,
             useExpandedFormat = useExpandedFormat,
+            showBatteryEstimateEnabled = viewModel.showBatteryEstimateEnabled,
             modifier = modifier.sysuiResTag(ShadeHeader.TestTags.BatteryTestTagLegacy),
             isHighlighted = isHighlighted,
         )
@@ -592,6 +593,7 @@ private fun BatteryInfo(
 private fun BatteryIconLegacy(
     createBatteryMeterViewController: (ViewGroup, StatusBarLocation) -> BatteryMeterViewController,
     useExpandedFormat: Boolean,
+    showBatteryEstimateEnabled: Boolean,
     modifier: Modifier = Modifier,
     isHighlighted: Boolean = false,
 ) {
@@ -627,7 +629,10 @@ private fun BatteryIconLegacy(
         update = { batteryIcon ->
             val cutoutLocation = cutout().location
             batteryIcon.setPercentShowMode(
-                if (useExpandedFormat || cutoutLocation != CutoutLocation.CENTER) {
+                if (
+                    showBatteryEstimateEnabled &&
+                        (useExpandedFormat || cutoutLocation != CutoutLocation.CENTER)
+                ) {
                     BatteryMeterView.MODE_ESTIMATE
                 } else {
                     BatteryMeterView.MODE_ON

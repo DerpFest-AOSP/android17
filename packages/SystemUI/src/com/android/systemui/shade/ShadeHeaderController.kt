@@ -27,6 +27,8 @@ import android.content.res.Configuration
 import android.graphics.Insets
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.Trace
 import android.os.Trace.TRACE_TAG_APP
 import android.provider.AlarmClock
@@ -36,6 +38,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.TextView
+import android.database.ContentObserver
 import androidx.annotation.VisibleForTesting
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.wrapContentSize
@@ -90,6 +93,7 @@ import com.android.systemui.statusbar.pipeline.battery.ui.composable.ShowPercent
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryNextToPercentViewModel
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryViewModel
 import com.android.systemui.statusbar.pipeline.shared.ui.view.SystemStatusIconsLayoutHelper
+import lineageos.providers.LineageSettings
 import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.NextAlarmController
@@ -192,6 +196,13 @@ constructor(
     private var nextAlarmIntent: PendingIntent? = null
 
     private val showBatteryEstimate = MutableStateFlow(false)
+
+    private val batteryEstimateSettingObserver =
+        object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                updateBatteryMode()
+            }
+        }
 
     private var privacyChipVisible = false
     private var qsDisabled = false
@@ -536,6 +547,13 @@ constructor(
         systemIconsHoverContainer.setOnHoverListener(
             statusOverlayHoverListenerFactory.createListener(systemIconsHoverContainer)
         )
+        context.contentResolver.registerContentObserver(
+            LineageSettings.System.getUriFor(
+                LineageSettings.System.STATUS_BAR_SHOW_BATTERY_ESTIMATE
+            ),
+            false,
+            batteryEstimateSettingObserver,
+        )
     }
 
     override fun onViewDetached() {
@@ -549,6 +567,7 @@ constructor(
         statusBarIconController.removeIconGroup(iconManager)
         nextAlarmController.removeCallback(nextAlarmCallback)
         systemIconsHoverContainer.setOnHoverListener(null)
+        context.contentResolver.unregisterContentObserver(batteryEstimateSettingObserver)
     }
 
     fun disable(state1: Int, state2: Int, animate: Boolean) {

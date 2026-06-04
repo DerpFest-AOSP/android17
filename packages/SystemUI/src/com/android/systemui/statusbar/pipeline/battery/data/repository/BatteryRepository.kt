@@ -49,7 +49,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
@@ -94,6 +96,12 @@ interface BatteryRepository {
      * we should show the battery percentage in the home screen status bar
      */
     val showBatteryPercentMode: StateFlow<Int>
+
+    /**
+     * [LineageSettings.System.STATUS_BAR_SHOW_BATTERY_ESTIMATE]. A user setting to indicate
+     * whether we should show the battery time remaining estimate in Quick Settings.
+     */
+    val showBatteryEstimateEnabled: StateFlow<Boolean>
 
     /**
      * [Settings.System.STATUSBAR_ICON_TINT_MODE] with legacy support for
@@ -417,6 +425,49 @@ constructor(
                 initialValue = BatteryRepository.SHOW_PERCENT_HIDDEN,
             )
 
+    override val showBatteryEstimateEnabled: StateFlow<Boolean> =
+        callbackFlow {
+                val resolver = context.contentResolver
+                val uri =
+                    LineageSettings.System.getUriFor(
+                        LineageSettings.System.STATUS_BAR_SHOW_BATTERY_ESTIMATE
+                    )
+
+                fun readEnabled(): Boolean =
+                    LineageSettings.System.getIntForUser(
+                        resolver,
+                        LineageSettings.System.STATUS_BAR_SHOW_BATTERY_ESTIMATE,
+                        1,
+                        UserHandle.USER_CURRENT,
+                    ) == 1
+
+                val observer =
+                    object : ContentObserver(Handler(Looper.getMainLooper())) {
+                        override fun onChange(selfChange: Boolean) {
+                            trySend(readEnabled())
+                        }
+                    }
+
+                resolver.registerContentObserver(
+                    uri,
+                    /* notifyForDescendants = */ false,
+                    observer,
+                    UserHandle.USER_ALL,
+                )
+
+                trySend(readEnabled())
+
+                awaitClose { resolver.unregisterContentObserver(observer) }
+            }
+            .flowOn(bgDispatcher)
+            .distinctUntilChanged()
+            .logDiffsForTable(
+                tableLogBuffer = tableLog,
+                columnName = COL_SHOW_ESTIMATE_SETTING,
+                initialValue = true,
+            )
+            .stateIn(scope, SharingStarted.Lazily, true)
+
     private val statusBarIconTintSettings: Flow<Pair<Int, Int>> =
         callbackFlow {
                 val resolver = context.contentResolver
@@ -490,7 +541,8 @@ constructor(
     }
 
     override val batteryTimeRemainingEstimate: Flow<String?> =
-        estimate
+        showBatteryEstimateEnabled
+            .flatMapLatest { enabled -> if (enabled) estimate else flowOf(null) }
             .flowOn(bgDispatcher)
             .distinctUntilChanged()
             .logDiffsForTable(
@@ -516,6 +568,7 @@ constructor(
         private const val COL_LEVEL = "level"
         private const val COL_UNKNOWN = "unknown"
         private const val COL_SHOW_PERCENT_SETTING = "showPercentSetting"
+        private const val COL_SHOW_ESTIMATE_SETTING = "showEstimateSetting"
         private const val COL_TIME_REMAINING_EST = "timeRemainingEstimate"
     }
 }
