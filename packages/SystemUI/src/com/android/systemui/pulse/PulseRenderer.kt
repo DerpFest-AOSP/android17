@@ -75,7 +75,6 @@ class PulseRenderer(
             "matrix" -> style !is MatrixStyleRenderer
             "particle" -> style !is ParticleStyleRenderer
             "waveform" -> style !is WaveformStyleRenderer
-            "qs_gradient_waveform" -> style !is QsGradientLayeredWaveformStyleRenderer
             else -> false
         }
 
@@ -100,7 +99,6 @@ class PulseRenderer(
             "matrix" -> MatrixStyleRenderer(settingsRepo)
             "particle" -> ParticleStyleRenderer(settingsRepo)
             "waveform" -> WaveformStyleRenderer(settingsRepo)
-            "qs_gradient_waveform" -> QsGradientLayeredWaveformStyleRenderer(settingsRepo, context)
             else -> SolidLineStyleRenderer(settingsRepo)
         }
     }
