@@ -884,7 +884,14 @@ private fun SportsText(event: IslandEvent.Sports, modifier: Modifier, overrideCo
         else -> "vs"
     }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Text(scoreText, color = color, style = PillAccent, maxLines = 1)
+        Text(
+            scoreText,
+            color = color,
+            style = PillAccent,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Clip,
+        )
         event.team2Icon?.let { icon ->
             Box(modifier = Modifier.padding(start = 4.dp)) {
                 Image(
@@ -1139,12 +1146,7 @@ private fun AospChipText(event: IslandEvent.AospChip, modifier: Modifier, overri
         is OngoingActivityChipModel.Content.Timer -> AospChipTimerText(c, color, modifier)
         is OngoingActivityChipModel.Content.ShortTimeDelta -> AospChipDeltaText(c, color, modifier)
         is OngoingActivityChipModel.Content.Countdown ->
-            Text(
-                formatCountdownLong(c.secondsUntilStarted * 1000L),
-                color = color,
-                style = PillMono,
-                modifier = modifier,
-            )
+            PillMonoLabel(formatCountdownLong(c.secondsUntilStarted * 1000L), color, modifier)
         is OngoingActivityChipModel.Content.IconOnly -> {}
     }
 }
@@ -1160,7 +1162,7 @@ private fun AospChipTimerText(content: OngoingActivityChipModel.Content.Timer, c
             delay(1000L - abs(content.startTimeMs - content.timeSource.getCurrentTime()) % 1000L)
         }
     }
-    Text(formatCountdownLong(elapsedMs), color = color, style = PillMono, modifier = modifier)
+    PillMonoLabel(formatCountdownLong(elapsedMs), color, modifier)
 }
 
 private fun aospTimerElapsedMs(content: OngoingActivityChipModel.Content.Timer): Long {
@@ -1204,6 +1206,7 @@ private fun MarqueeLabel(text: String, color: Color, modifier: Modifier = Modifi
         color = color,
         style = PillPrimary,
         maxLines = 1,
+        softWrap = false,
         overflow = TextOverflow.Clip,
         modifier = modifier.basicMarquee(iterations = 1),
     )
@@ -1229,7 +1232,7 @@ private fun AudioRecText(event: IslandEvent.AudioRecording, modifier: Modifier, 
                 }
             }
             val color = overrideColor ?: eventStyleFor(event).accent
-            Text(formatCountdownLong(elapsedMs), color = color, style = PillMono, modifier = modifier)
+            PillMonoLabel(formatCountdownLong(elapsedMs), color, modifier)
         }
         RecordingState.SAVED -> MarqueeLabel(stringResource(R.string.ax_dynamic_bar_saved), overrideColor ?: GreenAccent, modifier)
     }
@@ -1266,7 +1269,7 @@ private fun TimerText(event: IslandEvent.Timer, modifier: Modifier, overrideColo
     if (event.endTimeMs > 0L) {
         val color = overrideColor ?: if (event.isPaused) SubtleGray else BlueAccent
         if (event.isPaused) {
-            Text(stringResource(R.string.ax_dynamic_bar_paused), color = color, style = PillMono, modifier = modifier)
+            PillMonoLabel(stringResource(R.string.ax_dynamic_bar_paused), color, modifier)
         } else {
             var remainingMs by
                 remember(event.endTimeMs) {
@@ -1278,7 +1281,7 @@ private fun TimerText(event: IslandEvent.Timer, modifier: Modifier, overrideColo
                     remainingMs = (event.endTimeMs - System.currentTimeMillis()).coerceAtLeast(0L)
                 }
             }
-            Text(formatCountdownLong(remainingMs), color = color, style = PillMono, modifier = modifier)
+            PillMonoLabel(formatCountdownLong(remainingMs), color, modifier)
         }
     } else {
         MarqueeLabel(event.label.ifEmpty { stringResource(R.string.ax_dynamic_bar_timer) }, overrideColor ?: BlueAccent, modifier)
@@ -1289,7 +1292,7 @@ private fun TimerText(event: IslandEvent.Timer, modifier: Modifier, overrideColo
 private fun StopwatchText(event: IslandEvent.Stopwatch, modifier: Modifier, overrideColor: Color? = null) {
     val color = overrideColor ?: if (event.isRunning) MintAccent else SubtleGray
     if (!event.isRunning) {
-        Text(stringResource(R.string.ax_dynamic_bar_paused), color = color, style = PillMono, modifier = modifier)
+        PillMonoLabel(stringResource(R.string.ax_dynamic_bar_paused), color, modifier)
     } else {
         var elapsedMs by
             remember(event.startTimeMs) {
@@ -1301,7 +1304,7 @@ private fun StopwatchText(event: IslandEvent.Stopwatch, modifier: Modifier, over
                 elapsedMs = (System.currentTimeMillis() - event.startTimeMs).coerceAtLeast(0L)
             }
         }
-        Text(formatStopwatch(elapsedMs), color = color, style = PillMono, modifier = modifier)
+        PillMonoLabel(formatStopwatch(elapsedMs), color, modifier)
     }
 }
 

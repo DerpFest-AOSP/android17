@@ -263,7 +263,7 @@ internal fun RowScope.CompactTimerRow(event: IslandEvent.Timer) {
             Text(
                 if (event.isPaused) stringResource(R.string.ax_dynamic_bar_paused) else formatCountdownLong(remainingMs),
                 color = if (event.isPaused) SubtleGray else style.accent,
-                style = TsMono.copy(fontSize = 13.sp),
+                style = TsMono,
             )
         } else {
             Text(stringResource(if (event.isPaused) R.string.ax_dynamic_bar_paused else R.string.ax_dynamic_bar_running), color = style.accent, style = MaterialTheme.typography.labelSmall)
@@ -306,7 +306,7 @@ internal fun RowScope.CompactStopwatchRow(event: IslandEvent.Stopwatch) {
         Text(
             if (event.isRunning) formatStopwatch(elapsedMs) else stringResource(R.string.ax_dynamic_bar_paused),
             color = if (event.isRunning) style.accent else SubtleGray,
-            style = TsMono.copy(fontSize = 13.sp),
+            style = TsMono,
         )
     }
 }

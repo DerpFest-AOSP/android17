@@ -8,6 +8,7 @@ import com.android.systemui.axdynamicbar.model.IslandState
 import com.android.systemui.axdynamicbar.model.IslandUiState
 import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.IslandActions
+import com.android.systemui.axdynamicbar.shared.isVisibleOnDynamicBarSurface
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.axdynamicbar.shared.sendWithBal
@@ -258,14 +259,7 @@ constructor(
                 dismissedEventIds.removeAll { id -> rawEvents.none { it.id == id } }
                 val events = rawEvents.filter { e ->
                     e.id !in dismissedEventIds &&
-                        
-                        !(onKeyguard && e is IslandEvent.Notification) &&
-                        
-                        !(onKeyguard && e is IslandEvent.Charging) &&
-                        
-                        !(onKeyguard && e is IslandEvent.AppSwitch) &&
-                        
-                        !(!onKeyguard && e is IslandEvent.KeyguardIndication)
+                        e.isVisibleOnDynamicBarSurface(onKeyguard)
                 }
 
                 val current = _uiState.value
