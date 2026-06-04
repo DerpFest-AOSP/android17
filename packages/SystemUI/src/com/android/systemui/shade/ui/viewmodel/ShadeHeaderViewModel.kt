@@ -51,6 +51,7 @@ import com.android.systemui.statusbar.phone.StatusBarLocation
 import com.android.systemui.statusbar.phone.domain.interactor.IsAreaDark
 import com.android.systemui.statusbar.phone.domain.interactor.ShadeDarkIconInteractor
 import com.android.systemui.statusbar.phone.ui.StatusBarIconController
+import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryViewModel
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.CarrierTextInteractor
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconsInteractor
@@ -89,6 +90,7 @@ constructor(
     val statusBarIconController: StatusBarIconController,
     val batteryViewModelFactory: BatteryViewModel.AlwaysShowPercent.Factory,
     val systemStatusIconsViewModelFactory: SystemStatusIconsViewModel.Factory,
+    private val batteryRepository: BatteryRepository,
     val kairosNetwork: KairosNetwork,
     val mobileIconsViewModelKairos: dagger.Lazy<MobileIconsViewModelKairos>,
     private val dualShadeEducationInteractor: DualShadeEducationInteractor,
@@ -108,6 +110,12 @@ constructor(
     val isSingleCarrier: Boolean by
         mobileIconsInteractor.isSingleCarrier.hydratedStateOf(
             initialValue = mobileIconsInteractor.isSingleCarrier.value
+        )
+
+    val showBatteryEstimateEnabled: Boolean by
+        batteryRepository.showBatteryEstimateEnabled.hydratedStateOf(
+            traceName = "showBatteryEstimateEnabled",
+            initialValue = true,
         )
 
     /** The list of subscription Ids for current mobile connections. */

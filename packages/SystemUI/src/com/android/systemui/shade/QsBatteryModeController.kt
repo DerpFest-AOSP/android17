@@ -7,6 +7,7 @@ import com.android.systemui.battery.BatteryMeterView
 import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.layout.StatusBarContentInsetsProvider
+import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
 import javax.inject.Inject
 
 /**
@@ -18,6 +19,7 @@ class QsBatteryModeController
 constructor(
     @ShadeDisplayAware private val context: Context,
     private val perDisplaySubcomponentRepo: PerDisplayRepository<SystemUIDisplaySubcomponent>,
+    private val batteryRepository: BatteryRepository,
 ) {
 
     private companion object {
@@ -46,15 +48,24 @@ constructor(
     fun getBatteryMode(cutout: DisplayCutout?, qsExpandedFraction: Float): Int? {
         val insetsProvider =
             perDisplaySubcomponentRepo[context.displayId]?.statusBarContentInsetsProvider
-        return when {
-            qsExpandedFraction > fadeInStartFraction -> BatteryMeterView.MODE_ESTIMATE
-            insetsProvider != null && qsExpandedFraction < fadeOutCompleteFraction ->
-                if (hasCenterCutout(cutout, insetsProvider)) {
-                    BatteryMeterView.MODE_ON
-                } else {
-                    BatteryMeterView.MODE_ESTIMATE
-                }
-            else -> null
+        val mode =
+            when {
+                qsExpandedFraction > fadeInStartFraction -> BatteryMeterView.MODE_ESTIMATE
+                insetsProvider != null && qsExpandedFraction < fadeOutCompleteFraction ->
+                    if (hasCenterCutout(cutout, insetsProvider)) {
+                        BatteryMeterView.MODE_ON
+                    } else {
+                        BatteryMeterView.MODE_ESTIMATE
+                    }
+                else -> null
+            }
+        return if (
+            mode == BatteryMeterView.MODE_ESTIMATE &&
+                !batteryRepository.showBatteryEstimateEnabled.value
+        ) {
+            BatteryMeterView.MODE_ON
+        } else {
+            mode
         }
     }
 

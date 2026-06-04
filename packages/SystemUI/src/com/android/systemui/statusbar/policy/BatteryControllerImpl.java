@@ -35,6 +35,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.PowerSaveState;
+import android.os.UserHandle;
 import android.util.IndentingPrintWriter;
 
 import androidx.annotation.NonNull;
@@ -64,6 +65,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import javax.annotation.concurrent.GuardedBy;
+
+import lineageos.providers.LineageSettings;
 
 /**
  * Default implementation of a {@link BatteryController}. This controller monitors for battery
@@ -391,12 +394,24 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
 
     @Override
     public void getEstimatedTimeRemainingString(EstimateFetchCompletion completion) {
+        if (!isBatteryEstimateDisplayEnabled()) {
+            completion.onBatteryRemainingEstimateRetrieved(null);
+            return;
+        }
         // Need to fetch or refresh the estimate, but it may involve binder calls so offload the
         // work
         synchronized (mFetchCallbacks) {
             mFetchCallbacks.add(completion);
         }
         updateEstimateInBackground();
+    }
+
+    private boolean isBatteryEstimateDisplayEnabled() {
+        return LineageSettings.System.getIntForUser(
+                mContext.getContentResolver(),
+                LineageSettings.System.STATUS_BAR_SHOW_BATTERY_ESTIMATE,
+                1,
+                UserHandle.USER_CURRENT) == 1;
     }
 
     @Nullable
@@ -422,7 +437,8 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
             // Only fetch the estimate if they are enabled
             synchronized (mEstimateLock) {
                 mEstimate = null;
-                if (mEstimates.isHybridNotificationEnabled()) {
+                if (mEstimates.isHybridNotificationEnabled()
+                        && isBatteryEstimateDisplayEnabled()) {
                     updateEstimate();
                 }
             }

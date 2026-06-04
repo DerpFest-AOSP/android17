@@ -745,7 +745,7 @@ private fun BatteryInfo(
         viewModelFactory = viewModel.batteryViewModelFactory,
         isDarkProvider = { isDarkProvider },
         showIcon = showIcon,
-        showEstimate = useExpandedFormat,
+        showEstimate = useExpandedFormat && viewModel.showBatteryEstimateEnabled,
         textColor = textColor,
         modifier = modifier.sysuiResTag(ShadeHeader.TestTags.BatteryTestTag),
         useAccentTintInContext = false, // QS header: no accent tint
