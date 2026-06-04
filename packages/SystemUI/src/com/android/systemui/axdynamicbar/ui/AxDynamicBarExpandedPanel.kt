@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
 import android.view.Gravity
-import android.view.MotionEvent
 import android.view.WindowManager
 import android.window.OnBackInvokedCallback
 import android.window.OnBackInvokedDispatcher
@@ -189,14 +188,6 @@ constructor(
         val view =
             ComposeView(context).apply {
                 setContent { PlatformTheme { OverlayContent(viewModel, statusBarTop, hasCutout) } }
-                setOnTouchListener { _, event ->
-                    if (event.action == MotionEvent.ACTION_OUTSIDE) {
-                        viewModel.statusBarExpansion.collapse()
-                        true
-                    } else {
-                        false
-                    }
-                }
             }
 
         view.setViewTreeLifecycleOwner(lifecycleOwner)
@@ -209,7 +200,6 @@ constructor(
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
             WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR or
             WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
-            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH or
             if (isCurrentlyExpanded) 0
             else (WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
