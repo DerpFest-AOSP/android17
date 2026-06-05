@@ -2380,7 +2380,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 break;
             case SCREENSHOT:
                 if (!mPocketLockShowing) {
-                    mScreenshotHelper.takeScreenshot(SCREENSHOT_KEY_OTHER, mHandler, null);
+                    takeScreenshot(SCREENSHOT_KEY_OTHER);
+                    notifyKeyGestureCompleted(event, KeyGestureEvent.KEY_GESTURE_TYPE_TAKE_SCREENSHOT);
                 }
                 break;
             case VOLUME_PANEL:
@@ -8073,5 +8074,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 am.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
                 break;
         }
+    }
+
+    private void takeScreenshot(int source) {
+        mScreenshotHelper.takeScreenshot(source, mHandler, null);
     }
 }
