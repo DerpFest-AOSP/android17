@@ -417,6 +417,29 @@ object KeyguardRootViewBinder {
                 override fun onChildViewAdded(parent: View, child: View) {
                     childViews.put(child.id, child)
                     onViewAdded(child.id, child)
+                    val movement = viewModel.currentMovement
+                    with(movement) {
+                        when (child.id) {
+                            burnInLayerId, aodPromotedNotificationId,
+                            aodNotificationIconContainerId, sliceViewId,
+                            weatherAreaInlineId, dateViewId -> {
+                                child.translationY = translationY.toFloat()
+                                child.translationX = translationX.toFloat()
+                            }
+                            largeClockId -> {
+                                child.translationY = translationY.toFloat()
+                                if (scaleClockOnly) {
+                                    child.scaleX = scale
+                                    child.scaleY = scale
+                                }
+                            }
+                        }
+                        if (child.id == largeClockDateId &&
+                            com.android.systemui.shared.Flags.clockReactiveSmartspaceLayout()
+                        ) {
+                            child.translationY = translationY.toFloat()
+                        }
+                    }
                 }
 
                 override fun onChildViewRemoved(parent: View, child: View) {
@@ -604,6 +627,8 @@ object KeyguardRootViewBinder {
     private val largeClockId = ClockViewIds.LOCKSCREEN_CLOCK_VIEW_LARGE
     private val largeClockDateId = sharedR.id.date_smartspace_view_large
     private val largeClockWeatherId = sharedR.id.weather_smartspace_view_large
+    private val dateViewId = sharedR.id.date_smartspace_view
+    private val weatherAreaInlineId = sharedR.id.weather_smartspace_view
     private val bcSmartspaceId = sharedR.id.bc_smartspace_view
     private val smallClockId = ClockViewIds.LOCKSCREEN_CLOCK_VIEW_SMALL
     private val indicationArea = R.id.keyguard_indication_area
