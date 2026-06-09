@@ -234,14 +234,18 @@ constructor(
 }
 
 private fun isQsMediaVolumeSliderEnabled(context: Context): Boolean {
+    return getQsMediaVolumeSliderMode(context) != Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED
+}
+
+private fun getQsMediaVolumeSliderMode(context: Context): Int {
     return try {
         Settings.System.getIntForUser(
             context.contentResolver,
             Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-            0,
+            Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED,
             UserHandle.USER_CURRENT,
-        ) == 1
+        )
     } catch (_: Throwable) {
-        false
+        Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED
     }
 }

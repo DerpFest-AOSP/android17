@@ -6997,11 +6997,18 @@ public final class Settings {
         public static final String QS_VOLUME_GRADIENT_ENABLED = "qs_volume_gradient_enabled";
 
         /**
-         * Whether to show the media volume slider next to the brightness slider in Quick Settings.
-         * 1 to enable, 0 to disable. Default is 1.
+         * Quick Settings media volume slider mode.
+         * 0 = disabled (default), 1 = alongside brightness, 2 = replace brightness.
          * @hide
          */
         public static final String QS_MEDIA_VOLUME_SLIDER_ENABLED = "qs_media_volume_slider_enabled";
+
+        /** @hide */
+        public static final int QS_MEDIA_VOLUME_SLIDER_DISABLED = 0;
+        /** @hide */
+        public static final int QS_MEDIA_VOLUME_SLIDER_ALONGSIDE = 1;
+        /** @hide */
+        public static final int QS_MEDIA_VOLUME_SLIDER_REPLACE_BRIGHTNESS = 2;
 
         /**
          * Gradient start color for tiles, brightness slider, and volume slider.

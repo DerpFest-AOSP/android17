@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -43,23 +43,88 @@ import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.Au
 
 const val QS_MEDIA_VOLUME_SLIDER_TAG = "qs_media_volume_slider"
 
+enum class QsMediaVolumeSliderMode {
+    Disabled,
+    Alongside,
+    ReplaceBrightness,
+    ;
+
+    companion object {
+        fun fromInt(value: Int): QsMediaVolumeSliderMode =
+            when (value) {
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ALONGSIDE -> Alongside
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_REPLACE_BRIGHTNESS -> ReplaceBrightness
+                else -> Disabled
+            }
+
+        fun isActive(mode: QsMediaVolumeSliderMode): Boolean = mode != Disabled
+    }
+}
+
+@Composable
+fun rememberQsMediaVolumeSliderMode(): QsMediaVolumeSliderMode {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readMode(): Int =
+        try {
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED,
+                UserHandle.USER_CURRENT,
+            )
+        } catch (_: Throwable) {
+            Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED
+        }
+
+    var modeValue by remember { mutableIntStateOf(readMode()) }
+
+    DisposableEffect(contentResolver) {
+        val observer =
+            object : android.database.ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    context.mainExecutor.execute { modeValue = readMode() }
+                }
+            }
+
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+
+    return QsMediaVolumeSliderMode.fromInt(modeValue)
+}
+
+@Composable
+fun isQsMediaVolumeSliderEnabled(): Boolean =
+    QsMediaVolumeSliderMode.isActive(rememberQsMediaVolumeSliderMode())
+
 @Composable
 fun QuickSettingsSliders(
     brightness: @Composable () -> Unit,
     volume: @Composable () -> Unit,
     modifier: Modifier = Modifier,
-    isVolumeSliderEnabled: Boolean = isQsMediaVolumeSliderEnabled(),
+    sliderMode: QsMediaVolumeSliderMode = rememberQsMediaVolumeSliderMode(),
 ) {
-    if (isVolumeSliderEnabled) {
-        Row(
-            horizontalArrangement = spacedBy(dimensionResource(id = R.dimen.qs_split_sliders_gap)),
-            modifier = modifier.fillMaxWidth(),
-        ) {
-            Box(modifier = Modifier.weight(1f)) { brightness() }
-            Box(modifier = Modifier.weight(1f)) { volume() }
-        }
-    } else {
-        Box(modifier = modifier.fillMaxWidth()) { brightness() }
+    when (sliderMode) {
+        QsMediaVolumeSliderMode.Disabled ->
+            Box(modifier = modifier.fillMaxWidth()) { brightness() }
+        QsMediaVolumeSliderMode.Alongside ->
+            Row(
+                horizontalArrangement = spacedBy(dimensionResource(id = R.dimen.qs_split_sliders_gap)),
+                modifier = modifier.fillMaxWidth(),
+            ) {
+                Box(modifier = Modifier.weight(1f)) { brightness() }
+                Box(modifier = Modifier.weight(1f)) { volume() }
+            }
+        QsMediaVolumeSliderMode.ReplaceBrightness ->
+            Box(modifier = modifier.fillMaxWidth()) { volume() }
     }
 }
 
@@ -91,45 +156,4 @@ fun QSMediaVolumeSlider(
         hapticsViewModelFactory = viewModel.getSliderHapticsViewModelFactory(),
         modifier = modifier.fillMaxWidth().testTag(QS_MEDIA_VOLUME_SLIDER_TAG),
     )
-}
-
-@Composable
-fun isQsMediaVolumeSliderEnabled(): Boolean {
-    val context = LocalContext.current
-    val contentResolver = context.contentResolver
-
-    fun readEnabled(): Boolean {
-        return try {
-            Settings.System.getIntForUser(
-                contentResolver,
-                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-                0,
-                UserHandle.USER_CURRENT,
-            ) == 1
-        } catch (_: Throwable) {
-            false
-        }
-    }
-
-    var enabled by remember { mutableStateOf(readEnabled()) }
-
-    DisposableEffect(contentResolver) {
-        val observer =
-            object : android.database.ContentObserver(null) {
-                override fun onChange(selfChange: Boolean) {
-                    context.mainExecutor.execute { enabled = readEnabled() }
-                }
-            }
-
-        contentResolver.registerContentObserver(
-            Settings.System.getUriFor(Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED),
-            false,
-            observer,
-            UserHandle.USER_ALL,
-        )
-
-        onDispose { contentResolver.unregisterContentObserver(observer) }
-    }
-
-    return enabled
 }

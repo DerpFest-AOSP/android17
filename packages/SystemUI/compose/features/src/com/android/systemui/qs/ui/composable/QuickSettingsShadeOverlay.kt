@@ -412,7 +412,6 @@ private fun ContentScope.QuickSettingsLayout(
                         QSMediaVolumeSlider(qsContainerViewModel.audioStreamSliderViewModelFactory)
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    isVolumeSliderEnabled = useQsMediaVolumeSlider,
                 )
             }
 

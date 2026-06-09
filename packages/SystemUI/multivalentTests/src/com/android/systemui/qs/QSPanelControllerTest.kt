@@ -140,7 +140,7 @@ class QSPanelControllerTest : SysuiTestCase() {
             Settings.System.putIntForUser(
                 context.contentResolver,
                 Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-                0,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED,
                 UserHandle.USER_CURRENT,
             )
             controller = createController()
@@ -150,13 +150,34 @@ class QSPanelControllerTest : SysuiTestCase() {
     }
 
     @Test
+    fun settingReplaceBrightness_setsBrightnessViewToVolumeComposeView() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            controller.destroy()
+            Settings.System.putIntForUser(
+                context.contentResolver,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_REPLACE_BRIGHTNESS,
+                UserHandle.USER_CURRENT,
+            )
+            controller = createController()
+        }
+
+        val brightnessViewCaptor = argumentCaptor<View>()
+        verify(qsPanel, atLeastOnce()).setBrightnessView(brightnessViewCaptor.capture())
+        val volumeView = brightnessViewCaptor.allValues.last()
+
+        assertThat(volumeView).isInstanceOf(ComposeView::class.java)
+        assertThat(volumeView).isNotInstanceOf(QSSlidersRowView::class.java)
+    }
+
+    @Test
     fun settingEnabled_setsBrightnessViewToSliderRow() {
         InstrumentationRegistry.getInstrumentation().runOnMainSync {
             controller.destroy()
             Settings.System.putIntForUser(
                 context.contentResolver,
                 Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-                1,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ALONGSIDE,
                 UserHandle.USER_CURRENT,
             )
             controller = createController()

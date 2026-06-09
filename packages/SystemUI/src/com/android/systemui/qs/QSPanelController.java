@@ -88,7 +88,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     protected final MediaCarouselInteractor mMediaCarouselInteractor;
     @Nullable private QSSlidersRowView mSlidersRowView;
-    private boolean mUseQsMediaVolumeSlider;
+    private int mQsMediaVolumeSliderMode;
 
     private final ContentObserver mQsMediaVolumeSliderObserver = new ContentObserver(
             new Handler(Looper.getMainLooper())) {
@@ -136,7 +136,7 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
         mAudioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory;
 
         mBrightnessSliderController = brightnessSliderFactory.create(getContext(), mView);
-        mUseQsMediaVolumeSlider = shouldUseQsMediaVolumeSlider();
+        mQsMediaVolumeSliderMode = getQsMediaVolumeSliderMode();
         setBrightnessView();
 
         mBrightnessController = brightnessControllerFactory.create(mBrightnessSliderController);
@@ -211,10 +211,10 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
 
     private void maybeReinflateBrightnessSlider() {
         int newDensity = mView.getResources().getConfiguration().densityDpi;
-        boolean useQsMediaVolumeSlider = shouldUseQsMediaVolumeSlider();
-        if (newDensity != mLastDensity || useQsMediaVolumeSlider != mUseQsMediaVolumeSlider) {
+        int newMode = getQsMediaVolumeSliderMode();
+        if (newDensity != mLastDensity || newMode != mQsMediaVolumeSliderMode) {
             mLastDensity = newDensity;
-            mUseQsMediaVolumeSlider = useQsMediaVolumeSlider;
+            mQsMediaVolumeSliderMode = newMode;
             reinflateBrightnessSlider();
         } else if (mSlidersRowView != null) {
             mSlidersRowView.updateResources();
@@ -279,25 +279,43 @@ public class QSPanelController extends QSPanelControllerBase<QSPanel> {
     }
 
     private void setBrightnessView() {
-        if (!mUseQsMediaVolumeSlider) {
-            mSlidersRowView = null;
-            mView.setBrightnessView(mBrightnessSliderController.getRootView());
-            return;
+        switch (mQsMediaVolumeSliderMode) {
+            case Settings.System.QS_MEDIA_VOLUME_SLIDER_ALONGSIDE: {
+                QSSlidersRowView slidersRowView = new QSSlidersRowView(getContext());
+                slidersRowView.setBrightnessView(mBrightnessSliderController.getRootView());
+                slidersRowView.setVolumeView(
+                        new ComposeView(getContext()), mAudioStreamSliderViewModelFactory);
+                mSlidersRowView = slidersRowView;
+                mView.setBrightnessView(slidersRowView);
+                break;
+            }
+            case Settings.System.QS_MEDIA_VOLUME_SLIDER_REPLACE_BRIGHTNESS: {
+                mSlidersRowView = null;
+                ComposeView volumeView = new ComposeView(getContext());
+                QSMediaSliderComposableProvider.setContent(
+                        volumeView, mAudioStreamSliderViewModelFactory);
+                mView.setBrightnessView(volumeView);
+                break;
+            }
+            case Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED:
+            default:
+                mSlidersRowView = null;
+                mView.setBrightnessView(mBrightnessSliderController.getRootView());
+                break;
         }
-
-        QSSlidersRowView slidersRowView = new QSSlidersRowView(getContext());
-        slidersRowView.setBrightnessView(mBrightnessSliderController.getRootView());
-        slidersRowView.setVolumeView(new ComposeView(getContext()), mAudioStreamSliderViewModelFactory);
-        mSlidersRowView = slidersRowView;
-        mView.setBrightnessView(slidersRowView);
     }
 
-    private boolean shouldUseQsMediaVolumeSlider() {
-        return Settings.System.getIntForUser(
+    private int getQsMediaVolumeSliderMode() {
+        int mode = Settings.System.getIntForUser(
                 mView.getContext().getContentResolver(),
                 Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-                0,
-                UserHandle.USER_CURRENT) == 1;
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED,
+                UserHandle.USER_CURRENT);
+        if (mode < Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED
+                || mode > Settings.System.QS_MEDIA_VOLUME_SLIDER_REPLACE_BRIGHTNESS) {
+            return Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED;
+        }
+        return mode;
     }
 
     /** Start customizing the Quick Settings. */

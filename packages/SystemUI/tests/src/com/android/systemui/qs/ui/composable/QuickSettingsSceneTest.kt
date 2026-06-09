@@ -81,12 +81,12 @@ class QuickSettingsSceneTest : SysuiTestCase() {
 
         usingMediaInComposeFragment = true
 
-        Settings.System.putIntForUser(
-            context.contentResolver,
-            Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-            1,
-            UserHandle.USER_CURRENT,
-        )
+            Settings.System.putIntForUser(
+                context.contentResolver,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
+                Settings.System.QS_MEDIA_VOLUME_SLIDER_ALONGSIDE,
+                UserHandle.USER_CURRENT,
+            )
 
         currentTilesInteractor.setTiles(
             listOf(

@@ -34,6 +34,7 @@ import androidx.test.filters.SmallTest
 import com.android.systemui.SysuiTestCase
 import com.android.systemui.qs.composefragment.QuickQuickSettingsLayout
 import com.android.systemui.qs.composefragment.QuickSettingsLayout
+import com.android.systemui.qs.ui.composable.QsMediaVolumeSliderMode
 import com.android.systemui.qs.ui.composable.QuickSettingsSliders
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -96,7 +97,7 @@ class QSFragmentComposeTest : SysuiTestCase() {
     fun portraitLayout_qs() {
         composeTestRule.setContent {
             QuickSettingsLayout(
-                brightness = { Sliders(isVolumeSliderEnabled = false) },
+                brightness = { Sliders(QsMediaVolumeSliderMode.Disabled) },
                 tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
                 media = { Media() },
                 mediaInRow = false,
@@ -123,7 +124,7 @@ class QSFragmentComposeTest : SysuiTestCase() {
     fun landscapeLayout_qs() {
         composeTestRule.setContent {
             QuickSettingsLayout(
-                brightness = { Sliders(isVolumeSliderEnabled = false) },
+                brightness = { Sliders(QsMediaVolumeSliderMode.Disabled) },
                 tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
                 media = { Media() },
                 mediaInRow = true,
@@ -157,7 +158,7 @@ class QSFragmentComposeTest : SysuiTestCase() {
     fun landscapeLayout_qsSplitSliders() {
         composeTestRule.setContent {
             QuickSettingsLayout(
-                brightness = { Sliders(isVolumeSliderEnabled = true) },
+                brightness = { Sliders(QsMediaVolumeSliderMode.Alongside) },
                 tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
                 media = { Media() },
                 mediaInRow = true,
@@ -202,11 +203,11 @@ class QSFragmentComposeTest : SysuiTestCase() {
         }
 
         @Composable
-        fun Sliders(isVolumeSliderEnabled: Boolean) {
+        fun Sliders(sliderMode: QsMediaVolumeSliderMode) {
             QuickSettingsSliders(
                 brightness = { Brightness() },
                 volume = { Volume() },
-                isVolumeSliderEnabled = isVolumeSliderEnabled,
+                sliderMode = sliderMode,
             )
         }
 

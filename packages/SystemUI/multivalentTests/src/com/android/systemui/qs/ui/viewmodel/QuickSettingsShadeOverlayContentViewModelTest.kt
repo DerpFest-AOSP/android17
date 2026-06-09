@@ -225,7 +225,7 @@ class QuickSettingsShadeOverlayContentViewModelTest : SysuiTestCase() {
     fun volumeSliderViewModel_qsMediaSliderDisabledAndDesktopAudioEnabled_present() =
         kosmos.runTest {
             setDesktopAudioTileDetailsEnabled(true)
-            setQsMediaVolumeSliderEnabled(false)
+            setQsMediaVolumeSliderMode(Settings.System.QS_MEDIA_VOLUME_SLIDER_DISABLED)
 
             val viewModel =
                 quickSettingsShadeOverlayContentViewModelFactory.create(testScope.backgroundScope)
@@ -238,7 +238,7 @@ class QuickSettingsShadeOverlayContentViewModelTest : SysuiTestCase() {
     fun volumeSliderViewModel_qsMediaSliderEnabledAndDesktopAudioEnabled_absent() =
         kosmos.runTest {
             setDesktopAudioTileDetailsEnabled(true)
-            setQsMediaVolumeSliderEnabled(true)
+            setQsMediaVolumeSliderMode(Settings.System.QS_MEDIA_VOLUME_SLIDER_ALONGSIDE)
 
             val viewModel =
                 quickSettingsShadeOverlayContentViewModelFactory.create(testScope.backgroundScope)
@@ -270,11 +270,11 @@ class QuickSettingsShadeOverlayContentViewModelTest : SysuiTestCase() {
         configurationController.onConfigurationChanged(Configuration())
     }
 
-    private fun Kosmos.setQsMediaVolumeSliderEnabled(enable: Boolean) {
+    private fun Kosmos.setQsMediaVolumeSliderMode(mode: Int) {
         Settings.System.putIntForUser(
             testableContext.contentResolver,
             Settings.System.QS_MEDIA_VOLUME_SLIDER_ENABLED,
-            if (enable) 1 else 0,
+            mode,
             UserHandle.USER_CURRENT,
         )
     }
