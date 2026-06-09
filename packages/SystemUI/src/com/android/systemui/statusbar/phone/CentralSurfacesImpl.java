@@ -1395,7 +1395,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
                         mShadeSurface.updateExpansionAndVisibility();
                         setBouncerShowingForStatusBarComponents(mBouncerShowing);
                         checkBarModes();
-                        mBurnInProtectionController.setPhoneStatusBarView(mPhoneStatusBarViewController.getPhoneStatusBarView());
+                        mBurnInProtectionController.setPhoneStatusBarBurnInProtectionHandler(
+                                mPhoneStatusBarViewController.getPhoneStatusBarBurnInProtectionHandler());
                     });
         }
 

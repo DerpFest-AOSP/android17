@@ -47,7 +47,6 @@ import com.android.systemui.shade.StatusBarLongPressGestureDetector;
 import com.android.systemui.statusbar.core.StatusBarConnectedDisplays;
 import com.android.systemui.statusbar.policy.StatusBarBrightnessGesture;
 import com.android.systemui.statusbar.phone.userswitcher.StatusBarUserSwitcherContainer;
-import com.android.systemui.statusbar.policy.Offset;
 import com.android.systemui.statusbar.window.StatusBarWindowControllerStore;
 import com.android.systemui.user.ui.binder.StatusBarUserChipViewBinder;
 import com.android.systemui.user.ui.viewmodel.StatusBarUserChipViewModel;
@@ -176,15 +175,6 @@ public class PhoneStatusBarView extends FrameLayout {
             requestLayout();
         }
         return super.onApplyWindowInsets(insets);
-    }
-
-    public void offsetStatusBar(Offset offset) {
-        if (mStatusBarContents == null) {
-            return;
-        }
-        mStatusBarContents.setTranslationX(offset.getX());
-        mStatusBarContents.setTranslationY(offset.getY());
-        invalidate();
     }
 
     /**

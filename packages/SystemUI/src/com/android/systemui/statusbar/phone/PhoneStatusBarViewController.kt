@@ -46,6 +46,7 @@ import com.android.systemui.statusbar.data.repository.StatusBarConfigurationCont
 import com.android.systemui.statusbar.data.repository.StatusBarContentInsetsProviderStore
 import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.statusbar.policy.ConfigurationController
+import com.android.systemui.statusbar.policy.Offset
 import com.android.systemui.statusbar.policy.StatusBarBrightnessGesture
 import com.android.systemui.statusbar.window.StatusBarWindowControllerStore
 import com.android.systemui.statusbar.window.StatusBarWindowStateController
@@ -335,6 +336,30 @@ private constructor(
 
     fun getPhoneStatusBarView(): PhoneStatusBarView {
         return mView
+    }
+
+    private val burnInProtectionHandler = PhoneStatusBarBurnInProtectionHandler()
+
+    fun getPhoneStatusBarBurnInProtectionHandler(): PhoneStatusBarBurnInProtectionHandler {
+        return burnInProtectionHandler
+    }
+
+    inner class PhoneStatusBarBurnInProtectionHandler {
+        private val statusBarStartSideContent: View? =
+            mView.findViewById(R.id.status_bar_start_side_content)
+
+        private val statusBarEndSideContent: View? =
+            mView.findViewById(R.id.status_bar_end_side_content)
+
+        fun offsetStatusBar(startContentOffset: Offset, endContentOffset: Offset) {
+            statusBarStartSideContent?.translationX = startContentOffset.x.toFloat()
+            statusBarStartSideContent?.translationY = startContentOffset.y.toFloat()
+
+            statusBarEndSideContent?.translationX = endContentOffset.x.toFloat()
+            statusBarEndSideContent?.translationY = endContentOffset.y.toFloat()
+
+            mView.invalidate()
+        }
     }
 
     inner class PhoneStatusBarViewTouchHandler : Gefingerpoken {
