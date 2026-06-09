@@ -41,6 +41,7 @@ import com.android.systemui.statusbar.phone.CentralSurfaces
 import com.android.systemui.statusbar.phone.PhoneStatusBarTransitions
 import com.android.systemui.statusbar.phone.PhoneStatusBarViewController
 import com.android.systemui.statusbar.phone.PhoneStatusBarView
+import com.android.systemui.statusbar.policy.BurnInProtectionController
 import com.android.systemui.statusbar.window.StatusBarWindowController
 import com.android.systemui.statusbar.window.data.repository.StatusBarWindowStatePerDisplayRepository
 import com.android.systemui.statusbar.window.shared.model.StatusBarWindowState
@@ -85,6 +86,7 @@ constructor(
     private val shadeSurface: ShadeSurface,
     private val bubblesOptional: Optional<Bubbles>,
     private val dumpManager: DumpManager,
+    private val burnInProtectionController: BurnInProtectionController,
     powerInteractor: PowerInteractor,
     primaryBouncerInteractor: PrimaryBouncerInteractor,
 ) : Dumpable {
@@ -225,6 +227,10 @@ constructor(
                     // a heads-up notification was being displayed and should continue being
                     // displayed).
                     shadeSurface.updateExpansionAndVisibility()
+
+                    burnInProtectionController.setPhoneStatusBarBurnInProtectionHandler(
+                        statusBarViewController.getPhoneStatusBarBurnInProtectionHandler()
+                    )
                 }
             }
     }
