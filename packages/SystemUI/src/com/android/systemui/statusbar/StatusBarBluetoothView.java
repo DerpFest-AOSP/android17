@@ -71,6 +71,9 @@ public class StatusBarBluetoothView extends FrameLayout implements StatusIconDis
     @Nullable
     private Runnable mApplyVisibilityRunnable;
 
+    @Nullable
+    private Runnable mApplyLayoutRunnable;
+
     public static StatusBarBluetoothView fromContext(
             Context context, String slot, boolean blocked) {
         StatusBarBluetoothView v = (StatusBarBluetoothView)
@@ -220,6 +223,20 @@ public class StatusBarBluetoothView extends FrameLayout implements StatusIconDis
         }
 
         if (requestLayout) {
+            requestLayoutWhenSafe();
+        }
+    }
+
+    private void requestLayoutWhenSafe() {
+        if (isInLayout()) {
+            if (mApplyLayoutRunnable == null) {
+                mApplyLayoutRunnable = () -> {
+                    mApplyLayoutRunnable = null;
+                    requestLayout();
+                };
+                post(mApplyLayoutRunnable);
+            }
+        } else {
             requestLayout();
         }
     }

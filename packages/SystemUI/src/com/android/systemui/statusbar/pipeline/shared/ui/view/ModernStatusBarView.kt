@@ -41,13 +41,14 @@ open class ModernStatusBarView(context: Context, attrs: AttributeSet?) :
 
     @StatusBarIconView.VisibleState
     private var iconVisibleState: Int = STATE_HIDDEN
-        set(value) {
-            if (field == value) {
-                return
-            }
-            field = value
-            binding.onVisibilityStateChanged(value)
-        }
+
+    /**
+     * Applying visibility state during [StatusIconContainer.onLayout] toggles child visibility and
+     * calls [requestLayout], which triggers "requestLayout() improperly called during layout" and
+     * flicker when a neighboring icon (e.g. bluetooth battery) changes width. Defer updates until
+     * after the layout pass.
+     */
+    private var applyVisibilityRunnable: Runnable? = null
 
     override fun getSlot() = slot
 
@@ -76,7 +77,25 @@ open class ModernStatusBarView(context: Context, attrs: AttributeSet?) :
     }
 
     override fun setVisibleState(@StatusBarIconView.VisibleState state: Int, animate: Boolean) {
+        if (iconVisibleState == state) {
+            return
+        }
         iconVisibleState = state
+        applyVisibilityStateToBinding()
+    }
+
+    private fun applyVisibilityStateToBinding() {
+        if (isInLayout) {
+            if (applyVisibilityRunnable == null) {
+                applyVisibilityRunnable = Runnable {
+                    applyVisibilityRunnable = null
+                    binding.onVisibilityStateChanged(iconVisibleState)
+                }
+                post(applyVisibilityRunnable)
+            }
+        } else {
+            binding.onVisibilityStateChanged(iconVisibleState)
+        }
     }
 
     @StatusBarIconView.VisibleState
