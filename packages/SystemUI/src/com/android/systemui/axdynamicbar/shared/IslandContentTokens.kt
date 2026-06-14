@@ -576,12 +576,30 @@ internal fun resolveLabelIconVector(label: String): ImageVector {
     }
 }
 
+internal fun IslandEvent.MediaCustomAction.isShuffleAction(): Boolean {
+    val labelLower = label.lowercase()
+    val actionLower = action.lowercase()
+    return labelLower.contains("shuffle")
+        || actionLower.contains("shuffle")
+        || actionLower.contains("set_shuffle_mode")
+}
+
 @Composable
 internal fun CustomActionIcon(
     ca: IslandEvent.MediaCustomAction,
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
+    if (ca.isShuffleAction()) {
+        Image(
+            painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
+            contentDescription = ca.label,
+            colorFilter = ColorFilter.tint(tint),
+            contentScale = ContentScale.Fit,
+            modifier = modifier,
+        )
+        return
+    }
     val appBitmap = ca.icon?.let { drawable ->
         remember(drawable) {
             try { drawable.toBitmap(48, 48).asImageBitmap() } catch (_: Exception) { null }
