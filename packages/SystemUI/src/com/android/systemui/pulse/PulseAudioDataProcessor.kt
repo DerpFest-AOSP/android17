@@ -71,6 +71,8 @@ class PulseAudioDataProcessor(private val context: Context) {
 
         if (visualizer != null) {
             isProcessing = true
+        } else {
+            unregisterPlaybackCallback()
         }
     }
 
