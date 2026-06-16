@@ -58,10 +58,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.palette.graphics.Palette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import androidx.compose.foundation.Image
 import androidx.compose.material3.Icon
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -591,11 +588,10 @@ internal fun CustomActionIcon(
     modifier: Modifier = Modifier,
 ) {
     if (ca.isShuffleAction()) {
-        Image(
+        Icon(
             painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
             contentDescription = ca.label,
-            colorFilter = ColorFilter.tint(tint),
-            contentScale = ContentScale.Fit,
+            tint = tint,
             modifier = modifier,
         )
         return
@@ -610,11 +606,10 @@ internal fun CustomActionIcon(
     } else {
         val vectorGlyphRes = resolveNowPlayingStyleActionDrawableRes(ca.label)
         if (vectorGlyphRes != null) {
-            Image(
+            Icon(
                 painter = painterResource(vectorGlyphRes),
                 contentDescription = ca.label,
-                colorFilter = ColorFilter.tint(tint),
-                contentScale = ContentScale.Fit,
+                tint = tint,
                 modifier = modifier,
             )
         } else {

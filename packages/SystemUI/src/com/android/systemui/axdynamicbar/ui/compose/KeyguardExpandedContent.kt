@@ -488,12 +488,11 @@ private fun KeyguardMediaPanel(event: IslandEvent.Media, interactor: IslandActio
                             if (ca != null) {
                                 CustomActionIcon(ca, tint = traySecondary, modifier = Modifier.size(SizeIconMd))
                             } else {
-                                Image(
+                                Icon(
                                     painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
                                     contentDescription =
                                         stringResource(R.string.ax_dynamic_bar_shuffle),
-                                    colorFilter = ColorFilter.tint(traySecondary),
-                                    contentScale = ContentScale.Fit,
+                                    tint = traySecondary,
                                     modifier = Modifier.size(SizeIconMd),
                                 )
                             }

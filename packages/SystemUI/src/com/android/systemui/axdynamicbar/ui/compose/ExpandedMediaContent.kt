@@ -615,12 +615,11 @@ private fun MediaControls(
                     modifier = Modifier.size(sideTargets),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Image(
+                    Icon(
                         painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
                         contentDescription =
                             stringResource(R.string.ax_dynamic_bar_shuffle),
-                        colorFilter = ColorFilter.tint(onCard.copy(alpha = 0.35f)),
-                        contentScale = ContentScale.Fit,
+                        tint = onCard.copy(alpha = 0.35f),
                         modifier = Modifier.size(sideIcon),
                     )
                 }
@@ -1183,11 +1182,10 @@ private fun MediaCustomActionButton(
             enabled = false,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                Image(
+                Icon(
                     painter = painterResource(R.drawable.ax_accord_ic_nowplaying_shuffle),
                     contentDescription = stringResource(R.string.ax_dynamic_bar_shuffle),
-                    colorFilter = ColorFilter.tint(accent.copy(alpha = AlphaDisabled)),
-                    contentScale = ContentScale.Fit,
+                    tint = accent.copy(alpha = AlphaDisabled),
                     modifier = Modifier.size(ControlIconSize),
                 )
             }
