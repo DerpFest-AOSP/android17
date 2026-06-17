@@ -115,6 +115,7 @@ import com.android.systemui.statusbar.pipeline.shared.ui.view.SystemStatusIconsL
 import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBarViewModel
 import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBarViewModel.HomeStatusBarViewModelFactory
 import com.android.systemui.statusbar.policy.Clock
+import com.android.systemui.statusbar.policy.networkspeed.NetworkSpeedStatusBarIcon
 import com.android.systemui.statusbar.systemstatusicons.SystemStatusIconsInCompose
 import com.android.systemui.statusbar.systemstatusicons.ui.compose.SystemStatusIcons
 import com.android.systemui.statusbar.systemstatusicons.ui.viewmodel.SystemStatusIconsViewModel
@@ -676,6 +677,10 @@ private fun addEndSideComposable(
                     modifier =
                         Modifier.widthIn(max = with(LocalDensity.current) { endSideWidth.toDp() }),
                 ) {
+                    NetworkSpeedStatusBarIcon(
+                        isDark = statusBarViewModel.areaDark,
+                    )
+
                     SystemStatusIconsContainer(
                         viewModelFactory = statusBarViewModel.systemStatusIconsViewModelFactory,
                         isDark = statusBarViewModel.areaDark,

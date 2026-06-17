@@ -29,6 +29,9 @@ import com.android.systemui.statusbar.phone.ui.StatusBarIconController
 import com.android.systemui.statusbar.policy.networkspeed.NetworkSpeedIconState
 import com.android.systemui.statusbar.policy.networkspeed.NetworkSpeedView
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class NetworkSpeedController private constructor(
     private val context: Context
@@ -53,6 +56,9 @@ class NetworkSpeedController private constructor(
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var speedUpdateJob: Job? = null
+
+    private val _iconState = MutableStateFlow<NetworkSpeedIconState?>(null)
+    val iconState: StateFlow<NetworkSpeedIconState?> = _iconState.asStateFlow()
 
     private val networkRequest = NetworkRequest.Builder()
             .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
@@ -84,6 +90,9 @@ class NetworkSpeedController private constructor(
 
     fun init() {
         connectivityManager.registerNetworkCallback(networkRequest, networkCallback)
+        connectivityManager.activeNetwork?.let { network ->
+            updateConnectionState(hasInternet(network))
+        }
 
         contentResolver.registerContentObserver(
             Settings.Secure.getUriFor(ICON_HIDE_LIST),
@@ -101,12 +110,16 @@ class NetworkSpeedController private constructor(
         keyguardUpdateMonitor?.registerCallback(keyguardCallback)
     }
 
+    private fun hasInternet(network: Network, caps: NetworkCapabilities? = null): Boolean {
+        val networkCaps = caps ?: connectivityManager.getNetworkCapabilities(network)
+        return networkCaps != null
+                && networkCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && !networkCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_SUSPENDED)
+    }
+
     private fun hasValidatedInternet(
             network: Network, caps: NetworkCapabilities? = null): Boolean {
-        val caps = caps ?: connectivityManager.getNetworkCapabilities(network)
-        return caps != null
-                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-                && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        return hasInternet(network, caps)
     }
 
     private fun updateSwitchState() {
@@ -158,6 +171,7 @@ class NetworkSpeedController private constructor(
         }
 
         withContext(Dispatchers.Main) {
+            _iconState.value = iconState.copy()
             StatusBarIconControllerImplEx.get().setNetworkSpeedIcon(slotNetworkSpeed, iconState)
             if (networkVisibility != iconState.isVisible()) {
                 networkVisibility = iconState.isVisible()
