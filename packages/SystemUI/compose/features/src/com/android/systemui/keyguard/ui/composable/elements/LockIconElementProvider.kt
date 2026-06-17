@@ -54,6 +54,7 @@ import com.android.systemui.plugins.keyguard.ui.composable.elements.LockscreenSc
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.statusbar.VibratorHelper
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor
 import com.google.android.msdl.domain.MSDLPlayer
 import dagger.Lazy
 import javax.inject.Inject
@@ -67,6 +68,7 @@ constructor(
     @ShadeDisplayAware private val context: Context,
     @Application private val applicationScope: CoroutineScope,
     @Main private val mainDispatcher: CoroutineDispatcher,
+    private val windowRootViewBlurInteractor: WindowRootViewBlurInteractor,
     private val windowManager: WindowManager,
     private val authController: AuthController,
     private val featureFlags: FeatureFlagsClassic,
@@ -107,6 +109,7 @@ constructor(
                         DeviceEntryIconViewBinder.bind(
                             applicationScope,
                             mainDispatcher,
+                            windowRootViewBlurInteractor,
                             this,
                             deviceEntryIconViewModel.get(),
                             deviceEntryForegroundViewModel.get(),

@@ -29,10 +29,12 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.doOnDetach
 import androidx.core.view.isInvisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.app.tracing.coroutines.launchTraced as launch
+import com.android.internal.graphics.drawable.BackgroundBlurDrawable
 import com.android.systemui.Flags
 import com.android.systemui.biometrics.UdfpsIconDrawable
 import com.android.systemui.common.ui.view.TouchHandlingView
@@ -45,8 +47,10 @@ import com.android.systemui.plugins.FalsingManager
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.VibratorHelper
 import com.android.systemui.util.kotlin.DisposableHandles
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor
 import com.google.android.msdl.data.model.MSDLToken
 import com.google.android.msdl.domain.MSDLPlayer
+import kotlin.math.min
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DisposableHandle
@@ -74,6 +78,7 @@ object DeviceEntryIconViewBinder {
     fun bind(
         applicationScope: CoroutineScope,
         mainImmediateDispatcher: CoroutineDispatcher,
+        windowRootViewBlurInteractor: WindowRootViewBlurInteractor,
         view: DeviceEntryIconView,
         viewModel: DeviceEntryIconViewModel,
         fgViewModel: DeviceEntryForegroundViewModel,
@@ -144,6 +149,32 @@ object DeviceEntryIconViewBinder {
                         view.clearFocus()
                         view.clearAccessibilityFocus()
                         viewModel.onUserInteraction()
+                    }
+                }
+            }
+
+        val layoutChangeListener =
+            View.OnLayoutChangeListener {
+                v,
+                left,
+                top,
+                right,
+                bottom,
+                oldLeft,
+                oldTop,
+                oldRight,
+                oldBottom ->
+                val width = right - left
+                val height = bottom - top
+                if (height <= 0 || width <= 0) {
+                    return@OnLayoutChangeListener
+                }
+                if (height == oldBottom - oldTop && width == oldRight - oldLeft) {
+                    return@OnLayoutChangeListener
+                }
+                v?.background?.let {
+                    if (it is BackgroundBlurDrawable) {
+                        it.setCornerRadius(min(height, width).toFloat() / 2f)
                     }
                 }
             }
@@ -307,8 +338,32 @@ object DeviceEntryIconViewBinder {
         disposables +=
             bgView.repeatWhenAttached(mainImmediateDispatcher) {
                 repeatOnLifecycle(Lifecycle.State.CREATED) {
+                    bgView.viewRootImpl?.createBackgroundBlurDrawable()?.let { blurDrawable ->
+                        blurDrawable.setBlurRadius(
+                            bgView.context.resources.getDimensionPixelOffset(
+                                R.dimen.fingerprint_icon_blur_radius
+                            )
+                        )
+                        blurDrawable.setVisible(false, false)
+                        bgView.background = blurDrawable
+                        bgView.addOnLayoutChangeListener(layoutChangeListener)
+                        bgView.doOnDetach {
+                            bgView.removeOnLayoutChangeListener(layoutChangeListener)
+                        }
+
+                        launch("$TAG#windowRootViewBlurInteractor.isBlurCurrentlySupported") {
+                            windowRootViewBlurInteractor.isBlurCurrentlySupported.collect {
+                                isSupported ->
+                                bgView.background?.setVisible(isSupported, false)
+                            }
+                        }
+                    }
+
                     launch("$TAG#bgViewModel.alpha") {
-                        bgViewModel.alpha.collect { alpha -> bgView.alpha = alpha }
+                        bgViewModel.alpha.collect { alpha ->
+                            bgView.alpha = alpha
+                            bgView.background?.alpha = (255 * alpha).toInt()
+                        }
                     }
                     launch("$TAG#bgViewModel.color") {
                         bgViewModel.color.collect { color ->

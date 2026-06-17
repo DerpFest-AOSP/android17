@@ -1019,6 +1019,7 @@
     <dimen name="keyguard_affordance_fixed_width">56dp</dimen>
     <dimen name="keyguard_affordance_fixed_radius">28dp</dimen>
     <dimen name="keyguard_shortcuts_blur_radius">15dp</dimen>
+    <dimen name="fingerprint_icon_blur_radius">15dp</dimen>
     <dimen name="keyguard_affordance_fixed_padding">16dp</dimen>
 
     <!--  The width/height/padding of the keyguard settings popup menu  -->
