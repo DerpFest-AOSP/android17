@@ -114,7 +114,6 @@ class NetworkSpeedController private constructor(
         val networkCaps = caps ?: connectivityManager.getNetworkCapabilities(network)
         return networkCaps != null
                 && networkCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                && !networkCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_SUSPENDED)
     }
 
     private fun hasValidatedInternet(
