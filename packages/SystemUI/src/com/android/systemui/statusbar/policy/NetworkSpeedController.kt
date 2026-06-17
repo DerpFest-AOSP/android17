@@ -6,6 +6,7 @@
  */
 package com.android.systemui.statusbar.policy
 
+import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -18,6 +19,7 @@ import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.statusbar.phone.StatusBarIconControllerImplEx
+import com.android.systemui.statusbar.phone.ui.StatusBarIconController
 import com.android.systemui.statusbar.policy.networkspeed.NetworkSpeedIconState
 import com.android.systemui.util.settings.SecureSettings
 import com.android.systemui.util.settings.SettingsProxyExt.observerFlow
@@ -37,6 +39,7 @@ import kotlinx.coroutines.withContext
 
 @SysUISingleton
 class NetworkSpeedController @Inject constructor(
+    private val context: Context,
     private val connectivityManager: ConnectivityManager,
     private val secureSettings: SecureSettings,
     private val keyguardUpdateMonitor: KeyguardUpdateMonitor,
@@ -104,8 +107,8 @@ class NetworkSpeedController @Inject constructor(
 
     private fun readSwitchState(): Boolean {
         val iconHideList = secureSettings.getString(ICON_HIDE_LIST)
-        return !iconHideList.isNullOrEmpty() &&
-            !iconHideList.contains(SLOT_NETWORK_SPEED)
+        val hideList = StatusBarIconController.getIconHideList(context, iconHideList)
+        return !hideList.contains(SLOT_NETWORK_SPEED)
     }
 
     private fun hasValidatedInternet(

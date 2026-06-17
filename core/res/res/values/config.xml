@@ -27,6 +27,7 @@
     <!-- Do not translate. Defines the slots for the right-hand side icons.  That is to say, the
          icons in the status bar that are not notifications. -->
     <string-array name="config_statusBarIcons">
+        <item><xliff:g id="id">@string/status_bar_network_speed</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_no_calling</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_call_strength</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_alarm_clock</xliff:g></item>
@@ -86,6 +87,7 @@
     <string translatable="false" name="status_bar_mute">mute</string>
     <string translatable="false" name="status_bar_volume">volume</string>
     <string translatable="false" name="status_bar_wifi">wifi</string>
+    <string translatable="false" name="status_bar_network_speed">network_speed</string>
     <string translatable="false" name="status_bar_cdma_eri">cdma_eri</string>
     <string translatable="false" name="status_bar_data_connection">data_connection</string>
     <string translatable="false" name="status_bar_phone_evdo_signal">phone_evdo_signal</string>
