@@ -19,7 +19,7 @@ import android.annotation.NonNull;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.Resources;
-import android.view.CrossWindowBlurListeners;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,11 +27,10 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ListAdapter;
 
-import com.android.systemui.statusbar.BlurUtils;
-import com.android.systemui.dump.DumpManager;
-import com.android.systemui.keyguard.ui.transitions.BlurConfig;
-
 import androidx.constraintlayout.helper.widget.Flow;
+
+import com.android.systemui.res.R;
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor;
 
 /**
  * Creates a customized Dialog for displaying the Shut Down and Restart actions.
@@ -41,11 +40,15 @@ public class GlobalActionsPowerDialog {
     /**
      * Create a dialog for displaying Shut Down and Restart actions.
      */
-    public static Dialog create(@NonNull Context context, ListAdapter adapter) {
+    public static Dialog create(
+            @NonNull Context context,
+            ListAdapter adapter,
+            @NonNull WindowRootViewBlurInteractor blurInteractor,
+            boolean translucentPowerMenu) {
         ViewGroup listView = (ViewGroup) LayoutInflater.from(context).inflate(
-                com.android.systemui.res.R.layout.global_actions_power_dialog_flow, null);
+                R.layout.global_actions_power_dialog_flow, null);
 
-        Flow flow = listView.findViewById(com.android.systemui.res.R.id.power_flow);
+        Flow flow = listView.findViewById(R.id.power_flow);
 
         for (int i = 0; i < adapter.getCount(); i++) {
             View action = adapter.getView(i, null, listView);
@@ -56,8 +59,7 @@ public class GlobalActionsPowerDialog {
 
         Resources res = context.getResources();
 
-        int nElementsWrap = res.getInteger(
-                com.android.systemui.res.R.integer.power_menu_lite_max_columns);
+        int nElementsWrap = res.getInteger(R.integer.power_menu_lite_max_columns);
         int nChildren = listView.getChildCount() - 1; // don't count flow element
 
         // Avoid having just one action on the last row if there are more than 2 columns because
@@ -67,33 +69,33 @@ public class GlobalActionsPowerDialog {
         }
         flow.setMaxElementsWrap(nElementsWrap);
 
-        Dialog dialog = new Dialog(context,
-                com.android.systemui.res.R.style.Theme_SystemUI_Dialog_GlobalActionsLite);
+        Dialog dialog = new Dialog(context, R.style.Theme_SystemUI_Dialog_GlobalActionsLite);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(listView);
 
-        BlurUtils blurUtils = new BlurUtils(context.getResources(),
-                new BlurConfig(0.0f, 0.0f),
-                CrossWindowBlurListeners.getInstance(), new DumpManager());
+        final boolean blurSupported = blurInteractor.isBlurCurrentlySupported().getValue();
+        final boolean useBlurBackground = blurSupported && translucentPowerMenu;
 
         Window window = dialog.getWindow();
         window.setType(WindowManager.LayoutParams.TYPE_VOLUME_OVERLAY);
         window.setTitle(""); // prevent Talkback from speaking first item name twice
-        window.setBackgroundDrawable(res.getDrawable(
-                com.android.systemui.res.R.drawable.global_actions_lite_background,
-                context.getTheme()));
         window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-        if (blurUtils.supportsBlursOnWindows()) {
-            // Enable blur behind
-            // Enable dim behind since we are setting some amount dim for the blur.
+        if (useBlurBackground) {
             window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
-            // Set blur behind radius
-            int blurBehindRadius = context.getResources()
-                    .getDimensionPixelSize(com.android.systemui.res.R.dimen.max_window_blur_radius);
-            window.getAttributes().setBlurBehindRadius(blurBehindRadius);
+            window.getAttributes().setBlurBehindRadius(
+                    res.getDimensionPixelSize(R.dimen.global_actions_blur_radius));
+            window.setBackgroundDrawable(null);
+
+            GradientDrawable background = new GradientDrawable();
+            background.setColor(context.getColor(R.color.global_actions_grid_background_blur));
+            background.setCornerRadius(res.getDimension(R.dimen.global_actions_corner_radius));
+            listView.setBackground(background);
+
             window.setDimAmount(0.54f);
         } else {
+            window.setBackgroundDrawable(res.getDrawable(
+                    R.drawable.global_actions_lite_background, context.getTheme()));
             window.setDimAmount(0.88f);
         }
 

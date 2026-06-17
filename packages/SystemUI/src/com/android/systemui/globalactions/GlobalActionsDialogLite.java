@@ -17,16 +17,13 @@
 package com.android.systemui.globalactions;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.TYPE_STATUS_BAR_SUB_PANEL;
 import static android.view.WindowManager.ScreenshotSource.SCREENSHOT_GLOBAL_ACTIONS;
 import static android.view.WindowManager.TAKE_SCREENSHOT_FULLSCREEN;
 import static android.view.WindowManager.TAKE_SCREENSHOT_SELECTED_REGION;
+import static com.android.systemui.util.kotlin.JavaAdapterKt.collectFlow;
 
-import android.view.CrossWindowBlurListeners;
-import com.android.systemui.statusbar.BlurUtils;
-import com.android.systemui.dump.DumpManager;
 import static com.android.internal.widget.LockPatternUtils.StrongAuthTracker.SOME_AUTH_REQUIRED_AFTER_USER_REQUEST;
 import static com.android.internal.widget.LockPatternUtils.StrongAuthTracker.STRONG_AUTH_NOT_REQUIRED;
 import static com.android.internal.widget.LockPatternUtils.StrongAuthTracker.STRONG_AUTH_REQUIRED_AFTER_USER_LOCKDOWN;
@@ -176,8 +173,7 @@ import com.android.systemui.util.EmergencyDialerConstants;
 import com.android.systemui.util.RingerModeTracker;
 import com.android.systemui.util.settings.GlobalSettings;
 import com.android.systemui.util.settings.SecureSettings;
-import com.android.systemui.keyguard.ui.transitions.BlurConfig;
-
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor;
 import dagger.Lazy;
 
 import lineageos.app.LineageGlobalActions;
@@ -297,6 +293,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     private final Vibrator mVibrator;
     private final boolean mShowSilentToggle;
     private final boolean mIsTv;
+    private final boolean mTranslucentPowerMenu;
+    private final WindowRootViewBlurInteractor mWindowRootViewBlurInteractor;
     private final EmergencyAffordanceManager mEmergencyAffordanceManager;
     private final ScreenshotHelper mScreenshotHelper;
     private final SysuiColorExtractor mSysuiColorExtractor;
@@ -456,7 +454,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             GlobalActionsInteractor interactor,
             ControlsComponent controlsComponent,
             Lazy<DisplayWindowPropertiesRepository> displayWindowPropertiesRepository,
-            PowerManager powerManager) {
+            PowerManager powerManager,
+            WindowRootViewBlurInteractor windowRootViewBlurInteractor) {
         mContext = context;
         mWindowManagerFuncs = windowManagerFuncs;
         mAudioManager = audioManager;
@@ -496,6 +495,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         mInteractor = interactor;
         mDisplayWindowPropertiesRepositoryLazy = displayWindowPropertiesRepository;
         mPowerManager = powerManager;
+        mTranslucentPowerMenu = resources.getBoolean(
+                com.android.systemui.res.R.bool.config_translucentStandalonePowerMenu);
+        mWindowRootViewBlurInteractor = windowRootViewBlurInteractor;
 
         mHandler = new Handler(mMainHandler.getLooper()) {
             public void handleMessage(Message msg) {
@@ -640,6 +642,16 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
     protected void handleShow(@Nullable Expandable expandable, int displayId) {
         mDialog = createDialog(displayId);
         prepareDialog();
+
+        WindowManager.LayoutParams attrs = mDialog.getWindow().getAttributes();
+        attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+        if (mTranslucentPowerMenu
+                && mWindowRootViewBlurInteractor.isBlurCurrentlySupported().getValue()) {
+            attrs.flags |= WindowManager.LayoutParams.FLAG_BLUR_BEHIND;
+            attrs.setBlurBehindRadius(mContext.getResources().getDimensionPixelSize(
+                    com.android.systemui.res.R.dimen.global_actions_blur_radius));
+        }
+        mDialog.getWindow().setAttributes(attrs);
 
         DialogTransitionAnimator.Controller controller =
                 expandable != null ? expandable.dialogTransitionController(
@@ -952,7 +964,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 mShadeController,
                 mKeyguardUpdateMonitor,
                 mLockPatternUtils,
-                mSelectedUserInteractor) {
+                mSelectedUserInteractor,
+                mWindowRootViewBlurInteractor,
+                mTranslucentPowerMenu) {
             @Override
             public boolean dispatchTouchEvent(MotionEvent event) {
                 rescheduleBurninTimeout(mGlobalActionDialogTimeout);
@@ -3085,7 +3099,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         private SelectedUserInteractor mSelectedUserInteractor;
         private LockPatternUtils mLockPatternUtils;
         private float mWindowDimAmount;
-        private BlurUtils mBlurUtils;
+        private final WindowRootViewBlurInteractor mWindowRootViewBlurInteractor;
+        private final boolean mTranslucentPowerMenu;
 
         protected ViewGroup mContainer;
 
@@ -3169,7 +3184,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
                 ShadeController shadeController,
                 KeyguardUpdateMonitor keyguardUpdateMonitor,
                 LockPatternUtils lockPatternUtils,
-                SelectedUserInteractor selectedUserInteractor) {
+                SelectedUserInteractor selectedUserInteractor,
+                WindowRootViewBlurInteractor windowRootViewBlurInteractor,
+                boolean translucentPowerMenu) {
             // We set dismissOnDeviceLock to false because we have a custom broadcast receiver to
             // dismiss this dialog when the device is locked.
             super(context, themeRes, false /* dismissOnDeviceLock */);
@@ -3193,9 +3210,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             mLockPatternUtils = lockPatternUtils;
             mGestureDetector = new GestureDetector(mContext, mGestureListener);
             mSelectedUserInteractor = selectedUserInteractor;
-            mBlurUtils = new BlurUtils(mContext.getResources(),
-                    new BlurConfig(0.0f, 0.0f),
-                    CrossWindowBlurListeners.getInstance(), new DumpManager());
+            mWindowRootViewBlurInteractor = windowRootViewBlurInteractor;
+            mTranslucentPowerMenu = translucentPowerMenu;
         }
 
         @Override
@@ -3266,13 +3282,16 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         }
 
         public void showPowerOptionsMenu() {
-            mPowerOptionsDialog = GlobalActionsPowerDialog.create(mContext, mPowerOptionsAdapter);
+            mPowerOptionsDialog = GlobalActionsPowerDialog.create(
+                    mContext, mPowerOptionsAdapter, mWindowRootViewBlurInteractor,
+                    mTranslucentPowerMenu);
             mPowerOptionsDialog.show();
         }
 
         public void showRestartOptionsMenu() {
-            mRestartOptionsDialog = GlobalActionsPowerDialog.create(mContext,
-                    mRestartOptionsAdapter);
+            mRestartOptionsDialog = GlobalActionsPowerDialog.create(
+                    mContext, mRestartOptionsAdapter, mWindowRootViewBlurInteractor,
+                    mTranslucentPowerMenu);
             mRestartOptionsDialog.show();
         }
 
@@ -3282,7 +3301,8 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
         }
 
         public void showUsersMenu() {
-            mUsersDialog = GlobalActionsPowerDialog.create(mContext, mUsersAdapter);
+            mUsersDialog = GlobalActionsPowerDialog.create(
+                    mContext, mUsersAdapter, mWindowRootViewBlurInteractor, mTranslucentPowerMenu);
             mUsersDialog.show();
         }
 
@@ -3307,6 +3327,13 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             mGlobalActionsLayout.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
             mGlobalActionsLayout.setRotationListener(this::onRotate);
             mGlobalActionsLayout.setAdapter(mAdapter);
+            if (mGlobalActionsLayout instanceof GlobalActionsLayout globalActionsLayout) {
+                collectFlow(globalActionsLayout,
+                        mWindowRootViewBlurInteractor.isBlurCurrentlySupported(),
+                        globalActionsLayout::setIsBlurSupported);
+                globalActionsLayout.setIsBlurSupported(
+                        mWindowRootViewBlurInteractor.isBlurCurrentlySupported().getValue());
+            }
             mContainer = findViewById(com.android.systemui.res.R.id.global_actions_container);
             mContainer.setOnTouchListener((v, event) -> {
                 mGestureDetector.onTouchEvent(event);
@@ -3347,14 +3374,9 @@ public class GlobalActionsDialogLite implements DialogInterface.OnDismissListene
             window.setTitle(""); // prevent Talkback from speaking first item name twice
             window.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
             window.addFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND);
-            if (mBlurUtils.supportsBlursOnWindows()) {
-                // Enable blur behind
-                // Enable dim behind since we are setting some amount dim for the blur.
-                window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
-                // Set blur behind radius
-                int blurBehindRadius = mContext.getResources()
-                        .getDimensionPixelSize(com.android.systemui.res.R.dimen.max_window_blur_radius);
-                window.getAttributes().setBlurBehindRadius(blurBehindRadius);
+            final boolean blurSupported =
+                    mWindowRootViewBlurInteractor.isBlurCurrentlySupported().getValue();
+            if (blurSupported && mTranslucentPowerMenu) {
                 window.setDimAmount(0.54f);
             } else {
                 window.setDimAmount(0.88f);

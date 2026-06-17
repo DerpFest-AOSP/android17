@@ -213,7 +213,8 @@ public class GlobalActionsDialogLiteTest extends SysuiTestCase {
                 mInteractor,
                 mControlsComponent,
                 () -> new FakeDisplayWindowPropertiesRepository(mContext),
-                mPowerManager
+                mPowerManager,
+                mKosmos.getWindowRootViewBlurInteractor()
         );
         mGlobalActionsDialogLite.setZeroDialogPressDelayForTesting();
 
