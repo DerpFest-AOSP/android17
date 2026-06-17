@@ -79,6 +79,7 @@ import com.android.systemui.shade.domain.interactor.FakeShadeDialogContextIntera
 import com.android.systemui.shade.domain.interactor.ShadeDialogContextInteractor;
 import com.android.systemui.statusbar.phone.SystemUIDialog;
 import com.android.systemui.statusbar.phone.SystemUIDialogManager;
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor;
 import com.android.systemui.util.concurrency.FakeExecutor;
 import com.android.systemui.util.time.FakeSystemClock;
 
@@ -421,7 +422,8 @@ public class HearingDevicesDialogDelegateTest extends SysuiTestCase {
                 mContext,
                 mSystemUIDialogManager,
                 getFakeBroadcastDispatcher(),
-                mDialogTransitionAnimator
+                mDialogTransitionAnimator,
+                org.mockito.Mockito.mock(WindowRootViewBlurInteractor.class)
         );
         mDialogDelegate = new HearingDevicesDialogDelegate(
                 showPairNewDevice,

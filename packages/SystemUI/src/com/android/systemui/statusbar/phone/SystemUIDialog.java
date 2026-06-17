@@ -50,6 +50,7 @@ import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.dagger.qualifiers.Application;
 import com.android.systemui.res.R;
 import com.android.systemui.util.DialogKt;
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +84,8 @@ public class SystemUIDialog extends AlertDialog implements ViewRootImpl.ConfigCh
     private final DismissReceiver mDismissReceiver;
     private final Handler mHandler = new Handler();
     private final SystemUIDialogManager mDialogManager;
+    @Nullable
+    private final WindowRootViewBlurInteractor mBlurInteractor;
 
     private int mLastWidth = Integer.MIN_VALUE;
     private int mLastHeight = Integer.MIN_VALUE;
@@ -119,17 +122,20 @@ public class SystemUIDialog extends AlertDialog implements ViewRootImpl.ConfigCh
         private final SystemUIDialogManager mSystemUIDialogManager;
         private final BroadcastDispatcher mBroadcastDispatcher;
         private final DialogTransitionAnimator mDialogTransitionAnimator;
+        private final WindowRootViewBlurInteractor mBlurInteractor;
 
         @Inject
         public Factory(
                 @Application Context context,
                 SystemUIDialogManager systemUIDialogManager,
                 BroadcastDispatcher broadcastDispatcher,
-                DialogTransitionAnimator dialogTransitionAnimator) {
+                DialogTransitionAnimator dialogTransitionAnimator,
+                WindowRootViewBlurInteractor blurInteractor) {
             mContext = context;
             mSystemUIDialogManager = systemUIDialogManager;
             mBroadcastDispatcher = broadcastDispatcher;
             mDialogTransitionAnimator = dialogTransitionAnimator;
+            mBlurInteractor = blurInteractor;
         }
 
         /**
@@ -193,6 +199,7 @@ public class SystemUIDialog extends AlertDialog implements ViewRootImpl.ConfigCh
                     mBroadcastDispatcher,
                     mDialogTransitionAnimator,
                     dialogDelegate,
+                    mBlurInteractor,
                     shouldAcsdDismissDialog);
         }
     }
@@ -244,6 +251,28 @@ public class SystemUIDialog extends AlertDialog implements ViewRootImpl.ConfigCh
             DialogTransitionAnimator dialogTransitionAnimator,
             DialogDelegate<SystemUIDialog> delegate,
             boolean shouldAcsdDismissDialog) {
+        this(
+                context,
+                theme,
+                dismissOnDeviceLock,
+                dialogManager,
+                broadcastDispatcher,
+                dialogTransitionAnimator,
+                delegate,
+                null /* blurInteractor */,
+                shouldAcsdDismissDialog);
+    }
+
+    public SystemUIDialog(
+            Context context,
+            int theme,
+            boolean dismissOnDeviceLock,
+            SystemUIDialogManager dialogManager,
+            BroadcastDispatcher broadcastDispatcher,
+            DialogTransitionAnimator dialogTransitionAnimator,
+            DialogDelegate<SystemUIDialog> delegate,
+            @Nullable WindowRootViewBlurInteractor blurInteractor,
+            boolean shouldAcsdDismissDialog) {
         super(context, theme);
         mContext = context;
         mDialogTransitionAnimator = dialogTransitionAnimator;
@@ -257,6 +286,12 @@ public class SystemUIDialog extends AlertDialog implements ViewRootImpl.ConfigCh
         mDismissReceiver = dismissOnDeviceLock ? new DismissReceiver(this, broadcastDispatcher,
                 dialogTransitionAnimator, shouldAcsdDismissDialog) : null;
         mDialogManager = dialogManager;
+        mBlurInteractor = blurInteractor;
+    }
+
+    @Nullable
+    public WindowRootViewBlurInteractor getBlurInteractor() {
+        return mBlurInteractor;
     }
 
     @Override

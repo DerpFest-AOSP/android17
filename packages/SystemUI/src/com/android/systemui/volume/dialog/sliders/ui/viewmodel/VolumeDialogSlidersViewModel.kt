@@ -39,6 +39,8 @@ constructor(
     private val volumeDialogLogger: VolumeDialogLogger,
 ) {
 
+    val showBlur = true
+
     val sliders: Flow<VolumeDialogSliderUiModel> =
         slidersInteractor.sliders
             .map { slidersModel ->

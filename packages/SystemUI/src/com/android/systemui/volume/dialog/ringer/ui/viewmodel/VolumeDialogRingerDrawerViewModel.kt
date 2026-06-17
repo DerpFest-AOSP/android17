@@ -79,6 +79,8 @@ constructor(
     private val systemClock: SystemClock,
 ) {
 
+    val showBlur = true
+
     private val drawerState = MutableStateFlow<RingerDrawerState>(RingerDrawerState.Initial)
     private val orientation: StateFlow<Int> =
         configurationController.onConfigChanged

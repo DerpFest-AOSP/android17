@@ -95,6 +95,8 @@
     <color name="media_dialog_outline">@android:color/system_outline_dark</color>
     <color name="media_dialog_outline_variant">@android:color/system_outline_variant_dark</color>
 
+    <color name="volume_dialog_view_background_blur_fallback">@android:color/system_accent1_800</color>
+
     <!-- Biometric dialog colors -->
     <color name="biometric_dialog_gray">#ffcccccc</color>
     <color name="biometric_dialog_accent">@color/material_dynamic_primary70</color>

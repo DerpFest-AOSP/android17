@@ -18,10 +18,10 @@ package com.android.systemui.volume.panel.component.button.ui.composable
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -35,7 +35,7 @@ fun BottomComponentButtonSurface(modifier: Modifier = Modifier, content: @Compos
     Surface(
         modifier = modifier.height(64.dp),
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surface,
+        color = Color.Transparent,
         content = content,
     )
 }

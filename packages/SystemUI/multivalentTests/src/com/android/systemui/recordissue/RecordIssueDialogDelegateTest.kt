@@ -39,8 +39,10 @@ import com.android.systemui.statusbar.phone.SystemUIDialogManager
 import com.android.systemui.util.concurrency.FakeExecutor
 import com.android.systemui.util.mockito.any
 import com.android.systemui.util.mockito.eq
+import com.android.systemui.util.mockito.mock
 import com.android.systemui.util.mockito.whenever
 import com.android.systemui.util.time.FakeSystemClock
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor
 import com.google.common.truth.Truth.assertThat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -96,6 +98,7 @@ class RecordIssueDialogDelegateTest : SysuiTestCase() {
                     systemUIDialogManager,
                     broadcastDispatcher,
                     mDialogTransitionAnimator,
+                    mock<WindowRootViewBlurInteractor>(),
                 )
             )
 

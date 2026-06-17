@@ -20,13 +20,18 @@ import android.animation.ArgbEvaluator
 import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.ContentObserver
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.InsetDrawable
+import android.graphics.drawable.LayerDrawable
+import android.gui.EarlyWakeupInfo
+import android.os.Binder
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.LayoutInflater
+import android.view.SurfaceControl
 import android.view.View
 import android.widget.ImageButton
 import androidx.annotation.LayoutRes
@@ -39,6 +44,7 @@ import androidx.dynamicanimation.animation.SpringForce
 import com.android.app.tracing.coroutines.launchInTraced
 import com.android.app.tracing.coroutines.launchTraced
 import com.android.internal.R as internalR
+import com.android.internal.graphics.drawable.BackgroundBlurDrawable
 import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.dagger.scope.VolumeDialogScope
 import com.android.systemui.volume.dialog.ringer.ui.util.VolumeDialogRingerDrawerTransitionListener
@@ -54,6 +60,7 @@ import com.android.systemui.volume.dialog.ui.binder.ViewBinder
 import com.android.systemui.volume.dialog.ui.utils.suspendAnimate
 import com.android.systemui.volume.dialog.ui.viewmodel.VolumeDialogViewModel
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor
 import javax.inject.Inject
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
@@ -74,6 +81,7 @@ class VolumeDialogRingerViewBinder
 constructor(
     private val viewModel: VolumeDialogRingerDrawerViewModel,
     private val dialogViewModel: VolumeDialogViewModel,
+    private val windowRootViewBlurInteractor: WindowRootViewBlurInteractor,
 ) : ViewBinder {
     private val roundnessSpringForce =
         SpringForce(1F).apply {
@@ -86,6 +94,28 @@ constructor(
             dampingRatio = 1F
         }
     private val rgbEvaluator = ArgbEvaluator()
+    private val transaction = SurfaceControl.Transaction()
+    private var isInEarlyWakeUp = false
+    private val earlyWakeupInfo =
+        EarlyWakeupInfo().apply {
+            token = Binder()
+            trace = TAG
+        }
+
+    private val onAttachStateChangeListener =
+        object : View.OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(view: View) {
+                if (windowRootViewBlurInteractor.isBlurCurrentlySupported.value) {
+                    startEarlyWakeup()
+                }
+            }
+
+            override fun onViewDetachedFromWindow(view: View) {
+                if (windowRootViewBlurInteractor.isBlurCurrentlySupported.value) {
+                    endEarlyWakeup()
+                }
+            }
+        }
 
     override fun CoroutineScope.bind(view: View) {
         val volumeDialogBackgroundView = view.requireViewById<View>(R.id.volume_dialog_background)
@@ -126,10 +156,30 @@ constructor(
             backgroundAnimationProgress = it
         }
         drawerContainer.setTransitionListener(ringerDrawerTransitionListener)
-        volumeDialogBackgroundView.background = volumeDialogBackgroundView.background.mutate()
-        ringerBackgroundView.background = ringerBackgroundView.background.mutate()
+
+        volumeDialogBackgroundView.updateBackground()
+        ringerBackgroundView.updateBackground()
         launchTraced("VDRVB#addTouchableBounds") {
             dialogViewModel.addTouchableBounds(ringerBackgroundView)
+        }
+
+        if (viewModel.showBlur) {
+            launchTraced("VDRVB#isBlurCurrentlySupported") {
+                windowRootViewBlurInteractor.isBlurCurrentlySupported.collect { supported ->
+                    if (view.isAttachedToWindow) {
+                        if (supported) {
+                            startEarlyWakeup()
+                        } else {
+                            endEarlyWakeup()
+                        }
+                    }
+
+                    volumeDialogBackgroundView.setIsBlurSupported(supported)
+                    ringerBackgroundView.setIsBlurSupported(supported)
+                }
+            }
+
+            view.addOnAttachStateChangeListener(onAttachStateChangeListener)
         }
 
         var gradientColorsForRinger: Pair<Int, Int>? = getGradientColorsForRinger(view.context)
@@ -188,8 +238,21 @@ constructor(
 
                         // Set up view background and visibility
                         drawerContainer.visibility = View.VISIBLE
-                        (volumeDialogBackgroundView.background as GradientDrawable).cornerRadii =
-                            bottomCornerRadii
+                        if (viewModel.showBlur) {
+                            val layers = (volumeDialogBackgroundView.background as LayerDrawable)
+                            val blurDrawable = layers.getDrawable(0) as BackgroundBlurDrawable
+                            blurDrawable.setCornerRadius(
+                                0f,
+                                0f,
+                                bottomDefaultRadius,
+                                bottomDefaultRadius,
+                            )
+                            (layers.getDrawable(1) as GradientDrawable).cornerRadii =
+                                bottomCornerRadii
+                        } else {
+                            (volumeDialogBackgroundView.background as GradientDrawable)
+                                .cornerRadii = bottomCornerRadii
+                        }
                         when (uiModel.drawerState) {
                             is RingerDrawerState.Initial -> {
                                 drawerContainer.animateAndBindDrawerButtons(
@@ -288,13 +351,58 @@ constructor(
                     }
                     is RingerViewModelState.Unavailable -> {
                         drawerContainer.visibility = View.GONE
-                        volumeDialogBackgroundView.setBackgroundResource(
-                            R.drawable.volume_dialog_background
-                        )
+                        if (viewModel.showBlur) {
+                            val layers = (volumeDialogBackgroundView.background as LayerDrawable)
+                            val blurDrawable = layers.getDrawable(0) as BackgroundBlurDrawable
+                            blurDrawable.setCornerRadius(volumeDialogBgFullRadius.toFloat())
+                            (layers.getDrawable(1) as GradientDrawable).cornerRadius =
+                                volumeDialogBgFullRadius.toFloat()
+                        } else {
+                            volumeDialogBackgroundView.setBackgroundResource(
+                                R.drawable.volume_dialog_background
+                            )
+                        }
                     }
                 }
             }
             .launchInTraced("VDRVB#ringerViewModel", this)
+    }
+
+    private fun View.setIsBlurSupported(supported: Boolean) {
+        if (viewModel.showBlur) {
+            val layers = (background as LayerDrawable)
+            (layers.getDrawable(0) as BackgroundBlurDrawable).setBlurRadius(
+                if (supported) {
+                    context.resources.getDimensionPixelSize(
+                        R.dimen.volume_dialog_background_surface_blur_radius
+                    )
+                } else {
+                    0
+                }
+            )
+            (layers.getDrawable(1) as GradientDrawable).setColor(
+                context.getColor(
+                    if (supported) R.color.volume_dialog_view_background_blur
+                    else R.color.volume_dialog_view_background_blur_fallback
+                )
+            )
+        }
+    }
+
+    private fun startEarlyWakeup() {
+        if (!isInEarlyWakeUp) {
+            transaction.setEarlyWakeupStart(earlyWakeupInfo)
+            transaction.apply()
+            isInEarlyWakeUp = true
+        }
+    }
+
+    private fun endEarlyWakeup() {
+        if (isInEarlyWakeUp) {
+            transaction.setEarlyWakeupEnd(earlyWakeupInfo)
+            transaction.apply()
+            isInEarlyWakeUp = false
+        }
     }
 
     private suspend fun MotionLayout.animateAndBindDrawerButtons(
@@ -532,8 +640,33 @@ constructor(
 
     private fun View.applyCorners(fullRadius: Int, diff: Int, progress: Float) {
         val radius = fullRadius - progress * diff
-        (background as GradientDrawable).cornerRadius = radius
+        if (viewModel.showBlur) {
+            val layers = (background as LayerDrawable)
+            (layers.getDrawable(0) as BackgroundBlurDrawable).setCornerRadius(radius)
+            (layers.getDrawable(1) as GradientDrawable).cornerRadius = radius
+        } else {
+            (background as GradientDrawable).cornerRadius = radius
+        }
         background.invalidateSelf()
+    }
+
+    private fun View.updateBackground() {
+        if (viewModel.showBlur && background is GradientDrawable) {
+            val surfaceEffect = background as GradientDrawable
+
+            val blurDrawable = viewRootImpl.createBackgroundBlurDrawable()
+            val dialogCornerRadius: Int =
+                context.resources.getDimensionPixelSize(
+                    R.dimen.volume_dialog_background_corner_radius
+                )
+            blurDrawable.setCornerRadius(dialogCornerRadius.toFloat())
+            blurDrawable.setBlurRadius(0)
+            setBackgroundDrawable(LayerDrawable(arrayOf<Drawable>(blurDrawable, surfaceEffect)))
+
+            setIsBlurSupported(windowRootViewBlurInteractor.isBlurCurrentlySupported.value)
+        } else {
+            background = background.mutate()
+        }
     }
 
     /** When volume gradient is enabled, returns (startArgb, endArgb); otherwise null. */
@@ -624,6 +757,10 @@ constructor(
             button.imageTintList =
                 ColorStateList.valueOf(context.getColor(internalR.color.materialColorOnPrimary))
         }
+    }
+
+    companion object {
+        private const val TAG = "VolumeDialogRingerViewBinder"
     }
 }
 

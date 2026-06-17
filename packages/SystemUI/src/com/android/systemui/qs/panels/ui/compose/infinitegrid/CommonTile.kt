@@ -671,6 +671,9 @@ object CommonTileDefaults {
     @Composable
     fun longPressLabelMoreDetails() =
         stringResource(id = R.string.accessibility_long_click_tile_details)
+
+    /** Dimensions for focus rings with tight corners. */
+    val TileDetailsEntryTightCornerRadius: Dp = 12.dp
 }
 
 /** Same as Image, but it doesn't clip its content. */
