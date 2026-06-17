@@ -138,12 +138,10 @@ fun VolumeSlider(
         ) {
             val materialSliderColors =
                 SliderDefaults.colors(
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor =
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
-                    activeTickColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f),
-                    inactiveTickColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTickColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    disabledActiveTickColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    disabledInactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 )
             if (state is SliderState.Empty) {
                 // reserve the space for the slider to avoid excess resizing

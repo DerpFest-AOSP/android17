@@ -20,7 +20,6 @@ import android.app.Dialog
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Bundle
-import android.view.WindowManager
 import androidx.annotation.GravityInt
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.AnchoredDraggableDefaults
@@ -128,7 +127,6 @@ fun SystemUIDialogFactory.createBottomSheet(
     // TODO(b/337205027): remove maxWidth parameter when aligned to M3 spec
     maxWidth: Dp = Dp.Unspecified,
 ): ComponentSystemUIDialog {
-    val factoryBlurUtils = blurUtils
     return create(
         context = context,
         theme = theme,
@@ -147,20 +145,6 @@ fun SystemUIDialogFactory.createBottomSheet(
                     if (!isDragged && dragState.currentValue == DragAnchors.End) dialog.dismiss()
                 }
             }
-
-            val supportsBlur = factoryBlurUtils.supportsBlursOnWindows()
-            if (supportsBlur) {
-                LaunchedEffect(dialog) {
-                    dialog.window?.let { window ->
-                        window.addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND)
-                        window.attributes.blurBehindRadius =
-                            factoryBlurUtils.maxBlurRadius.toInt()
-                        window.setBackgroundBlurRadius(factoryBlurUtils.maxBlurRadius.toInt())
-                        window.setBackgroundDrawableResource(android.R.color.transparent)
-                    }
-                }
-            }
-
             Box(
                 modifier =
                     Modifier.bottomSheetClickable { dialog.dismiss() }
@@ -205,17 +189,7 @@ fun SystemUIDialogFactory.createBottomSheet(
                                     else DraggableBottomSheet.MaxWidth
                             ),
                     shape = RoundedCornerShape(topStart = radius, topEnd = radius),
-                    color =
-                        if (supportsBlur) {
-                            val isDark =
-                                LocalConfiguration.current.uiMode and
-                                    Configuration.UI_MODE_NIGHT_MASK ==
-                                    Configuration.UI_MODE_NIGHT_YES
-                            val alpha = if (isDark) 0.3f else 0.6f
-                            MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = alpha)
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainer
-                        },
+                    color = MaterialTheme.colorScheme.surfaceContainer,
                 ) {
                     Box(
                         Modifier.padding(

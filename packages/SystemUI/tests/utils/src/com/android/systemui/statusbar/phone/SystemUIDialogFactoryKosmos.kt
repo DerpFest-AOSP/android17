@@ -21,7 +21,6 @@ import com.android.systemui.animation.dialogTransitionAnimator
 import com.android.systemui.broadcast.broadcastDispatcher
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.model.sysuiStateInteractor
-import com.android.systemui.statusbar.BlurUtils
 import com.android.systemui.statusbar.policy.configurationController
 import com.android.systemui.util.mockito.mock
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +33,6 @@ val Kosmos.systemUIDialogFactory: SystemUIDialogFactory by
             systemUIDialogManager,
             broadcastDispatcher,
             dialogTransitionAnimator,
-            mock<BlurUtils>(),
         )
     }
 
