@@ -65,6 +65,7 @@
         <item><xliff:g id="id">@string/status_bar_stacked_mobile</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_mobile</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_wifi</xliff:g></item>
+        <item><xliff:g id="id">@string/status_bar_network_speed</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_airplane</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_battery</xliff:g></item>
         <item><xliff:g id="id">@string/status_bar_sensors_off</xliff:g></item>
@@ -89,6 +90,7 @@
     <string translatable="false" name="status_bar_mute">mute</string>
     <string translatable="false" name="status_bar_volume">volume</string>
     <string translatable="false" name="status_bar_wifi">wifi</string>
+    <string translatable="false" name="status_bar_network_speed">network_speed</string>
     <string translatable="false" name="status_bar_cdma_eri">cdma_eri</string>
     <string translatable="false" name="status_bar_data_connection">data_connection</string>
     <string translatable="false" name="status_bar_phone_evdo_signal">phone_evdo_signal</string>

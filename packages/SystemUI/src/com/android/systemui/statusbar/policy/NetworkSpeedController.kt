@@ -25,6 +25,7 @@ import com.android.systemui.statusbar.StatusIconDisplayable
 import com.android.systemui.statusbar.phone.StatusBarIconHolder
 import com.android.systemui.statusbar.phone.NetworkSpeedIconHolder
 import com.android.systemui.statusbar.phone.StatusBarIconControllerImplEx
+import com.android.systemui.statusbar.phone.ui.StatusBarIconController
 import com.android.systemui.statusbar.policy.networkspeed.NetworkSpeedIconState
 import com.android.systemui.statusbar.policy.networkspeed.NetworkSpeedView
 import kotlinx.coroutines.*
@@ -114,8 +115,8 @@ class NetworkSpeedController private constructor(
             ICON_HIDE_LIST,
             UserHandle.USER_CURRENT
         )
-        isSwitchOn = !iconHideList.isNullOrEmpty() 
-            && !iconHideList.contains(slotNetworkSpeed)
+        val hideList = StatusBarIconController.getIconHideList(context, iconHideList)
+        isSwitchOn = !hideList.contains(slotNetworkSpeed)
     }
 
     private fun updateConnectionState(connected: Boolean) {
