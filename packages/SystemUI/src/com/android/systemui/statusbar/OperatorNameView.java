@@ -47,6 +47,22 @@ public class OperatorNameView extends TextView {
     ) {
         setVisibility(showOperatorName ? VISIBLE : GONE);
 
+        String customCarrierText = android.provider.Settings.System.getStringForUser(
+                getContext().getContentResolver(),
+                android.provider.Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT,
+                android.os.UserHandle.USER_CURRENT);
+        boolean hasCustomCarrier = !android.text.TextUtils.isEmpty(customCarrierText);
+
+        if (hasCustomCarrier && !mDemoMode) {
+            if (showOperatorName) {
+                setText(customCarrierText);
+                setVisibility(VISIBLE);
+            } else {
+                setVisibility(GONE);
+            }
+            return;
+        }
+
         if (!hasMobile || airplaneMode) {
             setText(null);
             setVisibility(GONE);
@@ -59,6 +75,15 @@ public class OperatorNameView extends TextView {
     }
 
     void updateText(OperatorNameViewController.SubInfo subInfo) {
+        String customCarrierText = android.provider.Settings.System.getStringForUser(
+                getContext().getContentResolver(),
+                android.provider.Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT,
+                android.os.UserHandle.USER_CURRENT);
+        if (!android.text.TextUtils.isEmpty(customCarrierText) && !mDemoMode) {
+            setText(customCarrierText);
+            return;
+        }
+
         CharSequence carrierName = null;
         CharSequence displayText = null;
         if (subInfo != null) {

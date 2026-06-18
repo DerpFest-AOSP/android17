@@ -80,15 +80,21 @@ constructor(
             .intSetting(name = Settings.System.LOCKSCREEN_SHOW_CARRIER, defaultValue = 1)
             .map { it == 2 || it == 3 }
 
+    private val customCarrierText: Flow<String?> =
+        settingsRepository.stringSetting(name = Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT)
+
     /**
      * True if the user enabled the operator name for the home status bar and the device is not in
      * airplane mode.
      */
     val shouldShowOperatorName: Flow<Boolean> =
-        combine(airplaneModeInteractor.isAirplaneMode, showCarrierInStatusBar) {
-            isAirplaneMode,
-            showCarrier ->
-            showCarrier && !isAirplaneMode
+        combine(
+            airplaneModeInteractor.isAirplaneMode,
+            showCarrierInStatusBar,
+            customCarrierText
+        ) { isAirplaneMode, showCarrier, customText ->
+            val hasCustomCarrier = !customText.isNullOrEmpty()
+            showCarrier && (hasCustomCarrier || !isAirplaneMode)
         }
 
     private val windowState =

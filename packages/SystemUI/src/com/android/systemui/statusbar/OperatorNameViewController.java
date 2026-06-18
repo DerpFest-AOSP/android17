@@ -44,6 +44,8 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
 
     private static final String LOCKSCREEN_SHOW_CARRIER =
             "system:" + Settings.System.LOCKSCREEN_SHOW_CARRIER;
+    private static final String LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT =
+            "system:" + Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT;
 
     private final DarkIconDispatcher mDarkIconDispatcher;
     private final TunerService mTunerService;
@@ -83,7 +85,7 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
                 mJavaAdapter.alwaysCollectFlow(
                         mAirplaneModeInteractor.isAirplaneMode(),
                         (isAirplaneMode) -> update());
-        mTunerService.addTunable(mTunable, LOCKSCREEN_SHOW_CARRIER);
+        mTunerService.addTunable(mTunable, LOCKSCREEN_SHOW_CARRIER, LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT);
         mKeyguardUpdateMonitor.registerCallback(mKeyguardUpdateMonitorCallback);
     }
 
@@ -112,6 +114,13 @@ public class OperatorNameViewController extends ViewController<OperatorNameView>
         int defaultSubId = mSubscriptionManagerProxy.getDefaultDataSubscriptionId();
 
         SubscriptionInfo sI = mKeyguardUpdateMonitor.getSubscriptionInfoForSubId(defaultSubId);
+        if (sI == null) {
+            return new SubInfo(
+                    android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID,
+                    "",
+                    TelephonyManager.SIM_STATE_UNKNOWN,
+                    null);
+        }
         return new SubInfo(
                 sI.getSubscriptionId(),
                 sI.getCarrierName(),
