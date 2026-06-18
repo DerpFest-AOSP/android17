@@ -677,10 +677,6 @@ private fun addEndSideComposable(
                     modifier =
                         Modifier.widthIn(max = with(LocalDensity.current) { endSideWidth.toDp() }),
                 ) {
-                    NetworkSpeedStatusBarIcon(
-                        isDark = statusBarViewModel.areaDark,
-                    )
-
                     SystemStatusIconsContainer(
                         viewModelFactory = statusBarViewModel.systemStatusIconsViewModelFactory,
                         isDark = statusBarViewModel.areaDark,
@@ -734,15 +730,24 @@ private fun SystemStatusIconsContainer(
 ) {
     var bounds by remember { mutableStateOf(Rect()) }
     val tint = if (isDark.isDarkTheme(bounds)) Color.White else Color.Black
-    SystemStatusIcons(
-        viewModelFactory = viewModelFactory,
-        tint = tint,
-        modifier =
-            modifier.onLayoutRectChanged { relativeLayoutBounds ->
-                bounds =
-                    with(relativeLayoutBounds.boundsInScreen) { Rect(left, top, right, bottom) }
-            },
-    )
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        modifier = modifier,
+    ) {
+        NetworkSpeedStatusBarIcon(isDark = isDark)
+        SystemStatusIcons(
+            viewModelFactory = viewModelFactory,
+            tint = tint,
+            modifier =
+                Modifier.onLayoutRectChanged { relativeLayoutBounds ->
+                    bounds =
+                        with(relativeLayoutBounds.boundsInScreen) {
+                            Rect(left, top, right, bottom)
+                        }
+                },
+        )
+    }
 }
 
 private fun bindRegionSamplingViewModel(
