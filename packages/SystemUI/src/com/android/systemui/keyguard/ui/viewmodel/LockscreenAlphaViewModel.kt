@@ -63,6 +63,8 @@ constructor(
     private val occludedToDozingTransitionViewModel: OccludedToDozingTransitionViewModel,
     private val occludedToLockscreenTransitionViewModel: OccludedToLockscreenTransitionViewModel,
     private val offToLockscreenTransitionViewModel: OffToLockscreenTransitionViewModel,
+    private val toLockscreenEndStateTransitionViewModel: ToLockscreenEndStateTransitionViewModel,
+    private val toAodEndStateTransitionViewModel: ToAodEndStateTransitionViewModel,
     private val keyguardInteractor: KeyguardInteractor,
     @Assisted private val viewStateAccessor: ViewStateAccessor,
 ) : HydratedActivatable() {
@@ -120,6 +122,8 @@ constructor(
                         occludedToDozingTransitionViewModel.lockscreenAlpha,
                         occludedToLockscreenTransitionViewModel.lockscreenAlpha,
                         offToLockscreenTransitionViewModel.lockscreenAlpha,
+                        toLockscreenEndStateTransitionViewModel.lockscreenAlpha,
+                        toAodEndStateTransitionViewModel.lockscreenAlpha,
                     )
                     .onStart { emit(0f) },
             ) { hideKeyguard, alpha ->

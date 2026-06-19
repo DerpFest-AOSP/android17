@@ -59,12 +59,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import android.provider.Settings
 import android.os.UserHandle
 import com.android.internal.util.derp.derpUtils
 
 object DeviceEntryIconViewBinder {
     private const val TAG = "DeviceEntryIconViewBinder"
+
+    private fun usesLockIconBlur(iconType: DeviceEntryIconView.IconType): Boolean {
+        return iconType == DeviceEntryIconView.IconType.LOCK ||
+            iconType == DeviceEntryIconView.IconType.UNLOCK
+    }
 
     /**
      * Updates UI for:
@@ -338,24 +345,20 @@ object DeviceEntryIconViewBinder {
         disposables +=
             bgView.repeatWhenAttached(mainImmediateDispatcher) {
                 repeatOnLifecycle(Lifecycle.State.CREATED) {
-                    bgView.viewRootImpl?.createBackgroundBlurDrawable()?.let { blurDrawable ->
-                        blurDrawable.setBlurRadius(
-                            bgView.context.resources.getDimensionPixelOffset(
-                                R.dimen.fingerprint_icon_blur_radius
+                    val blurDrawable =
+                        bgView.viewRootImpl?.createBackgroundBlurDrawable()?.apply {
+                            setBlurRadius(
+                                bgView.context.resources.getDimensionPixelOffset(
+                                    R.dimen.fingerprint_icon_blur_radius
+                                )
                             )
-                        )
-                        blurDrawable.setVisible(false, false)
+                            setVisible(false, false)
+                        }
+                    if (blurDrawable != null) {
                         bgView.background = blurDrawable
                         bgView.addOnLayoutChangeListener(layoutChangeListener)
                         bgView.doOnDetach {
                             bgView.removeOnLayoutChangeListener(layoutChangeListener)
-                        }
-
-                        launch("$TAG#windowRootViewBlurInteractor.isBlurCurrentlySupported") {
-                            windowRootViewBlurInteractor.isBlurCurrentlySupported.collect {
-                                isSupported ->
-                                bgView.background?.setVisible(isSupported, false)
-                            }
                         }
                     }
 
@@ -372,6 +375,19 @@ object DeviceEntryIconViewBinder {
                             } else {
                                 bgView.imageTintList = null
                             }
+                        }
+                    }
+                    if (blurDrawable != null) {
+                        launch("$TAG#lockIconBlurVisibility") {
+                            combine(
+                                    windowRootViewBlurInteractor.isBlurCurrentlySupported,
+                                    fgViewModel.viewModel.map { it.type },
+                                ) { isSupported, iconType ->
+                                    isSupported && usesLockIconBlur(iconType)
+                                }
+                                .collect { shouldShowBlur ->
+                                    bgView.background?.setVisible(shouldShowBlur, false)
+                                }
                         }
                     }
                 }

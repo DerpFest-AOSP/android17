@@ -19,6 +19,7 @@ package com.android.systemui.keyguard.ui.viewmodel
 
 import android.content.Context
 import com.android.settingslib.Utils
+import com.android.systemui.common.shared.colors.SurfaceEffectColors
 import com.android.systemui.common.ui.domain.interactor.ConfigurationInteractor
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.keyguard.domain.interactor.KeyguardTransitionInteractor
@@ -27,9 +28,11 @@ import com.android.systemui.scene.domain.interactor.SceneInteractor
 import com.android.systemui.scene.shared.flag.SceneContainerFlag
 import com.android.systemui.scene.shared.model.Scenes
 import com.android.systemui.shade.ShadeDisplayAware
+import com.android.systemui.window.domain.interactor.WindowRootViewBlurInteractor
 import dagger.Lazy
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -66,24 +69,37 @@ constructor(
     lockscreenToDozingTransitionViewModel: LockscreenToDozingTransitionViewModel,
     glanceableHubToAodTransitionViewModel: GlanceableHubToAodTransitionViewModel,
     glanceableHubToLockscreenTransitionViewModel: GlanceableHubToLockscreenTransitionViewModel,
+    toLockscreenEndStateTransitionViewModel: ToLockscreenEndStateTransitionViewModel,
+    toAodEndStateTransitionViewModel: ToAodEndStateTransitionViewModel,
+    toDozingEndStateTransitionViewModel: ToDozingEndStateTransitionViewModel,
+    windowRootViewBlurInteractor: WindowRootViewBlurInteractor,
     private val sceneInteractor: Lazy<SceneInteractor>,
 ) {
     val color: Flow<Int> =
         deviceEntryIconViewModel.useBackgroundProtection.flatMapLatest { useBackground ->
             if (useBackground) {
                 configurationInteractor.onAnyConfigurationChange
-                    .map {
-                        Utils.getColorAttrDefaultColor(
-                            context,
-                            com.android.internal.R.attr.colorSurface,
-                        )
-                    }
-                    .onStart {
-                        emit(
+                    .combine(windowRootViewBlurInteractor.isBlurCurrentlySupported) { _, isSupported
+                        ->
+                        if (isSupported) {
+                            SurfaceEffectColors.surfaceEffect1(context)
+                        } else {
                             Utils.getColorAttrDefaultColor(
                                 context,
                                 com.android.internal.R.attr.colorSurface,
                             )
+                        }
+                    }
+                    .onStart {
+                        emit(
+                            if (windowRootViewBlurInteractor.isBlurCurrentlySupported.value) {
+                                SurfaceEffectColors.surfaceEffect1(context)
+                            } else {
+                                Utils.getColorAttrDefaultColor(
+                                    context,
+                                    com.android.internal.R.attr.colorSurface,
+                                )
+                            }
                         )
                     }
             } else {
@@ -115,6 +131,9 @@ constructor(
                         lockscreenToDozingTransitionViewModel.deviceEntryBackgroundViewAlpha,
                         glanceableHubToAodTransitionViewModel.deviceEntryBackgroundViewAlpha,
                         glanceableHubToLockscreenTransitionViewModel.deviceEntryBackgroundViewAlpha,
+                        toLockscreenEndStateTransitionViewModel.deviceEntryBackgroundViewAlpha,
+                        toAodEndStateTransitionViewModel.deviceEntryBackgroundViewAlpha,
+                        toDozingEndStateTransitionViewModel.deviceEntryBackgroundViewAlpha,
                     )
                     .merge()
                     .onStart {

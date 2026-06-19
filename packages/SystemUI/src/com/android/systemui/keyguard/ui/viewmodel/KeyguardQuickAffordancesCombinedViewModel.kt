@@ -72,6 +72,9 @@ constructor(
     lockscreenToOccludedTransitionViewModel: LockscreenToOccludedTransitionViewModel,
     lockscreenToPrimaryBouncerTransitionViewModel: LockscreenToPrimaryBouncerTransitionViewModel,
     lockscreenToGlanceableHubTransitionViewModel: LockscreenToGlanceableHubTransitionViewModel,
+    toLockscreenEndStateTransitionViewModel: ToLockscreenEndStateTransitionViewModel,
+    toAodEndStateTransitionViewModel: ToAodEndStateTransitionViewModel,
+    toDozingEndStateTransitionViewModel: ToDozingEndStateTransitionViewModel,
     transitionInteractor: KeyguardTransitionInteractor,
 ) {
 
@@ -118,6 +121,7 @@ constructor(
             offToLockscreenTransitionViewModel.shortcutsAlpha,
             primaryBouncerToLockscreenTransitionViewModel.shortcutsAlpha,
             glanceableHubToLockscreenTransitionViewModel.shortcutsAlpha,
+            toLockscreenEndStateTransitionViewModel.shortcutsAlpha,
         )
 
     /** alpha while fading the quick affordances in */
@@ -130,6 +134,8 @@ constructor(
             lockscreenToOccludedTransitionViewModel.shortcutsAlpha,
             lockscreenToPrimaryBouncerTransitionViewModel.shortcutsAlpha,
             lockscreenToGlanceableHubTransitionViewModel.shortcutsAlpha,
+            toAodEndStateTransitionViewModel.shortcutsAlpha,
+            toDozingEndStateTransitionViewModel.shortcutsAlpha,
             shadeExpansionAlpha,
         )
 
