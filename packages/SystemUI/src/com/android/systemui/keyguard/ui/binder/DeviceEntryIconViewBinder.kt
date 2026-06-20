@@ -69,8 +69,7 @@ object DeviceEntryIconViewBinder {
     private const val TAG = "DeviceEntryIconViewBinder"
 
     private fun usesLockIconBlur(iconType: DeviceEntryIconView.IconType): Boolean {
-        return iconType == DeviceEntryIconView.IconType.LOCK ||
-            iconType == DeviceEntryIconView.IconType.UNLOCK
+        return iconType == DeviceEntryIconView.IconType.LOCK
     }
 
     /**
@@ -213,10 +212,6 @@ object DeviceEntryIconViewBinder {
                             view.translationY = burnInOffsets.y.toFloat()
                             view.aodFpDrawable.progress = burnInOffsets.progress
                         }
-                    }
-
-                    launch("$TAG#viewModel.deviceEntryViewAlpha") {
-                        viewModel.deviceEntryViewAlpha.collect { alpha -> view.alpha = alpha }
                     }
                 }
             }
@@ -377,24 +372,26 @@ object DeviceEntryIconViewBinder {
                                     fgViewModel.viewModel.map { it.type },
                                 ) { alphaTriple, useBackgroundProtection, useCustomIcon, iconType ->
                                     val (isSupported, bgAlpha, parentAlpha) = alphaTriple
-                                    val showBlur =
+                                    val blurEligible =
                                         isSupported &&
                                             useBackgroundProtection &&
                                             usesLockIconBlur(iconType) &&
-                                            bgAlpha > 0f &&
-                                            parentAlpha > 0f &&
                                             !(useCustomIcon && packageInstalled)
-                                    showBlur to bgAlpha
+                                    val effectiveBlurAlpha =
+                                        if (blurEligible) bgAlpha * parentAlpha else 0f
+                                    Triple(parentAlpha, bgAlpha, effectiveBlurAlpha)
                                 }
-                                .collect { (showBlur, bgAlpha) ->
+                                .collect { (parentAlpha, bgAlpha, effectiveBlurAlpha) ->
+                                    view.alpha = parentAlpha
                                     bgView.alpha = bgAlpha
-                                    bgView.background?.let { background ->
-                                        background.alpha = (255 * bgAlpha).toInt()
-                                        background.setVisible(showBlur, false)
-                                    }
+                                    blurDrawable.alpha = (255 * effectiveBlurAlpha).toInt()
+                                    blurDrawable.setVisible(effectiveBlurAlpha > 0f, false)
                                 }
                         }
                     } else {
+                        launch("$TAG#viewModel.deviceEntryViewAlpha") {
+                            viewModel.deviceEntryViewAlpha.collect { alpha -> view.alpha = alpha }
+                        }
                         launch("$TAG#bgViewModel.alpha") {
                             bgViewModel.alpha.collect { alpha -> bgView.alpha = alpha }
                         }
