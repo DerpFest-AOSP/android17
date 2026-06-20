@@ -362,32 +362,50 @@ object DeviceEntryIconViewBinder {
                         }
                     }
 
-                    launch("$TAG#bgViewModel.alpha") {
-                        bgViewModel.alpha.collect { alpha ->
-                            bgView.alpha = alpha
-                            bgView.background?.alpha = (255 * alpha).toInt()
+                    if (blurDrawable != null) {
+                        launch("$TAG#bgViewBlurVisibility") {
+                            combine(
+                                    combine(
+                                        windowRootViewBlurInteractor.isBlurCurrentlySupported,
+                                        bgViewModel.alpha,
+                                        viewModel.deviceEntryViewAlpha,
+                                    ) { isSupported, bgAlpha, parentAlpha ->
+                                        Triple(isSupported, bgAlpha, parentAlpha)
+                                    },
+                                    viewModel.useBackgroundProtection,
+                                    shouldUseCustomUdfpsIcon,
+                                    fgViewModel.viewModel.map { it.type },
+                                ) { alphaTriple, useBackgroundProtection, useCustomIcon, iconType ->
+                                    val (isSupported, bgAlpha, parentAlpha) = alphaTriple
+                                    val showBlur =
+                                        isSupported &&
+                                            useBackgroundProtection &&
+                                            usesLockIconBlur(iconType) &&
+                                            bgAlpha > 0f &&
+                                            parentAlpha > 0f &&
+                                            !(useCustomIcon && packageInstalled)
+                                    showBlur to bgAlpha
+                                }
+                                .collect { (showBlur, bgAlpha) ->
+                                    bgView.alpha = bgAlpha
+                                    bgView.background?.let { background ->
+                                        background.alpha = (255 * bgAlpha).toInt()
+                                        background.setVisible(showBlur, false)
+                                    }
+                                }
+                        }
+                    } else {
+                        launch("$TAG#bgViewModel.alpha") {
+                            bgViewModel.alpha.collect { alpha -> bgView.alpha = alpha }
                         }
                     }
                     launch("$TAG#bgViewModel.color") {
                         bgViewModel.color.collect { color ->
                             if (!shouldUseCustomUdfpsIcon.value || !packageInstalled) {
-                            bgView.imageTintList = ColorStateList.valueOf(color)
+                                bgView.imageTintList = ColorStateList.valueOf(color)
                             } else {
                                 bgView.imageTintList = null
                             }
-                        }
-                    }
-                    if (blurDrawable != null) {
-                        launch("$TAG#lockIconBlurVisibility") {
-                            combine(
-                                    windowRootViewBlurInteractor.isBlurCurrentlySupported,
-                                    fgViewModel.viewModel.map { it.type },
-                                ) { isSupported, iconType ->
-                                    isSupported && usesLockIconBlur(iconType)
-                                }
-                                .collect { shouldShowBlur ->
-                                    bgView.background?.setVisible(shouldShowBlur, false)
-                                }
                         }
                     }
                 }
