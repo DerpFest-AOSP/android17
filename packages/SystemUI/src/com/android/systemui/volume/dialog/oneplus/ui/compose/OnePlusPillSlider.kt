@@ -1,17 +1,7 @@
 /*
- * Copyright (C) 2014-2026 The BlissRoms Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-FileCopyrightText: The BlissRoms Project
+ * SPDX-FileCopyrightText: DerpFest AOSP
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package com.android.systemui.volume.dialog.oneplus.ui.compose
@@ -48,7 +38,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.common.ui.compose.Icon
+import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
+import com.android.systemui.volume.dialog.ui.compose.rememberVolumePanelBlurDrawable
+import com.android.systemui.volume.dialog.ui.compose.volumePanelBackgroundBlur
+import com.android.systemui.volume.dialog.ui.compose.volumePanelBlurSurfaceColor
 
 /**
  * Drives how the track/fill pick colors. [OnWallpaper] is for the single collapsed pill over the
@@ -70,6 +64,8 @@ private data class OnePlusPillStyleColors(
 @Composable
 private fun onePlusPillStyleColors(
     styling: OnePlusPillStyling,
+    isBlurSupported: Boolean,
+    blurSurfaceColor: Color,
 ): OnePlusPillStyleColors {
     if (styling == OnePlusPillStyling.OnDarkScrim) {
         return OnePlusPillStyleColors(
@@ -77,6 +73,15 @@ private fun onePlusPillStyleColors(
             fill = Color.White,
             iconTint = Color.White,
             label = Color.White,
+        )
+    }
+    if (isBlurSupported) {
+        val onSurface = MaterialTheme.colorScheme.onSurface
+        return OnePlusPillStyleColors(
+            track = blurSurfaceColor,
+            fill = onSurface,
+            iconTint = Color.White,
+            label = onSurface,
         )
     }
     val isDark = isSystemInDarkTheme()
@@ -107,6 +112,7 @@ fun OnePlusPillSlider(
     sliderHeight: Dp = 200.dp,
     modifier: Modifier = Modifier,
     styling: OnePlusPillStyling = OnePlusPillStyling.OnWallpaper,
+    isBlurSupported: Boolean = false,
 ) {
     val collectedState by viewModel.state.collectAsStateWithLifecycle(null)
     val state = collectedState ?: return
@@ -123,7 +129,15 @@ fun OnePlusPillSlider(
     }
 
     val sliderShape = RoundedCornerShape(24.dp)
-    val colors = onePlusPillStyleColors(styling)
+    val blurSurfaceColor = volumePanelBlurSurfaceColor(isBlurSupported)
+    val colors = onePlusPillStyleColors(styling, isBlurSupported, blurSurfaceColor)
+    val useTrackBlur =
+        isBlurSupported && styling == OnePlusPillStyling.OnWallpaper
+    val blurDrawable = rememberVolumePanelBlurDrawable(key = "oneplus_pill")
+    val trackBlurRadiusPx =
+        androidx.compose.ui.platform.LocalContext.current.resources.getDimensionPixelSize(
+            R.dimen.volume_dialog_background_surface_blur_radius
+        )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -134,6 +148,12 @@ fun OnePlusPillSlider(
             modifier = Modifier
                 .width(sliderWidth)
                 .height(sliderHeight)
+                .volumePanelBackgroundBlur(
+                    blurDrawable = blurDrawable,
+                    isBlurSupported = useTrackBlur,
+                    blurRadiusPx = trackBlurRadiusPx,
+                    cornerRadius = 24.dp,
+                )
                 .clip(sliderShape)
                 .background(colors.track)
                 .pointerInput(range) {

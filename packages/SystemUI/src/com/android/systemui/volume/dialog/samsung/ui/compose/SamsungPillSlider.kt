@@ -1,17 +1,7 @@
 /*
- * Copyright (C) 2014-2026 The BlissRoms Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-FileCopyrightText: The BlissRoms Project
+ * SPDX-FileCopyrightText: DerpFest AOSP
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package com.android.systemui.volume.dialog.samsung.ui.compose
@@ -50,7 +40,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.common.ui.compose.Icon
+import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
+import com.android.systemui.volume.dialog.ui.compose.rememberVolumePanelBlurDrawable
+import com.android.systemui.volume.dialog.ui.compose.volumePanelBackgroundBlur
+import com.android.systemui.volume.dialog.ui.compose.volumePanelBlurSurfaceColor
 
 /**
  * [OnWallpaper] = collapsed single pill (needs contrast on bright wallpapers in light mode).
@@ -71,6 +65,8 @@ private data class SamsungPillStyleColors(
 @Composable
 private fun samsungPillStyleColors(
     styling: SamsungPillStyling,
+    isBlurSupported: Boolean,
+    blurSurfaceColor: Color,
 ): SamsungPillStyleColors {
     if (styling == SamsungPillStyling.InExpandedFrost) {
         return SamsungPillStyleColors(
@@ -78,6 +74,15 @@ private fun samsungPillStyleColors(
             fill = Color.White.copy(alpha = 0.65f),
             streamIconTint = Color.White,
             moreVertTint = Color.White,
+        )
+    }
+    if (isBlurSupported) {
+        val onSurface = MaterialTheme.colorScheme.onSurface
+        return SamsungPillStyleColors(
+            track = blurSurfaceColor,
+            fill = onSurface.copy(alpha = 0.7f),
+            streamIconTint = Color.White,
+            moreVertTint = onSurface,
         )
     }
     val isDark = isSystemInDarkTheme()
@@ -108,6 +113,7 @@ fun SamsungPillSlider(
     onExpandClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     styling: SamsungPillStyling = SamsungPillStyling.OnWallpaper,
+    isBlurSupported: Boolean = false,
 ) {
     val collectedState by viewModel.state.collectAsStateWithLifecycle(null)
     val state = collectedState ?: return
@@ -129,10 +135,20 @@ fun SamsungPillSlider(
         label = "sliderFill",
     )
 
-    val colors = samsungPillStyleColors(styling)
+    val colors = samsungPillStyleColors(
+        styling = styling,
+        isBlurSupported = isBlurSupported,
+        blurSurfaceColor = volumePanelBlurSurfaceColor(isBlurSupported),
+    )
     val trackColor = colors.track
     val fillColor = colors.fill
     val pillShape = RoundedCornerShape(50)
+    val useTrackBlur = isBlurSupported && styling == SamsungPillStyling.OnWallpaper
+    val blurDrawable = rememberVolumePanelBlurDrawable(key = "samsung_pill")
+    val trackBlurRadiusPx =
+        androidx.compose.ui.platform.LocalContext.current.resources.getDimensionPixelSize(
+            R.dimen.volume_dialog_background_surface_blur_radius
+        )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -142,6 +158,12 @@ fun SamsungPillSlider(
             modifier = Modifier
                 .width(sliderWidth)
                 .height(sliderHeight)
+                .volumePanelBackgroundBlur(
+                    blurDrawable = blurDrawable,
+                    isBlurSupported = useTrackBlur,
+                    blurRadiusPx = trackBlurRadiusPx,
+                    cornerRadius = sliderHeight / 2,
+                )
                 .clip(pillShape)
                 .background(trackColor)
                 .pointerInput(range) {

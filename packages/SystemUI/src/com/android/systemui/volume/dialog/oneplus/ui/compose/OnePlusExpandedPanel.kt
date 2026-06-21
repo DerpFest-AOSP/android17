@@ -1,17 +1,7 @@
 /*
- * Copyright (C) 2014-2026 The BlissRoms Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-FileCopyrightText: The BlissRoms Project
+ * SPDX-FileCopyrightText: DerpFest AOSP
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 package com.android.systemui.volume.dialog.oneplus.ui.compose
@@ -47,22 +37,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.dagger.VolumeDialogSliderComponent
+import com.android.systemui.volume.dialog.ui.compose.rememberVolumePanelBlurDrawable
+import com.android.systemui.volume.dialog.ui.compose.volumePanelBackgroundBlur
 
 @Composable
 fun OnePlusExpandedPanel(
     sliderComponents: List<VolumeDialogSliderComponent>,
     onSettingsClicked: () -> Unit,
     onDismiss: () -> Unit,
+    isBlurSupported: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val sliderHeight = dimensionResource(R.dimen.volume_dialog_oneplus_expanded_slider_height)
     val sliderSpacing = dimensionResource(R.dimen.volume_dialog_oneplus_slider_spacing)
     val horizontalPadding = dimensionResource(R.dimen.volume_dialog_oneplus_expanded_horizontal_padding)
+    val expandedBlurRadiusPx =
+        androidx.compose.ui.platform.LocalContext.current.resources.getDimensionPixelSize(
+            R.dimen.volume_dialog_oneplus_blur_radius
+        )
+    val blurDrawable = rememberVolumePanelBlurDrawable(key = "oneplus_expanded")
+    val scrimColor =
+        if (isBlurSupported) {
+            Color.Black.copy(alpha = 0.35f)
+        } else {
+            Color.Black.copy(alpha = 0.85f)
+        }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.85f))
+            .volumePanelBackgroundBlur(
+                blurDrawable = blurDrawable,
+                isBlurSupported = isBlurSupported,
+                blurRadiusPx = expandedBlurRadiusPx,
+                cornerRadius = 0.dp,
+            )
+            .background(scrimColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
