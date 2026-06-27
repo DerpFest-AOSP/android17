@@ -148,6 +148,7 @@ public class SystemSettings {
                 Settings.System.STATUS_BAR_DYNAMIC_ISLAND_FLASHLIGHT,
                 Settings.System.STATUS_BAR_DYNAMIC_ISLAND_STOPWATCH,
                 Settings.System.STATUS_BAR_DYNAMIC_ISLAND_LIVE_SCORES,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_LYRICS,
                 Settings.System.STATUS_BAR_DYNAMIC_ISLAND_ONGOING_ACTIVITIES,
                 Settings.System.STATUS_BAR_DYNAMIC_ISLAND_CALLS,
                 Settings.System.STATUS_BAR_DYNAMIC_ISLAND_WIDTH

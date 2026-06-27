@@ -7322,6 +7322,13 @@ public final class Settings {
                 "status_bar_dynamic_island_live_scores";
 
         /**
+         * Whether lyrics are shown in the dynamic island media popup.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_LYRICS =
+                "status_bar_dynamic_island_lyrics";
+
+        /**
          * Whether ongoing activities / downloads are shown in the dynamic island.
          * @hide
          */

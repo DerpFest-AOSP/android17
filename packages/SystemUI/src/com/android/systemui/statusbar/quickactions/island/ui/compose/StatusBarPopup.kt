@@ -25,7 +25,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
@@ -58,6 +60,7 @@ import com.android.systemui.res.R
 import com.android.systemui.statusbar.quickactions.island.alarm.ui.compose.AlarmPopup
 import com.android.systemui.statusbar.quickactions.island.flashlight.ui.compose.FlashlightPopup
 import com.android.systemui.statusbar.quickactions.island.livescore.ui.compose.LiveScorePopup
+import com.android.systemui.statusbar.quickactions.island.media.ui.compose.LyricsCard
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupContentModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.ui.compose.ScreenRecordPopup
@@ -157,8 +160,24 @@ fun StatusBarPopup(
                                     mediaColor = mediaColor,
                                 )
                             }
-                        Box(modifier = Modifier.widthIn(min = 320.dp, max = 400.dp)) {
-                            MediaCard(event = eventMedia, interactor = islandActions)
+                        val hasLyrics =
+                            model.isDynamicIslandLyricsEnabled &&
+                                (!model.lyrics.isNullOrBlank() ||
+                                    !model.syncedLyrics.isNullOrBlank())
+                        if (hasLyrics) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Box(modifier = Modifier.widthIn(min = 320.dp, max = 400.dp)) {
+                                    MediaCard(event = eventMedia, interactor = islandActions)
+                                }
+                                LyricsCard(model = model)
+                            }
+                        } else {
+                            Box(modifier = Modifier.widthIn(min = 320.dp, max = 400.dp)) {
+                                MediaCard(event = eventMedia, interactor = islandActions)
+                            }
                         }
                     }
                     is PopupContentModel.ScreenRecord -> ScreenRecordPopup(model = popupContent.model)

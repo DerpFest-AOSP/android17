@@ -35,6 +35,7 @@ object DynamicIslandFeatureSettings {
     const val FLASHLIGHT = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_FLASHLIGHT
     const val STOPWATCH = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_STOPWATCH
     const val LIVE_SCORES = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_LIVE_SCORES
+    const val LYRICS = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_LYRICS
     const val ONGOING_ACTIVITIES = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_ONGOING_ACTIVITIES
     const val CALLS = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_CALLS
     const val WIDTH = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_WIDTH
