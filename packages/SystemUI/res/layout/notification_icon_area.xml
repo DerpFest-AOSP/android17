@@ -17,8 +17,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:paddingStart="4sp">
+    android:orientation="horizontal">
 
     <!-- Wrapper hides counter when there isn't enough space (e.g. status bar chips active) -->
     <com.android.systemui.statusbar.phone.ui.HideWhenSquashedFrameLayout
