@@ -38,11 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.common.ui.compose.Icon
-import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
-import com.android.systemui.volume.dialog.ui.compose.rememberVolumePanelBlurDrawable
-import com.android.systemui.volume.dialog.ui.compose.volumePanelBackgroundBlur
-import com.android.systemui.volume.dialog.ui.compose.volumePanelBlurSurfaceColor
 
 /**
  * Drives how the track/fill pick colors. [OnWallpaper] is for the single collapsed pill over the
@@ -62,26 +58,13 @@ private data class OnePlusPillStyleColors(
 )
 
 @Composable
-private fun onePlusPillStyleColors(
-    styling: OnePlusPillStyling,
-    isBlurSupported: Boolean,
-    blurSurfaceColor: Color,
-): OnePlusPillStyleColors {
+private fun onePlusPillStyleColors(styling: OnePlusPillStyling): OnePlusPillStyleColors {
     if (styling == OnePlusPillStyling.OnDarkScrim) {
         return OnePlusPillStyleColors(
             track = Color.White.copy(alpha = 0.15f),
             fill = Color.White,
             iconTint = Color.White,
             label = Color.White,
-        )
-    }
-    if (isBlurSupported) {
-        val onSurface = MaterialTheme.colorScheme.onSurface
-        return OnePlusPillStyleColors(
-            track = blurSurfaceColor,
-            fill = onSurface,
-            iconTint = Color.White,
-            label = onSurface,
         )
     }
     val isDark = isSystemInDarkTheme()
@@ -112,7 +95,6 @@ fun OnePlusPillSlider(
     sliderHeight: Dp = 200.dp,
     modifier: Modifier = Modifier,
     styling: OnePlusPillStyling = OnePlusPillStyling.OnWallpaper,
-    isBlurSupported: Boolean = false,
 ) {
     val collectedState by viewModel.state.collectAsStateWithLifecycle(null)
     val state = collectedState ?: return
@@ -129,15 +111,7 @@ fun OnePlusPillSlider(
     }
 
     val sliderShape = RoundedCornerShape(24.dp)
-    val blurSurfaceColor = volumePanelBlurSurfaceColor(isBlurSupported)
-    val colors = onePlusPillStyleColors(styling, isBlurSupported, blurSurfaceColor)
-    val useTrackBlur =
-        isBlurSupported && styling == OnePlusPillStyling.OnWallpaper
-    val blurDrawable = rememberVolumePanelBlurDrawable(key = "oneplus_pill")
-    val trackBlurRadiusPx =
-        androidx.compose.ui.platform.LocalContext.current.resources.getDimensionPixelSize(
-            R.dimen.volume_dialog_background_surface_blur_radius
-        )
+    val colors = onePlusPillStyleColors(styling)
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -148,12 +122,6 @@ fun OnePlusPillSlider(
             modifier = Modifier
                 .width(sliderWidth)
                 .height(sliderHeight)
-                .volumePanelBackgroundBlur(
-                    blurDrawable = blurDrawable,
-                    isBlurSupported = useTrackBlur,
-                    blurRadiusPx = trackBlurRadiusPx,
-                    cornerRadius = 24.dp,
-                )
                 .clip(sliderShape)
                 .background(colors.track)
                 .pointerInput(range) {

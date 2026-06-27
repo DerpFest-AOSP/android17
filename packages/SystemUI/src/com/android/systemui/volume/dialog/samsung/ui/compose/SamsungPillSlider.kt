@@ -40,11 +40,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.systemui.common.ui.compose.Icon
-import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.viewmodel.VolumeDialogSliderViewModel
-import com.android.systemui.volume.dialog.ui.compose.rememberVolumePanelBlurDrawable
-import com.android.systemui.volume.dialog.ui.compose.volumePanelBackgroundBlur
-import com.android.systemui.volume.dialog.ui.compose.volumePanelBlurSurfaceColor
 
 /**
  * [OnWallpaper] = collapsed single pill (needs contrast on bright wallpapers in light mode).
@@ -63,26 +59,13 @@ private data class SamsungPillStyleColors(
 )
 
 @Composable
-private fun samsungPillStyleColors(
-    styling: SamsungPillStyling,
-    isBlurSupported: Boolean,
-    blurSurfaceColor: Color,
-): SamsungPillStyleColors {
+private fun samsungPillStyleColors(styling: SamsungPillStyling): SamsungPillStyleColors {
     if (styling == SamsungPillStyling.InExpandedFrost) {
         return SamsungPillStyleColors(
             track = Color.White.copy(alpha = 0.15f),
             fill = Color.White.copy(alpha = 0.65f),
             streamIconTint = Color.White,
             moreVertTint = Color.White,
-        )
-    }
-    if (isBlurSupported) {
-        val onSurface = MaterialTheme.colorScheme.onSurface
-        return SamsungPillStyleColors(
-            track = blurSurfaceColor,
-            fill = onSurface.copy(alpha = 0.7f),
-            streamIconTint = Color.White,
-            moreVertTint = onSurface,
         )
     }
     val isDark = isSystemInDarkTheme()
@@ -113,7 +96,6 @@ fun SamsungPillSlider(
     onExpandClicked: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     styling: SamsungPillStyling = SamsungPillStyling.OnWallpaper,
-    isBlurSupported: Boolean = false,
 ) {
     val collectedState by viewModel.state.collectAsStateWithLifecycle(null)
     val state = collectedState ?: return
@@ -135,20 +117,10 @@ fun SamsungPillSlider(
         label = "sliderFill",
     )
 
-    val colors = samsungPillStyleColors(
-        styling = styling,
-        isBlurSupported = isBlurSupported,
-        blurSurfaceColor = volumePanelBlurSurfaceColor(isBlurSupported),
-    )
+    val colors = samsungPillStyleColors(styling)
     val trackColor = colors.track
     val fillColor = colors.fill
     val pillShape = RoundedCornerShape(50)
-    val useTrackBlur = isBlurSupported && styling == SamsungPillStyling.OnWallpaper
-    val blurDrawable = rememberVolumePanelBlurDrawable(key = "samsung_pill")
-    val trackBlurRadiusPx =
-        androidx.compose.ui.platform.LocalContext.current.resources.getDimensionPixelSize(
-            R.dimen.volume_dialog_background_surface_blur_radius
-        )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -158,12 +130,6 @@ fun SamsungPillSlider(
             modifier = Modifier
                 .width(sliderWidth)
                 .height(sliderHeight)
-                .volumePanelBackgroundBlur(
-                    blurDrawable = blurDrawable,
-                    isBlurSupported = useTrackBlur,
-                    blurRadiusPx = trackBlurRadiusPx,
-                    cornerRadius = sliderHeight / 2,
-                )
                 .clip(pillShape)
                 .background(trackColor)
                 .pointerInput(range) {

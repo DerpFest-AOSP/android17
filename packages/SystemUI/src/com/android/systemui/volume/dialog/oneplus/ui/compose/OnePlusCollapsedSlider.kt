@@ -33,7 +33,6 @@ fun OnePlusCollapsedSlider(
     viewModel: VolumeDialogSliderViewModel,
     onExpandClicked: () -> Unit,
     isOnLeft: Boolean = false,
-    isBlurSupported: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val sliderWidth = dimensionResource(R.dimen.volume_dialog_oneplus_collapsed_slider_width)
@@ -54,7 +53,6 @@ fun OnePlusCollapsedSlider(
             viewModel = viewModel,
             sliderWidth = sliderWidth,
             sliderHeight = sliderHeight,
-            isBlurSupported = isBlurSupported,
         )
 
         Spacer(modifier = Modifier.height(12.dp))

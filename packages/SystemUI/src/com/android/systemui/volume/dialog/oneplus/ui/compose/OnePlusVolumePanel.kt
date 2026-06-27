@@ -75,7 +75,6 @@ fun OnePlusVolumePanel(
                             viewModel = component.sliderViewModel(),
                             onExpandClicked = { viewModel.onExpandClicked() },
                             isOnLeft = isOnLeft,
-                            isBlurSupported = isBlurSupported,
                         )
                     }
                 }

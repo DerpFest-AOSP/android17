@@ -21,7 +21,6 @@ fun SamsungCollapsedSlider(
     viewModel: VolumeDialogSliderViewModel,
     onExpandClicked: () -> Unit,
     isOnLeft: Boolean = false,
-    isBlurSupported: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val sliderWidth = dimensionResource(R.dimen.volume_dialog_samsung_collapsed_slider_width)
@@ -44,7 +43,6 @@ fun SamsungCollapsedSlider(
             sliderHeight = sliderHeight,
             showIcon = true,
             onExpandClicked = onExpandClicked,
-            isBlurSupported = isBlurSupported,
         )
     }
 }
