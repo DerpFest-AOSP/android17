@@ -60,8 +60,6 @@ public class CompatibilityInfo implements Parcelable {
     public static final CompatibilityInfo DEFAULT_COMPATIBILITY_INFO = new CompatibilityInfo() {
     };
 
-    static final String TAG = "CompatibilityInfo";
-
     /**
      * This is the number of pixels we would like to have along the
      * short axis of an app that needs to run on a normal size screen.
