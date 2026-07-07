@@ -1998,6 +1998,7 @@ public class ActivityManagerService extends IActivityManager.Stub
             ServiceManager.addService("permission", new PermissionController(this));
             ServiceManager.addService("processinfo", new ProcessInfoService(this));
             ServiceManager.addService("cacheinfo", new CacheBinder(this));
+            ServiceManager.addService("boost_framework", new BoostFrameworkService());
             if (Flags.enableActivityManagerStructuredService()) {
                 ServiceManager.addService(
                         "activity_structured",

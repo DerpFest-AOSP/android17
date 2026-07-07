@@ -143,6 +143,7 @@ import com.android.systemui.util.Assert;
 import com.android.systemui.util.ColorUtilKt;
 import com.android.systemui.util.DumpUtilsKt;
 import com.android.systemui.util.ListenerSet;
+import com.android.systemui.util.SystemUIBoostFramework;
 import com.android.systemui.util.state.DownstreamObservableState;
 import com.android.systemui.util.state.ObservableState;
 
@@ -4864,11 +4865,15 @@ public class NotificationStackScrollLayout
         mPanelTracking = true;
         mAmbientState.setPanelTracking(true);
         resetExposedMenuView(true /* animate */, true /* force */);
+        SystemUIBoostFramework.getInstance().animationBoostOn(
+                SystemUIBoostFramework.REQUEST_ANIMATION_BOOST_TYPE_TRACKING_NOTIFICATION_STACK_SCROLL_LAYOUT);
     }
 
     void onPanelTrackingStopped() {
         mPanelTracking = false;
         mAmbientState.setPanelTracking(false);
+        SystemUIBoostFramework.getInstance().animationBoostOff(
+                SystemUIBoostFramework.REQUEST_ANIMATION_BOOST_TYPE_TRACKING_NOTIFICATION_STACK_SCROLL_LAYOUT);
     }
 
     void resetScrollPosition() {
