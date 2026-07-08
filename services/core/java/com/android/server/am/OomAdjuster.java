@@ -344,6 +344,8 @@ public abstract class OomAdjuster {
     //Per Task Boost of top-app renderThread
     public static BoostFramework mPerfBoost = new BoostFramework();
     public static int mPerfHandle = -1;
+    public static int mCurAppPid = -1;
+    public static int mCurRenderTid = -1;
     public static int mCurRenderThreadTid = -1;
     public static boolean mIsTopAppRenderThreadBoostEnabled = false;
 
