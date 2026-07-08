@@ -20,6 +20,7 @@ import android.annotation.TestApi;
 import android.content.res.Resources;
 import android.os.StatFs;
 import android.os.SystemProperties;
+import android.util.BoostFramework;
 
 /**
  * Provides access to SQLite functions that affect all database connection,
@@ -85,6 +86,9 @@ public final class SQLiteGlobal {
      * Gets the default journal mode when WAL is not in use.
      */
     public static @SQLiteDatabase.JournalMode String getDefaultJournalMode() {
+        if (BoostFramework.shouldUseUiPerf()) {
+            return SystemProperties.get("debug.sqlite.journalmode", "PERSIST");
+        }
         return SystemProperties.get("debug.sqlite.journalmode",
                 Resources.getSystem().getString(
                 com.android.internal.R.string.db_default_journal_mode));
@@ -107,6 +111,9 @@ public final class SQLiteGlobal {
         String defaultMode = sDefaultSyncMode;
         if (defaultMode != null) {
             return defaultMode;
+        }
+        if (BoostFramework.shouldUseUiPerf()) {
+            return SystemProperties.get("debug.sqlite.syncmode", "OFF");
         }
         return SystemProperties.get("debug.sqlite.syncmode",
                 Resources.getSystem().getString(
