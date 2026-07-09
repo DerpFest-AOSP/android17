@@ -224,7 +224,6 @@ import android.sysprop.DisplayProperties;
 import android.sysprop.ViewProperties;
 import android.text.TextUtils;
 import android.util.AndroidRuntimeException;
-import android.util.BoostFramework.ScrollOptimizer;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.IndentingPrintWriter;
@@ -2873,7 +2872,6 @@ public final class ViewRootImpl implements ViewParent,
             mBlastBufferQueue.destroy();
         }
         mBlastBufferQueue = new BLASTBufferQueue(mTag, true /* updateDestinationFrame */);
-        ScrollOptimizer.setBLASTBufferQueue(mBlastBufferQueue);
         // If we create and destroy BBQ without recreating the SurfaceControl, we can end up
         // queuing buffers on multiple apply tokens causing out of order buffer submissions. We
         // fix this by setting the same apply token on all BBQs created by this VRI.
@@ -10706,7 +10704,6 @@ public final class ViewRootImpl implements ViewParent,
     }
 
     void doProcessInputEvents() {
-        ScrollOptimizer.setBLASTBufferQueue(mBlastBufferQueue);
         // Deliver all pending input events in the queue.
         while (mPendingInputEventHead != null) {
             QueuedInputEvent q = mPendingInputEventHead;
@@ -10721,10 +10718,6 @@ public final class ViewRootImpl implements ViewParent,
                     mPendingInputEventCount);
 
             mViewFrameInfo.setInputEvent(mInputEventAssigner.processEvent(q.mEvent));
-
-            if (q.mEvent instanceof MotionEvent) {
-                ScrollOptimizer.setMotionType(((MotionEvent) q.mEvent).getActionMasked());
-            }
 
             deliverInputEvent(q);
         }

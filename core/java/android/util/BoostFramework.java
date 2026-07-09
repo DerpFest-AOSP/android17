@@ -31,7 +31,6 @@ package android.util;
 
 import android.content.Context;
 import android.graphics.BLASTBufferQueue;
-import android.os.Process;
 import android.os.SystemProperties;
 import android.util.Log;
 
@@ -110,8 +109,6 @@ public class BoostFramework {
     public static final int VENDOR_HINT_IME_LAUNCH_EVENT = 0x0000109F;
     //App exit animation boost
     public static final int VENDOR_HINT_EXIT_ANIM_BOOST = 0x000010A9;
-
-    public static final String UI_PERF_PROP = "debug.ui.perfmode.enable";
 
     //feedback hints
     public static final int VENDOR_FEEDBACK_WORKLOAD_TYPE = 0x00001601;
@@ -854,12 +851,4 @@ public class BoostFramework {
             return newFrameTimeNanos;
         }
     }
-
-    /** @hide */
-    public static boolean shouldUseUiPerf() {
-        if (SystemProperties.getInt(UI_PERF_PROP, 0) == Process.myPid()) {
-            return true;
-        }
-        return false;
-    }
-}
+};
