@@ -423,9 +423,11 @@ public class MediaFocusControl implements PlayerFocusEnforcer {
                 }
             } else {
                 for (FocusRequester multifr : mMultiAudioFocusList) {
-                    if (isLockedFocusOwner(multifr)) {
-                        multifr.handleFocusGain(AudioManager.AUDIOFOCUS_GAIN);
-                    }
+                    // Restore all multi-focus owners, not just locked ones.
+                    // Regular GAIN owners ducked by a transient focus request need
+                    // handleFocusGain() to invoke restoreVShapedPlayers(), mirroring
+                    // the symmetric ducking path in propagateFocusLossFromGain_syncAf().
+                    multifr.handleFocusGain(AudioManager.AUDIOFOCUS_GAIN);
                 }
             }
         }
