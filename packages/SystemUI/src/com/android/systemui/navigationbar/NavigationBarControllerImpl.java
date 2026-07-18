@@ -61,6 +61,7 @@ import com.android.systemui.shared.system.TaskStackChangeListeners;
 import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.phone.AutoHideControllerStore;
 import com.android.systemui.statusbar.phone.LightBarController;
+import com.android.systemui.statusbar.policy.BurnInProtectionController;
 import com.android.systemui.statusbar.policy.ConfigurationController;
 import com.android.systemui.util.Utils;
 import com.android.systemui.util.settings.SecureSettings;
@@ -88,6 +89,7 @@ public class NavigationBarControllerImpl implements
     private final Context mContext;
     private final Executor mExecutor;
     private final NavigationBarComponent.Factory mNavigationBarComponentFactory;
+    private final BurnInProtectionController mBurnInProtectionController;
     private final SecureSettings mSecureSettings;
     private final DisplayTracker mDisplayTracker;
     private final DisplayManager mDisplayManager;
@@ -138,10 +140,12 @@ public class NavigationBarControllerImpl implements
             DisplayTracker displayTracker,
             DeviceStateManager deviceStateManager,
             DisplaysWithDecorationsRepositoryCompat displaysWithDecorationsRepositoryCompat,
-            @Main CoroutineDispatcher mainCoroutineDispatcher) {
+            @Main CoroutineDispatcher mainCoroutineDispatcher,
+            BurnInProtectionController burnInProtectionController) {
         mContext = context;
         mExecutor = mainExecutor;
         mNavigationBarComponentFactory = navigationBarComponentFactory;
+        mBurnInProtectionController = burnInProtectionController;
         mSecureSettings = secureSettings;
         mDisplayTracker = displayTracker;
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
@@ -439,6 +443,10 @@ public class NavigationBarControllerImpl implements
         navBar.init();
         mNavigationBars.put(displayId, navBar);
 
+        if (isOnDefaultDisplay) {
+            mBurnInProtectionController.setNavigationBarView(navBar.getView());
+        }
+
         navBar.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
@@ -459,6 +467,9 @@ public class NavigationBarControllerImpl implements
     public void removeNavigationBar(int displayId) {
         NavigationBar navBar = mNavigationBars.get(displayId);
         if (navBar != null) {
+            if (displayId == mDisplayTracker.getDefaultDisplayId()) {
+                mBurnInProtectionController.setNavigationBarView(null);
+            }
             navBar.destroyView();
             mNavigationBars.remove(displayId);
         }
