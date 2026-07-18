@@ -50,6 +50,10 @@ constructor(
             override fun onDensityOrFontScaleChanged() {
                 statusBarIconController.refreshIconGroups(displayId)
             }
+
+            override fun onThemeChanged() {
+                statusBarIconController.refreshIconGroups(displayId)
+            }
         }
 
     override fun start() {
