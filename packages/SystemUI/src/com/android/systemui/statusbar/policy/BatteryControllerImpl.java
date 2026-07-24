@@ -29,7 +29,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.ContentObserver;
 import android.hardware.usb.UsbManager;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -37,6 +39,7 @@ import android.os.PowerManager;
 import android.os.PowerSaveState;
 import android.os.UserHandle;
 import android.util.IndentingPrintWriter;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -78,6 +81,12 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
 
     private static final String ACTION_LEVEL_TEST = "com.android.systemui.BATTERY_LEVEL_TEST";
 
+    private static final String FLIPENDO_AUTHORITY = "com.google.android.flipendo.api";
+    private static final String FLIPENDO_STATE_METHOD = "get_flipendo_state";
+    private static final String FLIPENDO_IS_AGGRESSIVE_KEY = "is_flipendo_aggressive";
+    private static final Uri FLIPENDO_STATE_URI =
+            Uri.parse("content://" + FLIPENDO_AUTHORITY + "/" + FLIPENDO_STATE_METHOD);
+
     private final EnhancedEstimates mEstimates;
     protected final BroadcastDispatcher mBroadcastDispatcher;
     protected final ArrayList<BatteryController.BatteryStateChangeCallback>
@@ -89,6 +98,7 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
     private final BatteryControllerLogger mLogger;
     private final Handler mMainHandler;
     private final Handler mBgHandler;
+    private final ContentObserver mExtremeSaverObserver;
     protected final Context mContext;
 
     protected int mLevel;
@@ -102,6 +112,7 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
     private boolean mWirelessCharging;
     private boolean mIsBatteryDefender = false;
     private boolean mIsIncompatibleCharging = false;
+    private boolean mIsExtremeSaver = false;
     private boolean mTestMode = false;
     @VisibleForTesting
     boolean mHasReceivedBattery = false;
@@ -137,6 +148,13 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
         mDemoModeController = demoModeController;
         mDumpManager = dumpManager;
         mLogger = logger;
+        mExtremeSaverObserver =
+                new ContentObserver(mBgHandler) {
+                    @Override
+                    public void onChange(boolean selfChange) {
+                        updateExtremeSaver();
+                    }
+                };
         mLogger.logBatteryControllerInstance(this);
     }
 
@@ -153,6 +171,13 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
     public void init() {
         mLogger.logBatteryControllerInit(this, mHasReceivedBattery);
         registerReceiver();
+        try {
+            mContext.getContentResolver()
+                    .registerContentObserver(FLIPENDO_STATE_URI, false, mExtremeSaverObserver);
+            mBgHandler.post(this::updateExtremeSaver);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Unable to observe extreme battery saver state", e);
+        }
         if (!mHasReceivedBattery) {
             // Get initial state. Relying on Sticky behavior until API for getting info.
             Intent intent = mContext.registerReceiver(
@@ -190,6 +215,8 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
         ipw.println(mIsIncompatibleCharging);
         ipw.print("mPowerSave=");
         ipw.println(mPowerSave);
+        ipw.print("mIsExtremeSaver=");
+        ipw.println(mIsExtremeSaver);
         ipw.print("mStateUnknown=");
         ipw.println(mStateUnknown);
         ipw.println("Callbacks:------------------");
@@ -232,6 +259,7 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
         // Make sure new callbacks get the correct initial state
         cb.onBatteryLevelChanged(mLevel, mPluggedIn, mCharging);
         cb.onPowerSaveChanged(mPowerSave);
+        cb.onExtremeBatterySaverChanged(mIsExtremeSaver);
         cb.onBatteryUnknownStateChanged(mStateUnknown);
         cb.onWirelessChargingChanged(mWirelessCharging);
         cb.onIsBatteryDefenderChanged(mIsBatteryDefender);
@@ -359,6 +387,11 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
     }
 
     @Override
+    public boolean isExtremeSaverOn() {
+        return mIsExtremeSaver;
+    }
+
+    @Override
     public boolean isWirelessCharging() {
         return mWirelessCharging;
     }
@@ -475,6 +508,26 @@ public class BatteryControllerImpl extends BroadcastReceiver implements BatteryC
 
     private void updatePowerSave() {
         setPowerSave(mPowerManager.isPowerSaveMode());
+    }
+
+    private void updateExtremeSaver() {
+        final Bundle state;
+        try {
+            state = mContext.getContentResolver()
+                    .call(FLIPENDO_AUTHORITY, FLIPENDO_STATE_METHOD, null, null);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Unable to read extreme battery saver state", e);
+            return;
+        }
+        if (state == null) return;
+
+        final boolean isExtremeSaver = state.getBoolean(FLIPENDO_IS_AGGRESSIVE_KEY, false);
+        mMainHandler.post(() -> {
+            if (isExtremeSaver == mIsExtremeSaver) return;
+            mIsExtremeSaver = isExtremeSaver;
+            dispatchSafeChange(
+                    callback -> callback.onExtremeBatterySaverChanged(mIsExtremeSaver));
+        });
     }
 
     private void setPowerSave(boolean powerSave) {
