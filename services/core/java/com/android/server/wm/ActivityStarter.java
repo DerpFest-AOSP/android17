@@ -146,6 +146,7 @@ import com.android.internal.util.FrameworkStatsLog;
 import com.android.server.UiThread;
 import com.android.server.am.ActivityManagerService.IntentCreatorToken;
 import com.android.server.am.PendingIntentRecord;
+import com.android.server.am.QtiBackgroundManager;
 import com.android.server.pm.InstantAppResolver;
 import com.android.server.pm.PackageArchiver;
 import com.android.server.pm.UserActivitiesAllowlist;
@@ -1145,6 +1146,10 @@ class ActivityStarter {
             if (callingUid != realCallingUid
                     && realCallingUid != Request.DEFAULT_REAL_CALLING_UID) {
                 request.logMessage.append(" (realCallingUid=").append(realCallingUid).append(")");
+            }
+
+            if (aInfo != null) {
+                QtiBackgroundManager.getInstance().handleActivityStart(aInfo.applicationInfo);
             }
         }
 
@@ -3360,6 +3365,7 @@ class ActivityStarter {
 
     /** Places {@link #mStartActivity} in {@code task} or an embedded {@link TaskFragment}. */
     private void addOrReparentStartingActivity(@NonNull Task task, String reason) {
+        mStartActivity.acquireActivityBoost();
         TaskFragment newParent = task;
         if (mInTaskFragment != null) {
             int embeddingCheckResult = canEmbedActivity(mInTaskFragment, mStartActivity, task);

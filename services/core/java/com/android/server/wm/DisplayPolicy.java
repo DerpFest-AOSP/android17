@@ -64,6 +64,7 @@ import static android.view.WindowManager.LayoutParams.INVALID_WINDOW_TYPE;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_CONSUME_IME_INSETS;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_IMMERSIVE_CONFIRMATION_WINDOW;
+import static android.view.Display.INVALID_DISPLAY;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_INTERCEPT_GLOBAL_DRAG_AND_DROP;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_LAYOUT_SIZE_EXTENDED_BY_CUTOUT;
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY;
@@ -103,6 +104,7 @@ import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.Px;
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.app.ActivityThread;
 import android.app.LoadedApk;
 import android.app.ResourcesManager;
@@ -111,6 +113,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.content.pm.ApplicationInfo;
 import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
@@ -126,6 +129,7 @@ import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.Trace;
 import android.os.UserHandle;
+import android.util.BoostFramework;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.Slog;
@@ -222,6 +226,20 @@ public class DisplayPolicy {
     private final boolean mCarDockEnablesAccelerometer;
     private final boolean mDeskDockEnablesAccelerometer;
     private final AccessibilityManager mAccessibilityManager;
+
+    private static boolean SCROLL_BOOST_SS_ENABLE = false;
+    private static boolean SILKY_SCROLLS_ENABLE = false;
+    private static boolean SILKY_SCROLLS_LITE_ENABLE = false;
+    private static boolean isLowRAM = false;
+
+    /*
+     * @hide
+     */
+    BoostFramework mPerfBoostDrag = null;
+    BoostFramework mPerfBoostFling = null;
+    BoostFramework mPerfBoostPrefling = null;
+    BoostFramework mPerf = new BoostFramework();
+    private boolean mIsPerfBoostFlingAcquired;
 
     private final Object mServiceAcquireLock = new Object();
     private long mPanicTime;
@@ -453,6 +471,52 @@ public class DisplayPolicy {
         }
     }
 
+    private String getAppPackageName() {
+        String currentPackage;
+        try {
+            ActivityManager.RunningTaskInfo rti = ActivityTaskManager.getService().getTasks(
+                1, false /* filterVisibleRecents */, false /*keepIntentExtra */,
+                INVALID_DISPLAY).get(0);
+            currentPackage = rti.topActivity.getPackageName();
+        } catch (Exception e) {
+            currentPackage = null;
+        }
+        return currentPackage;
+    }
+
+    private String getActivityName() {
+        String activityName;
+        try {
+            ActivityManager.RunningTaskInfo rti = ActivityTaskManager.getService().getTasks(
+                1, false /* filterVisibleRecents */, false /*keepIntentExtra */,
+                INVALID_DISPLAY).get(0);
+            activityName = rti.topActivity.flattenToShortString();
+        } catch (Exception e) {
+            activityName = null;
+        }
+        return activityName;
+    }
+
+    private boolean isTopAppGame(String currentPackage, BoostFramework BoostType) {
+        boolean isGame = false;
+        if (isLowRAM) {
+            try {
+                ApplicationInfo ai = mContext.getPackageManager().getApplicationInfo(currentPackage, 0);
+                if(ai != null) {
+                    isGame = (ai.category == ApplicationInfo.CATEGORY_GAME) ||
+                            ((ai.flags & ApplicationInfo.FLAG_IS_GAME) ==
+                                ApplicationInfo.FLAG_IS_GAME);
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        } else {
+            isGame = (BoostType.perfGetFeedback(BoostFramework.VENDOR_FEEDBACK_WORKLOAD_TYPE,
+                      currentPackage) == BoostFramework.WorkloadType.GAME);
+        }
+        return isGame;
+    }
+
     DisplayPolicy(WindowManagerService service, DisplayContent displayContent) {
         mService = service;
         mContext = displayContent.isDefaultDisplay ? service.mContext
@@ -481,6 +545,13 @@ public class DisplayPolicy {
             mScreenOnEarly = true;
             mScreenOnFully = true;
         }
+
+        if (mPerf != null) {
+            SCROLL_BOOST_SS_ENABLE = Boolean.parseBoolean(mPerf.perfGetProp("vendor.perf.gestureflingboost.enable", "false"));
+            SILKY_SCROLLS_ENABLE = Boolean.parseBoolean(mPerf.perfGetProp("ro.vendor.perf.ss", "false"));
+            SILKY_SCROLLS_LITE_ENABLE = Boolean.parseBoolean(mPerf.perfGetProp("ro.vendor.perf.silkyscrolls_lite", "false"));
+        }
+        isLowRAM = SystemProperties.getBoolean("ro.config.low_ram", false);
 
         final Looper looper = UiThread.getHandler().getLooper();
         mHandler = new PolicyHandler(looper);
@@ -585,6 +656,153 @@ public class DisplayPolicy {
                         listener.onTouchStart();
                     }
                 }
+
+                @Override
+                public void onVerticalFling(int duration) {
+                        String currentPackage = getAppPackageName();
+                        if (currentPackage == null) {
+                            Slog.e(TAG, "Error: package name null");
+                            return;
+                        }
+                        String currentActivity = getActivityName();
+                        if (currentActivity == null) {
+                            Slog.e(TAG, "Error: activity name null");
+                            return;
+                        }
+                        if (SCROLL_BOOST_SS_ENABLE) {
+                            if (mPerfBoostFling == null) {
+                                mPerfBoostFling = new BoostFramework();
+                                mIsPerfBoostFlingAcquired = false;
+                            }
+                            if (mPerfBoostFling == null) {
+                                Slog.e(TAG, "Error: boost object null");
+                                return;
+                            }
+                            boolean isGame = isTopAppGame(currentPackage, mPerfBoostFling);
+                            if (!isGame) {
+                                if (mPerfBoostFling.board_first_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL &&
+                                    mPerfBoostFling.board_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL) {
+                                        mPerfBoostFling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                         currentPackage, duration + 160, BoostFramework.Scroll.VERTICAL);
+                                        mIsPerfBoostFlingAcquired = true;
+                                } else {
+                                        mPerfBoostFling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                        currentActivity, duration + 160, BoostFramework.Scroll.VERTICAL);
+                                        mIsPerfBoostFlingAcquired = true;
+                                }
+                           }
+                        }
+                    }
+
+                    @Override
+                    public void onHorizontalFling(int duration) {
+                        String currentPackage = getAppPackageName();
+                        if (currentPackage == null) {
+                            Slog.e(TAG, "Error: package name null");
+                            return;
+                        }
+                        String currentActivity = getActivityName();
+                        if (currentActivity == null) {
+                            Slog.e(TAG, "Error: activity name null");
+                            return;
+                        }
+                        if (SCROLL_BOOST_SS_ENABLE) {
+                            if (mPerfBoostFling == null) {
+                                mPerfBoostFling = new BoostFramework();
+                                mIsPerfBoostFlingAcquired = false;
+                            }
+                            if (mPerfBoostFling == null) {
+                                Slog.e(TAG, "Error: boost object null");
+                                return;
+                            }
+                            boolean isGame = isTopAppGame(currentPackage, mPerfBoostFling);
+                            if (!isGame) {
+                                if (mPerfBoostFling.board_first_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL &&
+                                    mPerfBoostFling.board_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL) {
+                                        mPerfBoostFling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                         currentPackage, duration + 160, BoostFramework.Scroll.HORIZONTAL);
+                                        mIsPerfBoostFlingAcquired = true;
+                                } else {
+                                        mPerfBoostFling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                        currentActivity, duration + 160, BoostFramework.Scroll.HORIZONTAL);
+                                        mIsPerfBoostFlingAcquired = true;
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onScroll(boolean started) {
+                        String currentPackage = getAppPackageName();
+                        if (currentPackage == null) {
+                            Slog.e(TAG, "Error: package name null");
+                            return;
+                        }
+                        String currentActivity = getActivityName();
+                        if (currentActivity == null) {
+                            Slog.e(TAG, "Error: activity name null");
+                            return;
+                        }
+                        boolean isGame;
+                        if (mPerfBoostDrag == null) {
+                            mPerfBoostDrag = new BoostFramework();
+                        }
+                        if (mPerfBoostDrag == null) {
+                            Slog.e(TAG, "Error: boost object null");
+                            return;
+                        }
+                        if (SCROLL_BOOST_SS_ENABLE && started) {
+                            if (mPerfBoostPrefling == null) {
+                                mPerfBoostPrefling = new BoostFramework();
+                            }
+                            if (mPerfBoostPrefling == null) {
+                                Slog.e(TAG, "Error: boost object null");
+                                return;
+                            }
+                            isGame = isTopAppGame(currentPackage, mPerfBoostPrefling);
+                            if (!isGame) {
+                                if (mPerfBoostPrefling.board_first_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL &&
+                                    mPerfBoostPrefling.board_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL) {
+                                        mPerfBoostPrefling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                        currentPackage, -1, BoostFramework.Scroll.PREFILING);
+                                } else {
+                                mPerfBoostPrefling.perfHint(BoostFramework.VENDOR_HINT_SCROLL_BOOST,
+                                        currentActivity, -1, BoostFramework.Scroll.PREFILING);
+                                }
+                            }
+                        }
+                        isGame = isTopAppGame(currentPackage, mPerfBoostDrag);
+                        if (!isGame && started) {
+                            if (SILKY_SCROLLS_ENABLE) {
+                                if(mPerfBoostDrag.board_first_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL &&
+                                    mPerfBoostDrag.board_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL) {
+                                        mPerfBoostDrag.perfEvent(BoostFramework.VENDOR_HINT_DRAG_START, currentPackage);
+                                    } else {
+                                        mPerfBoostDrag.perfEvent(BoostFramework.VENDOR_HINT_DRAG_START, currentActivity);
+                                    }
+                            }
+                            if(mPerfBoostDrag.board_first_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL &&
+                               mPerfBoostDrag.board_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL) {
+                                    mPerfBoostDrag.perfHint(BoostFramework.VENDOR_HINT_DRAG_BOOST,
+                                            currentPackage, -1, 1);
+                            } else {
+                                mPerfBoostDrag.perfHint(BoostFramework.VENDOR_HINT_DRAG_BOOST,
+                                            currentActivity, -1, 1);
+                            }
+                        } else {
+                            if (SILKY_SCROLLS_ENABLE || SILKY_SCROLLS_LITE_ENABLE){
+                            if(mPerfBoostDrag.board_first_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL &&
+                               mPerfBoostDrag.board_api_lvl <= BoostFramework.VENDOR_V_API_LEVEL) {
+                                    mPerfBoostDrag.perfEvent(BoostFramework.VENDOR_HINT_DRAG_END, currentPackage);
+                               } else {
+                                   mPerfBoostDrag.perfEvent(BoostFramework.VENDOR_HINT_DRAG_END, currentActivity);
+                               }
+                            } else if (mPerfBoostDrag.board_first_api_lvl >= BoostFramework.VENDOR_V_API_LEVEL) {
+                               mPerfBoostDrag.perfHintRelease();
+                            }
+                            mPerfBoostDrag.perfLockRelease();
+                        }
+                    }
 
                 @Override
                 public void onUpOrCancel() {

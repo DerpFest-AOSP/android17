@@ -562,6 +562,9 @@ class Task extends TaskFragment {
 
     private final Handler mHandler;
 
+    private static final ActivityPluginDelegate mQtiActivityPluginDelegate =
+        new ActivityPluginDelegate();
+
     private class ActivityTaskHandler extends Handler {
 
         ActivityTaskHandler(Looper looper) {
@@ -1457,6 +1460,11 @@ class Task extends TaskFragment {
                 // Pausing the resumed activity because it is occluded by other task fragment, or
                 // should not be remained in resumed state.
                 if (startPausing(false /* uiSleeping*/, resuming, reason)) {
+                    if (mQtiActivityPluginDelegate != null && top != null && top.info != null
+                            && getWindowingMode() != WINDOWING_MODE_UNDEFINED) {
+                        mQtiActivityPluginDelegate.activitySuspendNotification(top.info.packageName,
+                                getWindowingMode() == WINDOWING_MODE_FULLSCREEN, true);
+                    }
                     someActivityPaused[0]++;
                 }
             }
@@ -1464,8 +1472,14 @@ class Task extends TaskFragment {
 
         forAllLeafTaskFragments((taskFrag) -> {
             final ActivityRecord resumedActivity = taskFrag.getResumedActivity();
+            final ActivityRecord top = topRunningActivity();
             if (resumedActivity != null && !taskFrag.canBeResumed(resuming)) {
                 if (taskFrag.startPausing(false /* uiSleeping*/, resuming, reason)) {
+                    if (mQtiActivityPluginDelegate != null && top != null && top.info != null
+                            && getWindowingMode() != WINDOWING_MODE_UNDEFINED) {
+                        mQtiActivityPluginDelegate.activitySuspendNotification(top.info.packageName,
+                                getWindowingMode() == WINDOWING_MODE_FULLSCREEN, true);
+                    }
                     someActivityPaused[0]++;
                 }
             }
@@ -5461,6 +5475,11 @@ class Task extends TaskFragment {
 
         final boolean[] resumed = new boolean[1];
         final TaskFragment topFragment = topActivity.getTaskFragment();
+        if (mQtiActivityPluginDelegate != null && getWindowingMode() != WINDOWING_MODE_UNDEFINED
+                    && topActivity.info != null) {
+            mQtiActivityPluginDelegate.activityInvokeNotification(
+                    topActivity.info.packageName, getWindowingMode() == WINDOWING_MODE_FULLSCREEN);
+        }
         forAllLeafTaskFragments(f -> {
             if (topFragment == f) {
                 return;
@@ -5525,6 +5544,11 @@ class Task extends TaskFragment {
 
         // Slot the activity into the history root task and proceed
         ProtoLog.i(WM_DEBUG_ADD_REMOVE, "Adding activity %s to task %s", r, activityTask);
+
+        if (mQtiActivityPluginDelegate != null) {
+            mQtiActivityPluginDelegate.activityInvokeNotification
+                (r.info.packageName, getWindowingMode() == WINDOWING_MODE_FULLSCREEN);
+        }
 
         if (isActivityTypeHomeOrRecents() && getActivityBelow(r) == null) {
             // If this is the first activity, don't do any fancy animations,
@@ -6534,6 +6558,13 @@ class Task extends TaskFragment {
         if (!isLeafTask()) {
             Slog.w(TAG, func + " on non-leaf task " + this);
         }
+    }
+
+    public void onARStopTriggered(ActivityRecord r) {
+        if (mQtiActivityPluginDelegate != null && getWindowingMode() != WINDOWING_MODE_UNDEFINED) {
+                            mQtiActivityPluginDelegate.activitySuspendNotification
+                                (r.info.applicationInfo.packageName, getWindowingMode() == WINDOWING_MODE_FULLSCREEN, false);
+                        }
     }
 
     public DisplayInfo getDisplayInfo() {

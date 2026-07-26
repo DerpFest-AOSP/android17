@@ -24,6 +24,7 @@ import android.annotation.IntDef;
 import android.annotation.NonNull;
 import android.annotation.Nullable;
 import android.annotation.RequiresPermission;
+import android.annotation.SuppressLint;
 import android.annotation.SystemApi;
 import android.annotation.TestApi;
 import android.annotation.XmlRes;
@@ -944,6 +945,22 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * @hide
      */
     public static final String METADATA_PRELOADED_FONTS = "preloaded_fonts";
+
+// QTI: Activity Trigger / density override (match CLO; public API + UnflaggedApi suppress)
+    /**
+     * Boolean indicating whether the resolution of the SurfaceView associated
+     * with this appplication can be overriden.
+     * {@hide}
+     */
+    @SuppressLint("UnflaggedApi") // Existing CLO public API; newly introduced here.
+    public int overrideRes = 0;
+
+    /**
+     * In case, app needs different density than device density, set this value.
+     * {@hide}
+     */
+    @SuppressLint("UnflaggedApi") // Existing CLO public API; newly introduced here.
+    public int overrideDensity = 0;
 
     /**
      * The required smallest screen width the application can run on.  If 0,
@@ -2146,6 +2163,8 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         flags = orig.flags;
         privateFlags = orig.privateFlags;
         privateFlagsExt = orig.privateFlagsExt;
+        overrideRes = orig.overrideRes;
+        overrideDensity = orig.overrideDensity;
         requiresSmallestWidthDp = orig.requiresSmallestWidthDp;
         compatibleWidthLimitDp = orig.compatibleWidthLimitDp;
         largestWidthLimitDp = orig.largestWidthLimitDp;
@@ -2244,6 +2263,8 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         dest.writeInt(flags);
         dest.writeInt(privateFlags);
         dest.writeInt(privateFlagsExt);
+        dest.writeInt(overrideRes);
+        dest.writeInt(overrideDensity);
         dest.writeInt(requiresSmallestWidthDp);
         dest.writeInt(compatibleWidthLimitDp);
         dest.writeInt(largestWidthLimitDp);
@@ -2375,6 +2396,8 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         flags = source.readInt();
         privateFlags = source.readInt();
         privateFlagsExt = source.readInt();
+        overrideRes = source.readInt();
+        overrideDensity = source.readInt();
         requiresSmallestWidthDp = source.readInt();
         compatibleWidthLimitDp = source.readInt();
         largestWidthLimitDp = source.readInt();
@@ -2988,6 +3011,11 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         return output.toArray(new String[output.size()]);
     }
 
+    /** @hide */
+    public int getOverrideDensity() {
+        return overrideDensity;
+    }
+
     /** @hide */ public void setCodePath(String codePath) { scanSourceDir = codePath; }
     /** @hide */ public void setBaseCodePath(String baseCodePath) { sourceDir = baseCodePath; }
     /** @hide */ public void setSplitCodePaths(String[] splitCodePaths) { splitSourceDirs = splitCodePaths; }
@@ -3003,6 +3031,9 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
     public void setRequestRawExternalStorageAccess(@Nullable Boolean value) {
         requestRawExternalStorageAccess = value;
     }
+    /** {@hide} */
+    @SuppressLint("UnflaggedApi") // Existing CLO public API; newly introduced here.
+    public void setOverrideRes(int overrideResolution) { overrideRes = overrideResolution; }
 
     /** @hide */
     public void setPageSizeAppCompatFlags(@PageSizeAppCompatFlags int value) {
@@ -3187,6 +3218,10 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
 
         return bundled;
     }
+
+    /** {@hide} */
+    @SuppressLint("UnflaggedApi") // Existing CLO public API; newly introduced here.
+    public int canOverrideRes() { return overrideRes; }
 
     /**
      * Returns whether the backup agent should run in pcc process.

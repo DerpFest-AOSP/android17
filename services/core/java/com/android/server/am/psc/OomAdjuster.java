@@ -85,6 +85,7 @@ import static android.os.Process.THREAD_GROUP_RESTRICTED;
 import static android.os.Process.THREAD_GROUP_TOP_APP;
 import static android.os.Process.THREAD_PRIORITY_DISPLAY;
 import static android.os.Process.THREAD_PRIORITY_TOP_APP_BOOST;
+import static android.os.Process.setCgroupProcsProcessGroup;
 
 import static com.android.internal.app.procstats.DumpUtils.STATE_PERFETTO_TRACK_NAMES;
 import static com.android.internal.app.procstats.ProcessState.PROCESS_STATE_TO_STATE;
@@ -156,7 +157,9 @@ import android.os.Handler;
 import android.os.Process;
 import android.os.SystemClock;
 import android.util.ArraySet;
+import android.util.BoostFramework;
 import android.util.Slog;
+import com.android.server.am.QtiBackgroundManager;
 import android.util.SparseBooleanArray;
 import android.util.proto.ProtoOutputStream;
 
@@ -373,6 +376,18 @@ public abstract class OomAdjuster {
      * OOM scores.
      */
     @GuardedBy("mServiceLock")
+    // BService aging propagation (flags/props; path may be commented).
+    int mMinBServiceAgingTime = 5000;
+    int mBServiceAppThreshold = 5;
+    boolean mEnableBServicePropagation = false;
+    // Process in same process Group keep in same cgroup
+    boolean mEnableProcessGroupCgroupFollow = false;
+    boolean mProcessGroupCgroupFollowDex2oatOnly = false;
+    // Enable hooks for background apps transition
+    boolean mEnableBgt = false;
+
+    public static BoostFramework mPerf = new BoostFramework();
+
     protected final ArrayList<ProcessRecordInternal> mProcsToOomAdj = new ArrayList<>();
 
     /**
@@ -596,6 +611,15 @@ public abstract class OomAdjuster {
             ProcessList.setOomAdj(pid, uid, adj, forLmkdOnly);
         }
 
+        void setOomAdjExt(int pid, int uid, int adj, int weight, boolean forLmkdOnly) {
+            ProcessList.setOomAdjExt(pid, uid, adj, weight, forLmkdOnly);
+        }
+
+        void batchSetOomAdjExt(ArrayList<ProcessRecordInternal> procsToOomAdj,
+                ArrayList<Integer> weights) {
+            ProcessList.batchSetOomAdjExt(procsToOomAdj, weights);
+        }
+
         /** Sets the priority of a specific thread. */
         public void setThreadPriority(int tid, int priority) {
             Process.setThreadPriority(tid, priority);
@@ -811,7 +835,25 @@ public abstract class OomAdjuster {
 
         mLogger = new OomAdjusterDebugLogger(this, mOomConstants);
 
+        if (mPerf != null) {
+            mMinBServiceAgingTime = Integer.valueOf(mPerf.perfGetProp(
+                    "ro.vendor.qti.sys.fw.bservice_age", "5000"));
+            mBServiceAppThreshold = Integer.valueOf(mPerf.perfGetProp(
+                    "ro.vendor.qti.sys.fw.bservice_limit", "5"));
+            mEnableBServicePropagation = Boolean.parseBoolean(mPerf.perfGetProp(
+                    "ro.vendor.qti.sys.fw.bservice_enable", "false"));
+            mEnableProcessGroupCgroupFollow = Boolean.parseBoolean(mPerf.perfGetProp(
+                    "ro.vendor.qti.cgroup_follow.enable", "false"));
+            mProcessGroupCgroupFollowDex2oatOnly = Boolean.parseBoolean(mPerf.perfGetProp(
+                    "ro.vendor.qti.cgroup_follow.dex2oat_only", "false"));
+            mEnableBgt = Boolean.parseBoolean(mPerf.perfGetProp(
+                    "vendor.perf.bgt.enable", "false"));
+        }
+
         mProcessGroupHandler = new Handler(adjusterThread.getLooper(), msg -> {
+            if (QtiBackgroundManager.getInstance().handleProcessGroupMessage(msg)) {
+                return true;
+            }
             final int group = msg.what;
             final ProcessRecordInternal app = (ProcessRecordInternal) msg.obj;
 
@@ -1351,7 +1393,17 @@ public abstract class OomAdjuster {
                 mProcessList.getLruProcessesLOSP();
         final int numLru = lruList.size();
 
-        final boolean doKillExcessiveProcesses = shouldKillExcessiveProcesses(now);
+        final boolean doKillExcessiveProcesses;
+        final String enableVendorKillConfig = (mPerf != null)
+                ? mPerf.perfGetProp("ro.vendor.am.force_kill_excessive_processes", "true")
+                : "true";
+        if (enableVendorKillConfig.equals("true")) {
+            // Vendor explicitly wants to control this
+            doKillExcessiveProcesses = Boolean.parseBoolean(enableVendorKillConfig);
+        } else {
+            // Default AOSP / framework behavior
+            doKillExcessiveProcesses = shouldKillExcessiveProcesses(now);
+        }
         if (!doKillExcessiveProcesses) {
             if (mNextNoKillDebugMessageTime < now) {
                 Slog.d(TAG, "Not killing cached processes"); // STOPSHIP Remove it b/222365734
@@ -1534,7 +1586,13 @@ public abstract class OomAdjuster {
         }
 
         if (!mProcsToOomAdj.isEmpty()) {
-            mInjector.batchSetOomAdj(mProcsToOomAdj);
+            if (QtiBackgroundManager.getInstance().useAppKeepaliveManager()) {
+                ArrayList<Integer> weights =
+                    QtiBackgroundManager.getInstance().getProcsKeepaliveWeight(mProcsToOomAdj);
+                mInjector.batchSetOomAdjExt(mProcsToOomAdj, weights);
+            } else {
+                mInjector.batchSetOomAdj(mProcsToOomAdj);
+            }
             mProcsToOomAdj.clear();
         }
 
@@ -2315,14 +2373,48 @@ public abstract class OomAdjuster {
 
         if (state.getCurAdj() != state.getSetAdj()) {
             mCallback.onOomAdjustChanged(state.getSetAdj(), state.getCurAdj(), state);
+
+            // Hooks for background apps transition
+            if (mEnableBgt) {
+                if ((state.getSetAdj() >= CACHED_APP_MIN_ADJ &&
+                        state.getSetAdj() <= CACHED_APP_MAX_ADJ) &&
+                        state.getCurAdj() == FOREGROUND_APP_ADJ &&
+                            state.getHasForegroundActivities()) {
+                    Slog.d(TAG, "App adj change from cached state to fg state : "
+                            + state.getPid() + " " + state.processName);
+                    if (mPerf != null) {
+                        int fgAppPerfLockArgs[] = {BoostFramework.MPCTLV3_GPU_IS_APP_FG, state.getPid()};
+                        mPerf.perfLockAcquire(10, fgAppPerfLockArgs);
+                    }
+                }
+                if (state.getSetAdj() == PREVIOUS_APP_ADJ &&
+                        (state.getCurAdj() >= CACHED_APP_MIN_ADJ &&
+                        state.getCurAdj() <= CACHED_APP_MAX_ADJ) &&
+                            state.getHasActivities()) {
+                    Slog.d(TAG, "App adj change from previous state to cached state : "
+                            + state.getPid() + " " + state.processName);
+                    if (mPerf != null) {
+                        int bgAppPerfLockArgs[] = {BoostFramework.MPCTLV3_GPU_IS_APP_BG, state.getPid()};
+                        mPerf.perfLockAcquire(10, bgAppPerfLockArgs);
+                    }
+                }
+            }
             if (isBatchingOomAdj && mOomConstants.mEnableBatchingOomAdj) {
                 mProcsToOomAdj.add(state);
             } else {
-                boolean forLmkdOnly = false;
-                if (state.isZramWrittenBack()) {
-                    forLmkdOnly = true;
+                if (QtiBackgroundManager.getInstance().useAppKeepaliveManager()) {
+                    int weight =
+                        QtiBackgroundManager.getInstance().getProcKeepaliveWeight(state);
+                    boolean forLmkdOnly = state.isZramWrittenBack();
+                    mInjector.setOomAdjExt(
+                            state.getPid(), state.uid, state.getCurAdj(), weight, forLmkdOnly);
+                } else {
+                    boolean forLmkdOnly = false;
+                    if (state.isZramWrittenBack()) {
+                        forLmkdOnly = true;
+                    }
+                    mInjector.setOomAdj(state.getPid(), state.uid, state.getCurAdj(), forLmkdOnly);
                 }
-                mInjector.setOomAdj(state.getPid(), state.uid, state.getCurAdj(), forLmkdOnly);
             }
 
             if (reportDebugMsgs) {
@@ -2427,6 +2519,9 @@ public abstract class OomAdjuster {
                     Slog.w(TAG, "Failed setting thread priority of " + state.getPid(), e);
                 }
             }
+
+            QtiBackgroundManager.getInstance().handleSchedGroupTransition(state,
+                    oldSchedGroup, curSchedGroup, mProcessGroupHandler);
         }
         if (state.getHasRepForegroundActivities() != state.getHasForegroundActivities()) {
             state.setRepForegroundActivities(state.getHasForegroundActivities());

@@ -13428,6 +13428,7 @@ package android.content.pm {
     ctor public ApplicationInfo();
     ctor public ApplicationInfo(android.content.pm.ApplicationInfo);
     method public boolean areAttributionsUserVisible();
+    method public int canOverrideRes();
     method public int describeContents();
     method public void dump(android.util.Printer, String);
     method public static CharSequence getCategoryTitle(android.content.Context, int);
@@ -13442,6 +13443,7 @@ package android.content.pm {
     method public boolean isResourceOverlay();
     method public boolean isVirtualPreload();
     method public CharSequence loadDescription(android.content.pm.PackageManager);
+    method public void setOverrideRes(int);
     field public static final int CATEGORY_ACCESSIBILITY = 8; // 0x8
     field public static final int CATEGORY_AUDIO = 1; // 0x1
     field public static final int CATEGORY_GAME = 0; // 0x0
@@ -13516,6 +13518,8 @@ package android.content.pm {
     field public String manageSpaceActivityName;
     field public int minSdkVersion;
     field public String nativeLibraryDir;
+    field public int overrideDensity;
+    field public int overrideRes;
     field public String permission;
     field public String processName;
     field public String publicSourceDir;

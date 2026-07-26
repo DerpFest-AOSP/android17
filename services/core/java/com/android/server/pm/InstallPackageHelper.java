@@ -153,6 +153,7 @@ import android.system.Os;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
+import android.util.BoostFramework;
 import android.util.EventLog;
 import android.util.ExceptionUtils;
 import android.util.IntArray;
@@ -1783,6 +1784,16 @@ final class InstallPackageHelper {
                     // on the device; we should replace it.
                     replace = true;
                     if (DEBUG_INSTALL) Slog.d(TAG, "Replace existing package: " + pkgName);
+                    if (pkgName != null) {
+                        BoostFramework mPerf = new BoostFramework();
+                        if (mPerf != null) {
+                            if (mPerf.board_first_api_lvl < BoostFramework.VENDOR_T_API_LEVEL &&
+                                mPerf.board_api_lvl < BoostFramework.VENDOR_T_API_LEVEL) {
+                                mPerf.perfUXEngine_events(BoostFramework.UXE_EVENT_PKG_INSTALL, 0, pkgName, 1);
+                            }
+                            mPerf.perfEvent(BoostFramework.VENDOR_HINT_APP_UPDATE, pkgName, 2, 0, -1);
+                        }
+                    }
                 }
                 if (replace) {
                     // Prevent apps opting out from runtime permissions
@@ -2700,6 +2711,17 @@ final class InstallPackageHelper {
                     "User " + userId + " doesn't exist or has been removed",
                     PackageManagerException.INTERNAL_ERROR_MISSING_USER));
             return;
+        }
+        if (pkgName != null) {
+            BoostFramework mPerf = new BoostFramework();
+            if (mPerf != null) {
+                if (mPerf.board_first_api_lvl < BoostFramework.VENDOR_T_API_LEVEL &&
+                    mPerf.board_api_lvl < BoostFramework.VENDOR_T_API_LEVEL) {
+                    mPerf.perfUXEngine_events(BoostFramework.UXE_EVENT_PKG_INSTALL, 0, pkgName, 0);
+                } else {
+                    mPerf.perfEvent(BoostFramework.VENDOR_HINT_PKG_INSTALL, pkgName, 2, 0, 0);
+                }
+            }
         }
         synchronized (mPm.mLock) {
             // For system-bundled packages, we assume that installing an upgraded version

@@ -171,6 +171,7 @@ import android.provider.Settings.Secure;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
+import android.util.BoostFramework;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.ExceptionUtils;
@@ -4652,6 +4653,7 @@ public class PackageManagerService implements PackageSender, TestUtilityService 
         }, overlayFilter);
 
         mModuleInfoProvider.systemReady();
+        new BoostFramework(mContext, true);
 
         // Installer service might attempt to install some packages that have been staged for
         // installation on reboot. Make sure this is the last component to be call since the

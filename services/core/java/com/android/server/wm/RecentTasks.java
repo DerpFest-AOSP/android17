@@ -72,6 +72,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.text.TextUtils;
 import android.util.ArraySet;
+import android.util.BoostFramework;
 import android.util.IntArray;
 import android.util.Slog;
 import android.util.SparseArray;
@@ -220,6 +221,8 @@ class RecentTasks {
     // the list.  This does not affect affiliated tasks.
     private boolean mFreezeTaskListReordering;
     private long mFreezeTaskListTimeoutMs = FREEZE_TASK_LIST_TIMEOUT_MS;
+
+    private final BoostFramework mUxPerf = new BoostFramework();
 
     // Mainly to avoid object recreation on multiple calls.
     private final ArrayList<Task> mTmpRecents = new ArrayList<>();
@@ -1394,6 +1397,22 @@ class RecentTasks {
     void remove(Task task) {
         mTasks.remove(task);
         notifyTaskRemoved(task, false /* wasTrimmed */, false /* killProcess */);
+        if (task != null) {
+            final Intent intent = task.getBaseIntent();
+            if (intent == null) return;
+            final ComponentName componentName = intent.getComponent();
+            if (componentName == null) return;
+
+            final String taskPkgName = componentName.getPackageName();
+            if (mUxPerf != null) {
+                if (mUxPerf.board_first_api_lvl < BoostFramework.VENDOR_T_API_LEVEL &&
+                    mUxPerf.board_api_lvl < BoostFramework.VENDOR_T_API_LEVEL) {
+                    mUxPerf.perfUXEngine_events(BoostFramework.UXE_EVENT_KILL, 0, taskPkgName, 0);
+                } else {
+                    mUxPerf.perfEvent(BoostFramework.VENDOR_HINT_KILL, taskPkgName, 2, 0, 0);
+                }
+            }
+        }
     }
 
     /**

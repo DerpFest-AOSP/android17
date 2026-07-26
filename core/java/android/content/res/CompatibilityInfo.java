@@ -32,6 +32,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.ravenwood.annotation.RavenwoodKeepWholeClass;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.MergedConfiguration;
 import android.view.InsetsSourceControl;
 import android.view.InsetsState;
@@ -247,10 +248,18 @@ public class CompatibilityInfo implements Parcelable {
                 compatFlags |= NEEDS_SCREEN_COMPAT;
             }
 
-            // Modern apps always support densities.
-            applicationDensity = DisplayMetrics.DENSITY_DEVICE;
-            applicationScale = 1.0f;
-            applicationInvertedScale = 1.0f;
+            int density = appInfo.getOverrideDensity();
+            if (density != 0) {
+                applicationDensity = density;
+                applicationScale = DisplayMetrics.DENSITY_DEVICE / (float) applicationDensity;
+                applicationInvertedScale = 1.0f / applicationScale;
+                compatFlags |= SCALING_REQUIRED;
+            } else {
+                // Modern apps always support densities.
+                applicationDensity = DisplayMetrics.DENSITY_DEVICE;
+                applicationScale = 1.0f;
+                applicationInvertedScale = 1.0f;
+            }
             applicationDensityScale = 1.0f;
             applicationDensityInvertedScale = 1.0f;
         } else {
@@ -338,10 +347,18 @@ public class CompatibilityInfo implements Parcelable {
                 compatFlags |= NEVER_NEEDS_COMPAT;
             }
 
+            int density = appInfo.getOverrideDensity();
             if ((appInfo.flags & ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES) != 0) {
-                applicationDensity = DisplayMetrics.DENSITY_DEVICE;
-                applicationScale = 1.0f;
-                applicationInvertedScale = 1.0f;
+                if (density != 0) {
+                    applicationDensity = density;
+                    applicationScale = DisplayMetrics.DENSITY_DEVICE / (float) applicationDensity;
+                    applicationInvertedScale = 1.0f / applicationScale;
+                    compatFlags |= SCALING_REQUIRED;
+                } else {
+                    applicationDensity = DisplayMetrics.DENSITY_DEVICE;
+                    applicationScale = 1.0f;
+                    applicationInvertedScale = 1.0f;
+                }
                 applicationDensityScale = 1.0f;
                 applicationDensityInvertedScale = 1.0f;
             } else {
@@ -357,6 +374,10 @@ public class CompatibilityInfo implements Parcelable {
         }
 
         mCompatibilityFlags = compatFlags;
+
+        Log.d(TAG, "mCompatibilityFlags - " + Integer.toHexString(mCompatibilityFlags));
+        Log.d(TAG, "applicationDensity - " + applicationDensity);
+        Log.d(TAG, "applicationScale - " + applicationScale);
     }
 
     private CompatibilityInfo(int compFlags,

@@ -111,6 +111,7 @@ import android.os.SystemClock;
 import android.os.Trace;
 import android.util.ArrayMap;
 import android.util.ArraySet;
+import android.util.BoostFramework;
 import android.util.IntArray;
 import android.util.Slog;
 import android.util.SparseArray;
@@ -232,6 +233,10 @@ class Transition implements BLASTSyncEngine.TransactionReadyListener {
     /** Only use for clean-up after binder death! */
     private SurfaceControl.Transaction mStartTransaction = null;
     private SurfaceControl.Transaction mFinishTransaction = null;
+
+    /** Perf **/
+    private BoostFramework mPerf = null;
+    private boolean mIsAnimationPerfLockAcquired = false;
 
     /** Used for failsafe clean-up to prevent leaks due to misbehaving player impls. */
     private SurfaceControl.Transaction mCleanupTransaction = null;
@@ -419,6 +424,10 @@ class Transition implements BLASTSyncEngine.TransactionReadyListener {
         mLogger.mCreateTimeNs = SystemClock.elapsedRealtimeNanos();
         if (!mController.useFullReadyTracking()) {
             mReadyTracker.add(mReadyTrackerOld);
+        }
+
+        if (mPerf == null) {
+            mPerf = new BoostFramework();
         }
     }
 
@@ -887,6 +896,12 @@ class Transition implements BLASTSyncEngine.TransactionReadyListener {
             return;
         }
         mState = STATE_STARTED;
+
+        if (mPerf != null && mType == TRANSIT_CHANGE) {
+            mPerf.perfHint(BoostFramework.VENDOR_HINT_ROTATION_ANIM_BOOST, null);
+            mIsAnimationPerfLockAcquired = true;
+        }
+
         ProtoLog.v(WmProtoLogGroups.WM_DEBUG_WINDOW_TRANSITIONS, "Starting Transition %d",
                 mSyncId);
         applyReady();
@@ -1821,6 +1836,10 @@ class Transition implements BLASTSyncEngine.TransactionReadyListener {
         validateKeyguardOcclusion();
 
         mState = STATE_FINISHED;
+        if (mPerf != null && mIsAnimationPerfLockAcquired) {
+            mPerf.perfLockRelease();
+            mIsAnimationPerfLockAcquired = false;
+        }
         // Rotation change may be deferred while there is a display change transition, so check
         // again in case there is a new pending change.
         if (hasParticipatedDisplay && !mController.useShellTransitionsRotation()) {

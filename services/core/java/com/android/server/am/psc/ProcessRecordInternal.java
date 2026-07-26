@@ -1193,7 +1193,7 @@ public abstract class ProcessRecordInternal {
     }
 
     @GuardedBy({"mServiceLock", "mProcLock"})
-    void setSavedPriority(int savedPriority) {
+    public void setSavedPriority(int savedPriority) {
         mSavedPriority = savedPriority;
     }
 

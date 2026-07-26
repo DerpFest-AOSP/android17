@@ -364,6 +364,10 @@ class ProcessErrorStateRecord {
             return;
         }
 
+        if (QtiBackgroundManager.getInstance().shouldSkipAnrForFrozenApp(mApp)) {
+            return;
+        }
+
         final boolean isSilentAnr;
         latencyTracker.waitingOnAMSLockStarted();
         synchronized (mService) {

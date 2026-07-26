@@ -64,6 +64,10 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <sched.h>
+#include <mutex>
+#include <malloc.h>
+#include <linux/limits.h>
 
 using namespace android;
 
@@ -306,6 +310,81 @@ void android_os_Process_setProcessGroup(JNIEnv* env, jobject clazz, int pid, jin
         signalExceptionForGroupError(env, errno ? errno : EPERM, pid);
 }
 
+void android_os_Process_setCgroupProcsProcessGroup(JNIEnv* env, jobject clazz, int uid, int pid, jint grp, jboolean dex2oat_only)
+{
+    int fd;
+    char pathV1[255], pathV2[255];
+    static bool isCgroupV2 = false;
+    if ((grp == SP_FOREGROUND) || (grp > SP_MAX)) {
+        signalExceptionForGroupError(env, EINVAL, pid);
+        return;
+    }
+
+    //set process group for current process
+    android_os_Process_setProcessGroup(env, clazz, pid, grp);
+
+    //find processes in the same cgroup.procs of current uid and pid
+    snprintf(pathV1, sizeof(pathV1), "/acct/uid_%d/pid_%d/cgroup.procs", uid, pid);
+    snprintf(pathV2, sizeof(pathV2), "/sys/fs/cgroup/uid_%d/pid_%d/cgroup.procs", uid, pid);
+    if (isCgroupV2) {
+        // read from V2 only
+        fd = open(pathV2, O_RDONLY);
+    } else {
+        // first try V1
+        fd = open(pathV1, O_RDONLY);
+        if (fd < 0) {
+            fd = open(pathV2, O_RDONLY);
+            if (fd >= 0) {
+                isCgroupV2 = true;
+            }
+        }
+    }
+    if (fd >= 0) {
+        char buffer[256];
+        char ch;
+        int numRead;
+        size_t len=0;
+        for (;;) {
+            numRead=read(fd, &ch, 1);
+            if (numRead <= 0)
+                break;
+            if (ch != '\n') {
+                buffer[len++] = ch;
+            } else {
+                int temp_pid = atoi(buffer);
+                len=0;
+                if (temp_pid == pid)
+                    continue;
+                if (dex2oat_only) {
+                    // check if cmdline of temp_pid is dex2oat
+                    char cmdline[64];
+                    snprintf(cmdline, sizeof(cmdline), "/proc/%d/cmdline", temp_pid);
+                    int cmdline_fd = open(cmdline, O_RDONLY);
+                    if (cmdline_fd >= 0) {
+                        size_t read_size = read(cmdline_fd, buffer, 255);
+                        close(cmdline_fd);
+                        buffer[read_size]='\0';
+                        const char *dex2oat_name1 = "dex2oat"; //for plugins compiler
+                        const char *dex2oat_name2 = "/system/bin/dex2oat"; //for installer
+                        const char *dex2oat_name3 = "/apex/com.android.runtime/bin/dex2oat"; //for installer
+                        if (strncmp(buffer, dex2oat_name1, strlen(dex2oat_name1)) != 0
+                                && strncmp(buffer, dex2oat_name2, strlen(dex2oat_name2)) != 0
+                                && strncmp(buffer, dex2oat_name3, strlen(dex2oat_name3)) != 0) {
+                            continue;
+                        }
+                    } else {
+                        //ALOGE("read %s failed", cmdline);
+                        continue;
+                    }
+                }
+                //set cgroup of temp_pid follow pid
+                android_os_Process_setProcessGroup(env, clazz, temp_pid, grp);
+            }
+        }
+        close(fd);
+    }
+}
+
 void android_os_Process_setProcessFrozen(
         JNIEnv *env, jobject clazz, jint pid, jint uid, jboolean freeze)
 {
@@ -415,8 +494,21 @@ static void get_cpuset_cores_for_policy(SchedPolicy policy, cpu_set_t *cpu_set)
             }
             break;
         case SP_FOREGROUND:
+            if (!CgroupGetAttributePath("HighCapacityCPUs", &filename)) {
+                return;
+            }
+            break;
         case SP_AUDIO_APP:
         case SP_AUDIO_SYS:
+            if (!CgroupGetAttributePath("AudioAppCapacityCPUs", &filename)) {
+                return;
+            }
+            if (access(filename.c_str(), F_OK) != 0) {
+                if (!CgroupGetAttributePath("HighCapacityCPUs", &filename)) {
+                    return;
+                }
+            }
+            break;
         case SP_RT_APP:
             if (!CgroupGetAttributePath("HighCapacityCPUs", &filename)) {
                 return;
@@ -1358,6 +1450,184 @@ void android_os_Process_freezeCgroupUID(JNIEnv* env, jobject clazz, jint uid, jb
     }
 }
 
+static std::mutex g_cpu_topology_mutex;
+static bool kCpuTopologyInitialized = false;
+static cpu_set_t kAllCoreSet;
+static cpu_set_t kPerformanceCoreSet;
+
+jboolean android_os_Process_setPerfCoreAffinity(
+            JNIEnv* env, jobject clazz, jint tid, jboolean enable) {
+    if (tid <= 0) {
+        ALOGW("Invalid TID: %d", tid);
+        return JNI_FALSE;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(g_cpu_topology_mutex);
+        if (!kCpuTopologyInitialized) {
+            int num_cpus = sysconf(_SC_NPROCESSORS_CONF);
+            if (num_cpus == -1) {
+                ALOGE("Failed to get number of CPUs: %s", strerror(errno));
+                return JNI_FALSE;
+            }
+            ALOGD("Number of CPUs: %d", num_cpus);
+
+            const std::string cpufreq_dir = "/sys/devices/system/cpu/cpufreq/";
+            DIR *dir = opendir(cpufreq_dir.c_str());
+            if (!dir) {
+                ALOGE("Failed to open cpufreq directory: %s", strerror(errno));
+                CPU_ZERO(&kAllCoreSet);
+                CPU_ZERO(&kPerformanceCoreSet);
+                return JNI_FALSE;
+            }
+
+            struct dirent *entry;
+            int max_policy_id = 0;
+            while ((entry = readdir(dir)) != NULL) {
+                std::string name = entry->d_name;
+                if (name.rfind("policy", 0) == 0 && name != "policy" && name.length() > 6) {
+                    int policy_id = std::stoi(name.substr(6));
+                    if (policy_id > max_policy_id) {
+                        max_policy_id = policy_id;
+                    }
+                }
+            }
+            closedir(dir);
+
+            // Initialize performance cores
+            CPU_ZERO(&kPerformanceCoreSet);
+            unsigned long performanceCoreMask = 0;
+            for (int i = max_policy_id; i < num_cpus; ++i) {
+                CPU_SET(i, &kPerformanceCoreSet);
+                performanceCoreMask |= (1UL << i);
+            }
+            if (performanceCoreMask == 0) {
+                ALOGW("No performance CPU core available.");
+                return JNI_FALSE;
+            }
+            ALOGD("Performance core mask: 0x%lx (based on max_policy_id %d)",
+                    performanceCoreMask, max_policy_id);
+
+            // Initialize all cores
+            CPU_ZERO(&kAllCoreSet);
+            unsigned long allCoreMask = 0;
+            for (int i = 0; i < num_cpus; ++i) {
+                CPU_SET(i, &kAllCoreSet);
+                allCoreMask |= (1UL << i);
+            }
+            if (allCoreMask == 0) {
+                ALOGW("No CPU core available.");
+                return JNI_FALSE;
+            }
+            ALOGD("All core mask: 0x%lx", allCoreMask);
+
+            kCpuTopologyInitialized = true;
+            ALOGD("CPU topology initialized successfully.");
+        }
+    }
+
+    // Apply affinity
+    if (enable) {
+        if (sched_setaffinity(tid, sizeof(kPerformanceCoreSet), &kPerformanceCoreSet) == -1) {
+            ALOGE("Failed to set affinity for TID %d to perf core: %s", tid, strerror(errno));
+            return JNI_FALSE;
+        }
+        ALOGE("Successfully set affinity for TID %d to perf core", tid);
+    } else {
+        if (sched_setaffinity(tid, sizeof(kAllCoreSet), &kAllCoreSet) == -1) {
+            ALOGE("Failed to set affinity for TID %d to all cores: %s", tid, strerror(errno));
+            return JNI_FALSE;
+        }
+        ALOGE("Successfully set affinity for TID %d to all core", tid);
+    }
+    return JNI_TRUE;
+}
+
+static void malloc_purge_on_sigusr2(int) {
+    mallopt(M_DECAY_TIME, 0);
+    mallopt(M_PURGE_ALL, 0);
+    mallopt(M_DECAY_TIME, 1);
+}
+
+// Bit mask for SIGUSR2 in the SigCgt field of /proc/<pid>/status.
+// SigCgt is a 64-bit hex bitmask; bit N-1 corresponds to signal N.
+static constexpr unsigned long long kSigUsr2Bit = 1ULL << (SIGUSR2 - 1);
+
+static bool hasMallocPurgeHandler(int pid) {
+    char path[PATH_MAX];
+
+    int n = snprintf(path, sizeof(path), "/proc/%d/status", pid);
+    if (n < 0 || static_cast<size_t>(n) >= sizeof(path)) {
+        ALOGW("hasMallocPurgeHandler: path truncated for pid=%d", pid);
+        return false;
+    }
+
+    FILE* f = fopen(path, "re");
+    if (!f) {
+        return false;
+    }
+
+    bool has_handler = false;
+    char line[256];
+    while (fgets(line, sizeof(line), f)) {
+        unsigned long long sigcgt = 0;
+        if (sscanf(line, "SigCgt: %llx", &sigcgt) == 1) {
+            has_handler = (sigcgt & kSigUsr2Bit) != 0;
+            break;
+        }
+    }
+    fclose(f);
+    return has_handler;
+}
+
+static bool sendMallocPurgeSignalToPid(int pid) {
+    if (pid <= 0) return false;
+
+    if (!hasMallocPurgeHandler(pid)) {
+        return false;
+    }
+
+    if (kill(pid, SIGUSR2) != 0) {
+        ALOGW("sendMallocPurgeSignalToPid: failed to send SIGUSR2 "
+                "to pid=%d: %s", pid, strerror(errno));
+        return false;
+    }
+    return true;
+}
+
+static jboolean android_os_Process_sendMallocPurgeSignalToPid(
+        JNIEnv* /*env*/, jobject /*clazz*/, jint pid) {
+    return sendMallocPurgeSignalToPid(static_cast<int>(pid))
+           ? JNI_TRUE : JNI_FALSE;
+}
+
+static void android_os_Process_sendMallocPurgeSignalToAll(JNIEnv* /*env*/,
+                                                           jobject /*clazz*/) {
+    std::unique_ptr<DIR, decltype(&closedir)> proc(opendir("/proc"), closedir);
+    if (!proc) {
+        ALOGE("sendMallocPurgeSignalToAll: failed to open /proc: %s",
+              strerror(errno));
+        return;
+    }
+
+    const int self_pid = getpid();
+    int count = 0;
+    struct dirent* entry;
+
+    while ((entry = readdir(proc.get())) != nullptr) {
+        int pid = atoi(entry->d_name);
+        if (pid <= 0 || pid == self_pid) {
+            continue;
+        }
+
+        if (sendMallocPurgeSignalToPid(pid)) {
+            ++count;
+        }
+    }
+
+    ALOGI("sendMallocPurgeSignalToAll: sent SIGUSR2 to %d processes", count);
+}
+
 static const JNINativeMethod methods[] = {
         {"getUidForName", "(Ljava/lang/String;)I", (void*)android_os_Process_getUidForName},
         {"getGidForName", "(Ljava/lang/String;)I", (void*)android_os_Process_getGidForName},
@@ -1370,6 +1640,7 @@ static const JNINativeMethod methods[] = {
         {"setThreadGroup", "(II)V", (void*)android_os_Process_setThreadGroup},
         {"setThreadGroupAndCpuset", "(II)V", (void*)android_os_Process_setThreadGroupAndCpuset},
         {"setProcessGroup", "(II)V", (void*)android_os_Process_setProcessGroup},
+        {"setCgroupProcsProcessGroup", "(IIIZ)V", (void*)android_os_Process_setCgroupProcsProcessGroup},
         {"getProcessGroup", "(I)I", (void*)android_os_Process_getProcessGroup},
         {"createProcessGroup", "(II)I", (void*)android_os_Process_createProcessGroup},
         {"getExclusiveCores", "()[I", (void*)android_os_Process_getExclusiveCores},
@@ -1406,9 +1677,21 @@ static const JNINativeMethod methods[] = {
         {"removeAllProcessGroups", "()V", (void*)android_os_Process_removeAllProcessGroups},
         {"nativePidFdOpen", "(II)I", (void*)android_os_Process_nativePidFdOpen},
         {"freezeCgroupUid", "(IZ)V", (void*)android_os_Process_freezeCgroupUID},
+        {"setPerfCoreAffinity", "(IZ)Z", (void*)android_os_Process_setPerfCoreAffinity},
+        {"sendMallocPurgeSignalToAll", "()V", (void*)android_os_Process_sendMallocPurgeSignalToAll},
+        {"sendMallocPurgeSignalToPid", "(I)Z", (void*)android_os_Process_sendMallocPurgeSignalToPid},
 };
 
 int register_android_os_Process(JNIEnv* env)
 {
+    struct sigaction sa = {};
+    sa.sa_handler = malloc_purge_on_sigusr2;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGUSR2, &sa, nullptr) != 0) {
+        ALOGW("register_android_os_Process: "
+              "failed to register SIGUSR2 handler: %s", strerror(errno));
+    }
+
     return RegisterMethodsOrDie(env, "android/os/Process", methods, NELEM(methods));
 }

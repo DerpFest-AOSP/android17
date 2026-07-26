@@ -243,6 +243,7 @@ import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.AtomicFile;
 import android.util.AtomicFileOutputStream;
+import android.util.BoostFramework;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.IntArray;
@@ -366,6 +367,7 @@ import com.android.server.StorageManagerInternal;
 import com.android.server.UiThread;
 import com.android.server.Watchdog;
 import com.android.server.am.ActivityManagerService;
+import com.android.server.am.QtiBackgroundManager;
 import com.android.server.am.UserState;
 import com.android.server.input.InputManagerService;
 import com.android.server.inputmethod.InputMethodManagerInternal;
@@ -1229,6 +1231,8 @@ public class WindowManagerService extends IWindowManager.Stub
             com.android.internal.dev.perfetto.sdk.PerfettoTrace.end(BIG_LOCKS_CATEGORY).emit();
         }
     }
+
+    private BoostFramework mPerf = null;
 
     SystemPerformanceHinter mSystemPerformanceHinter;
 
@@ -3100,6 +3104,9 @@ public class WindowManagerService extends IWindowManager.Stub
 
     void finishDrawingWindow(Session session, IWindow client,
             @Nullable SurfaceControl.Transaction postDrawTransaction, int seqId) {
+        QtiBackgroundManager.getInstance().unfreezeProcessLevel(
+                session.mPackageName, QtiBackgroundManager.COMPLETE_LAUNCH_UNFREEZE);
+
         if (postDrawTransaction != null) {
             postDrawTransaction.sanitize(Binder.getCallingPid(), Binder.getCallingUid());
         }

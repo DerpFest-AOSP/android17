@@ -425,7 +425,7 @@ public class ActivityTaskManagerService extends IActivityTaskManager.Stub {
      */
     @SystemServerLock(LockGuard.INDEX_WINDOW)
     final Object mGlobalLockWithoutBoost = mGlobalLock;
-    ActivityTaskSupervisor mTaskSupervisor;
+    public ActivityTaskSupervisor mTaskSupervisor;
     ActivityClientController mActivityClientController;
     WindowContainerVisibilityHelper mVisibilityHelper;
     RootWindowContainer mRootWindowContainer;
