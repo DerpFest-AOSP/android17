@@ -17,6 +17,9 @@
 package com.android.systemui.statusbar.quickactions.island.ui.compose
 
 import android.view.DisplayCutout
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,12 +38,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -53,6 +61,10 @@ import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFe
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupContentModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.shared.model.ScreenRecordPopupModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 /** Single centered status bar capsule styled like a compact dynamic island. */
 @Composable
@@ -126,6 +138,7 @@ fun StatusBarDynamicIslandChip(
     Row(
         modifier =
             modifier
+                .openSquishAnimation(viewModel.isPopupShown)
                 .defaultMinSize(minHeight = 32.dp)
                 .widthIn(
                     min = compactWidth,
@@ -265,6 +278,7 @@ private fun UtilityStatusIslandChip(
     Row(
         modifier =
             modifier
+                .openSquishAnimation(viewModel.isPopupShown)
                 .defaultMinSize(minHeight = 32.dp)
                 .width(connectedIslandWidth)
                 .clip(RoundedCornerShape(50))
@@ -416,5 +430,53 @@ private fun compactIslandWidthFor(content: PopupContentModel): Dp? {
         is PopupContentModel.OngoingCall -> CompactTimerIslandWidth
         is PopupContentModel.PromotedOngoing -> CompactMediaIslandWidth
         else -> null
+    }
+}
+
+@Composable
+private fun Modifier.openSquishAnimation(isOpen: Boolean): Modifier {
+    val scaleX = remember { Animatable(1f, visibilityThreshold = 0.01f) }
+    val scaleY = remember { Animatable(1f, visibilityThreshold = 0.01f) }
+    val currentIsOpen by rememberUpdatedState(isOpen)
+    LaunchedEffect(Unit) {
+        snapshotFlow { currentIsOpen }
+            .drop(1)
+            .collectLatest { open ->
+                if (!open) return@collectLatest
+                scaleX.snapTo(1f)
+                scaleY.snapTo(1f)
+                coroutineScope {
+                    launch {
+                        scaleX.animateTo(
+                            targetValue = 1f,
+                            animationSpec =
+                                keyframes {
+                                    durationMillis = 360
+                                    0.9f at 0
+                                    1.05f at 160 using FastOutSlowInEasing
+                                    0.98f at 280
+                                    1f at 360
+                                },
+                        )
+                    }
+                    launch {
+                        scaleY.animateTo(
+                            targetValue = 1f,
+                            animationSpec =
+                                keyframes {
+                                    durationMillis = 360
+                                    1.12f at 0
+                                    0.94f at 160 using FastOutSlowInEasing
+                                    1.02f at 280
+                                    1f at 360
+                                },
+                        )
+                    }
+                }
+            }
+    }
+    return this.graphicsLayer {
+        this.scaleX = scaleX.value
+        this.scaleY = scaleY.value
     }
 }
