@@ -116,6 +116,13 @@ class FakeHomeStatusBarViewModel(
     override val isNotificationIconContainerVisible =
         MutableStateFlow(VisibilityModel(visibility = View.GONE, shouldAnimateChange = false))
 
+    override val hideStartSideContentForHeadsUp = MutableStateFlow(false)
+
+    override val isLyricVisible =
+        MutableStateFlow(VisibilityModel(visibility = View.GONE, shouldAnimateChange = false))
+
+    override val isLyricEnabled = MutableStateFlow(false)
+
     override val systemInfoCombinedVis =
         MutableStateFlow(
             SystemInfoCombinedVisibilityModel(

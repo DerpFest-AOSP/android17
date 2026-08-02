@@ -45,6 +45,7 @@ import com.android.systemui.statusbar.events.shared.model.SystemEventAnimationSt
 import com.android.systemui.statusbar.events.shared.model.SystemEventAnimationState.AnimatingIn
 import com.android.systemui.statusbar.events.shared.model.SystemEventAnimationState.AnimatingOut
 import com.android.systemui.statusbar.events.shared.model.SystemEventAnimationState.RunningChipAnim
+import com.android.systemui.statusbar.phone.LyricViewController
 import com.android.systemui.statusbar.pipeline.shared.ui.model.VisibilityModel
 import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBarViewModel
 import com.android.systemui.statusbar.phone.ui.StatusBarIconController
@@ -104,6 +105,7 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
         val rightClock: Clock? = view.findViewById(R.id.clock_right)
         val notificationIconsArea = view.requireViewById<View>(R.id.notificationIcons)
         val leftLogo: LogoImage = view.requireViewById(R.id.statusbar_logo)
+        val lyricController = LyricController(view)
 
         // GONE because this shouldn't take space in the layout
         systemInfoView.hideInitially()
@@ -112,6 +114,7 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
         rightClock?.hideInitially(state = View.GONE)
         leftLogo.hideInitially()
         notificationIconsArea.hideInitially()
+        lyricController.hideInitially()
 
         view.repeatWhenAttached {
             repeatOnLifecycle(Lifecycle.State.CREATED) {
@@ -335,6 +338,14 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
                 }
 
                 launch {
+                    viewModel.isLyricEnabled.collect { lyricController.isEnabled = it }
+                }
+
+                launch {
+                    viewModel.isLyricVisible.collect { lyricController.adjustVisibility(it) }
+                }
+
+                launch {
                     viewModel.systemInfoCombinedVis.collect { (baseVis, animState) ->
                         // Broadly speaking, the baseVis controls the view.visibility, and
                         // the animation state uses only alpha to achieve its effect. This
@@ -496,6 +507,38 @@ class HomeStatusBarViewBinderImpl @Inject constructor() : HomeStatusBarViewBinde
             .withEndAction(null)
 
         // TODO(b/364360986): Synchronize the motion with the Keyguard fading if necessary.
+    }
+
+    inner class LyricController(val statusBar: View) :
+        LyricViewController(statusBar.context, statusBar) {
+        private val leftSide: View by lazy {
+            statusBar.findViewById(R.id.status_bar_start_side_except_heads_up)
+        }
+
+        fun hideInitially() {
+            // GONE because this shouldn't take space in the layout
+            view.hideInitially(state = View.GONE)
+        }
+
+        fun adjustVisibility(model: VisibilityModel) {
+            if (model.visibility == View.VISIBLE) {
+                showLyricView(model.shouldAnimateChange)
+            } else {
+                hideLyricView(model.shouldAnimateChange)
+            }
+        }
+
+        override fun showLyricView(animate: Boolean) {
+            if (isLyricStarted) {
+                leftSide.hide(shouldAnimateChange = animate)
+                view.show(animate)
+            }
+        }
+
+        override fun hideLyricView(animate: Boolean) {
+            view.hide(shouldAnimateChange = animate)
+            leftSide.show(animate)
+        }
     }
 
     companion object {

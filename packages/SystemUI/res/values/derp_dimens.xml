@@ -62,4 +62,8 @@
 
     <!-- Biometric view -->
     <dimen name="biometric_indicator_above_margin_bottom">8dp</dimen>
+
+    <!-- Status bar lyric -->
+    <dimen name="lyric_icon_margin_end">4dp</dimen>
+    <dimen name="lyric_padding_end">4dp</dimen>
 </resources>
