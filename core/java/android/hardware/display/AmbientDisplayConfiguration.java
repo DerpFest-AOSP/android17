@@ -22,7 +22,6 @@ import android.annotation.TestApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.hardware.biometrics.Flags;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.SystemProperties;
@@ -190,18 +189,10 @@ public class AmbientDisplayConfiguration {
 
     /** @hide */
     public boolean screenOffUdfpsEnabled(int user) {
-        if (TextUtils.isEmpty(udfpsLongPressSensorType())) {
-            return false;
-        }
-
-        boolean isScreenOffUnlockEnabled = mScreenOffUdfpsAvailable && Flags.screenOffUnlockUdfps();
-        if (!isScreenOffUnlockEnabled) {
-            return false;
-        } else {
-            return boolSetting(SCREEN_OFF_UNLOCK_UDFPS_ENABLED, user,
-                    mContext.getResources().getBoolean(R.bool.config_screen_off_udfps_default_on)
-                            ? 1 : 0);
-        }
+        if (!mScreenOffUdfpsAvailable) return false;
+        return mContext.getResources().getBoolean(R.bool.config_screen_off_udfps_default_on)
+                ? boolSettingDefaultOn(SCREEN_OFF_UNLOCK_UDFPS_ENABLED, user)
+                : boolSettingDefaultOff(SCREEN_OFF_UNLOCK_UDFPS_ENABLED, user);
     }
 
     /** @hide */
