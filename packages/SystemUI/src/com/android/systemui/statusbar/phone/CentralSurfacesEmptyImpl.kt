@@ -161,4 +161,6 @@ abstract class CentralSurfacesEmptyImpl : CentralSurfaces {
     override fun brightnessControl(event: MotionEvent?) {}
 
     override fun onBrightnessChanged(upOrCancel: Boolean) {}
+
+    override fun cancelBrightnessControl() {}
 }
