@@ -616,20 +616,8 @@ constructor(
             .flowOn(bgDispatcher)
 
     override val isLyricVisible: Flow<VisibilityModel> =
-        combine(
-                isNotificationIconContainerVisible,
-                hideStartSideContentForHeadsUp,
-                hasOngoingActivityChips,
-            ) {
-                isNotificationIconContainerVisible,
-                hideStartSideContentForHeadsUp,
-                hasOngoingActivityChips ->
-                val showLyric =
-                    (isNotificationIconContainerVisible.visibility == View.VISIBLE) &&
-                        !hideStartSideContentForHeadsUp &&
-                        !hasOngoingActivityChips
-                VisibilityModel(showLyric.toVisibleOrGone(), false)
-            }
+        isNotificationIconContainerVisible
+            .map { VisibilityModel(it.visibility, false) }
             .distinctUntilChanged()
             .flowOn(bgDispatcher)
 
