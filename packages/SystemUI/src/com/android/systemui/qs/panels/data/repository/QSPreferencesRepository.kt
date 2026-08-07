@@ -28,6 +28,7 @@ import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.log.LogBuffer
 import com.android.systemui.log.core.Logger
 import com.android.systemui.qs.panels.shared.model.PanelsLog
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.pipeline.shared.InternetTileMigration.logMigration
 import com.android.systemui.qs.pipeline.shared.InternetTileMigration.migrateInternetTile
 import com.android.systemui.qs.pipeline.shared.TileSpec
@@ -99,6 +100,17 @@ constructor(
             }
             .flowOn(backgroundDispatcher)
 
+    /** Ordered list of QS shade components for the current user. */
+    val shadeComponents: Flow<List<QsShadeComponent>> =
+        combine(backupRestorationEvents, userRepository.selectedUserInfo, ::Pair)
+            .flatMapLatest { (_, userInfo) ->
+                val prefs = getSharedPrefs(userInfo.id)
+                prefs.observe().emitOnStart().map {
+                    QsShadeComponent.parse(prefs.getString(SHADE_COMPONENTS_KEY, null))
+                }
+            }
+            .flowOn(backgroundDispatcher)
+
     /** Sets for the current user the set of [TileSpec] to display as large tiles. */
     fun writeLargeTileSpecs(specs: Set<TileSpec>, changeDefault: Boolean = true) {
         with(getSharedPrefs(userRepository.getSelectedUserInfo().id)) {
@@ -122,6 +134,13 @@ constructor(
     fun writeEditTooltipShown(value: Boolean) {
         getSharedPrefs(userRepository.getSelectedUserInfo().id).edit {
             putBoolean(EDIT_TOOLTIP_SHOWN_KEY, value)
+        }
+    }
+
+    /** Sets the QS shade component order for the current user. */
+    fun writeShadeComponents(components: List<QsShadeComponent>) {
+        getSharedPrefs(userRepository.getSelectedUserInfo().id).edit {
+            putString(SHADE_COMPONENTS_KEY, QsShadeComponent.serialize(components))
         }
     }
 
@@ -216,6 +235,7 @@ constructor(
         private const val LARGE_TILES_SPECS_KEY = "large_tiles_specs"
         private const val LARGE_TILES_DEFAULT_KEY = "large_tiles_default"
         private const val EDIT_TOOLTIP_SHOWN_KEY = "edit_tooltip_shown"
+        private const val SHADE_COMPONENTS_KEY = "shade_components"
         const val FILE_NAME = "quick_settings_prefs"
     }
 }

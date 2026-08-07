@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +37,8 @@ import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
+import com.android.systemui.qs.flags.QsLayoutMode
+import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.EditTileListState
 import com.android.systemui.qs.panels.ui.compose.PaginatableGridLayout
@@ -43,6 +46,8 @@ import com.android.systemui.qs.panels.ui.compose.TileListener
 import com.android.systemui.qs.panels.ui.compose.bounceableInfo
 import com.android.systemui.qs.panels.ui.viewmodel.BounceableTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
+import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel
+import com.android.systemui.qs.panels.ui.viewmodel.EditModeTabsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.IconTilesViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.InfiniteGridViewModel
@@ -64,6 +69,10 @@ constructor(
     override val viewModelFactory: InfiniteGridViewModel.Factory,
     private val textFeedbackContentViewModelFactory: TextFeedbackContentViewModel.Factory,
     private val tileHapticsViewModelFactory: TileHapticsViewModel.Factory,
+    private val editModeTabs: EditModeTabs,
+    private val editModeLayoutTab: EditModeLayoutTab,
+    private val editModeLayoutTabViewModel: EditModeLayoutTabViewModel,
+    private val qsPreferencesInteractor: QSPreferencesInteractor,
 ) : PaginatableGridLayout {
 
     @Composable
@@ -199,6 +208,28 @@ constructor(
             }
         LaunchedEffect(currentTiles, largeTiles) { listState.updateTiles(currentTiles, largeTiles) }
 
+        val editModeTabsViewModel = remember { EditModeTabsViewModel() }
+        if (QsLayoutMode.isEnabled) {
+            LaunchedEffect(editModeLayoutTabViewModel) {
+                qsPreferencesInteractor.shadeComponents.collect { order ->
+                    editModeLayoutTabViewModel.setComponents(order)
+                }
+            }
+            LaunchedEffect(editModeLayoutTabViewModel) {
+                var wasDragging = false
+                snapshotFlow {
+                        (editModeLayoutTabViewModel.dragState != null) to
+                            editModeLayoutTabViewModel.components.toList()
+                    }
+                    .collect { (dragging, order) ->
+                        if (wasDragging && !dragging) {
+                            qsPreferencesInteractor.setShadeComponents(order)
+                        }
+                        wasDragging = dragging
+                    }
+            }
+        }
+
         DefaultEditTileGrid(
             listState = listState,
             allTiles = tiles,
@@ -207,6 +238,11 @@ constructor(
             snapshotViewModel = snapshotViewModel,
             onStopEditing = onStopEditing,
             topBarActions = actions,
+            editModeTabs = editModeTabs.takeIf { QsLayoutMode.isEnabled },
+            editModeTabsViewModel = editModeTabsViewModel.takeIf { QsLayoutMode.isEnabled },
+            editModeLayoutTab = editModeLayoutTab.takeIf { QsLayoutMode.isEnabled },
+            editModeLayoutTabViewModel =
+                editModeLayoutTabViewModel.takeIf { QsLayoutMode.isEnabled },
         ) { action ->
             // Opening the dialog doesn't require a snapshot
             if (action != EditAction.ResetGrid) {
@@ -227,7 +263,7 @@ constructor(
                     dialogDelegate.showDialog()
                 }
                 is EditAction.ResizeTile -> {
-                    iconTilesViewModel.resize(action.tileSpec, action.toIcon)
+                    iconTilesViewModel.resize(action.tileSpec, toIcon = action.toIcon)
                 }
                 is EditAction.SetTiles -> {
                     onSetTiles(action.tileSpecs)

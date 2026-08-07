@@ -143,8 +143,11 @@ import com.android.systemui.qs.composefragment.viewmodel.QSFragmentComposeViewMo
 import com.android.systemui.qs.footer.ui.compose.FooterActions
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
 import com.android.systemui.qs.panels.ui.compose.EditMode
+import com.android.systemui.qs.panels.ui.compose.QqsShadeComponentsLayout
+import com.android.systemui.qs.panels.ui.compose.QsShadeComponentsColumn
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
 import com.android.systemui.qs.panels.ui.compose.TileGrid
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
 import com.android.systemui.qs.ui.composable.QuickSettingsShade.systemGestureExclusionInShade
@@ -772,6 +775,7 @@ constructor(
                             tiles = Tiles,
                             media = Media,
                             mediaInRow = viewModel.qqsMediaInRow,
+                            components = viewModel.containerViewModel.shadeComponents,
                         )
                     }
                 }
@@ -927,6 +931,7 @@ constructor(
                                 tiles = TileGrid,
                                 media = Media,
                                 mediaInRow = viewModel.qsMediaInRow,
+                                components = containerViewModel.shadeComponents,
                             )
                         }
                     }
@@ -1423,21 +1428,16 @@ fun QuickQuickSettingsLayout(
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
+    components: List<QsShadeComponent> = QsShadeComponent.DEFAULT_ORDER,
 ) {
-    if (mediaInRow) {
-        Row(
-            horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(modifier = Modifier.weight(1f)) { tiles() }
-            Box(modifier = Modifier.weight(1f)) { media() }
-        }
-    } else {
-        Column(verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical))) {
-            tiles()
-            media()
-        }
-    }
+    QqsShadeComponentsLayout(
+        components = components,
+        tiles = tiles,
+        media = media,
+        mediaInRow = mediaInRow,
+        verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
+        horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
+    )
 }
 
 /** [brightness] is nullable as it might not be there (e.g. on connected displays). */
@@ -1448,31 +1448,17 @@ fun QuickSettingsLayout(
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
+    components: List<QsShadeComponent> = QsShadeComponent.DEFAULT_ORDER,
 ) {
-    if (mediaInRow) {
-        Column(
-            verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            brightness()
-            Row(
-                horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(modifier = Modifier.weight(1f)) { tiles() }
-                Box(modifier = Modifier.weight(1f)) { media() }
-            }
-        }
-    } else {
-        Column(
-            verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            brightness()
-            tiles()
-            media()
-        }
-    }
+    QsShadeComponentsColumn(
+        components = components,
+        brightness = brightness,
+        tiles = tiles,
+        media = media,
+        mediaInRow = mediaInRow,
+        verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
+        horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
+    )
 }
 
 private object ResIdTags {

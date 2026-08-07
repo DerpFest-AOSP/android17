@@ -18,8 +18,6 @@ package com.android.systemui.qs.ui.composable
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +26,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
@@ -42,7 +39,9 @@ import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.media.remedia.ui.compose.Media
 import com.android.systemui.media.remedia.ui.compose.MediaPresentationStyle
 import com.android.systemui.qs.composefragment.ui.GridAnchor
+import com.android.systemui.qs.panels.ui.compose.QsShadeComponentsColumn
 import com.android.systemui.qs.panels.ui.compose.TileGrid
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
 import com.android.systemui.qs.ui.viewmodel.QuickSettingsContainerViewModel
 import com.android.systemui.res.R
@@ -123,6 +122,7 @@ fun ContentScope.QuickSettingsContent(
                 }
             },
         mediaInRow = mediaInRow,
+        components = viewModel.shadeComponents,
         modifier =
             modifier
                 .element(Elements.QuickSettingsContent)
@@ -137,32 +137,17 @@ private fun QuickSettingsPanelLayout(
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
+    components: List<QsShadeComponent>,
     modifier: Modifier = Modifier,
 ) {
-    if (mediaInRow) {
-        Column(
-            verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier,
-        ) {
-            brightness()
-            Row(
-                horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(modifier = Modifier.weight(1f)) { tiles() }
-                Box(modifier = Modifier.weight(1f)) { media() }
-            }
-        }
-    } else {
-        Column(
-            verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier,
-        ) {
-            brightness()
-            tiles()
-            media()
-        }
-    }
+    QsShadeComponentsColumn(
+        components = components,
+        brightness = brightness,
+        tiles = tiles,
+        media = media,
+        mediaInRow = mediaInRow,
+        verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
+        horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
+        modifier = modifier,
+    )
 }

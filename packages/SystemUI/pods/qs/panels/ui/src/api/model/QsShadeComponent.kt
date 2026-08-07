@@ -20,5 +20,33 @@ package com.android.systemui.qs.panels.ui.model
 enum class QsShadeComponent {
     BRIGHTNESS,
     TILES_GRID,
-    MEDIA,
+    MEDIA;
+
+    companion object {
+        /** Default top-to-bottom order for QS components. */
+        @JvmField val DEFAULT_ORDER: List<QsShadeComponent> = listOf(BRIGHTNESS, TILES_GRID, MEDIA)
+
+        private const val DELIMITER = ","
+
+        /** Serializes [components] for SharedPreferences storage. */
+        fun serialize(components: List<QsShadeComponent>): String =
+            components.joinToString(DELIMITER) { it.name }
+
+        /**
+         * Parses a stored order string. Returns [DEFAULT_ORDER] when the value is missing, unknown,
+         * incomplete, or contains duplicates.
+         */
+        fun parse(serialized: String?): List<QsShadeComponent> {
+            if (serialized.isNullOrBlank()) return DEFAULT_ORDER
+            val parsed =
+                serialized.split(DELIMITER).mapNotNull { name ->
+                    entries.firstOrNull { it.name == name }
+                }
+            return if (parsed.toSet() == entries.toSet() && parsed.size == entries.size) {
+                parsed
+            } else {
+                DEFAULT_ORDER
+            }
+        }
+    }
 }

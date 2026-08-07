@@ -34,6 +34,7 @@ import androidx.test.filters.SmallTest
 import com.android.systemui.SysuiTestCase
 import com.android.systemui.qs.composefragment.QuickQuickSettingsLayout
 import com.android.systemui.qs.composefragment.QuickSettingsLayout
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -148,6 +149,57 @@ class QSFragmentComposeTest : SysuiTestCase() {
         assertThat((tilesBounds.width - mediaBounds.width).abs()).isAtMost(1.dp)
         // Vertically centered
         assertThat((tilesBounds.centerY - mediaBounds.centerY).abs()).isAtMost(1.dp)
+    }
+
+    @Test
+    fun portraitLayout_qqs_mediaFirst() {
+        composeTestRule.setContent {
+            QuickQuickSettingsLayout(
+                tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
+                media = { Media() },
+                mediaInRow = false,
+                components =
+                    listOf(
+                        QsShadeComponent.MEDIA,
+                        QsShadeComponent.TILES_GRID,
+                        QsShadeComponent.BRIGHTNESS,
+                    ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val tilesBounds = composeTestRule.onNodeWithTag(TILES).getBoundsInRoot()
+        val mediaBounds = composeTestRule.onNodeWithTag(MEDIA).getBoundsInRoot()
+
+        assertThat(mediaBounds.bottom).isLessThan(tilesBounds.top)
+    }
+
+    @Test
+    fun portraitLayout_qs_brightnessAtBottom() {
+        composeTestRule.setContent {
+            QuickSettingsLayout(
+                brightness = { Brightness() },
+                tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
+                media = { Media() },
+                mediaInRow = false,
+                components =
+                    listOf(
+                        QsShadeComponent.TILES_GRID,
+                        QsShadeComponent.MEDIA,
+                        QsShadeComponent.BRIGHTNESS,
+                    ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val brightnessBounds = composeTestRule.onNodeWithTag(BRIGHTNESS).getBoundsInRoot()
+        val tilesBounds = composeTestRule.onNodeWithTag(TILES).getBoundsInRoot()
+        val mediaBounds = composeTestRule.onNodeWithTag(MEDIA).getBoundsInRoot()
+
+        assertThat(tilesBounds.bottom).isLessThan(mediaBounds.top)
+        assertThat(mediaBounds.bottom).isLessThan(brightnessBounds.top)
     }
 
     private companion object {

@@ -56,6 +56,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -166,6 +167,7 @@ import com.android.systemui.common.shared.model.Icon
 import com.android.systemui.common.ui.compose.load
 import com.android.systemui.common.ui.icons.Undo
 import com.android.systemui.compose.modifiers.sysuiResTag
+import com.android.systemui.qs.flags.QsLayoutMode
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.DragAndDropState
 import com.android.systemui.qs.panels.ui.compose.DragType
@@ -178,6 +180,9 @@ import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileArrangementPadding
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.TileHeight
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ToggleTargetSize
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Brightness
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Media
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.TilesGrid
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_DISTANCE
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_SPEED
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SELECT_DEBOUNCE_MILLIS
@@ -198,9 +203,12 @@ import com.android.systemui.qs.panels.ui.compose.selection.TileState
 import com.android.systemui.qs.panels.ui.compose.selection.rememberResizingState
 import com.android.systemui.qs.panels.ui.compose.selection.rememberSelectionState
 import com.android.systemui.qs.panels.ui.compose.selection.selectableTile
+import com.android.systemui.qs.panels.ui.model.EditModeTab
 import com.android.systemui.qs.panels.ui.model.GridCell
 import com.android.systemui.qs.panels.ui.model.SpacerGridCell
 import com.android.systemui.qs.panels.ui.model.TileGridCell
+import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel
+import com.android.systemui.qs.panels.ui.viewmodel.EditModeTabsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditTileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditTileViewModelConstants.APP_ICON_INLINE_CONTENT_ID
 import com.android.systemui.qs.panels.ui.viewmodel.EditTopBarActionViewModel
@@ -247,9 +255,22 @@ fun DefaultEditTileGrid(
     modifier: Modifier = Modifier,
     scrollState: ScrollState = rememberScrollState(),
     onStopEditing: () -> Unit = {},
+    editModeTabs: EditModeTabs? = null,
+    editModeTabsViewModel: EditModeTabsViewModel? = null,
+    editModeLayoutTab: EditModeLayoutTab? = null,
+    editModeLayoutTabViewModel: EditModeLayoutTabViewModel? = null,
     onEditAction: (EditAction) -> Unit = {},
 ) {
     val selectionState = rememberSelectionState()
+    val layoutModeEnabled =
+        QsLayoutMode.isEnabled &&
+            editModeTabs != null &&
+            editModeTabsViewModel != null &&
+            editModeLayoutTab != null &&
+            editModeLayoutTabViewModel != null
+    val selectedTab =
+        if (layoutModeEnabled) editModeTabsViewModel!!.selectedTab else EditModeTab.EditingTab
+    val showTileEditing = selectedTab is EditModeTab.EditingTab
 
     AutoSelectTiles(listState, selectionState)
 
@@ -287,9 +308,11 @@ fun DefaultEditTileGrid(
     val isTileRemovable: (TileSpec) -> Boolean by rememberUpdatedState { spec ->
         allTiles.find { it.tileSpec == spec }?.isRemovable ?: false
     }
+    Box(modifier = modifier) {
     Scaffold(
         modifier =
-            modifier
+            Modifier
+                .fillMaxSize()
                 .consumeWindowInsets(WindowInsets.displayCutout)
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .sysuiResTag(EDIT_MODE_ROOT_TEST_TAG),
@@ -299,38 +322,65 @@ fun DefaultEditTileGrid(
                 onStopEditing = onStopEditing,
                 subtitle = { expanded: Boolean ->
                     if (expanded) {
-                        TopBarSubtitle(
-                            listState,
-                            selectionState,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
+                        if (layoutModeEnabled && selectedTab is EditModeTab.LayoutTab) {
+                            Text(
+                                text = stringResource(selectedTab.headerResId),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        } else {
+                            TopBarSubtitle(
+                                listState,
+                                selectionState,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 },
                 modifier = Modifier.statusBarsPadding(),
                 scrollBehavior = scrollBehavior,
                 collapsibleActions = topBarActions,
                 actions = {
-                    undoAction()
+                    if (showTileEditing) {
+                        undoAction()
 
-                    RemoveButton(
-                        enabled = selectionState.selection?.let { isTileRemovable(it) } ?: false
-                    ) {
-                        selectionState.selection?.let { currentSelection ->
-                            // Auto-select an adjacent tile when removing the selection,
-                            // prioritizing the next tile and falling back to the previous tile
-                            listState
-                                .findNeighboringTile(currentSelection)
-                                ?.let(selectionState::select)
-                            onEditAction(EditAction.RemoveTile(currentSelection))
+                        RemoveButton(
+                            enabled = selectionState.selection?.let { isTileRemovable(it) } ?: false
+                        ) {
+                            selectionState.selection?.let { currentSelection ->
+                                // Auto-select an adjacent tile when removing the selection,
+                                // prioritizing the next tile and falling back to the previous tile
+                                listState
+                                    .findNeighboringTile(currentSelection)
+                                    ?.let(selectionState::select)
+                                onEditAction(EditAction.RemoveTile(currentSelection))
+                            }
                         }
                     }
                 },
             )
         },
+        bottomBar = {
+            if (layoutModeEnabled) {
+                Box(
+                    Modifier.fillMaxWidth()
+                        .padding(WindowInsets.navigationBars.asPaddingValues())
+                        .padding(bottom = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    editModeTabs!!.Content(
+                        viewModel = editModeTabsViewModel!!,
+                        colors = EditModeTabsDefaults.colors(),
+                        modifier = Modifier,
+                    )
+                }
+            }
+        },
     ) { innerPadding ->
         CompositionLocalProvider(
             LocalOverscrollFactory provides rememberOffsetOverscrollEffectFactory()
         ) {
+            if (showTileEditing) {
             AutoScrollGrid(listState, scrollState, innerPadding)
 
             LaunchedEffect(listState.dragType) {
@@ -370,6 +420,27 @@ fun DefaultEditTileGrid(
                     )
                 }
             }
+            } else if (layoutModeEnabled) {
+                Box(Modifier.padding(innerPadding).fillMaxSize()) {
+                    editModeLayoutTab!!.Content(
+                        viewmodel = editModeLayoutTabViewModel!!,
+                        brightness = { Brightness() },
+                        tilesGrid = { TilesGrid() },
+                        media = { Media() },
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                    )
+                }
+            }
+        }
+    }
+        if (layoutModeEnabled && !showTileEditing) {
+            editModeLayoutTab!!.DragShadow(
+                viewmodel = editModeLayoutTabViewModel!!,
+                brightness = { Brightness() },
+                tilesGrid = { TilesGrid() },
+                media = { Media() },
+                modifier = Modifier,
+            )
         }
     }
 }

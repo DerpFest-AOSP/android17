@@ -25,6 +25,8 @@ import com.android.systemui.media.controls.ui.controller.MediaHierarchyManager.C
 import com.android.systemui.media.remedia.ui.compose.MediaUiBehavior
 import com.android.systemui.media.remedia.ui.viewmodel.MediaCarouselVisibility
 import com.android.systemui.media.remedia.ui.viewmodel.MediaViewModel
+import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.MediaInRowInLandscapeViewModel
@@ -51,6 +53,7 @@ constructor(
     val mediaViewModelFactory: MediaViewModel.Factory,
     mediaInRowInLandscapeViewModelFactory: MediaInRowInLandscapeViewModel.Factory,
     @ShadeDisplayAware shadeDisplayTypeRepository: DisplayTypeRepository,
+    qsPreferencesInteractor: QSPreferencesInteractor,
 ) : HydratedActivatable() {
 
     val isBrightnessSliderVisible by
@@ -75,6 +78,11 @@ constructor(
 
     val showMediaInRow: Boolean
         get() = qsMediaInRowViewModel.shouldMediaShowInRow
+
+    val shadeComponents: List<QsShadeComponent> by
+        qsPreferencesInteractor.shadeComponents.hydratedStateOf(
+            initialValue = QsShadeComponent.DEFAULT_ORDER
+        )
 
     fun onMediaSwipeToDismiss() = mediaCarouselInteractor.onSwipeToDismiss()
 

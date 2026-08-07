@@ -53,7 +53,11 @@ import com.android.systemui.kosmos.useUnconfinedTestDispatcher
 import com.android.systemui.qs.composefragment.dagger.usingMediaInComposeFragment
 import com.android.systemui.qs.flags.QsSplitInternetTile
 import com.android.systemui.qs.panels.domain.interactor.iconTilesInteractor
+import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.FakeEditModeLayoutTabViewModel
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.InfiniteGridLayout
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.NoOpEditModeLayoutTab
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.NoOpEditModeTabs
 import com.android.systemui.qs.panels.ui.viewmodel.InfiniteGridViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.detailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.editModeViewModel
@@ -95,6 +99,10 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                     },
                 textFeedbackContentViewModelFactory,
                 tileHapticsViewModelFactory,
+                editModeTabs = NoOpEditModeTabs,
+                editModeLayoutTab = NoOpEditModeLayoutTab,
+                editModeLayoutTabViewModel = FakeEditModeLayoutTabViewModel(),
+                qsPreferencesInteractor = qsPreferencesInteractor,
             )
         }
 

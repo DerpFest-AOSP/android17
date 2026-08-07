@@ -27,6 +27,9 @@ interface EditModeLayoutTabViewModel {
     /** Current state of a drag movement. */
     val dragState: DragState?
 
+    /** Replaces the current component order, e.g. when hydrating from preferences. */
+    fun setComponents(components: List<QsShadeComponent>)
+
     /** Callback when [source] is dragged over [target]. */
     fun onHover(source: QsShadeComponent, target: QsShadeComponent?)
 

@@ -34,6 +34,12 @@ class EditModeLayoutTabViewModelImpl @Inject constructor() : EditModeLayoutTabVi
 
     override var dragState: DragState? by mutableStateOf(null)
 
+    override fun setComponents(components: List<QsShadeComponent>) {
+        if (this.components.toList() == components) return
+        this.components.clear()
+        this.components.addAll(components)
+    }
+
     override fun onHover(source: QsShadeComponent, target: QsShadeComponent?) {
         if (target == null || source == target) return
 

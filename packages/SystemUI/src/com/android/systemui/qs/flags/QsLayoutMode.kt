@@ -24,10 +24,10 @@ object QsLayoutMode {
     /** The aconfig flag name */
     const val FLAG_NAME = Flags.FLAG_QS_LAYOUT_MODE
 
-    /** Should QS use layout mode */
+    /** Should QS use layout mode. Enabled by default for Derp. */
     @JvmStatic
     inline val isEnabled
-        get() = Flags.qsLayoutMode()
+        get() = true
 
     /**
      * Called to ensure code is only run when the flag is enabled. This protects users from the
