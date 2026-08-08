@@ -259,6 +259,7 @@ fun DefaultEditTileGrid(
     editModeTabsViewModel: EditModeTabsViewModel? = null,
     editModeLayoutTab: EditModeLayoutTab? = null,
     editModeLayoutTabViewModel: EditModeLayoutTabViewModel? = null,
+    layoutBrightness: @Composable () -> Unit = { Brightness() },
     onEditAction: (EditAction) -> Unit = {},
 ) {
     val selectionState = rememberSelectionState()
@@ -424,7 +425,7 @@ fun DefaultEditTileGrid(
                 Box(Modifier.padding(innerPadding).fillMaxSize()) {
                     editModeLayoutTab!!.Content(
                         viewmodel = editModeLayoutTabViewModel!!,
-                        brightness = { Brightness() },
+                        brightness = layoutBrightness,
                         tilesGrid = { TilesGrid() },
                         media = { Media() },
                         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
@@ -434,9 +435,11 @@ fun DefaultEditTileGrid(
         }
     }
         if (layoutModeEnabled && !showTileEditing) {
+            // Real brightness lives only in DragShadow while dragging; the list slot uses a
+            // placeholder (see EditModeLayoutTabImpl) so the slider is not dual-composed.
             editModeLayoutTab!!.DragShadow(
                 viewmodel = editModeLayoutTabViewModel!!,
-                brightness = { Brightness() },
+                brightness = layoutBrightness,
                 tilesGrid = { TilesGrid() },
                 media = { Media() },
                 modifier = Modifier,

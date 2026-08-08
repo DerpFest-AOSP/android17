@@ -42,6 +42,7 @@ import androidx.test.filters.SmallTest
 import com.android.compose.theme.PlatformTheme
 import com.android.systemui.Flags
 import com.android.systemui.SysuiTestCase
+import com.android.systemui.brightness.ui.viewmodel.brightnessSliderViewModelFactory
 import com.android.systemui.compose.modifiers.resIdToTestTag
 import com.android.systemui.flags.DisableSceneContainer
 import com.android.systemui.haptics.msdl.tileHapticsViewModelFactory
@@ -103,6 +104,7 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                 editModeLayoutTab = NoOpEditModeLayoutTab,
                 editModeLayoutTabViewModel = FakeEditModeLayoutTabViewModel(),
                 qsPreferencesInteractor = qsPreferencesInteractor,
+                brightnessSliderViewModelFactory = brightnessSliderViewModelFactory,
             )
         }
 

@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
+import com.android.systemui.brightness.ui.viewmodel.brightnessSliderViewModelFactory
 import com.android.systemui.haptics.msdl.tileHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
@@ -104,5 +105,6 @@ val Kosmos.infiniteGridLayout by
             NoOpEditModeLayoutTab,
             FakeEditModeLayoutTabViewModel(),
             qsPreferencesInteractor,
+            brightnessSliderViewModelFactory,
         )
     }

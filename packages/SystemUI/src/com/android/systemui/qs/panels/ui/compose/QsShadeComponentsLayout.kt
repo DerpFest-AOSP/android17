@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
@@ -44,23 +45,29 @@ fun QsShadeComponentsColumn(
                     horizontalArrangement = horizontalArrangement,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Box(modifier = Modifier.weight(1f)) { tiles() }
-                    Box(modifier = Modifier.weight(1f)) { media() }
+                    Box(modifier = Modifier.weight(1f)) {
+                        key(QsShadeComponent.TILES_GRID) { tiles() }
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        key(QsShadeComponent.MEDIA) { media() }
+                    }
                 }
             }
             if (brightnessIndex <= pairIndex) {
-                brightness()
+                key(QsShadeComponent.BRIGHTNESS) { brightness() }
                 tilesMediaRow()
             } else {
                 tilesMediaRow()
-                brightness()
+                key(QsShadeComponent.BRIGHTNESS) { brightness() }
             }
         } else {
             components.forEach { component ->
-                when (component) {
-                    QsShadeComponent.BRIGHTNESS -> brightness()
-                    QsShadeComponent.TILES_GRID -> tiles()
-                    QsShadeComponent.MEDIA -> media()
+                key(component) {
+                    when (component) {
+                        QsShadeComponent.BRIGHTNESS -> brightness()
+                        QsShadeComponent.TILES_GRID -> tiles()
+                        QsShadeComponent.MEDIA -> media()
+                    }
                 }
             }
         }
@@ -88,21 +95,25 @@ fun QqsShadeComponentsLayout(
             modifier = modifier,
         ) {
             if (mediaFirst) {
-                Box(modifier = Modifier.weight(1f)) { media() }
-                Box(modifier = Modifier.weight(1f)) { tiles() }
+                Box(modifier = Modifier.weight(1f)) { key(QsShadeComponent.MEDIA) { media() } }
+                Box(modifier = Modifier.weight(1f)) {
+                    key(QsShadeComponent.TILES_GRID) { tiles() }
+                }
             } else {
-                Box(modifier = Modifier.weight(1f)) { tiles() }
-                Box(modifier = Modifier.weight(1f)) { media() }
+                Box(modifier = Modifier.weight(1f)) {
+                    key(QsShadeComponent.TILES_GRID) { tiles() }
+                }
+                Box(modifier = Modifier.weight(1f)) { key(QsShadeComponent.MEDIA) { media() } }
             }
         }
     } else {
         Column(verticalArrangement = verticalArrangement, modifier = modifier) {
             if (mediaFirst) {
-                media()
-                tiles()
+                key(QsShadeComponent.MEDIA) { media() }
+                key(QsShadeComponent.TILES_GRID) { tiles() }
             } else {
-                tiles()
-                media()
+                key(QsShadeComponent.TILES_GRID) { tiles() }
+                key(QsShadeComponent.MEDIA) { media() }
             }
         }
     }

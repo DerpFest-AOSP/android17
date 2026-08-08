@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,12 +28,16 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
+import com.android.systemui.brightness.ui.compose.BrightnessSliderContainer
+import com.android.systemui.brightness.ui.compose.ContainerColors
+import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
@@ -73,6 +78,7 @@ constructor(
     private val editModeLayoutTab: EditModeLayoutTab,
     private val editModeLayoutTabViewModel: EditModeLayoutTabViewModel,
     private val qsPreferencesInteractor: QSPreferencesInteractor,
+    private val brightnessSliderViewModelFactory: BrightnessSliderViewModel.Factory,
 ) : PaginatableGridLayout {
 
     @Composable
@@ -209,6 +215,10 @@ constructor(
         LaunchedEffect(currentTiles, largeTiles) { listState.updateTiles(currentTiles, largeTiles) }
 
         val editModeTabsViewModel = remember { EditModeTabsViewModel() }
+        val layoutBrightnessSliderViewModel =
+            rememberViewModel("InfiniteGridLayout.EditLayoutBrightness") {
+                brightnessSliderViewModelFactory.create(supportsMirroring = false)
+            }
         if (QsLayoutMode.isEnabled) {
             LaunchedEffect(editModeLayoutTabViewModel) {
                 qsPreferencesInteractor.shadeComponents.collect { order ->
@@ -243,6 +253,17 @@ constructor(
             editModeLayoutTab = editModeLayoutTab.takeIf { QsLayoutMode.isEnabled },
             editModeLayoutTabViewModel =
                 editModeLayoutTabViewModel.takeIf { QsLayoutMode.isEnabled },
+            layoutBrightness = {
+                BrightnessSliderContainer(
+                    viewModel = layoutBrightnessSliderViewModel,
+                    containerColors =
+                        ContainerColors(
+                            Color.Transparent,
+                            ContainerColors.defaultContainerColor,
+                        ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
         ) { action ->
             // Opening the dialog doesn't require a snapshot
             if (action != EditAction.ResetGrid) {

@@ -157,8 +157,15 @@ private fun EditLayoutTabImpl(
                     onDragEnd = { viewmodel.onDragEnd() },
                     modifier = Modifier.animateItem(),
                 ) {
+                    // While dragging, keep a same-type placeholder in the list slot so the real
+                    // brightness/media content is only composed in DragShadow (avoids dual
+                    // AndroidView / slider attachment crashes).
                     Box(Modifier.graphicsLayer { alpha = contentAlpha }) {
-                        Component(component, brightness, tilesGrid, media)
+                        if (isDragged) {
+                            PlaceholderComponent(component)
+                        } else {
+                            Component(component, brightness, tilesGrid, media)
+                        }
                     }
                 }
             }
@@ -237,6 +244,15 @@ private fun Component(
         QsShadeComponent.BRIGHTNESS -> brightness()
         QsShadeComponent.MEDIA -> media()
         QsShadeComponent.TILES_GRID -> tilesGrid()
+    }
+}
+
+@Composable
+private fun PlaceholderComponent(component: QsShadeComponent) {
+    when (component) {
+        QsShadeComponent.BRIGHTNESS -> EditModeLayoutTabDefaults.Brightness()
+        QsShadeComponent.MEDIA -> EditModeLayoutTabDefaults.Media()
+        QsShadeComponent.TILES_GRID -> EditModeLayoutTabDefaults.TilesGrid()
     }
 }
 

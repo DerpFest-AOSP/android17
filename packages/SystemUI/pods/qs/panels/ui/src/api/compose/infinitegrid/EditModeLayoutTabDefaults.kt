@@ -34,8 +34,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.systemui.common.ui.icons.PlayArrow
+import com.android.systemui.res.R
 
 object EditModeLayoutTabDefaults {
     @Composable
@@ -73,8 +76,12 @@ object EditModeLayoutTabDefaults {
                     )
                     .padding(16.dp),
         ) {
-            // TODO(b/485262315): Use resource
-            Text("Media")
+            Text(
+                text = stringResource(R.string.qs_edit_media_player),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             Spacer(Modifier.weight(1f))
 
