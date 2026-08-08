@@ -123,6 +123,10 @@ class FakeHomeStatusBarViewModel(
 
     override val isLyricEnabled = MutableStateFlow(false)
 
+    override val isLyricClockRightMode = MutableStateFlow(false)
+
+    override val isLyricClockRightHideIcon = MutableStateFlow(false)
+
     override val systemInfoCombinedVis =
         MutableStateFlow(
             SystemInfoCombinedVisibilityModel(
