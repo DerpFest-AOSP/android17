@@ -16,9 +16,13 @@
 
 package com.android.systemui.shade
 
+import android.content.Context
 import android.graphics.Point
 import android.hardware.display.AmbientDisplayConfiguration
 import android.os.PowerManager
+import android.os.VibrationAttributes
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -50,6 +54,7 @@ import javax.inject.Inject
 class PulsingGestureListener
 @Inject
 constructor(
+    private val context: Context,
     private val falsingManager: FalsingManager,
     private val dockManager: DockManager,
     private val powerInteractor: PowerInteractor,
@@ -61,9 +66,13 @@ constructor(
     tunerService: TunerService,
     dumpManager: DumpManager
 ) : GestureDetector.SimpleOnGestureListener(), Dumpable {
+    private val vibrator: Vibrator =
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     private var doubleTapEnabled = false
     private var singleTapEnabled = false
     private var doubleTapEnabledNative = false
+    private var singleTapVibrate = false
+    private var doubleTapVibrate = false
 
     init {
         val tunable = Tunable { key: String?, value: String? ->
@@ -76,13 +85,21 @@ constructor(
                 Settings.Secure.DOZE_TAP_SCREEN_GESTURE ->
                     singleTapEnabled =
                         ambientDisplayConfiguration.tapGestureEnabled(userTracker.userId)
+                Settings.Secure.DOZE_TAP_GESTURE_VIBRATE ->
+                    singleTapVibrate =
+                        ambientDisplayConfiguration.tapGestureVibrate(userTracker.userId)
+                Settings.Secure.DOZE_DOUBLE_TAP_GESTURE_VIBRATE ->
+                    doubleTapVibrate =
+                        ambientDisplayConfiguration.doubleTapGestureVibrate(userTracker.userId)
             }
         }
         tunerService.addTunable(
             tunable,
             Settings.Secure.DOUBLE_TAP_TO_WAKE,
             Settings.Secure.DOZE_DOUBLE_TAP_GESTURE,
-            Settings.Secure.DOZE_TAP_SCREEN_GESTURE
+            Settings.Secure.DOZE_TAP_SCREEN_GESTURE,
+            Settings.Secure.DOZE_TAP_GESTURE_VIBRATE,
+            Settings.Secure.DOZE_DOUBLE_TAP_GESTURE_VIBRATE
         )
 
         dumpManager.registerDumpable(this)
@@ -101,6 +118,7 @@ constructor(
             shadeLogger.logSingleTapUpFalsingState(proximityIsNotNear, isNotAFalseTap)
             if (proximityIsNotNear && isNotAFalseTap) {
                 shadeLogger.d("Single tap handled, requesting centralSurfaces.wakeUpIfDozing")
+                if (singleTapVibrate) wakeVibrate()
                 dozeInteractor.setLastTapToWakePosition(Point(x.toInt(), y.toInt()))
                 powerInteractor.wakeUpIfDozing("PULSING_SINGLE_TAP", PowerManager.WAKE_REASON_TAP)
             }
@@ -133,6 +151,7 @@ constructor(
                 !falsingManager.isProximityNear &&
                 !falsingManager.isFalseDoubleTap
         ) {
+            if (doubleTapVibrate) wakeVibrate()
             powerInteractor.wakeUpIfDozing("PULSING_DOUBLE_TAP", PowerManager.WAKE_REASON_TAP)
             return true
         }
@@ -140,10 +159,25 @@ constructor(
         return false
     }
 
+    private fun wakeVibrate() {
+        if (!vibrator.hasVibrator()) return
+        var effect = VibrationEffect.createWaveform(longArrayOf(0, 100), -1)
+        if (vibrator.areAllEffectsSupported(VibrationEffect.EFFECT_CLICK) ==
+                Vibrator.VIBRATION_EFFECT_SUPPORT_YES) {
+            effect = VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+        }
+        vibrator.vibrate(
+            effect,
+            VibrationAttributes.createForUsage(VibrationAttributes.USAGE_HARDWARE_FEEDBACK)
+        )
+    }
+
     override fun dump(pw: PrintWriter, args: Array<out String>) {
         pw.println("singleTapEnabled=$singleTapEnabled")
         pw.println("doubleTapEnabled=$doubleTapEnabled")
         pw.println("doubleTapEnabledNative=$doubleTapEnabledNative")
+        pw.println("singleTapVibrate=$singleTapVibrate")
+        pw.println("doubleTapVibrate=$doubleTapVibrate")
         pw.println("isDocked=${dockManager.isDocked}")
         pw.println("isProxCovered=${falsingManager.isProximityNear}")
     }
