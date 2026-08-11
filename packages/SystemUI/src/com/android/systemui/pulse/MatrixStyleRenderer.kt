@@ -74,7 +74,7 @@ internal class MatrixStyleRenderer(
 
     private val smoothing = 0.22f
     private val numbers = arrayOf("0", "1", "2", "3", "4", "5", "6", "7", "8", "9")
-    
+
     private var changeCounter = 0
     private val changeInterval = 3
 
