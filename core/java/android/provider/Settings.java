@@ -7293,6 +7293,22 @@ public final class Settings {
         public static final String TINT_STATUSBAR_ICONS_WITH_ACCENT = "tint_statusbar_icons_with_accent";
 
         /**
+         * Status bar icon tint mode: 0 = system default, 1 = accent (Monet), 2 = custom color.
+         * When unset, {@link #TINT_STATUSBAR_ICONS_WITH_ACCENT} is used for backward compatibility
+         * (1 maps to mode 1, 0 maps to mode 0).
+         * @hide
+         */
+        public static final String STATUSBAR_ICON_TINT_MODE = "statusbar_icon_tint_mode";
+
+        /**
+         * Custom status bar icon tint as a color string (e.g. {@code #FFFFFF}). Used when
+         * {@link #STATUSBAR_ICON_TINT_MODE} is 2.
+         * @hide
+         */
+        public static final String STATUSBAR_ICON_TINT_CUSTOM_COLOR =
+                "statusbar_icon_tint_custom_color";
+
+        /**
          * IMPORTANT: If you add a new public settings you also have to add it to
          * PUBLIC_SETTINGS below. If the new setting is hidden you have to add
          * it to PRIVATE_SETTINGS below. Also add a validator that can validate

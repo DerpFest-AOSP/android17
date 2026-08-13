@@ -28,6 +28,7 @@ import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.log.table.TableLogBuffer
 import com.android.systemui.log.table.logDiffsForTable
 import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
+import com.android.systemui.statusbar.phone.StatusBarIconTintHelper
 import com.android.systemui.statusbar.pipeline.dagger.BatteryTableLog
 import com.android.systemui.statusbar.policy.BatteryController
 import javax.inject.Inject
@@ -88,10 +89,16 @@ interface BatteryRepository {
     val showBatteryPercentMode: StateFlow<Int>
 
     /**
-     * [Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT]. A user setting to indicate whether
-     * status bar icons should be tinted with the system accent color
+     * [Settings.System.STATUSBAR_ICON_TINT_MODE] with legacy support for
+     * [Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT]. See [StatusBarIconTintHelper].
      */
-    val tintStatusBarIconsWithAccent: StateFlow<Boolean>
+    val statusBarIconTintMode: StateFlow<Int>
+
+    /**
+     * [Settings.System.STATUSBAR_ICON_TINT_CUSTOM_COLOR] when mode is custom. See
+     * [StatusBarIconTintHelper].
+     */
+    val statusBarIconTintCustomColorArgb: StateFlow<Int>
 
     companion object {
         const val ICON_STYLE_DEFAULT = 0
@@ -382,14 +389,67 @@ constructor(
                 initialValue = BatteryRepository.SHOW_PERCENT_HIDDEN,
             )
 
-    override val tintStatusBarIconsWithAccent =
-        settingsRepository
-            .boolSetting(Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT, defaultValue = false)
+    private val statusBarIconTintSettings: Flow<Pair<Int, Int>> =
+        callbackFlow {
+                val resolver = context.contentResolver
+                val uris =
+                    listOf(
+                        Settings.System.getUriFor(
+                            Settings.System.TINT_STATUSBAR_ICONS_WITH_ACCENT
+                        ),
+                        Settings.System.getUriFor(Settings.System.STATUSBAR_ICON_TINT_MODE),
+                        Settings.System.getUriFor(
+                            Settings.System.STATUSBAR_ICON_TINT_CUSTOM_COLOR
+                        ),
+                    )
+
+                fun readPair(): Pair<Int, Int> =
+                    Pair(
+                        StatusBarIconTintHelper.getMode(context),
+                        StatusBarIconTintHelper.getCustomColorArgb(context),
+                    )
+
+                val observer =
+                    object : ContentObserver(Handler(Looper.getMainLooper())) {
+                        override fun onChange(selfChange: Boolean) {
+                            trySend(readPair())
+                        }
+                    }
+
+                for (uri in uris) {
+                    resolver.registerContentObserver(
+                        uri,
+                        /* notifyForDescendants = */ false,
+                        observer,
+                        UserHandle.USER_ALL,
+                    )
+                }
+
+                trySend(readPair())
+
+                awaitClose { resolver.unregisterContentObserver(observer) }
+            }
+            .distinctUntilChanged()
+            .flowOn(bgDispatcher)
+
+    override val statusBarIconTintMode =
+        statusBarIconTintSettings
+            .map { it.first }
             .distinctUntilChanged()
             .stateIn(
                 scope = scope,
                 started = SharingStarted.Lazily,
-                initialValue = false,
+                initialValue = StatusBarIconTintHelper.getMode(context),
+            )
+
+    override val statusBarIconTintCustomColorArgb =
+        statusBarIconTintSettings
+            .map { it.second }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = scope,
+                started = SharingStarted.Lazily,
+                initialValue = StatusBarIconTintHelper.getCustomColorArgb(context),
             )
 
     /** Get and re-fetch the estimate every 2 minutes while active */
