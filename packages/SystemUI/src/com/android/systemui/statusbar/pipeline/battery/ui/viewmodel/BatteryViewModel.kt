@@ -137,7 +137,7 @@ sealed class BatteryViewModel(
 
             if (useAccentColor) {
                 val accentColorInt = Utils.getColorAccentDefaultColor(context)
-                val (accentLight, accentDark) = BatteryColors.createAccentThemes(accentColorInt)
+                val (accentLight, accentDark) = BatteryColors.createAccentThemes(context, accentColorInt)
                 ColorProfile(dark = accentDark, light = accentLight)
             } else {
                 baseProfile
