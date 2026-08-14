@@ -25,15 +25,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.displayCutoutPadding
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.overscroll
 import androidx.compose.foundation.rememberScrollState
@@ -72,8 +75,6 @@ import com.android.compose.lifecycle.LaunchedEffectWithLifecycle
 import com.android.compose.modifiers.thenIf
 import com.android.compose.windowsizeclass.LocalWindowSizeClass
 import com.android.internal.jank.InteractionJankMonitor
-import com.android.systemui.common.ui.compose.windowinsets.CutoutLocation
-import com.android.systemui.common.ui.compose.windowinsets.LocalDisplayCutout
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.lifecycle.ExclusiveActivatable
@@ -356,17 +357,19 @@ private fun ContentScope.QuickSettingsContent(
     headerViewModel: ShadeHeaderViewModel,
     verticalOverscrollEffect: OverscrollEffect,
 ) {
-    val cutoutLocation = LocalDisplayCutout.current().location
-
     val shadeHorizontalPadding =
         dimensionResource(id = R.dimen.notification_panel_margin_horizontal)
 
     // TODO(b/280887232): implement the real UI.
     Box(
         modifier =
-            modifier.fillMaxSize().thenIf(cutoutLocation != CutoutLocation.CENTER) {
-                Modifier.displayCutoutPadding()
-            }
+            modifier
+                .fillMaxSize()
+                // Only the horizontal cutout insets are applied here: the shade header already
+                // reserves the status bar area, which spans the cutout vertically. Applying the top
+                // inset as well would push the header down by the height of the status bar a second
+                // time.
+                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
     ) {
         val lifecycleOwner = LocalLifecycleOwner.current
         val footerActionsViewModel =

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -32,6 +33,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -84,8 +86,6 @@ import com.android.compose.modifiers.height
 import com.android.compose.modifiers.padding
 import com.android.compose.modifiers.thenIf
 import com.android.internal.jank.InteractionJankMonitor
-import com.android.systemui.common.ui.compose.windowinsets.CutoutLocation
-import com.android.systemui.common.ui.compose.windowinsets.LocalDisplayCutout
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.lifecycle.ExclusiveActivatable
@@ -286,9 +286,10 @@ private fun ContentScope.SingleShade(
     onEmptySpaceClick: (() -> Unit)?,
 ) {
 
-    val cutoutLocation = LocalDisplayCutout.current().location
-
-    val cutoutInsets = WindowInsets.Companion.displayCutout
+    // Only the horizontal cutout insets are applied here: the shade header already sizes itself to
+    // cover the status bar area, which spans the cutout vertically. Applying the top inset as well
+    // would offset the header by the height of the status bar a second time.
+    val cutoutInsets = WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)
 
     val tileSquishiness by
         animateContentFloatAsState(
@@ -454,13 +455,7 @@ private fun ContentScope.SingleShade(
                     allowSwipeToExpandChildren = isScrimAtRest,
                 )
             },
-            cutoutInsetsProvider = {
-                if (cutoutLocation == CutoutLocation.CENTER) {
-                    null
-                } else {
-                    cutoutInsets
-                }
-            },
+            cutoutInsetsProvider = { cutoutInsets },
         )
         Box(
             modifier =
