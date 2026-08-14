@@ -290,14 +290,11 @@ fun ContentScope.ExpandedShadeHeader(
     val useExpandedFormat by remember { derivedStateOf { shouldUseExpandedFormat(layoutState) } }
 
     val textColor = ShadeHeader.Colors.textColor
+    val statusBarHeight = viewModel.statusBarHeightPx.toDp(LocalContext.current).dp
 
     Box(modifier = modifier.sysuiResTag(ShadeHeader.TestTags.Root)) {
         if (viewModel.isPrivacyChipVisible) {
-            Box(
-                modifier =
-                    Modifier.height(viewModel.statusBarHeightPx.toDp(LocalContext.current).dp)
-                        .fillMaxWidth()
-            ) {
+            Box(modifier = Modifier.height(statusBarHeight).fillMaxWidth()) {
                 PrivacyChip(
                     privacyList = viewModel.privacyItems,
                     onClick = viewModel::onPrivacyChipClicked,
@@ -307,9 +304,9 @@ fun ContentScope.ExpandedShadeHeader(
         }
         Column(
             verticalArrangement = Arrangement.spacedBy(space = 16.dp, alignment = Alignment.Bottom),
-            modifier =
-                Modifier.fillMaxWidth()
-                    .defaultMinSize(minHeight = ShadeHeader.Dimensions.ExpandedHeight),
+            // The top inset keeps the content clear of the status bar area, which the privacy chip
+            // above draws into.
+            modifier = Modifier.fillMaxWidth().padding(top = statusBarHeight),
         ) {
             Box(modifier = Modifier.fillMaxWidth()) {
                 Clock(
