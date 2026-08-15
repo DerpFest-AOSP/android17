@@ -18,10 +18,8 @@ package com.android.systemui.notifications.ui.composable
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -37,7 +35,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.android.compose.animation.scene.ContentScope
 import com.android.compose.animation.scene.ElementKey
 import com.android.compose.animation.scene.UserAction
@@ -46,7 +43,6 @@ import com.android.compose.lifecycle.DisposableEffectWithLifecycle
 import com.android.compose.lifecycle.LaunchedEffectWithLifecycle
 import com.android.internal.jank.InteractionJankMonitor
 import com.android.systemui.dagger.SysUISingleton
-import com.android.systemui.keyguard.ui.composable.elements.LockscreenElements
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.media.remedia.ui.compose.Media
 import com.android.systemui.media.remedia.ui.compose.MediaPresentationStyle
@@ -54,11 +50,9 @@ import com.android.systemui.notifications.intelligence.rules.shared.NmContextual
 import com.android.systemui.notifications.intelligence.rules.ui.viewmodel.NotificationRulesParentViewModel
 import com.android.systemui.notifications.ui.viewmodel.NotificationsShadeOverlayActionsViewModel
 import com.android.systemui.notifications.ui.viewmodel.NotificationsShadeOverlayContentViewModel
-import com.android.systemui.plugins.keyguard.ui.composable.elements.LockscreenElementKeys
 import com.android.systemui.res.R
 import com.android.systemui.scene.session.ui.composable.SaveableSession
 import com.android.systemui.scene.shared.model.Overlays
-import com.android.systemui.scene.ui.composable.LocalSceneContainerPreloadedResources
 import com.android.systemui.scene.ui.composable.Overlay
 import com.android.systemui.shade.ui.composable.ChipHighlightModel
 import com.android.systemui.shade.ui.composable.OverlayShade
@@ -75,7 +69,6 @@ constructor(
     private val actionsViewModelFactory: NotificationsShadeOverlayActionsViewModel.Factory,
     private val contentViewModelFactory: NotificationsShadeOverlayContentViewModel.Factory,
     private val notificationRulesParentViewModelFactory: NotificationRulesParentViewModel.Factory,
-    private val lockscreenElements: LockscreenElements,
     private val shadeSession: SaveableSession,
     private val stackScrollView: Lazy<NotificationScrollView>,
     private val jankMonitor: InteractionJankMonitor,
@@ -122,8 +115,6 @@ constructor(
             onDispose { viewModel.onShadeOverlayBoundsChanged(null) }
         }
 
-        val isFullWidth = LocalSceneContainerPreloadedResources.current.isFullWidthShade
-
         val targetBlurRadiusPx: Float by
             remember(layoutState) {
                 derivedStateOf { viewModel.calculateTargetBlurRadius(layoutState.transitionState) }
@@ -149,7 +140,7 @@ constructor(
                         viewModel = headerViewModel,
                         notificationsHighlight = ChipHighlightModel.Strong,
                         quickSettingsHighlight = headerViewModel.inactiveChipHighlight,
-                        showClock = !isFullWidth,
+                        showClock = true,
                         modifier = Modifier.element(NotificationsShade.Elements.StatusBar),
                     )
                 }
@@ -172,23 +163,6 @@ constructor(
                         paneTitle = accessibilityTitle
                     }
             ) {
-                if (isFullWidth) {
-                    Box(
-                        Modifier.padding(
-                            start = notificationStackPadding,
-                            end = notificationStackPadding,
-                            bottom = 8.dp,
-                        )
-                    ) {
-                        with(lockscreenElements) {
-                            LockscreenElement(
-                                LockscreenElementKeys.Clock.Small,
-                                Modifier.height(88.dp),
-                            )
-                        }
-                    }
-                }
-
                 val stackScrollView = stackScrollView.get()
                 ScrollingNotificationPanel(
                     tag = "NotifShadeOverlay",
