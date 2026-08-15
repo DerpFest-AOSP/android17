@@ -612,6 +612,10 @@ private fun ContentScope.Clock(
                             null,
                         )
                         .apply {
+                            // The header aligns the clock itself. Without this, a font scale
+                            // or density change makes the clock reapply the status bar's
+                            // padding, which the header's scale transform magnifies.
+                            setShouldApplyPadding(false)
                             isSingleLine = true
                             textDirection = View.TEXT_DIRECTION_LOCALE
                             gravity = Gravity.START or Gravity.CENTER_VERTICAL
