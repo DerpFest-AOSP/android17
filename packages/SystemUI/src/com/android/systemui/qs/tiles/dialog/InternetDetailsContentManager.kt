@@ -593,11 +593,9 @@ constructor(
     }
 
     private fun getStartingInternetContent(): InternetContent {
-        return InternetContent(
-            isWifiEnabled = internetDetailsContentController.isWifiEnabled,
-            isDeviceLocked = internetDetailsContentController.isDeviceLocked,
-            isHeadlessSystemUser = internetDetailsContentController.isHeadlessSystemUser,
-        )
+        // Update the mobile layout when the dialog opens. Otherwise, a later Wi-Fi update
+        // may replace the mobile update and leave the mobile section visible.
+        return getInternetContent(shouldUpdateMobileNetwork = true)
     }
 
     @VisibleForTesting
