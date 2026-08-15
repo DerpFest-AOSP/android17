@@ -38,7 +38,6 @@ constructor(private val qsTileIntentUserActionHandler: QSTileIntentUserInputHand
                             qsTileIntentUserActionHandler.handle(
                                 action.expandable,
                                 data.intent,
-                                true,
                             )
                         is QRCodeScannerTileModel.TemporarilyUnavailable -> {} // no-op
                     }
