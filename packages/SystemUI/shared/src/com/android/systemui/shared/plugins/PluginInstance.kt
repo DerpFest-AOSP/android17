@@ -37,6 +37,8 @@ import com.android.systemui.shared.plugins.PluginManagerImpl.Companion.DEFAULT_L
 import com.android.systemui.shared.plugins.PluginManagerImpl.Companion.PLUGIN_CLASSLOADER
 import dalvik.system.PathClassLoader
 import java.io.File
+import java.io.IOException
+import java.util.zip.ZipFile
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -99,12 +101,38 @@ class PluginInstance<T : Plugin>(
             clear()
             putLong(FAIL_TIME, System.currentTimeMillis())
             putString(FAIL_MESSAGE, failure.message)
+            putString(FAIL_FINGERPRINT, codeFingerprint())
             var i = 0
             while (i < failure.stackTrace.size && i < FAIL_MAX_STACK) {
                 putString("Stack[$i]", "${failure.stackTrace[i]}")
                 i++
             }
         }
+    }
+
+    /**
+     * Identifies the code a failure was observed with. Comparing the crcs recorded in the zip
+     * central directories keeps this cheap, as the apks themselves are never read.
+     */
+    private fun codeFingerprint(): String =
+        "${dexFingerprint(hostContext.applicationInfo.sourceDir)};" +
+            dexFingerprint(pluginFactory.sourceDir)
+
+    private fun dexFingerprint(sourceDir: String?): String {
+        if (sourceDir == null) return ""
+        try {
+            ZipFile(sourceDir).use { apk ->
+                return apk
+                    .entries()
+                    .asSequence()
+                    .filter { it.name.endsWith(".dex") }
+                    .sortedBy { it.name }
+                    .joinToString(",") { "${it.name}=${it.crc}" }
+            }
+        } catch (ex: IOException) {
+            logger.e({ "Failed to fingerprint '$str1'" }, ex) { str1 = sourceDir }
+        }
+        return ""
     }
 
     /** Loads a persisted failure if it's still within the timeout. */
@@ -117,9 +145,15 @@ class PluginInstance<T : Plugin>(
             return false
         }
 
-        // TODO(b/438515243): Check apk checksums for differences (systemui & plugin)
         // If the failure occurred too long ago, we ignore it to check if it's still happening.
         if (sharedPrefs.getLong(FAIL_TIME, 0) < System.currentTimeMillis() - FAIL_TIMEOUT_MILLIS) {
+            hasError = false
+            return false
+        }
+
+        // A failure only describes the code that produced it, so an update of either apk gets a
+        // fresh attempt instead of having to wait out the timeout.
+        if (sharedPrefs.getString(FAIL_FINGERPRINT, null) != codeFingerprint()) {
             hasError = false
             return false
         }
@@ -377,6 +411,10 @@ class PluginInstance<T : Plugin>(
     ) {
         private val logger = Logger(DEFAULT_LOGBUFFER, TAG)
 
+        /** Location of the apk the plugin is loaded from */
+        val sourceDir: String?
+            get() = pluginAppInfo.sourceDir
+
         /** Creates the related plugin object from the factory */
         @Suppress("UNCHECKED_CAST")
         fun createPlugin(listener: ProtectedPluginListener?): T? {
@@ -447,6 +485,7 @@ class PluginInstance<T : Plugin>(
         private const val TAG = "PluginInstance"
         private const val FAIL_TIME = "FailureTime"
         private const val FAIL_MESSAGE = "ErrorMessage"
+        private const val FAIL_FINGERPRINT = "CodeFingerprint"
         private const val FAIL_MAX_STACK = 20
         private const val FAIL_TIMEOUT_MILLIS = (24 * 60 * 60 * 1000).toLong()
 
