@@ -97,9 +97,11 @@ import com.android.systemui.notifications.intelligence.rules.ui.viewmodel.Notifi
 import com.android.systemui.notifications.ui.composable.NestedScrollingNotificationPanel
 import com.android.systemui.notifications.ui.composable.ScrollingNotificationPanel
 import com.android.systemui.qs.composefragment.ui.GridAnchor
+import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.footer.ui.compose.FooterActionsWithAnimatedVisibility
 import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
+import com.android.systemui.qs.panels.ui.compose.TileDetails
 import com.android.systemui.qs.shared.ui.QuickSettings
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements.SplitShadeQuickSettings
 import com.android.systemui.qs.ui.composable.QuickSettingsContent
@@ -595,6 +597,7 @@ private fun ContentScope.SplitShade(
                         ) {
                             onDispose {
                                 qsContainerViewModel.editModeViewModel.stopEditing()
+                                qsContainerViewModel.detailsViewModel.closeDetailedView()
                                 sceneState.snapTo(QS)
                             }
                         }
@@ -628,6 +631,10 @@ private fun ContentScope.SplitShade(
                                 }
 
                                 Element(QS.rootElementKey, Modifier) {
+                                    val tileDetails =
+                                        if (QsDetailedView.isEnabled)
+                                            qsContainerViewModel.detailsViewModel.activeTileDetails
+                                        else null
                                     Column {
                                         Box(
                                             Modifier.weight(1f)
@@ -638,20 +645,29 @@ private fun ContentScope.SplitShade(
                                                     unbounded = true,
                                                 )
                                         ) {
-                                            QuickSettingsContent(
-                                                qsContainerViewModel,
-                                                mediaInRow = false,
-                                                mediaSquishiness = { tileSquishiness },
+                                            if (tileDetails != null) {
+                                                TileDetails(
+                                                    detailsViewModel =
+                                                        qsContainerViewModel.detailsViewModel
+                                                )
+                                            } else {
+                                                QuickSettingsContent(
+                                                    qsContainerViewModel,
+                                                    mediaInRow = false,
+                                                    mediaSquishiness = { tileSquishiness },
+                                                )
+                                            }
+                                        }
+                                        if (tileDetails == null) {
+                                            FooterActionsWithAnimatedVisibility(
+                                                viewModel = footerActionsViewModel,
+                                                isCustomizing = false,
+                                                customizingAnimationDuration = 0,
+                                                modifier =
+                                                    Modifier.align(Alignment.CenterHorizontally)
+                                                        .sysuiResTag("qs_footer_actions"),
                                             )
                                         }
-                                        FooterActionsWithAnimatedVisibility(
-                                            viewModel = footerActionsViewModel,
-                                            isCustomizing = false,
-                                            customizingAnimationDuration = 0,
-                                            modifier =
-                                                Modifier.align(Alignment.CenterHorizontally)
-                                                    .sysuiResTag("qs_footer_actions"),
-                                        )
                                     }
                                 }
                             }

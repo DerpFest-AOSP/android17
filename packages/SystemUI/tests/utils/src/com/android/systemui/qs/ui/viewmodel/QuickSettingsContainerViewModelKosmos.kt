@@ -26,7 +26,10 @@ import com.android.systemui.qs.panels.ui.viewmodel.detailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.editModeViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.mediaInRowInLandscapeViewModelFactory
 import com.android.systemui.qs.panels.ui.viewmodel.tileGridViewModelFactory
+import com.android.systemui.qs.tiles.dialog.audioDetailsViewModelFactory
 import com.android.systemui.shade.ui.viewmodel.shadeHeaderViewModelFactory
+import com.android.systemui.volume.dialog.domain.interactor.expandedAudioTileDetailsFeatureInteractor
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.audioStreamSliderViewModelFactory
 
 val Kosmos.quickSettingsContainerViewModelFactory by
     Kosmos.Fixture {
@@ -46,6 +49,10 @@ val Kosmos.quickSettingsContainerViewModelFactory by
                     mediaInRowInLandscapeViewModelFactory = mediaInRowInLandscapeViewModelFactory,
                     shadeDisplayTypeRepository = shadeDisplayTypeRepository,
                     qsPreferencesInteractor = qsPreferencesInteractor,
+                    audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,
+                    audioDetailsViewModelFactory = audioDetailsViewModelFactory,
+                    expandedAudioTileDetailsFeatureInteractor =
+                        expandedAudioTileDetailsFeatureInteractor,
                 )
             }
         }

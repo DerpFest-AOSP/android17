@@ -29,6 +29,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.android.compose.animation.scene.ContentScope
 import com.android.compose.gesture.gesturesDisabled
@@ -54,6 +55,7 @@ fun ContentScope.QuickSettingsContent(
     modifier: Modifier = Modifier,
     mediaSquishiness: () -> Float = { 1f },
 ) {
+    val volumeSliderViewModel = rememberQsVolumeSliderViewModel(viewModel)
     QuickSettingsPanelLayout(
         brightness =
             @Composable {
@@ -82,6 +84,17 @@ fun ContentScope.QuickSettingsContent(
                                     },
                         )
                     }
+                }
+                if (volumeSliderViewModel != null) {
+                    QsVolumeSliderRow(
+                        viewModel = volumeSliderViewModel,
+                        onSettingsClicked = {
+                            viewModel.detailsViewModel.onVolumeSettingsButtonClicked(
+                                viewModel.audioDetailsViewModelFactory.create()
+                            )
+                        },
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
                 }
             },
         tiles =

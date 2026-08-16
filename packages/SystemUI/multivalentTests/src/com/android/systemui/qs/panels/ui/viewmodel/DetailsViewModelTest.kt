@@ -132,6 +132,11 @@ class DetailsViewModelTest : SysuiTestCase() {
             // Click on a tile that doesn't have a detailed view.
             assertThat(underTest.onTileClicked(specNoDetails)).isFalse()
             assertThat(underTest.activeTileDetails).isNull()
+
+            // Volume settings should still open details in single shade.
+            underTest.onVolumeSettingsButtonClicked(audioDetailsViewModelFactory.create())
+            assertThat(underTest.activeTileDetails).isNotNull()
+            assertThat(underTest.activeTileDetails?.title).isEqualTo("Volume")
         }
 
     @Test

@@ -16,7 +16,9 @@
 
 package com.android.systemui.qs.ui.viewmodel
 
+import android.media.AudioManager
 import android.view.Display
+import com.android.settingslib.volume.shared.model.AudioStream
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
 import com.android.systemui.display.data.repository.DisplayTypeRepository
 import com.android.systemui.lifecycle.HydratedActivatable
@@ -31,11 +33,16 @@ import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.MediaInRowInLandscapeViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TileGridViewModel
+import com.android.systemui.qs.tiles.dialog.AudioDetailsViewModel
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.shade.ui.viewmodel.ShadeHeaderViewModel
+import com.android.systemui.volume.dialog.domain.interactor.ExpandedAudioTileDetailsFeatureInteractor
+import com.android.systemui.volume.panel.component.volume.domain.model.SliderType
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -54,6 +61,9 @@ constructor(
     mediaInRowInLandscapeViewModelFactory: MediaInRowInLandscapeViewModel.Factory,
     @ShadeDisplayAware shadeDisplayTypeRepository: DisplayTypeRepository,
     qsPreferencesInteractor: QSPreferencesInteractor,
+    private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
+    val audioDetailsViewModelFactory: AudioDetailsViewModel.Factory,
+    expandedAudioTileDetailsFeatureInteractor: ExpandedAudioTileDetailsFeatureInteractor,
 ) : HydratedActivatable() {
 
     val isBrightnessSliderVisible by
@@ -83,6 +93,20 @@ constructor(
         qsPreferencesInteractor.shadeComponents.hydratedStateOf(
             initialValue = QsShadeComponent.DEFAULT_ORDER
         )
+
+    val showVolumeSlider: Boolean = expandedAudioTileDetailsFeatureInteractor.isEnabled()
+
+    fun createVolumeSliderViewModel(coroutineScope: CoroutineScope): AudioStreamSliderViewModel? {
+        if (!showVolumeSlider) {
+            return null
+        }
+        return audioStreamSliderViewModelFactory.create(
+            AudioStreamSliderViewModel.FactoryAudioStreamWrapper(
+                SliderType.Stream(AudioStream(AudioManager.STREAM_MUSIC)).stream
+            ),
+            coroutineScope,
+        )
+    }
 
     fun onMediaSwipeToDismiss() = mediaCarouselInteractor.onSwipeToDismiss()
 

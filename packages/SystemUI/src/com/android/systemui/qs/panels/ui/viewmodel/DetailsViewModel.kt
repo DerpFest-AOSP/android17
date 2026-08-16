@@ -111,9 +111,7 @@ constructor(
 
     /** Update the active [TileDetailsViewModel] to [AudioDetailsViewModel]. */
     fun onVolumeSettingsButtonClicked(audioDetailsViewModel: AudioDetailsViewModel?) {
-        if (shadeModeInteractor.isDualShade) {
-            _activeTileDetails.value = audioDetailsViewModel
-        }
+        _activeTileDetails.value = audioDetailsViewModel
     }
 
     fun logOnSettingsClicked() {

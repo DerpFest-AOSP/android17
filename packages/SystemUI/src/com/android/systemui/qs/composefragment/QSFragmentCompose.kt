@@ -140,18 +140,22 @@ import com.android.systemui.qs.composefragment.ui.NotificationScrimClipParams
 import com.android.systemui.qs.composefragment.ui.quickQuickSettingsToQuickSettings
 import com.android.systemui.qs.composefragment.ui.toEditMode
 import com.android.systemui.qs.composefragment.viewmodel.QSFragmentComposeViewModel
+import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.footer.ui.compose.FooterActions
 import com.android.systemui.qs.panels.shared.model.QSFragmentComposeClippingTableLog
 import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QqsShadeComponentsLayout
 import com.android.systemui.qs.panels.ui.compose.QsShadeComponentsColumn
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
+import com.android.systemui.qs.panels.ui.compose.TileDetails
 import com.android.systemui.qs.panels.ui.compose.TileGrid
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements
+import com.android.systemui.qs.ui.composable.QsVolumeSliderRow
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
 import com.android.systemui.qs.ui.composable.QuickSettingsShade.systemGestureExclusionInShade
 import com.android.systemui.qs.ui.composable.QuickSettingsTheme
+import com.android.systemui.qs.ui.composable.rememberQsVolumeSliderViewModel
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.statusbar.policy.ConfigurationController
@@ -367,14 +371,18 @@ constructor(
                     .collect {
                         if (!it) {
                             viewModel.containerViewModel.editModeViewModel.stopEditing()
+                            viewModel.containerViewModel.detailsViewModel.closeDetailedView()
                         }
                     }
             }
             launch {
                 snapshotFlow { viewModel.isQsFullyExpanded }
                     .collect {
-                        if (!it && viewModel.isEditing) {
-                            viewModel.containerViewModel.editModeViewModel.stopEditing()
+                        if (!it) {
+                            if (viewModel.isEditing) {
+                                viewModel.containerViewModel.editModeViewModel.stopEditing()
+                            }
+                            viewModel.containerViewModel.detailsViewModel.closeDetailedView()
                         }
                     }
             }
@@ -788,6 +796,10 @@ constructor(
     private fun ContentScope.QuickSettingsElement(modifier: Modifier = Modifier) {
         val qqsPadding = viewModel.qqsHeaderHeight
         val qsExtraPadding = dimensionResource(R.dimen.qs_panel_padding_top)
+        val containerViewModel = viewModel.containerViewModel
+        val tileDetails =
+            if (QsDetailedView.isEnabled) containerViewModel.detailsViewModel.activeTileDetails
+            else null
         Column(
             modifier =
                 modifier.collapseExpandSemanticAction(
@@ -833,10 +845,16 @@ constructor(
                                 .padding(bottom = 8.dp)
                                 .sysuiResTag(ResIdTags.qsScroll)
                     ) {
-                        val containerViewModel = viewModel.containerViewModel
+                        val volumeSliderViewModel =
+                            rememberQsVolumeSliderViewModel(containerViewModel)
                         Spacer(
                             modifier = Modifier.height { qqsPadding + qsExtraPadding.roundToPx() }
                         )
+                        if (tileDetails != null) {
+                            TileDetails(
+                                detailsViewModel = containerViewModel.detailsViewModel,
+                            )
+                        } else {
                         val BrightnessSlider =
                             @Composable {
                                 Box(
@@ -922,26 +940,42 @@ constructor(
                                     )
                         ) {
                             QuickSettingsLayout(
-                                brightness =
+                                brightness = {
                                     if (viewModel.isBrightnessSliderVisible) {
-                                        { BrightnessSlider() }
-                                    } else {
-                                        {}
-                                    },
+                                        BrightnessSlider()
+                                    }
+                                    if (volumeSliderViewModel != null) {
+                                        QsVolumeSliderRow(
+                                            viewModel = volumeSliderViewModel,
+                                            onSettingsClicked = {
+                                                containerViewModel.detailsViewModel
+                                                    .onVolumeSettingsButtonClicked(
+                                                        containerViewModel
+                                                            .audioDetailsViewModelFactory
+                                                            .create()
+                                                    )
+                                            },
+                                            modifier = Modifier.padding(top = 8.dp),
+                                        )
+                                    }
+                                },
                                 tiles = TileGrid,
                                 media = Media,
                                 mediaInRow = viewModel.qsMediaInRow,
                                 components = containerViewModel.shadeComponents,
                             )
                         }
+                        }
                     }
                 }
-                QuickSettingsTheme {
-                    Element(
-                        Elements.FooterActions,
-                        Modifier.sysuiResTag(ResIdTags.qsFooterActions),
-                    ) {
-                        FooterActions(viewModel = viewModel.footerActionsViewModel)
+                if (tileDetails == null) {
+                    QuickSettingsTheme {
+                        Element(
+                            Elements.FooterActions,
+                            Modifier.sysuiResTag(ResIdTags.qsFooterActions),
+                        ) {
+                            FooterActions(viewModel = viewModel.footerActionsViewModel)
+                        }
                     }
                 }
             }

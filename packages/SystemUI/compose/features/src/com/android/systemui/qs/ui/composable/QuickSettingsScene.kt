@@ -84,8 +84,10 @@ import com.android.systemui.notifications.intelligence.rules.ui.viewmodel.Notifi
 import com.android.systemui.notifications.ui.composable.HeadsUpNotificationPlaceholder
 import com.android.systemui.notifications.ui.composable.ScrollingNotificationPanel
 import com.android.systemui.qs.composefragment.ui.GridAnchor
+import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.footer.ui.compose.FooterActionsWithAnimatedVisibility
 import com.android.systemui.qs.panels.ui.compose.EditMode
+import com.android.systemui.qs.panels.ui.compose.TileDetails
 import com.android.systemui.qs.shared.ui.QuickSettings
 import com.android.systemui.qs.ui.composable.QuickSettingsScene.Companion.InternalScenes.Edit
 import com.android.systemui.qs.ui.composable.QuickSettingsScene.Companion.InternalScenes.QS
@@ -249,6 +251,7 @@ private fun ContentScope.QuickSettingsScene(
         DisposableEffectWithLifecycle(key1 = viewModel, key2 = sceneState) {
             onDispose {
                 viewModel.qsContainerViewModel.editModeViewModel.stopEditing()
+                viewModel.qsContainerViewModel.detailsViewModel.closeDetailedView()
                 sceneState.snapTo(QS)
             }
         }
@@ -399,6 +402,9 @@ private fun ContentScope.QuickSettingsContent(
 
         // ############# Media ###############
         val mediaInRow = viewModel.qsContainerViewModel.showMediaInRow
+        val detailsViewModel = viewModel.qsContainerViewModel.detailsViewModel
+        val tileDetails =
+            if (QsDetailedView.isEnabled) detailsViewModel.activeTileDetails else null
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -431,23 +437,32 @@ private fun ContentScope.QuickSettingsContent(
                         }
                     }
                     Spacer(modifier = Modifier.height(16.dp))
-                    QuickSettingsContent(
-                        viewModel.qsContainerViewModel,
-                        mediaInRow,
-                        Modifier.padding(horizontal = shadeHorizontalPadding),
-                    )
+                    if (tileDetails != null) {
+                        TileDetails(
+                            modifier = Modifier.padding(horizontal = shadeHorizontalPadding),
+                            detailsViewModel = detailsViewModel,
+                        )
+                    } else {
+                        QuickSettingsContent(
+                            viewModel.qsContainerViewModel,
+                            mediaInRow,
+                            Modifier.padding(horizontal = shadeHorizontalPadding),
+                        )
+                    }
                 }
             }
 
-            FooterActionsWithAnimatedVisibility(
-                viewModel = footerActionsViewModel,
-                isCustomizing = false,
-                customizingAnimationDuration = 0,
-                modifier =
-                    Modifier.align(Alignment.CenterHorizontally)
-                        .sysuiResTag("qs_footer_actions")
-                        .padding(horizontal = shadeHorizontalPadding),
-            )
+            if (tileDetails == null) {
+                FooterActionsWithAnimatedVisibility(
+                    viewModel = footerActionsViewModel,
+                    isCustomizing = false,
+                    customizingAnimationDuration = 0,
+                    modifier =
+                        Modifier.align(Alignment.CenterHorizontally)
+                            .sysuiResTag("qs_footer_actions")
+                            .padding(horizontal = shadeHorizontalPadding),
+                )
+            }
         }
     }
 }
