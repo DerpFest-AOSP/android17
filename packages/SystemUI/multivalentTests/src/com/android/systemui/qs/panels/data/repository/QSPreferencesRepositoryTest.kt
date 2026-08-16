@@ -137,7 +137,7 @@ class QSPreferencesRepositoryTest : SysuiTestCase() {
                     PRIMARY_USER_ID,
                 )
 
-                assertThat(largeTiles).isEqualTo(tiles)
+                assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
             }
         }
 
@@ -196,7 +196,7 @@ class QSPreferencesRepositoryTest : SysuiTestCase() {
                 assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
 
                 fakeUserRepository.setSelectedUserInfo(ANOTHER_USER)
-                assertThat(largeTiles).isEqualTo(setOf("tileA").toTileSpecs())
+                assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
             }
         }
 
@@ -218,7 +218,7 @@ class QSPreferencesRepositoryTest : SysuiTestCase() {
                     PRIMARY_USER_ID,
                 )
 
-                assertThat(largeTiles).isEqualTo(tiles.toTileSpecs())
+                assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
             }
         }
 
@@ -263,7 +263,7 @@ class QSPreferencesRepositoryTest : SysuiTestCase() {
                     PRIMARY_USER_ID,
                 )
 
-                assertThat(largeTiles).isEqualTo(tiles)
+                assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
             }
         }
 
@@ -304,7 +304,7 @@ class QSPreferencesRepositoryTest : SysuiTestCase() {
                     PRIMARY_USER_ID,
                 )
 
-                assertThat(largeTiles).isEqualTo(tiles)
+                assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
             }
         }
 

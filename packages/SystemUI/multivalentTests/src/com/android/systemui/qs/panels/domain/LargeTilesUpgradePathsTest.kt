@@ -87,10 +87,10 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
      * This test corresponds to a user that upgraded in place from a build that didn't support large
      * tiles to one that does. The current tiles of the user are read from settings.
      *
-     * The resulting large tiles are those that were read from Settings.
+     * The resulting large tiles are the default mixed set, not every tile from Settings.
      */
     @Test
-    fun upgradeInPlace_noDataInSharedPreferences_allLargeTiles() =
+    fun upgradeInPlace_noDataInSharedPreferences_defaultLargeTiles() =
         kosmos.runTest {
             val largeTiles by collectLastValue(underTest.largeTilesSpecs)
             val tiles = setOf("a", "b", "c").toTileSpecs()
@@ -100,7 +100,28 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
                 userId,
             )
 
-            assertThat(largeTiles).isEqualTo(tiles)
+            assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
+        }
+
+    /**
+     * This test corresponds to a user that already went through the old in-place upgrade, which
+     * marked every current tile as large.
+     *
+     * The resulting large tiles are migrated back to the default mixed set.
+     */
+    @Test
+    fun upgradeInPlace_allCurrentTilesAlreadyLarge_migratesToDefault() =
+        kosmos.runTest {
+            val largeTiles by collectLastValue(underTest.largeTilesSpecs)
+            val tiles = setOf("a", "b", "c").toTileSpecs()
+            setLargeTilesSpecsInSharedPreferences(tiles.map { it.spec }.toSet())
+
+            underTest.setInitialOrUpgradeLargeTilesSpecs(
+                TilesUpgradePath.ReadFromSettings(tiles),
+                userId,
+            )
+
+            assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
         }
 
     /**
@@ -186,10 +207,10 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
      * one that does, via restore from backup. Note that there's no file in SharedPreferences to
      * restore.
      *
-     * The resulting set of large tiles are those that were restored from the backup.
+     * The resulting set of large tiles are the default mixed set.
      */
     @Test
-    fun restoreFromBackup_noDataInSharedPreferences_allLargeTiles() =
+    fun restoreFromBackup_noDataInSharedPreferences_defaultLargeTiles() =
         kosmos.runTest {
             val largeTiles by collectLastValue(underTest.largeTilesSpecs)
             val tiles = setOf("a", "b", "c").toTileSpecs()
@@ -199,7 +220,7 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
                 userId,
             )
 
-            assertThat(largeTiles).isEqualTo(tiles)
+            assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
         }
 
     /**
@@ -208,10 +229,10 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
      * initialization has set the tiles to default. Note that there's no file in SharedPreferences
      * to restore.
      *
-     * The resulting set of large tiles are those that were restored from the backup.
+     * The resulting set of large tiles stays the default mixed set.
      */
     @Test
-    fun restoreFromBackup_afterDefault_noDataInSharedPreferences_allLargeTiles() =
+    fun restoreFromBackup_afterDefault_noDataInSharedPreferences_defaultLargeTiles() =
         kosmos.runTest {
             val largeTiles by collectLastValue(underTest.largeTilesSpecs)
             underTest.setInitialOrUpgradeLargeTilesSpecs(TilesUpgradePath.DefaultSet, userId)
@@ -223,7 +244,7 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
                 userId,
             )
 
-            assertThat(largeTiles).isEqualTo(tiles)
+            assertThat(largeTiles).isEqualTo(defaultLargeTilesRepository.defaultLargeTiles)
         }
 
     /**

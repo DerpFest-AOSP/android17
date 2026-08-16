@@ -182,11 +182,11 @@ constructor(
      *   that we have performed the upgrade path once. In this case, we will mark that we set them
      *   as the default in case a restore needs to modify them later.
      * * If we got a list of tiles restored from a device and nothing has modified the list of
-     *   tiles, set all the restored tiles to large. Note that if we also restored a set of large
-     *   tiles before this was called, [LARGE_TILES_DEFAULT_KEY] will be false and we won't
-     *   overwrite it.
-     * * If we got a list of tiles from settings, we consider that we upgraded in place and then we
-     *   will set all those tiles to large IF there's no current set of large tiles.
+     *   tiles, use the default large tiles. Note that if we also restored a set of large tiles
+     *   before this was called, [LARGE_TILES_DEFAULT_KEY] will be false and we won't overwrite it.
+     * * If we got a list of tiles from settings, use the default large tiles IF there's no current
+     *   set of large tiles. If every current tile is already large (the previous AOSP in-place
+     *   upgrade, which expanded the whole grid), migrate back to the default mixed sizes.
      *
      * Even if largeTilesSpec is read Eagerly before we know if we are in an initial state, because
      * we are not writing the default values to the SharedPreferences, the file will not contain the
@@ -197,7 +197,7 @@ constructor(
         with(getSharedPrefs(userId)) {
             when (upgradePath) {
                 is TilesUpgradePath.DefaultSet -> {
-                    writeLargeTileSpecs(defaultLargeTilesRepository.defaultLargeTiles)
+                    writeDefaultLargeTiles()
                     logger.i("Large tiles set to default on init")
                     setLargeTilesDefault(true)
                 }
@@ -206,20 +206,41 @@ constructor(
                         getBoolean(LARGE_TILES_DEFAULT_KEY, false) ||
                             !contains(LARGE_TILES_SPECS_KEY)
                     ) {
-                        writeLargeTileSpecs(upgradePath.value)
-                        logger.i("Tiles restored from backup set to large: ${upgradePath.value}")
+                        writeDefaultLargeTiles()
+                        logger.i("Tiles restored from backup using default large tiles")
                         setLargeTilesDefault(false)
                     }
                 }
                 is TilesUpgradePath.ReadFromSettings -> {
                     if (!contains(LARGE_TILES_SPECS_KEY)) {
-                        writeLargeTileSpecs(upgradePath.value)
-                        logger.i("Tiles read from settings set to large: ${upgradePath.value}")
-                        setLargeTilesDefault(false)
+                        writeDefaultLargeTiles()
+                        logger.i("Tiles read from settings using default large tiles")
+                        setLargeTilesDefault(true)
+                    } else if (shouldMigrateAllLargeTiles(upgradePath.value)) {
+                        writeDefaultLargeTiles()
+                        logger.i("Migrated all-large tiles to default large tiles")
+                        setLargeTilesDefault(true)
                     }
                 }
             }
         }
+    }
+
+    private fun SharedPreferences.writeDefaultLargeTiles() {
+        writeLargeTileSpecs(defaultLargeTilesRepository.defaultLargeTiles)
+    }
+
+    /**
+     * True when every current tile is stored as large, which is the signature of the old in-place
+     * upgrade that expanded the whole grid.
+     */
+    private fun SharedPreferences.shouldMigrateAllLargeTiles(currentTiles: Set<TileSpec>): Boolean {
+        if (currentTiles.isEmpty()) {
+            return false
+        }
+        val stored = getLargeTilesSpecs()
+        return stored.containsAll(currentTiles) &&
+            stored != defaultLargeTilesRepository.defaultLargeTiles
     }
 
     private fun SharedPreferences.setLargeTilesDefault(value: Boolean) {
