@@ -29,7 +29,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import com.android.compose.animation.scene.ContentScope
 import com.android.compose.gesture.gesturesDisabled
@@ -85,6 +84,9 @@ fun ContentScope.QuickSettingsContent(
                         )
                     }
                 }
+            },
+        volume =
+            @Composable {
                 if (volumeSliderViewModel != null) {
                     QsVolumeSliderRow(
                         viewModel = volumeSliderViewModel,
@@ -93,7 +95,6 @@ fun ContentScope.QuickSettingsContent(
                                 viewModel.audioDetailsViewModelFactory.create()
                             )
                         },
-                        modifier = Modifier.padding(top = 8.dp),
                     )
                 }
             },
@@ -152,12 +153,14 @@ private fun QuickSettingsPanelLayout(
     mediaInRow: Boolean,
     components: List<QsShadeComponent>,
     modifier: Modifier = Modifier,
+    volume: @Composable () -> Unit = {},
 ) {
     QsShadeComponentsColumn(
         components = components,
         brightness = brightness,
         tiles = tiles,
         media = media,
+        volume = volume,
         mediaInRow = mediaInRow,
         verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
         horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),

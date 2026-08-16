@@ -25,12 +25,13 @@ import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.BRIGHTNESS
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.MEDIA
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.TILES_GRID
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent.VOLUME
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel.DragState
 import javax.inject.Inject
 
 class EditModeLayoutTabViewModelImpl @Inject constructor() : EditModeLayoutTabViewModel {
     override val components: SnapshotStateList<QsShadeComponent> =
-        mutableStateListOf(BRIGHTNESS, TILES_GRID, MEDIA)
+        mutableStateListOf(BRIGHTNESS, VOLUME, TILES_GRID, MEDIA)
 
     override var dragState: DragState? by mutableStateOf(null)
 

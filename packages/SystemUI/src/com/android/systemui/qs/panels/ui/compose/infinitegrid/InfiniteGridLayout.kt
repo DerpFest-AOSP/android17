@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
+import android.media.AudioManager
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
+import com.android.settingslib.volume.shared.model.AudioStream
 import com.android.systemui.brightness.ui.compose.BrightnessSliderContainer
 import com.android.systemui.brightness.ui.compose.ContainerColors
 import com.android.systemui.brightness.ui.viewmodel.BrightnessSliderViewModel
@@ -60,8 +62,11 @@ import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackContentViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TileViewModel
 import com.android.systemui.qs.pipeline.shared.TileSpec
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements.toElementKey
+import com.android.systemui.qs.ui.composable.QsVolumeSliderRow
 import com.android.systemui.res.R
 import com.android.systemui.shade.shared.flag.DualShadeFlag
+import com.android.systemui.volume.panel.component.volume.domain.model.SliderType
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -79,6 +84,7 @@ constructor(
     private val editModeLayoutTabViewModel: EditModeLayoutTabViewModel,
     private val qsPreferencesInteractor: QSPreferencesInteractor,
     private val brightnessSliderViewModelFactory: BrightnessSliderViewModel.Factory,
+    private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
 ) : PaginatableGridLayout {
 
     @Composable
@@ -219,6 +225,15 @@ constructor(
             rememberViewModel("InfiniteGridLayout.EditLayoutBrightness") {
                 brightnessSliderViewModelFactory.create(supportsMirroring = false)
             }
+        val layoutVolumeSliderViewModel =
+            remember(coroutineScope) {
+                audioStreamSliderViewModelFactory.create(
+                    AudioStreamSliderViewModel.FactoryAudioStreamWrapper(
+                        SliderType.Stream(AudioStream(AudioManager.STREAM_MUSIC)).stream
+                    ),
+                    coroutineScope,
+                )
+            }
         if (QsLayoutMode.isEnabled) {
             LaunchedEffect(editModeLayoutTabViewModel) {
                 qsPreferencesInteractor.shadeComponents.collect { order ->
@@ -261,6 +276,13 @@ constructor(
                             Color.Transparent,
                             ContainerColors.defaultContainerColor,
                         ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            },
+            layoutVolume = {
+                QsVolumeSliderRow(
+                    viewModel = layoutVolumeSliderViewModel,
+                    onSettingsClicked = {},
                     modifier = Modifier.fillMaxWidth(),
                 )
             },

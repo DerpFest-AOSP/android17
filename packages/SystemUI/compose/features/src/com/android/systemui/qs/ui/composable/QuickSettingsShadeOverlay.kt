@@ -23,6 +23,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -85,9 +86,11 @@ import com.android.systemui.notifications.ui.composable.SnoozableHeadsUpNotifica
 import com.android.systemui.qs.composefragment.ui.GridAnchor
 import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.panels.ui.compose.EditMode
+import com.android.systemui.qs.panels.ui.compose.QsShadeComponentsColumn
 import com.android.systemui.qs.panels.ui.compose.TileDetails
 import com.android.systemui.qs.panels.ui.compose.TileGrid
 import com.android.systemui.qs.panels.ui.compose.toolbar.Toolbar
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.ToolbarViewModel
 import com.android.systemui.qs.tiles.dialog.AudioDetailsViewModel
 import com.android.systemui.qs.ui.composable.QuickSettingsShade.systemGestureExclusionInShade
@@ -330,7 +333,7 @@ private fun ContentScope.QuickSettingsContainer(
     }
 }
 
-/** Column containing Brightness and QS tiles. */
+/** Column containing brightness, volume, tiles, and media in the edit-mode order. */
 @Composable
 private fun ContentScope.QuickSettingsLayout(
     qsContainerViewModel: QuickSettingsContainerViewModel,
@@ -377,65 +380,86 @@ private fun ContentScope.QuickSettingsLayout(
         VerticalSeparator(QuickSettingsShade.Dimensions.ToolbarBottomPadding)
 
         Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-            Media(
-                viewModelFactory = qsContainerViewModel.mediaViewModelFactory,
-                presentationStyle = MediaPresentationStyle.Compact,
-                behavior = QuickSettingsContainerViewModel.mediaUiBehavior,
-                onDismissed = qsContainerViewModel::onMediaSwipeToDismiss,
-                modifier = Modifier,
-                location = Media.Location.QS,
-            )
-
-            if (qsContainerViewModel.showMedia) {
-                VerticalSeparator(QuickSettingsShade.Dimensions.VerticalPadding)
-            }
-
-            if (qsContainerViewModel.isBrightnessSliderVisible) {
-                Box(
-                    Modifier.systemGestureExclusionInShade(
-                        enabled = { layoutState.transitionState is TransitionState.Idle }
-                    )
-                ) {
-                    BrightnessSliderContainer(
-                        viewModel = qsContainerViewModel.brightnessSliderViewModel,
-                        containerColors =
-                            ContainerColors(
-                                idleColor = Color.Transparent,
-                                mirrorColor =
-                                    OverlayShade.Colors.panelBackground(isTransparencyEnabled),
-                            ),
-                        modifier = Modifier.fillMaxWidth(),
-                        dimensions = QuickSettingsShade.Dimensions.brightnessSliderDimensions,
-                    )
+            val shadeComponents =
+                qsContainerViewModel.shadeComponents.filter { component ->
+                    when (component) {
+                        QsShadeComponent.BRIGHTNESS ->
+                            qsContainerViewModel.isBrightnessSliderVisible
+                        QsShadeComponent.VOLUME -> volumeSliderViewModel != null
+                        QsShadeComponent.MEDIA -> qsContainerViewModel.showMedia
+                        QsShadeComponent.TILES_GRID -> true
+                    }
                 }
-            }
-
-            if (volumeSliderViewModel != null) {
-                VerticalSeparator(QuickSettingsShade.Dimensions.VolumeSliderExtraPadding)
-                Box(
-                    Modifier.systemGestureExclusionInShade(
-                        enabled = { layoutState.transitionState is TransitionState.Idle }
-                    )
-                ) {
-                    QsVolumeSliderRow(
-                        viewModel = volumeSliderViewModel,
-                        onSettingsClicked = {
-                            qsContainerViewModel.detailsViewModel.onVolumeSettingsButtonClicked(
-                                audioDetailsViewModelFactory.create()
+            QsShadeComponentsColumn(
+                components = shadeComponents,
+                brightness = {
+                    if (qsContainerViewModel.isBrightnessSliderVisible) {
+                        Box(
+                            Modifier.systemGestureExclusionInShade(
+                                enabled = { layoutState.transitionState is TransitionState.Idle }
                             )
-                        },
-                        dimensions = QuickSettingsShade.Dimensions.VolumeSliderDimensions,
+                        ) {
+                            BrightnessSliderContainer(
+                                viewModel = qsContainerViewModel.brightnessSliderViewModel,
+                                containerColors =
+                                    ContainerColors(
+                                        idleColor = Color.Transparent,
+                                        mirrorColor =
+                                            OverlayShade.Colors.panelBackground(
+                                                isTransparencyEnabled
+                                            ),
+                                    ),
+                                modifier = Modifier.fillMaxWidth(),
+                                dimensions =
+                                    QuickSettingsShade.Dimensions.brightnessSliderDimensions,
+                            )
+                        }
+                    }
+                },
+                volume = {
+                    if (volumeSliderViewModel != null) {
+                        Box(
+                            Modifier.systemGestureExclusionInShade(
+                                enabled = { layoutState.transitionState is TransitionState.Idle }
+                            )
+                        ) {
+                            QsVolumeSliderRow(
+                                viewModel = volumeSliderViewModel,
+                                onSettingsClicked = {
+                                    qsContainerViewModel.detailsViewModel
+                                        .onVolumeSettingsButtonClicked(
+                                            audioDetailsViewModelFactory.create()
+                                        )
+                                },
+                                dimensions = QuickSettingsShade.Dimensions.VolumeSliderDimensions,
+                            )
+                        }
+                    }
+                },
+                tiles = {
+                    GridAnchor()
+                    TileGrid(
+                        viewModel = qsContainerViewModel.tileGridViewModel,
+                        modifier = Modifier.fillMaxWidth(),
+                        enableRevealEffect = TileRevealFlag.isEnabled,
                     )
-                }
-            }
-
-            VerticalSeparator(QuickSettingsShade.Dimensions.VerticalPadding)
-
-            GridAnchor()
-            TileGrid(
-                viewModel = qsContainerViewModel.tileGridViewModel,
+                },
+                media = {
+                    if (qsContainerViewModel.showMedia) {
+                        Media(
+                            viewModelFactory = qsContainerViewModel.mediaViewModelFactory,
+                            presentationStyle = MediaPresentationStyle.Compact,
+                            behavior = QuickSettingsContainerViewModel.mediaUiBehavior,
+                            onDismissed = qsContainerViewModel::onMediaSwipeToDismiss,
+                            modifier = Modifier,
+                            location = Media.Location.QS,
+                        )
+                    }
+                },
+                mediaInRow = false,
+                verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
+                horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
                 modifier = Modifier.fillMaxWidth(),
-                enableRevealEffect = TileRevealFlag.isEnabled,
             )
 
             val buildNumberViewModel =
@@ -512,11 +536,6 @@ object QuickSettingsShade {
             @Composable
             @ReadOnlyComposable
             get() = dimensionResource(id = R.dimen.toolbar_bottom_padding)
-
-        val VolumeSliderExtraPadding: Dp
-            @Composable
-            @ReadOnlyComposable
-            get() = dimensionResource(id = R.dimen.overlay_qs_layout_volume_extra_padding)
 
         val ToolbarHeight: Dp
             @Composable

@@ -184,6 +184,7 @@ import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Brightness
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Media
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.TilesGrid
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Volume
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_DISTANCE
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SCROLL_SPEED
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.AUTO_SELECT_DEBOUNCE_MILLIS
@@ -262,6 +263,7 @@ fun DefaultEditTileGrid(
     editModeLayoutTab: EditModeLayoutTab? = null,
     editModeLayoutTabViewModel: EditModeLayoutTabViewModel? = null,
     layoutBrightness: @Composable () -> Unit = { Brightness() },
+    layoutVolume: @Composable () -> Unit = { Volume() },
     onEditAction: (EditAction) -> Unit = {},
 ) {
     val selectionState = rememberSelectionState()
@@ -430,6 +432,7 @@ fun DefaultEditTileGrid(
                         brightness = layoutBrightness,
                         tilesGrid = { TilesGrid() },
                         media = { Media() },
+                        volume = layoutVolume,
                         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                     )
                 }
@@ -437,13 +440,14 @@ fun DefaultEditTileGrid(
         }
     }
         if (layoutModeEnabled && !showTileEditing) {
-            // Real brightness lives only in DragShadow while dragging; the list slot uses a
-            // placeholder (see EditModeLayoutTabImpl) so the slider is not dual-composed.
+            // Real sliders live only in DragShadow while dragging; the list slot uses a
+            // placeholder (see EditModeLayoutTabImpl) so they are not dual-composed.
             editModeLayoutTab!!.DragShadow(
                 viewmodel = editModeLayoutTabViewModel!!,
                 brightness = layoutBrightness,
                 tilesGrid = { TilesGrid() },
                 media = { Media() },
+                volume = layoutVolume,
                 modifier = Modifier,
             )
         }

@@ -78,6 +78,7 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
         brightness: @Composable () -> Unit,
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
+        volume: @Composable () -> Unit,
         modifier: Modifier,
     ) {
         EditLayoutTabImpl(
@@ -85,6 +86,7 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
             brightness = brightness,
             tilesGrid = tilesGrid,
             media = media,
+            volume = volume,
             modifier = modifier,
         )
     }
@@ -95,6 +97,7 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
         brightness: @Composable (() -> Unit),
         tilesGrid: @Composable (() -> Unit),
         media: @Composable (() -> Unit),
+        volume: @Composable (() -> Unit),
         modifier: Modifier,
     ) {
         DragShadowImpl(
@@ -102,6 +105,7 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
             brightness = brightness,
             tilesGrid = tilesGrid,
             media = media,
+            volume = volume,
             modifier = modifier,
         )
     }
@@ -114,6 +118,7 @@ private fun EditLayoutTabImpl(
     brightness: @Composable () -> Unit,
     tilesGrid: @Composable () -> Unit,
     media: @Composable () -> Unit,
+    volume: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -164,7 +169,7 @@ private fun EditLayoutTabImpl(
                         if (isDragged) {
                             PlaceholderComponent(component)
                         } else {
-                            Component(component, brightness, tilesGrid, media)
+                            Component(component, brightness, tilesGrid, media, volume)
                         }
                     }
                 }
@@ -179,6 +184,7 @@ private fun DragShadowImpl(
     brightness: @Composable () -> Unit,
     tilesGrid: @Composable () -> Unit,
     media: @Composable () -> Unit,
+    volume: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val drag = updateTransition(viewmodel.dragState)
@@ -198,7 +204,7 @@ private fun DragShadowImpl(
                     this.alpha = alpha
                 },
         ) {
-            Component(dragState.component, brightness, tilesGrid, media)
+            Component(dragState.component, brightness, tilesGrid, media, volume)
         }
     }
 }
@@ -239,9 +245,11 @@ private fun Component(
     brightness: @Composable () -> Unit,
     tilesGrid: @Composable () -> Unit,
     media: @Composable () -> Unit,
+    volume: @Composable () -> Unit,
 ) {
     when (component) {
         QsShadeComponent.BRIGHTNESS -> brightness()
+        QsShadeComponent.VOLUME -> volume()
         QsShadeComponent.MEDIA -> media()
         QsShadeComponent.TILES_GRID -> tilesGrid()
     }
@@ -251,6 +259,7 @@ private fun Component(
 private fun PlaceholderComponent(component: QsShadeComponent) {
     when (component) {
         QsShadeComponent.BRIGHTNESS -> EditModeLayoutTabDefaults.Brightness()
+        QsShadeComponent.VOLUME -> EditModeLayoutTabDefaults.Volume()
         QsShadeComponent.MEDIA -> EditModeLayoutTabDefaults.Media()
         QsShadeComponent.TILES_GRID -> EditModeLayoutTabDefaults.TilesGrid()
     }

@@ -33,7 +33,7 @@ import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.Au
 import com.android.systemui.volume.panel.component.volume.ui.composable.VolumeSlider
 import com.android.systemui.volume.panel.component.volume.ui.composable.VolumeSliderDimensions
 
-/** Volume slider and overflow button shown in Quick Settings next to the brightness slider. */
+/** Volume slider and overflow button shown in Quick Settings. */
 @Composable
 fun rememberQsVolumeSliderViewModel(
     viewModel: QuickSettingsContainerViewModel

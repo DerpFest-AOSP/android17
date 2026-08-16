@@ -32,6 +32,7 @@ import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.BRIGHTNESS
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.MEDIA
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.TILES_GRID
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent.VOLUME
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel.DragState
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeTabsViewModel
@@ -39,6 +40,7 @@ import com.android.systemui.qs.panels.ui.viewmodel.detailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.iconTilesViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.infiniteGridViewModelFactory
 import com.android.systemui.qs.panels.ui.viewmodel.textFeedbackContentViewModelFactory
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.audioStreamSliderViewModelFactory
 
 object NoOpEditModeTabs : EditModeTabs {
     @Composable
@@ -56,6 +58,7 @@ object NoOpEditModeLayoutTab : EditModeLayoutTab {
         brightness: @Composable () -> Unit,
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
+        volume: @Composable () -> Unit,
         modifier: Modifier,
     ) {}
 
@@ -65,13 +68,14 @@ object NoOpEditModeLayoutTab : EditModeLayoutTab {
         brightness: @Composable () -> Unit,
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
+        volume: @Composable () -> Unit,
         modifier: Modifier,
     ) {}
 }
 
 class FakeEditModeLayoutTabViewModel : EditModeLayoutTabViewModel {
     override val components: SnapshotStateList<QsShadeComponent> =
-        mutableStateListOf(BRIGHTNESS, TILES_GRID, MEDIA)
+        mutableStateListOf(BRIGHTNESS, VOLUME, TILES_GRID, MEDIA)
 
     override var dragState: DragState? by mutableStateOf(null)
 
@@ -106,5 +110,6 @@ val Kosmos.infiniteGridLayout by
             FakeEditModeLayoutTabViewModel(),
             qsPreferencesInteractor,
             brightnessSliderViewModelFactory,
+            audioStreamSliderViewModelFactory,
         )
     }

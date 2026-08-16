@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 
-/** Lays out brightness, tiles, and media according to [components]. */
+/** Lays out brightness, volume, tiles, and media according to [components]. */
 @Composable
 fun QsShadeComponentsColumn(
     components: List<QsShadeComponent>,
@@ -27,6 +27,7 @@ fun QsShadeComponentsColumn(
     horizontalArrangement: Arrangement.Horizontal,
     modifier: Modifier = Modifier,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    volume: @Composable () -> Unit = {},
 ) {
     Column(
         verticalArrangement = verticalArrangement,
@@ -34,12 +35,10 @@ fun QsShadeComponentsColumn(
         modifier = modifier,
     ) {
         if (mediaInRow) {
-            val brightnessIndex = components.indexOf(QsShadeComponent.BRIGHTNESS)
-            val pairIndex =
-                minOf(
-                    components.indexOf(QsShadeComponent.TILES_GRID),
-                    components.indexOf(QsShadeComponent.MEDIA),
-                )
+            val firstOfPair =
+                components.firstOrNull {
+                    it == QsShadeComponent.TILES_GRID || it == QsShadeComponent.MEDIA
+                }
             val tilesMediaRow = @Composable {
                 Row(
                     horizontalArrangement = horizontalArrangement,
@@ -53,18 +52,28 @@ fun QsShadeComponentsColumn(
                     }
                 }
             }
-            if (brightnessIndex <= pairIndex) {
-                key(QsShadeComponent.BRIGHTNESS) { brightness() }
-                tilesMediaRow()
-            } else {
-                tilesMediaRow()
-                key(QsShadeComponent.BRIGHTNESS) { brightness() }
+            components.forEach { component ->
+                when (component) {
+                    QsShadeComponent.TILES_GRID,
+                    QsShadeComponent.MEDIA -> {
+                        if (component == firstOfPair) {
+                            tilesMediaRow()
+                        }
+                    }
+                    QsShadeComponent.BRIGHTNESS -> {
+                        key(QsShadeComponent.BRIGHTNESS) { brightness() }
+                    }
+                    QsShadeComponent.VOLUME -> {
+                        key(QsShadeComponent.VOLUME) { volume() }
+                    }
+                }
             }
         } else {
             components.forEach { component ->
                 key(component) {
                     when (component) {
                         QsShadeComponent.BRIGHTNESS -> brightness()
+                        QsShadeComponent.VOLUME -> volume()
                         QsShadeComponent.TILES_GRID -> tiles()
                         QsShadeComponent.MEDIA -> media()
                     }
@@ -74,7 +83,7 @@ fun QsShadeComponentsColumn(
     }
 }
 
-/** Lays out QQS tiles and media according to [components] (brightness is omitted in QQS). */
+/** Lays out QQS tiles and media according to [components] (sliders are omitted in QQS). */
 @Composable
 fun QqsShadeComponentsLayout(
     components: List<QsShadeComponent>,

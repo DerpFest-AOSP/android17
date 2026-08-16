@@ -53,6 +53,17 @@ object EditModeLayoutTabDefaults {
     }
 
     @Composable
+    fun Volume(modifier: Modifier = Modifier) {
+        Slider(
+            value = 5f,
+            valueRange = 0f..10f,
+            modifier = modifier.fillMaxWidth(),
+            enabled = false,
+            onValueChange = {},
+        )
+    }
+
+    @Composable
     fun TilesGrid(modifier: Modifier = Modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(TileArrangement), modifier = modifier) {
             TilesRow(2)

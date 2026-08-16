@@ -19,12 +19,14 @@ package com.android.systemui.qs.panels.ui.model
 /** Represents a movable part of the QS shade. */
 enum class QsShadeComponent {
     BRIGHTNESS,
+    VOLUME,
     TILES_GRID,
     MEDIA;
 
     companion object {
         /** Default top-to-bottom order for QS components. */
-        @JvmField val DEFAULT_ORDER: List<QsShadeComponent> = listOf(BRIGHTNESS, TILES_GRID, MEDIA)
+        @JvmField
+        val DEFAULT_ORDER: List<QsShadeComponent> = listOf(BRIGHTNESS, VOLUME, TILES_GRID, MEDIA)
 
         private const val DELIMITER = ","
 
@@ -35,6 +37,9 @@ enum class QsShadeComponent {
         /**
          * Parses a stored order string. Returns [DEFAULT_ORDER] when the value is missing, unknown,
          * incomplete, or contains duplicates.
+         *
+         * Stored orders from before [VOLUME] was added keep their relative order and insert volume
+         * immediately after brightness.
          */
         fun parse(serialized: String?): List<QsShadeComponent> {
             if (serialized.isNullOrBlank()) return DEFAULT_ORDER
@@ -42,8 +47,30 @@ enum class QsShadeComponent {
                 serialized.split(DELIMITER).mapNotNull { name ->
                     entries.firstOrNull { it.name == name }
                 }
-            return if (parsed.toSet() == entries.toSet() && parsed.size == entries.size) {
-                parsed
+            if (parsed.toSet() == entries.toSet() && parsed.size == entries.size) {
+                return parsed
+            }
+            return mergeMissingComponents(parsed.distinct())
+        }
+
+        private fun mergeMissingComponents(parsed: List<QsShadeComponent>): List<QsShadeComponent> {
+            if (parsed.isEmpty()) return DEFAULT_ORDER
+            val result = parsed.toMutableList()
+            for (component in entries) {
+                if (component in result) continue
+                val insertAt =
+                    if (component == VOLUME && BRIGHTNESS in result) {
+                        result.indexOf(BRIGHTNESS) + 1
+                    } else {
+                        val defaultIndex = DEFAULT_ORDER.indexOf(component)
+                        result
+                            .indexOfFirst { DEFAULT_ORDER.indexOf(it) > defaultIndex }
+                            .let { index -> if (index == -1) result.size else index }
+                    }
+                result.add(insertAt, component)
+            }
+            return if (result.toSet() == entries.toSet() && result.size == entries.size) {
+                result
             } else {
                 DEFAULT_ORDER
             }

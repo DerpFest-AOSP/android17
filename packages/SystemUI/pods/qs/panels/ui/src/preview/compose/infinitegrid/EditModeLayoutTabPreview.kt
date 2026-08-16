@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Brightness
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Media
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.TilesGrid
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Volume
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModelImpl
 
 @Composable
@@ -42,7 +43,21 @@ fun EditLayoutTabScreen(
 ) {
     val composer = remember { EditModeLayoutTabImpl() }
     Box {
-        composer.Content(viewModel, { Brightness() }, { TilesGrid() }, { Media() }, Modifier)
-        composer.DragShadow(viewModel, { Brightness() }, { TilesGrid() }, { Media() }, Modifier)
+        composer.Content(
+            viewModel,
+            { Brightness() },
+            { TilesGrid() },
+            { Media() },
+            { Volume() },
+            Modifier,
+        )
+        composer.DragShadow(
+            viewModel,
+            { Brightness() },
+            { TilesGrid() },
+            { Media() },
+            { Volume() },
+            Modifier,
+        )
     }
 }

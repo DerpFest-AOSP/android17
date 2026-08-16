@@ -69,6 +69,7 @@ import com.android.systemui.qs.pipeline.domain.interactor.currentTilesInteractor
 import com.android.systemui.qs.pipeline.shared.TileSpec
 import com.android.systemui.shade.domain.interactor.enableDualShade
 import com.android.systemui.testKosmos
+import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.audioStreamSliderViewModelFactory
 import com.google.common.truth.Truth.assertThat
 import org.junit.Before
 import org.junit.Rule
@@ -105,6 +106,7 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                 editModeLayoutTabViewModel = FakeEditModeLayoutTabViewModel(),
                 qsPreferencesInteractor = qsPreferencesInteractor,
                 brightnessSliderViewModelFactory = brightnessSliderViewModelFactory,
+                audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,
             )
         }
 

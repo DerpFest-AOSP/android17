@@ -887,6 +887,21 @@ constructor(
                                     }
                                 }
                             }
+                        val VolumeSlider =
+                            @Composable {
+                                if (volumeSliderViewModel != null) {
+                                    QsVolumeSliderRow(
+                                        viewModel = volumeSliderViewModel,
+                                        onSettingsClicked = {
+                                            containerViewModel.detailsViewModel
+                                                .onVolumeSettingsButtonClicked(
+                                                    containerViewModel.audioDetailsViewModelFactory
+                                                        .create()
+                                                )
+                                        },
+                                    )
+                                }
+                            }
                         // When always compose is false, this will always be true, and
                         // we'll be listening whenever this is composed. When always
                         // compose is true, we look a the second condition and we'll
@@ -944,21 +959,8 @@ constructor(
                                     if (viewModel.isBrightnessSliderVisible) {
                                         BrightnessSlider()
                                     }
-                                    if (volumeSliderViewModel != null) {
-                                        QsVolumeSliderRow(
-                                            viewModel = volumeSliderViewModel,
-                                            onSettingsClicked = {
-                                                containerViewModel.detailsViewModel
-                                                    .onVolumeSettingsButtonClicked(
-                                                        containerViewModel
-                                                            .audioDetailsViewModelFactory
-                                                            .create()
-                                                    )
-                                            },
-                                            modifier = Modifier.padding(top = 8.dp),
-                                        )
-                                    }
                                 },
+                                volume = VolumeSlider,
                                 tiles = TileGrid,
                                 media = Media,
                                 mediaInRow = viewModel.qsMediaInRow,
@@ -1483,12 +1485,14 @@ fun QuickSettingsLayout(
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
     components: List<QsShadeComponent> = QsShadeComponent.DEFAULT_ORDER,
+    volume: @Composable () -> Unit = {},
 ) {
     QsShadeComponentsColumn(
         components = components,
         brightness = brightness,
         tiles = tiles,
         media = media,
+        volume = volume,
         mediaInRow = mediaInRow,
         verticalArrangement = spacedBy(QuickSettingsShade.Dimensions.VerticalPadding),
         horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),

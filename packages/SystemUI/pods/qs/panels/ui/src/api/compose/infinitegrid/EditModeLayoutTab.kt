@@ -29,6 +29,7 @@ public interface EditModeLayoutTab {
         brightness: @Composable () -> Unit,
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
+        volume: @Composable () -> Unit,
         modifier: Modifier,
     )
 
@@ -47,6 +48,7 @@ public interface EditModeLayoutTab {
         brightness: @Composable () -> Unit,
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
+        volume: @Composable () -> Unit,
         modifier: Modifier,
     )
 }
