@@ -28,7 +28,9 @@ import com.android.systemui.media.remedia.ui.compose.MediaUiBehavior
 import com.android.systemui.media.remedia.ui.viewmodel.MediaCarouselVisibility
 import com.android.systemui.media.remedia.ui.viewmodel.MediaViewModel
 import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
+import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.MediaInRowInLandscapeViewModel
@@ -61,12 +63,13 @@ constructor(
     mediaInRowInLandscapeViewModelFactory: MediaInRowInLandscapeViewModel.Factory,
     @ShadeDisplayAware shadeDisplayTypeRepository: DisplayTypeRepository,
     qsPreferencesInteractor: QSPreferencesInteractor,
+    private val brightnessSliderVisibilityInteractor: QsBrightnessSliderVisibilityInteractor,
     private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
     val audioDetailsViewModelFactory: AudioDetailsViewModel.Factory,
     expandedAudioTileDetailsFeatureInteractor: ExpandedAudioTileDetailsFeatureInteractor,
 ) : HydratedActivatable() {
 
-    val isBrightnessSliderVisible by
+    val isBrightnessSliderAvailable by
         shadeDisplayTypeRepository.displayType
             // The shade could be on an external display: in that case the slider shouldn't
             // be visible.
@@ -74,6 +77,19 @@ constructor(
             .hydratedStateOf(
                 initialValue = shadeDisplayTypeRepository.displayType.value == Display.TYPE_INTERNAL
             )
+
+    val brightnessSliderVisibility: QsSliderVisibility by
+        brightnessSliderVisibilityInteractor.visibility.hydratedStateOf(
+            initialValue = QsSliderVisibility.EXPANDED
+        )
+
+    val isBrightnessSliderVisible: Boolean
+        get() =
+            isBrightnessSliderAvailable && brightnessSliderVisibility != QsSliderVisibility.HIDDEN
+
+    val isBrightnessSliderVisibleInQqs: Boolean
+        get() =
+            isBrightnessSliderAvailable && brightnessSliderVisibility == QsSliderVisibility.ALWAYS
 
     val isEditing by editModeViewModel.isEditing.hydratedStateOf()
 

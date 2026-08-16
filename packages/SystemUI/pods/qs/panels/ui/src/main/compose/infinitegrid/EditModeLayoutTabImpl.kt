@@ -16,34 +16,52 @@
 
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
+import android.graphics.drawable.ColorDrawable
+import android.view.WindowManager
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,14 +71,27 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.ui.zIndex
 import com.android.compose.lifecycle.LaunchedEffectWithLifecycle
 import com.android.compose.modifiers.thenIf
+import com.android.compose.theme.LocalAndroidColorScheme
+import com.android.internal.graphics.drawable.BackgroundBlurDrawable
 import com.android.systemui.common.ui.icons.DragHandle
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -79,6 +110,9 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
+        brightnessVisibility: QsSliderVisibility,
+        onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+        isDualShade: Boolean,
         modifier: Modifier,
     ) {
         EditLayoutTabImpl(
@@ -87,6 +121,9 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
             tilesGrid = tilesGrid,
             media = media,
             volume = volume,
+            brightnessVisibility = brightnessVisibility,
+            onBrightnessVisibilityChange = onBrightnessVisibilityChange,
+            isDualShade = isDualShade,
             modifier = modifier,
         )
     }
@@ -98,6 +135,8 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
         tilesGrid: @Composable (() -> Unit),
         media: @Composable (() -> Unit),
         volume: @Composable (() -> Unit),
+        brightnessVisibility: QsSliderVisibility,
+        isDualShade: Boolean,
         modifier: Modifier,
     ) {
         DragShadowImpl(
@@ -106,6 +145,8 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
             tilesGrid = tilesGrid,
             media = media,
             volume = volume,
+            brightnessVisibility = brightnessVisibility,
+            isDualShade = isDualShade,
             modifier = modifier,
         )
     }
@@ -119,13 +160,17 @@ private fun EditLayoutTabImpl(
     tilesGrid: @Composable () -> Unit,
     media: @Composable () -> Unit,
     volume: @Composable () -> Unit,
+    brightnessVisibility: QsSliderVisibility,
+    onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+    isDualShade: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
+    var showVisibilitySheet by remember { mutableStateOf(false) }
 
     DragEventListener(listState, viewmodel)
 
-    Box {
+    Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -167,13 +212,30 @@ private fun EditLayoutTabImpl(
                     // AndroidView / slider attachment crashes).
                     Box(Modifier.graphicsLayer { alpha = contentAlpha }) {
                         if (isDragged) {
-                            PlaceholderComponent(component)
+                            PlaceholderComponent(component, brightnessVisibility, isDualShade)
                         } else {
-                            Component(component, brightness, tilesGrid, media, volume)
+                            Component(
+                                component,
+                                brightness,
+                                tilesGrid,
+                                media,
+                                volume,
+                                brightnessVisibility,
+                                isDualShade,
+                                onBrightnessRowClick = { showVisibilitySheet = true },
+                            )
                         }
                     }
                 }
             }
+        }
+        if (showVisibilitySheet) {
+            BrightnessVisibilitySheet(
+                visibility = brightnessVisibility,
+                isDualShade = isDualShade,
+                onVisibilityChange = onBrightnessVisibilityChange,
+                onDismiss = { showVisibilitySheet = false },
+            )
         }
     }
 }
@@ -185,6 +247,8 @@ private fun DragShadowImpl(
     tilesGrid: @Composable () -> Unit,
     media: @Composable () -> Unit,
     volume: @Composable () -> Unit,
+    brightnessVisibility: QsSliderVisibility,
+    isDualShade: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val drag = updateTransition(viewmodel.dragState)
@@ -204,7 +268,15 @@ private fun DragShadowImpl(
                     this.alpha = alpha
                 },
         ) {
-            Component(dragState.component, brightness, tilesGrid, media, volume)
+            Component(
+                dragState.component,
+                brightness,
+                tilesGrid,
+                media,
+                volume,
+                brightnessVisibility,
+                isDualShade,
+            )
         }
     }
 }
@@ -246,9 +318,18 @@ private fun Component(
     tilesGrid: @Composable () -> Unit,
     media: @Composable () -> Unit,
     volume: @Composable () -> Unit,
+    brightnessVisibility: QsSliderVisibility,
+    isDualShade: Boolean,
+    onBrightnessRowClick: (() -> Unit)? = null,
 ) {
     when (component) {
-        QsShadeComponent.BRIGHTNESS -> brightness()
+        QsShadeComponent.BRIGHTNESS ->
+            BrightnessRow(
+                visibility = brightnessVisibility,
+                isDualShade = isDualShade,
+                onClick = onBrightnessRowClick,
+                content = brightness,
+            )
         QsShadeComponent.VOLUME -> volume()
         QsShadeComponent.MEDIA -> media()
         QsShadeComponent.TILES_GRID -> tilesGrid()
@@ -256,12 +337,208 @@ private fun Component(
 }
 
 @Composable
-private fun PlaceholderComponent(component: QsShadeComponent) {
+private fun PlaceholderComponent(
+    component: QsShadeComponent,
+    brightnessVisibility: QsSliderVisibility,
+    isDualShade: Boolean,
+) {
     when (component) {
-        QsShadeComponent.BRIGHTNESS -> EditModeLayoutTabDefaults.Brightness()
+        QsShadeComponent.BRIGHTNESS ->
+            BrightnessRow(
+                visibility = brightnessVisibility,
+                isDualShade = isDualShade,
+                content = { EditModeLayoutTabDefaults.Brightness() },
+            )
         QsShadeComponent.VOLUME -> EditModeLayoutTabDefaults.Volume()
         QsShadeComponent.MEDIA -> EditModeLayoutTabDefaults.Media()
         QsShadeComponent.TILES_GRID -> EditModeLayoutTabDefaults.TilesGrid()
+    }
+}
+
+@Composable
+private fun BrightnessRow(
+    visibility: QsSliderVisibility,
+    isDualShade: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    val displayed = visibility.displayed(isDualShade)
+    val hidden = displayed == QsSliderVisibility.HIDDEN
+    val clickModifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    Box(modifier) {
+        Box(
+            Modifier.graphicsLayer { alpha = if (hidden) HiddenBrightnessAlpha else 1f }
+                .then(clickModifier)
+        ) {
+            content()
+        }
+        VisibilityChip(
+            visibility = displayed,
+            isDualShade = isDualShade,
+            modifier =
+                Modifier.align(Alignment.TopCenter).padding(top = 4.dp).zIndex(1f).then(clickModifier),
+        )
+    }
+}
+
+@Composable
+private fun VisibilityChip(
+    visibility: QsSliderVisibility,
+    isDualShade: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        shape = RoundedCornerShape(8.dp),
+        modifier = modifier,
+    ) {
+        Text(
+            text = visibility.label(isDualShade, short = true),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        )
+    }
+}
+
+@Composable
+private fun BrightnessVisibilitySheet(
+    visibility: QsSliderVisibility,
+    isDualShade: Boolean,
+    onVisibilityChange: (QsSliderVisibility) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val selected = visibility.displayed(isDualShade)
+    val sheetTint = LocalAndroidColorScheme.current.surfaceEffect1.copy(alpha = 0.9f)
+    val handleColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties =
+            DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true,
+                usePlatformDefaultWidth = false,
+                decorFitsSystemWindows = false,
+            ),
+    ) {
+        val view = LocalView.current
+        val blurDrawable = rememberBackgroundBlurDrawable()
+        SideEffect {
+            val window = (view.parent as? DialogWindowProvider)?.window ?: return@SideEffect
+            window.setLayout(
+                WindowManager.LayoutParams.MATCH_PARENT,
+                WindowManager.LayoutParams.MATCH_PARENT,
+            )
+            window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+            window.setDimAmount(0f)
+        }
+
+        Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier.fillMaxSize()
+                    .background(SheetScrimColor)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onDismiss,
+                    )
+            )
+            Surface(
+                color = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+                shape =
+                    RoundedCornerShape(topStart = SheetCornerRadius, topEnd = SheetCornerRadius),
+                modifier =
+                    Modifier.align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .backgroundBlur(
+                            blurDrawable,
+                            sheetTint,
+                            SheetBlurRadius,
+                            SheetCornerRadius,
+                        ),
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier =
+                        Modifier.fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 24.dp)
+                            .padding(bottom = 16.dp)
+                            .selectableGroup(),
+                ) {
+                    Box(
+                        Modifier.padding(top = 12.dp, bottom = 16.dp)
+                            .width(32.dp)
+                            .height(4.dp)
+                            .drawBehind {
+                                drawRoundRect(
+                                    color = handleColor,
+                                    cornerRadius = CornerRadius(size.minDimension / 2),
+                                )
+                            }
+                    )
+                    Text(
+                        text = brightnessVisibilityTitle(),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                    )
+                    QsSliderVisibility.available(isDualShade).forEach { option ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier =
+                                Modifier.fillMaxWidth()
+                                    .selectable(
+                                        selected = option == selected,
+                                        onClick = {
+                                            onVisibilityChange(option)
+                                            onDismiss()
+                                        },
+                                        role = Role.RadioButton,
+                                    )
+                                    .padding(vertical = 12.dp),
+                        ) {
+                            RadioButton(selected = option == selected, onClick = null)
+                            Text(
+                                text = option.label(isDualShade),
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 16.dp),
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun rememberBackgroundBlurDrawable(): BackgroundBlurDrawable? {
+    val view = LocalView.current
+    val drawable = remember(view) { view.viewRootImpl?.createBackgroundBlurDrawable() }
+    DisposableEffect(drawable) { onDispose { drawable?.setBlurRadius(0) } }
+    return drawable
+}
+
+private fun Modifier.backgroundBlur(
+    drawable: BackgroundBlurDrawable?,
+    tint: Color,
+    blurRadius: Dp,
+    cornerRadius: Dp,
+): Modifier {
+    if (drawable == null) {
+        return drawBehind {
+            drawRoundRect(color = tint, cornerRadius = CornerRadius(cornerRadius.toPx()))
+        }
+    }
+    return drawBehind {
+        drawable.setBlurRadius(blurRadius.roundToPx())
+        drawable.setCornerRadius(cornerRadius.toPx())
+        drawable.setColor(tint.toArgb())
+        drawable.setBounds(0, 0, size.width.toInt(), size.height.toInt())
+        drawIntoCanvas { canvas -> drawable.draw(canvas.nativeCanvas) }
     }
 }
 
@@ -438,4 +715,8 @@ private fun Transition<EditModeLayoutTabViewModel.DragState?>.componentVerticalO
 private val ContainerGridRadiusDp = 28.dp
 private const val ContainerBackgroundAlpha = .15f
 private const val DraggedContainerBackgroundAlpha = .5f
+private const val HiddenBrightnessAlpha = .4f
 private val BorderWidth = 2.dp
+private val SheetCornerRadius = ContainerGridRadiusDp
+private val SheetBlurRadius = 30.dp
+private val SheetScrimColor = Color.Black.copy(alpha = 0.24f)

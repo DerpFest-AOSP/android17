@@ -93,6 +93,14 @@
 
     <!-- QS layout editor -->
     <string name="qs_edit_media_player">Mediaplayer</string>
+    <string name="qs_edit_brightness_visibility_title">Helligkeitsregler</string>
+    <string name="qs_edit_brightness_visibility_always">Immer, auch in Quick QS</string>
+    <string name="qs_edit_brightness_visibility_always_short">Immer</string>
+    <string name="qs_edit_brightness_visibility_expanded">Nur wenn erweitert</string>
+    <string name="qs_edit_brightness_visibility_expanded_short">Erweitert</string>
+    <string name="qs_edit_brightness_visibility_hidden">Ausgeblendet</string>
+    <string name="qs_edit_brightness_visibility_show">Anzeigen</string>
+    <string name="qs_edit_brightness_visibility_hide">Ausblenden</string>
 
     <!-- Name of the bluetooth battery level status bar setting. -->
     <string name="status_bar_bluetooth_battery_level">Bluetooth-Akkustand</string>

@@ -54,7 +54,9 @@ import com.android.systemui.kosmos.useUnconfinedTestDispatcher
 import com.android.systemui.qs.composefragment.dagger.usingMediaInComposeFragment
 import com.android.systemui.qs.flags.QsSplitInternetTile
 import com.android.systemui.qs.panels.domain.interactor.iconTilesInteractor
+import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
+import com.android.systemui.shade.domain.interactor.shadeModeInteractor
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.FakeEditModeLayoutTabViewModel
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.InfiniteGridLayout
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.NoOpEditModeLayoutTab
@@ -105,6 +107,8 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                 editModeLayoutTab = NoOpEditModeLayoutTab,
                 editModeLayoutTabViewModel = FakeEditModeLayoutTabViewModel(),
                 qsPreferencesInteractor = qsPreferencesInteractor,
+                brightnessSliderVisibilityInteractor = qsBrightnessSliderVisibilityInteractor,
+                shadeModeInteractor = shadeModeInteractor,
                 brightnessSliderViewModelFactory = brightnessSliderViewModelFactory,
                 audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,
             )

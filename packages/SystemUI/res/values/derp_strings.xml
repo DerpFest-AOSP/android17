@@ -110,6 +110,14 @@
 
     <!-- QS layout editor -->
     <string name="qs_edit_media_player">Media player</string>
+    <string name="qs_edit_brightness_visibility_title">Brightness slider</string>
+    <string name="qs_edit_brightness_visibility_always">Always, including Quick QS</string>
+    <string name="qs_edit_brightness_visibility_always_short">Always</string>
+    <string name="qs_edit_brightness_visibility_expanded">Only when expanded</string>
+    <string name="qs_edit_brightness_visibility_expanded_short">Expanded</string>
+    <string name="qs_edit_brightness_visibility_hidden">Hidden</string>
+    <string name="qs_edit_brightness_visibility_show">Show</string>
+    <string name="qs_edit_brightness_visibility_hide">Hide</string>
 
     <!-- DerpFest Tile -->
     <string name="quick_derpfest_label">DerpFest Customizations</string>

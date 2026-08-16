@@ -30,6 +30,8 @@ import com.android.systemui.lifecycle.activateIn
 import com.android.systemui.media.controls.shared.model.MediaData
 import com.android.systemui.media.remedia.data.repository.mediaPipelineRepository
 import com.android.systemui.qs.composefragment.dagger.usingMediaInComposeFragment
+import com.android.systemui.qs.panels.domain.interactor.fakeQsBrightnessSliderVisibilityInteractor
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.shade.data.repository.fakeShadeDisplaysRepository
 import com.android.systemui.testKosmos
 import com.google.common.truth.Truth.assertThat
@@ -130,6 +132,52 @@ class QuickSettingsContainerViewModelTest : SysuiTestCase() {
                 fakeShadeDisplaysRepository.setPendingDisplayId(Display.DEFAULT_DISPLAY)
 
                 assertThat(underTest.isBrightnessSliderVisible).isFalse()
+            }
+        }
+
+    @Test
+    fun isBrightnessSliderVisible_hidden_isInvisible() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsBrightnessSliderVisibilityInteractor.setVisibility(QsSliderVisibility.HIDDEN)
+
+                assertThat(underTest.isBrightnessSliderVisible).isFalse()
+                assertThat(underTest.isBrightnessSliderVisibleInQqs).isFalse()
+            }
+        }
+
+    @Test
+    fun isBrightnessSliderVisible_expanded_visibleInQsOnly() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsBrightnessSliderVisibilityInteractor.setVisibility(QsSliderVisibility.EXPANDED)
+
+                assertThat(underTest.isBrightnessSliderVisible).isTrue()
+                assertThat(underTest.isBrightnessSliderVisibleInQqs).isFalse()
+            }
+        }
+
+    @Test
+    fun isBrightnessSliderVisible_always_visibleInQsAndQqs() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsBrightnessSliderVisibilityInteractor.setVisibility(QsSliderVisibility.ALWAYS)
+
+                assertThat(underTest.isBrightnessSliderVisible).isTrue()
+                assertThat(underTest.isBrightnessSliderVisibleInQqs).isTrue()
+            }
+        }
+
+    @Test
+    fun isBrightnessSliderVisible_always_externalDisplay_isInvisible() =
+        with(kosmos) {
+            testScope.runTest {
+                setDisplayType(Display.DEFAULT_DISPLAY + 1, Display.TYPE_EXTERNAL)
+                fakeShadeDisplaysRepository.setPendingDisplayId(Display.DEFAULT_DISPLAY + 1)
+                fakeQsBrightnessSliderVisibilityInteractor.setVisibility(QsSliderVisibility.ALWAYS)
+
+                assertThat(underTest.isBrightnessSliderVisible).isFalse()
+                assertThat(underTest.isBrightnessSliderVisibleInQqs).isFalse()
             }
         }
 

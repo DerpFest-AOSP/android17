@@ -46,6 +46,9 @@ import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.flags.QsLayoutMode
 import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
+import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractor
+import com.android.systemui.shade.domain.interactor.ShadeModeInteractor
+import com.android.systemui.shade.shared.model.ShadeMode
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.EditTileListState
 import com.android.systemui.qs.panels.ui.compose.PaginatableGridLayout
@@ -83,6 +86,8 @@ constructor(
     private val editModeLayoutTab: EditModeLayoutTab,
     private val editModeLayoutTabViewModel: EditModeLayoutTabViewModel,
     private val qsPreferencesInteractor: QSPreferencesInteractor,
+    private val brightnessSliderVisibilityInteractor: QsBrightnessSliderVisibilityInteractor,
+    private val shadeModeInteractor: ShadeModeInteractor,
     private val brightnessSliderViewModelFactory: BrightnessSliderViewModel.Factory,
     private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
 ) : PaginatableGridLayout {
@@ -255,6 +260,10 @@ constructor(
             }
         }
 
+        val brightnessVisibility by
+            brightnessSliderVisibilityInteractor.visibility.collectAsStateWithLifecycle()
+        val shadeMode by shadeModeInteractor.shadeMode.collectAsStateWithLifecycle()
+
         DefaultEditTileGrid(
             listState = listState,
             allTiles = tiles,
@@ -268,6 +277,9 @@ constructor(
             editModeLayoutTab = editModeLayoutTab.takeIf { QsLayoutMode.isEnabled },
             editModeLayoutTabViewModel =
                 editModeLayoutTabViewModel.takeIf { QsLayoutMode.isEnabled },
+            brightnessVisibility = brightnessVisibility,
+            onBrightnessVisibilityChange = brightnessSliderVisibilityInteractor::setVisibility,
+            isDualShade = shadeMode is ShadeMode.Dual,
             layoutBrightness = {
                 BrightnessSliderContainer(
                     viewModel = layoutBrightnessSliderViewModel,

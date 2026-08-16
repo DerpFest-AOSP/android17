@@ -18,6 +18,7 @@ package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel
 
 /** Interface for the Layout tab composer. */
@@ -30,6 +31,9 @@ public interface EditModeLayoutTab {
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
+        brightnessVisibility: QsSliderVisibility,
+        onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+        isDualShade: Boolean,
         modifier: Modifier,
     )
 
@@ -49,6 +53,8 @@ public interface EditModeLayoutTab {
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
+        brightnessVisibility: QsSliderVisibility,
+        isDualShade: Boolean,
         modifier: Modifier,
     )
 }

@@ -152,6 +152,27 @@ class QSFragmentComposeTest : SysuiTestCase() {
     }
 
     @Test
+    fun portraitLayout_qqs_brightnessAboveTiles() {
+        composeTestRule.setContent {
+            QuickQuickSettingsLayout(
+                tiles = { Tiles(TILES_HEIGHT_PORTRAIT) },
+                media = { Media() },
+                brightness = { Brightness() },
+                mediaInRow = false,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val brightnessBounds = composeTestRule.onNodeWithTag(BRIGHTNESS).getBoundsInRoot()
+        val tilesBounds = composeTestRule.onNodeWithTag(TILES).getBoundsInRoot()
+
+        assertThat(brightnessBounds.bottom).isLessThan(tilesBounds.top)
+        assertThat(brightnessBounds.left).isEqualTo(tilesBounds.left)
+        assertThat(brightnessBounds.right).isEqualTo(tilesBounds.right)
+    }
+
+    @Test
     fun portraitLayout_qqs_mediaFirst() {
         composeTestRule.setContent {
             QuickQuickSettingsLayout(

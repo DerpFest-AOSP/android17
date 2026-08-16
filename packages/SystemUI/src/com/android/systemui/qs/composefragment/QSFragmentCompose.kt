@@ -743,6 +743,23 @@ constructor(
                             listening = isListening,
                         )
                     }
+                val BrightnessSlider =
+                    @Composable {
+                        if (viewModel.isBrightnessSliderVisibleInQqs) {
+                            AlwaysDarkMode {
+                                BrightnessSliderContainer(
+                                    viewModel =
+                                        viewModel.containerViewModel.brightnessSliderViewModel,
+                                    containerColors =
+                                        ContainerColors(
+                                            Color.Transparent,
+                                            ContainerColors.defaultContainerColor,
+                                        ),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    }
                 val Media =
                     @Composable {
                         if (viewModel.qqsMediaVisible) {
@@ -782,6 +799,7 @@ constructor(
                         QuickQuickSettingsLayout(
                             tiles = Tiles,
                             media = Media,
+                            brightness = BrightnessSlider,
                             mediaInRow = viewModel.qqsMediaInRow,
                             components = viewModel.containerViewModel.shadeComponents,
                         )
@@ -1465,11 +1483,13 @@ fun QuickQuickSettingsLayout(
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
     components: List<QsShadeComponent> = QsShadeComponent.DEFAULT_ORDER,
+    brightness: @Composable () -> Unit = {},
 ) {
     QqsShadeComponentsLayout(
         components = components,
         tiles = tiles,
         media = media,
+        brightness = brightness,
         mediaInRow = mediaInRow,
         verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
         horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),

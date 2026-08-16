@@ -21,6 +21,7 @@ import com.android.systemui.display.domain.interactor.shadeDisplayTypeRepository
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.media.controls.domain.pipeline.interactor.mediaCarouselInteractor
 import com.android.systemui.media.remedia.ui.viewmodel.factory.mediaViewModelFactory
+import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
 import com.android.systemui.qs.panels.ui.viewmodel.detailsViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.editModeViewModel
@@ -49,6 +50,7 @@ val Kosmos.quickSettingsContainerViewModelFactory by
                     mediaInRowInLandscapeViewModelFactory = mediaInRowInLandscapeViewModelFactory,
                     shadeDisplayTypeRepository = shadeDisplayTypeRepository,
                     qsPreferencesInteractor = qsPreferencesInteractor,
+                    brightnessSliderVisibilityInteractor = qsBrightnessSliderVisibilityInteractor,
                     audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,
                     audioDetailsViewModelFactory = audioDetailsViewModelFactory,
                     expandedAudioTileDetailsFeatureInteractor =

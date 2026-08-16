@@ -303,6 +303,9 @@ constructor(
     val isBrightnessSliderVisible: Boolean
         get() = containerViewModel.isBrightnessSliderVisible
 
+    val isBrightnessSliderVisibleInQqs: Boolean
+        get() = containerViewModel.isBrightnessSliderVisibleInQqs
+
     // The initial values in these two are not meaningful. The flow will emit on start the correct
     // values. This is because we need to lazily fetch them after initMediaHosts.
     val qqsMediaVisible by
@@ -567,6 +570,10 @@ constructor(
                 println("isCustomizing", containerViewModel.editModeViewModel.isEditing.value)
                 println("inFirstPage", inFirstPage)
                 println("isBrightnessSliderVisible", containerViewModel.isBrightnessSliderVisible)
+                println(
+                    "isBrightnessSliderVisibleInQqs",
+                    containerViewModel.isBrightnessSliderVisibleInQqs,
+                )
             }
             printSection("Expansion state") {
                 println("qsExpansion", qsExpansion)

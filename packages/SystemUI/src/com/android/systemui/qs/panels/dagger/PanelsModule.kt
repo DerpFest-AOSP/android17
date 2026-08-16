@@ -18,6 +18,8 @@ package com.android.systemui.qs.panels.dagger
 
 import com.android.systemui.qs.panels.data.repository.DefaultLargeTilesRepository
 import com.android.systemui.qs.panels.data.repository.DefaultLargeTilesRepositoryImpl
+import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractor
+import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractorImpl
 import dagger.Binds
 import dagger.Module
 
@@ -27,4 +29,9 @@ interface PanelsModule {
     fun bindDefaultLargeTilesSpecsRepository(
         impl: DefaultLargeTilesRepositoryImpl
     ): DefaultLargeTilesRepository
+
+    @Binds
+    fun bindQsBrightnessSliderVisibilityInteractor(
+        impl: QsBrightnessSliderVisibilityInteractorImpl
+    ): QsBrightnessSliderVisibilityInteractor
 }

@@ -26,13 +26,16 @@ import androidx.compose.ui.Modifier
 import com.android.systemui.brightness.ui.viewmodel.brightnessSliderViewModelFactory
 import com.android.systemui.haptics.msdl.tileHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
+import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
+import com.android.systemui.shade.domain.interactor.shadeModeInteractor
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTabs.EditModeTabsColors
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.BRIGHTNESS
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.MEDIA
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.TILES_GRID
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent.VOLUME
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModel.DragState
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeTabsViewModel
@@ -59,6 +62,9 @@ object NoOpEditModeLayoutTab : EditModeLayoutTab {
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
+        brightnessVisibility: QsSliderVisibility,
+        onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+        isDualShade: Boolean,
         modifier: Modifier,
     ) {}
 
@@ -69,6 +75,8 @@ object NoOpEditModeLayoutTab : EditModeLayoutTab {
         tilesGrid: @Composable () -> Unit,
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
+        brightnessVisibility: QsSliderVisibility,
+        isDualShade: Boolean,
         modifier: Modifier,
     ) {}
 }
@@ -109,6 +117,8 @@ val Kosmos.infiniteGridLayout by
             NoOpEditModeLayoutTab,
             FakeEditModeLayoutTabViewModel(),
             qsPreferencesInteractor,
+            qsBrightnessSliderVisibilityInteractor,
+            shadeModeInteractor,
             brightnessSliderViewModelFactory,
             audioStreamSliderViewModelFactory,
         )

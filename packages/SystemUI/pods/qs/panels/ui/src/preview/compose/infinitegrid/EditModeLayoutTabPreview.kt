@@ -26,6 +26,7 @@ import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabD
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Media
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.TilesGrid
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeLayoutTabDefaults.Volume
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.viewmodel.EditModeLayoutTabViewModelImpl
 
 @Composable
@@ -49,6 +50,9 @@ fun EditLayoutTabScreen(
             { TilesGrid() },
             { Media() },
             { Volume() },
+            QsSliderVisibility.EXPANDED,
+            {},
+            false,
             Modifier,
         )
         composer.DragShadow(
@@ -57,6 +61,8 @@ fun EditLayoutTabScreen(
             { TilesGrid() },
             { Media() },
             { Volume() },
+            QsSliderVisibility.EXPANDED,
+            false,
             Modifier,
         )
     }

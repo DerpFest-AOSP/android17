@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.android.systemui.common.ui.icons.PlayArrow
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.res.R
 
 object EditModeLayoutTabDefaults {
@@ -116,6 +117,37 @@ object EditModeLayoutTabDefaults {
         }
     }
 }
+
+@Composable
+fun brightnessVisibilityTitle(): String =
+    stringResource(R.string.qs_edit_brightness_visibility_title)
+
+@Composable
+fun QsSliderVisibility.label(isDualShade: Boolean, short: Boolean = false): String =
+    stringResource(
+        if (isDualShade) {
+            when (this) {
+                QsSliderVisibility.HIDDEN -> R.string.qs_edit_brightness_visibility_hide
+                else -> R.string.qs_edit_brightness_visibility_show
+            }
+        } else {
+            when (this) {
+                QsSliderVisibility.ALWAYS ->
+                    if (short) {
+                        R.string.qs_edit_brightness_visibility_always_short
+                    } else {
+                        R.string.qs_edit_brightness_visibility_always
+                    }
+                QsSliderVisibility.EXPANDED ->
+                    if (short) {
+                        R.string.qs_edit_brightness_visibility_expanded_short
+                    } else {
+                        R.string.qs_edit_brightness_visibility_expanded
+                    }
+                QsSliderVisibility.HIDDEN -> R.string.qs_edit_brightness_visibility_hidden
+            }
+        }
+    )
 
 @Composable
 private fun TilesRow(count: Int, modifier: Modifier = Modifier) {

@@ -207,6 +207,7 @@ import com.android.systemui.qs.panels.ui.compose.selection.rememberResizingState
 import com.android.systemui.qs.panels.ui.compose.selection.rememberSelectionState
 import com.android.systemui.qs.panels.ui.compose.selection.selectableTile
 import com.android.systemui.qs.panels.ui.model.EditModeTab
+import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.model.GridCell
 import com.android.systemui.qs.panels.ui.model.SpacerGridCell
 import com.android.systemui.qs.panels.ui.model.TileGridCell
@@ -264,6 +265,9 @@ fun DefaultEditTileGrid(
     editModeLayoutTabViewModel: EditModeLayoutTabViewModel? = null,
     layoutBrightness: @Composable () -> Unit = { Brightness() },
     layoutVolume: @Composable () -> Unit = { Volume() },
+    brightnessVisibility: QsSliderVisibility = QsSliderVisibility.EXPANDED,
+    onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit = {},
+    isDualShade: Boolean = false,
     onEditAction: (EditAction) -> Unit = {},
 ) {
     val selectionState = rememberSelectionState()
@@ -433,6 +437,9 @@ fun DefaultEditTileGrid(
                         tilesGrid = { TilesGrid() },
                         media = { Media() },
                         volume = layoutVolume,
+                        brightnessVisibility = brightnessVisibility,
+                        onBrightnessVisibilityChange = onBrightnessVisibilityChange,
+                        isDualShade = isDualShade,
                         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                     )
                 }
@@ -448,6 +455,8 @@ fun DefaultEditTileGrid(
                 tilesGrid = { TilesGrid() },
                 media = { Media() },
                 volume = layoutVolume,
+                brightnessVisibility = brightnessVisibility,
+                isDualShade = isDualShade,
                 modifier = Modifier,
             )
         }
