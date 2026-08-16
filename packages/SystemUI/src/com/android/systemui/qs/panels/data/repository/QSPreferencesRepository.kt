@@ -158,6 +158,7 @@ constructor(
                 .edit()
                 .remove(LARGE_TILES_SPECS_KEY)
                 .remove(LARGE_TILES_DEFAULT_KEY)
+                .remove(LARGE_TILES_POLICY_VERSION_KEY)
                 .apply()
         }
     }
@@ -167,12 +168,38 @@ constructor(
     }
 
     private fun SharedPreferences.getLargeTilesSpecs(): Set<TileSpec> {
+        applyMixedSizesPolicy()
+        return loadLargeTilesSpecs()
+    }
+
+    private fun SharedPreferences.loadLargeTilesSpecs(): Set<TileSpec> {
         return getStringSet(
                 LARGE_TILES_SPECS_KEY,
                 defaultLargeTilesRepository.defaultLargeTiles.map { it.spec }.toSet(),
             )
             ?.map { TileSpec.create(it) }
             ?.toSet() ?: defaultLargeTilesRepository.defaultLargeTiles
+    }
+
+    /**
+     * One-shot migration off the old AOSP in-place upgrade, which stored every current tile as
+     * large. That check could miss devices that later added tiles, so any oversized set is reset to
+     * the default mixed sizes.
+     */
+    private fun SharedPreferences.applyMixedSizesPolicy() {
+        if (getInt(LARGE_TILES_POLICY_VERSION_KEY, 0) >= LARGE_TILES_POLICY_VERSION) {
+            return
+        }
+        val stored = loadLargeTilesSpecs().migrateInternetTile()
+        val defaults = defaultLargeTilesRepository.defaultLargeTiles
+        val editor = edit().putInt(LARGE_TILES_POLICY_VERSION_KEY, LARGE_TILES_POLICY_VERSION)
+        if (stored.size > defaults.size) {
+            editor
+                .putStringSet(LARGE_TILES_SPECS_KEY, defaults.map { it.spec }.toSet())
+                .putBoolean(LARGE_TILES_DEFAULT_KEY, true)
+            logger.i("Migrated ${stored.size} large tiles to default mixed sizes")
+        }
+        editor.commit()
     }
 
     /**
@@ -195,6 +222,7 @@ constructor(
      */
     fun setInitialOrUpgradeLargeTiles(upgradePath: TilesUpgradePath, userId: Int) {
         with(getSharedPrefs(userId)) {
+            applyMixedSizesPolicy()
             when (upgradePath) {
                 is TilesUpgradePath.DefaultSet -> {
                     writeDefaultLargeTiles()
@@ -235,12 +263,12 @@ constructor(
      * upgrade that expanded the whole grid.
      */
     private fun SharedPreferences.shouldMigrateAllLargeTiles(currentTiles: Set<TileSpec>): Boolean {
-        if (currentTiles.isEmpty()) {
+        val current = currentTiles.migrateInternetTile()
+        if (current.isEmpty()) {
             return false
         }
-        val stored = getLargeTilesSpecs()
-        return stored.containsAll(currentTiles) &&
-            stored != defaultLargeTilesRepository.defaultLargeTiles
+        val stored = loadLargeTilesSpecs().migrateInternetTile()
+        return stored.containsAll(current) && stored != defaultLargeTilesRepository.defaultLargeTiles
     }
 
     private fun SharedPreferences.setLargeTilesDefault(value: Boolean) {
@@ -255,6 +283,8 @@ constructor(
         private const val TAG = "QSPreferencesRepository"
         private const val LARGE_TILES_SPECS_KEY = "large_tiles_specs"
         private const val LARGE_TILES_DEFAULT_KEY = "large_tiles_default"
+        private const val LARGE_TILES_POLICY_VERSION_KEY = "large_tiles_policy_version"
+        private const val LARGE_TILES_POLICY_VERSION = 1
         private const val EDIT_TOOLTIP_SHOWN_KEY = "edit_tooltip_shown"
         private const val SHADE_COMPONENTS_KEY = "shade_components"
         const val FILE_NAME = "quick_settings_prefs"

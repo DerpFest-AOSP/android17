@@ -125,6 +125,23 @@ class LargeTilesUpgradePathsTest : SysuiTestCase() {
         }
 
     /**
+     * Devices that went through the old all-large upgrade and later added tiles no longer match
+     * "every current tile is large". The oversized stored set is still reset to the default mixed
+     * sizes on the first prefs read.
+     */
+    @Test
+    fun oversizedStoredLargeTiles_onRead_migratesToDefault() =
+        kosmos.runTest {
+            val defaults = defaultLargeTilesRepository.defaultLargeTiles
+            val oversized = defaults.map { it.spec }.toSet() + setOf("a", "b", "c", "d", "e")
+            setLargeTilesSpecsInSharedPreferences(oversized)
+
+            val largeTiles by collectLastValue(underTest.largeTilesSpecs)
+
+            assertThat(largeTiles).isEqualTo(defaults)
+        }
+
+    /**
      * This test corresponds to a fresh start, and then the user restarts the device, without ever
      * having modified the set of large tiles.
      *

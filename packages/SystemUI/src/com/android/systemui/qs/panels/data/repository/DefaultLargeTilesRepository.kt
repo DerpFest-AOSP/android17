@@ -44,8 +44,6 @@ class DefaultLargeTilesRepositoryImpl @Inject constructor(@Main resources: Resou
             setOf(
                 TileSpec.create("internet"),
                 TileSpec.create("bt"),
-                TileSpec.create("dnd"),
-                TileSpec.create("cast"),
             )
         }
 }
