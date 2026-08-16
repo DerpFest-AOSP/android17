@@ -24,6 +24,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.PlatformSliderDefaults
+import com.android.systemui.brightness.ui.compose.qsSliderButtonShape
+import com.android.systemui.brightness.ui.compose.qsSliderTrackCornerSize
+import com.android.systemui.brightness.ui.compose.rememberSliderShapeMode
 import com.android.systemui.qs.ui.viewmodel.QuickSettingsContainerViewModel
 import com.android.systemui.res.R
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
@@ -49,6 +52,9 @@ fun QsVolumeSliderRow(
     dimensions: VolumeSliderDimensions = VolumeSliderDimensions.Defaults,
 ) {
     val volumeSliderState by viewModel.slider.collectAsStateWithLifecycle()
+    val shapeMode = rememberSliderShapeMode()
+    val trackCornerSize = qsSliderTrackCornerSize(shapeMode)
+    val buttonShape = qsSliderButtonShape(shapeMode)
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -66,10 +72,12 @@ fun QsVolumeSliderRow(
             sliderColors = PlatformSliderDefaults.defaultPlatformSliderColors(),
             hapticsViewModelFactory = viewModel.getSliderHapticsViewModelFactory(),
             dimensions = dimensions,
+            trackCornerSize = trackCornerSize,
         )
         Spacer(Modifier.width(8.dp))
         IconButton(
             modifier = Modifier.size(dimensions.trackHeight),
+            shape = buttonShape,
             colors =
                 IconButtonDefaults.iconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

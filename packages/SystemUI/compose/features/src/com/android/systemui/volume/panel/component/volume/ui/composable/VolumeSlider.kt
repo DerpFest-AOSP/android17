@@ -77,13 +77,14 @@ fun VolumeSlider(
     showLabel: Boolean = true,
     dimensions: VolumeSliderDimensions = VolumeSliderDimensions.Defaults,
     materialSliderColors: SliderColors = SystemUISliderColors.Defaults,
+    trackCornerSize: Dp = SliderTrackRoundedCorner,
 ) {
     Column(
         modifier =
             modifier
                 .borderOnFocus(
                     color = MaterialTheme.colorScheme.secondary,
-                    cornerSize = CornerSize(SliderTrackRoundedCorner),
+                    cornerSize = CornerSize(trackCornerSize),
                 )
                 .animateContentSize()
     ) {
@@ -163,7 +164,7 @@ fun VolumeSlider(
                                         )
                                     }
                                 },
-                            trackCornerSize = SliderTrackRoundedCorner,
+                            trackCornerSize = trackCornerSize,
                         )
                     },
                     thumb = { sliderState, interactionSource ->

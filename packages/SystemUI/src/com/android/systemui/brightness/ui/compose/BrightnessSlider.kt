@@ -74,6 +74,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.scale
@@ -152,13 +153,7 @@ fun BrightnessSlider(
     var hapticsEnabled by remember { mutableStateOf(readEnableHaptics(cr)) }
 
     val shapeMode = rememberSliderShapeMode()
-    val trackCornerDp: Dp =
-        when (shapeMode) {
-            1 -> 24.dp /* Circle */
-            2 -> 12.dp /* Rounded Square */
-            3 -> 0.dp /* Square */
-            else -> SliderTrackRoundedCorner
-        }
+    val trackCornerDp: Dp = qsSliderTrackCornerSize(shapeMode)
 
     var value by remember(gammaValue) { mutableIntStateOf(gammaValue) }
     val animatedValue by
@@ -480,6 +475,24 @@ fun rememberSliderShapeMode(): Int {
     return shapeMode
 }
 
+/** Track corner radius for the current QS slider shape mode. */
+fun qsSliderTrackCornerSize(shapeMode: Int): Dp =
+    when (shapeMode) {
+        1 -> 24.dp /* Circle */
+        2 -> 12.dp /* Rounded Square */
+        3 -> 0.dp /* Square */
+        else -> InternalDimensions.SliderTrackRoundedCorner
+    }
+
+/** Side-button shape for the current QS slider shape mode. */
+fun qsSliderButtonShape(shapeMode: Int): Shape =
+    when (shapeMode) {
+        1 -> CircleShape
+        2 -> RoundedCornerShape(12.dp)
+        3 -> RoundedCornerShape(0.dp)
+        else -> CircleShape
+    }
+
 private fun readShowAutoBrightness(cr: ContentResolver): Boolean =
     try {
         LineageSettings.Secure.getIntForUser(
@@ -510,13 +523,7 @@ private fun drawAutoBrightnessButton(
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
     val shapeMode = rememberSliderShapeMode()
-    val autoIconShape =
-        when (shapeMode) {
-            1 -> CircleShape
-            2 -> RoundedCornerShape(12.dp)
-            3 -> RoundedCornerShape(0.dp)
-            else -> CircleShape
-        }
+    val autoIconShape = qsSliderButtonShape(shapeMode)
     val backgroundColor by animateColorAsState(
         targetValue = if (autoMode) {
             MaterialTheme.colorScheme.primary
@@ -588,13 +595,7 @@ fun BrightnessSliderContainer(
     var enabled by remember { mutableStateOf(false) }
 
     val shapeMode = rememberSliderShapeMode()
-    val trackCornerDp: Dp =
-        when (shapeMode) {
-            1 -> 24.dp /* Circle */
-            2 -> 12.dp /* Rounded Square */
-            3 -> 0.dp /* Square */
-            else -> SliderTrackRoundedCorner
-        }
+    val trackCornerDp: Dp = qsSliderTrackCornerSize(shapeMode)
     val bgCornerDp: Dp =
         when (shapeMode) {
             1 -> 50.dp /* Circle */
