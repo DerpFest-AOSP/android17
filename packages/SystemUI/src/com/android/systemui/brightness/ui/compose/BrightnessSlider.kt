@@ -30,7 +30,6 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.DragInteraction
@@ -49,6 +48,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -67,7 +67,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
@@ -397,11 +396,12 @@ fun BrightnessSlider(
     )
 
         if (hasAutoBrightness && showAutoBrightness) {
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             drawAutoBrightnessButton(
                 autoMode = autoMode,
                 hapticsEnabled = hapticsEnabled,
-                onIconClick = onIconClick
+                onIconClick = onIconClick,
+                size = dimensions.trackHeight,
             )
         }
     }
@@ -505,6 +505,7 @@ private fun drawAutoBrightnessButton(
     autoMode: Boolean,
     hapticsEnabled: Boolean,
     onIconClick: suspend () -> Unit,
+    size: Dp,
 ) {
     val view = LocalView.current
     val coroutineScope = rememberCoroutineScope()
@@ -548,15 +549,18 @@ private fun drawAutoBrightnessButton(
             }
             coroutineScope.launch { onIconClick() }
         },
-        modifier = Modifier
-            .size(52.dp)
-            .clip(autoIconShape)
-            .background(backgroundColor)
+        modifier = Modifier.size(size),
+        shape = autoIconShape,
+        colors =
+            IconButtonDefaults.iconButtonColors(
+                containerColor = backgroundColor,
+                contentColor = iconTint,
+            ),
     ) {
         Icon(
             painter = painterResource(painterRes),
             contentDescription = stringResource(R.string.accessibility_adaptive_brightness),
-            tint = iconTint
+            tint = iconTint,
         )
     }
 }
