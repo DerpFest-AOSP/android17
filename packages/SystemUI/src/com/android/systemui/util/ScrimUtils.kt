@@ -225,10 +225,16 @@ class ScrimUtils private constructor() {
     fun isPulsing(): Boolean = mPulsing.get()
     fun isKeyguardShowing(): Boolean = mKeyguardShowing == true
 
-    fun isPanelFullyCollapsed(): Boolean =
-        if (mStateIsKeyguard) {
+    fun isPanelFullyCollapsed(): Boolean {
+        // While dozing the shade is off-screen, but mQsVisible/mExpandedFraction can
+        // still hold the pre-doze values if the screen turned off with it expanded.
+        if (mIsDozing == true || mPulsing.get()) {
+            return true
+        }
+        return if (mStateIsKeyguard) {
             !mQsVisible.get()
         } else {
             (mExpandedFraction ?: 0.0f) <= 0.0f
         }
+    }
 }
