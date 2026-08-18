@@ -6,9 +6,10 @@
 package com.android.systemui.qs.panels.ui.model
 
 /**
- * When a QS slider (currently brightness) should appear.
+ * When a QS slider (brightness or volume) should appear.
  *
- * Values match [lineageos.providers.LineageSettings.Secure.QS_SHOW_BRIGHTNESS_SLIDER]:
+ * Values match LineageSettings.Secure.QS_SHOW_BRIGHTNESS_SLIDER and
+ * LineageSettings.Secure.QS_SHOW_VOLUME_SLIDER:
  * - 0 = never (hidden)
  * - 1 = show when expanded
  * - 2 = show always (including QQS)

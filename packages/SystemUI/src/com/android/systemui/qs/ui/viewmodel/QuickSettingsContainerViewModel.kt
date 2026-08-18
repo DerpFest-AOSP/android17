@@ -29,6 +29,7 @@ import com.android.systemui.media.remedia.ui.viewmodel.MediaCarouselVisibility
 import com.android.systemui.media.remedia.ui.viewmodel.MediaViewModel
 import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
 import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractor
+import com.android.systemui.qs.panels.domain.interactor.QsVolumeSliderVisibilityInteractor
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.qs.panels.ui.viewmodel.DetailsViewModel
@@ -64,6 +65,7 @@ constructor(
     @ShadeDisplayAware shadeDisplayTypeRepository: DisplayTypeRepository,
     qsPreferencesInteractor: QSPreferencesInteractor,
     private val brightnessSliderVisibilityInteractor: QsBrightnessSliderVisibilityInteractor,
+    private val volumeSliderVisibilityInteractor: QsVolumeSliderVisibilityInteractor,
     private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
     val audioDetailsViewModelFactory: AudioDetailsViewModel.Factory,
     expandedAudioTileDetailsFeatureInteractor: ExpandedAudioTileDetailsFeatureInteractor,
@@ -90,6 +92,17 @@ constructor(
     val isBrightnessSliderVisibleInQqs: Boolean
         get() =
             isBrightnessSliderAvailable && brightnessSliderVisibility == QsSliderVisibility.ALWAYS
+
+    val volumeSliderVisibility: QsSliderVisibility by
+        volumeSliderVisibilityInteractor.visibility.hydratedStateOf(
+            initialValue = QsSliderVisibility.EXPANDED
+        )
+
+    val isVolumeSliderVisible: Boolean
+        get() = showVolumeSlider && volumeSliderVisibility != QsSliderVisibility.HIDDEN
+
+    val isVolumeSliderVisibleInQqs: Boolean
+        get() = showVolumeSlider && volumeSliderVisibility == QsSliderVisibility.ALWAYS
 
     val isEditing by editModeViewModel.isEditing.hydratedStateOf()
 

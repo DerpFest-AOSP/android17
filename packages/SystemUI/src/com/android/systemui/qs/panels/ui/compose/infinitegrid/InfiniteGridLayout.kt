@@ -47,6 +47,7 @@ import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.flags.QsLayoutMode
 import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
 import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractor
+import com.android.systemui.qs.panels.domain.interactor.QsVolumeSliderVisibilityInteractor
 import com.android.systemui.shade.domain.interactor.ShadeModeInteractor
 import com.android.systemui.shade.shared.model.ShadeMode
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
@@ -87,6 +88,7 @@ constructor(
     private val editModeLayoutTabViewModel: EditModeLayoutTabViewModel,
     private val qsPreferencesInteractor: QSPreferencesInteractor,
     private val brightnessSliderVisibilityInteractor: QsBrightnessSliderVisibilityInteractor,
+    private val volumeSliderVisibilityInteractor: QsVolumeSliderVisibilityInteractor,
     private val shadeModeInteractor: ShadeModeInteractor,
     private val brightnessSliderViewModelFactory: BrightnessSliderViewModel.Factory,
     private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
@@ -262,6 +264,8 @@ constructor(
 
         val brightnessVisibility by
             brightnessSliderVisibilityInteractor.visibility.collectAsStateWithLifecycle()
+        val volumeVisibility by
+            volumeSliderVisibilityInteractor.visibility.collectAsStateWithLifecycle()
         val shadeMode by shadeModeInteractor.shadeMode.collectAsStateWithLifecycle()
 
         DefaultEditTileGrid(
@@ -279,6 +283,8 @@ constructor(
                 editModeLayoutTabViewModel.takeIf { QsLayoutMode.isEnabled },
             brightnessVisibility = brightnessVisibility,
             onBrightnessVisibilityChange = brightnessSliderVisibilityInteractor::setVisibility,
+            volumeVisibility = volumeVisibility,
+            onVolumeVisibilityChange = volumeSliderVisibilityInteractor::setVisibility,
             isDualShade = shadeMode is ShadeMode.Dual,
             layoutBrightness = {
                 BrightnessSliderContainer(

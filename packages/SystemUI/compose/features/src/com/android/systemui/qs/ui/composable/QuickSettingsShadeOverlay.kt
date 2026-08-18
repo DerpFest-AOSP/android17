@@ -385,7 +385,7 @@ private fun ContentScope.QuickSettingsLayout(
                     when (component) {
                         QsShadeComponent.BRIGHTNESS ->
                             qsContainerViewModel.isBrightnessSliderVisible
-                        QsShadeComponent.VOLUME -> volumeSliderViewModel != null
+                        QsShadeComponent.VOLUME -> qsContainerViewModel.isVolumeSliderVisible
                         QsShadeComponent.MEDIA -> qsContainerViewModel.showMedia
                         QsShadeComponent.TILES_GRID -> true
                     }
@@ -417,7 +417,9 @@ private fun ContentScope.QuickSettingsLayout(
                     }
                 },
                 volume = {
-                    if (volumeSliderViewModel != null) {
+                    if (
+                        qsContainerViewModel.isVolumeSliderVisible && volumeSliderViewModel != null
+                    ) {
                         Box(
                             Modifier.systemGestureExclusionInShade(
                                 enabled = { layoutState.transitionState is TransitionState.Idle }

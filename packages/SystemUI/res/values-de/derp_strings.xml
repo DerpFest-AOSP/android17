@@ -101,6 +101,7 @@
     <string name="qs_edit_brightness_visibility_hidden">Ausgeblendet</string>
     <string name="qs_edit_brightness_visibility_show">Anzeigen</string>
     <string name="qs_edit_brightness_visibility_hide">Ausblenden</string>
+    <string name="qs_edit_volume_visibility_title">Lautstärkeregler</string>
 
     <!-- Name of the bluetooth battery level status bar setting. -->
     <string name="status_bar_bluetooth_battery_level">Bluetooth-Akkustand</string>

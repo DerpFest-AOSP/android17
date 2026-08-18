@@ -112,6 +112,8 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
         volume: @Composable () -> Unit,
         brightnessVisibility: QsSliderVisibility,
         onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+        volumeVisibility: QsSliderVisibility,
+        onVolumeVisibilityChange: (QsSliderVisibility) -> Unit,
         isDualShade: Boolean,
         modifier: Modifier,
     ) {
@@ -123,6 +125,8 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
             volume = volume,
             brightnessVisibility = brightnessVisibility,
             onBrightnessVisibilityChange = onBrightnessVisibilityChange,
+            volumeVisibility = volumeVisibility,
+            onVolumeVisibilityChange = onVolumeVisibilityChange,
             isDualShade = isDualShade,
             modifier = modifier,
         )
@@ -136,6 +140,7 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
         media: @Composable (() -> Unit),
         volume: @Composable (() -> Unit),
         brightnessVisibility: QsSliderVisibility,
+        volumeVisibility: QsSliderVisibility,
         isDualShade: Boolean,
         modifier: Modifier,
     ) {
@@ -146,6 +151,7 @@ class EditModeLayoutTabImpl @Inject constructor() : EditModeLayoutTab {
             media = media,
             volume = volume,
             brightnessVisibility = brightnessVisibility,
+            volumeVisibility = volumeVisibility,
             isDualShade = isDualShade,
             modifier = modifier,
         )
@@ -162,11 +168,13 @@ private fun EditLayoutTabImpl(
     volume: @Composable () -> Unit,
     brightnessVisibility: QsSliderVisibility,
     onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+    volumeVisibility: QsSliderVisibility,
+    onVolumeVisibilityChange: (QsSliderVisibility) -> Unit,
     isDualShade: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    var showVisibilitySheet by remember { mutableStateOf(false) }
+    var visibilitySheetFor by remember { mutableStateOf<QsShadeComponent?>(null) }
 
     DragEventListener(listState, viewmodel)
 
@@ -212,7 +220,12 @@ private fun EditLayoutTabImpl(
                     // AndroidView / slider attachment crashes).
                     Box(Modifier.graphicsLayer { alpha = contentAlpha }) {
                         if (isDragged) {
-                            PlaceholderComponent(component, brightnessVisibility, isDualShade)
+                            PlaceholderComponent(
+                                component,
+                                brightnessVisibility,
+                                volumeVisibility,
+                                isDualShade,
+                            )
                         } else {
                             Component(
                                 component,
@@ -221,20 +234,40 @@ private fun EditLayoutTabImpl(
                                 media,
                                 volume,
                                 brightnessVisibility,
+                                volumeVisibility,
                                 isDualShade,
-                                onBrightnessRowClick = { showVisibilitySheet = true },
+                                onBrightnessRowClick = {
+                                    visibilitySheetFor = QsShadeComponent.BRIGHTNESS
+                                },
+                                onVolumeRowClick = { visibilitySheetFor = QsShadeComponent.VOLUME },
                             )
                         }
                     }
                 }
             }
         }
-        if (showVisibilitySheet) {
-            BrightnessVisibilitySheet(
-                visibility = brightnessVisibility,
+        visibilitySheetFor?.let { sheetFor ->
+            SliderVisibilitySheet(
+                title =
+                    if (sheetFor == QsShadeComponent.VOLUME) {
+                        volumeVisibilityTitle()
+                    } else {
+                        brightnessVisibilityTitle()
+                    },
+                visibility =
+                    if (sheetFor == QsShadeComponent.VOLUME) {
+                        volumeVisibility
+                    } else {
+                        brightnessVisibility
+                    },
                 isDualShade = isDualShade,
-                onVisibilityChange = onBrightnessVisibilityChange,
-                onDismiss = { showVisibilitySheet = false },
+                onVisibilityChange =
+                    if (sheetFor == QsShadeComponent.VOLUME) {
+                        onVolumeVisibilityChange
+                    } else {
+                        onBrightnessVisibilityChange
+                    },
+                onDismiss = { visibilitySheetFor = null },
             )
         }
     }
@@ -248,6 +281,7 @@ private fun DragShadowImpl(
     media: @Composable () -> Unit,
     volume: @Composable () -> Unit,
     brightnessVisibility: QsSliderVisibility,
+    volumeVisibility: QsSliderVisibility,
     isDualShade: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -275,6 +309,7 @@ private fun DragShadowImpl(
                 media,
                 volume,
                 brightnessVisibility,
+                volumeVisibility,
                 isDualShade,
             )
         }
@@ -319,18 +354,26 @@ private fun Component(
     media: @Composable () -> Unit,
     volume: @Composable () -> Unit,
     brightnessVisibility: QsSliderVisibility,
+    volumeVisibility: QsSliderVisibility,
     isDualShade: Boolean,
     onBrightnessRowClick: (() -> Unit)? = null,
+    onVolumeRowClick: (() -> Unit)? = null,
 ) {
     when (component) {
         QsShadeComponent.BRIGHTNESS ->
-            BrightnessRow(
+            SliderRow(
                 visibility = brightnessVisibility,
                 isDualShade = isDualShade,
                 onClick = onBrightnessRowClick,
                 content = brightness,
             )
-        QsShadeComponent.VOLUME -> volume()
+        QsShadeComponent.VOLUME ->
+            SliderRow(
+                visibility = volumeVisibility,
+                isDualShade = isDualShade,
+                onClick = onVolumeRowClick,
+                content = volume,
+            )
         QsShadeComponent.MEDIA -> media()
         QsShadeComponent.TILES_GRID -> tilesGrid()
     }
@@ -340,23 +383,29 @@ private fun Component(
 private fun PlaceholderComponent(
     component: QsShadeComponent,
     brightnessVisibility: QsSliderVisibility,
+    volumeVisibility: QsSliderVisibility,
     isDualShade: Boolean,
 ) {
     when (component) {
         QsShadeComponent.BRIGHTNESS ->
-            BrightnessRow(
+            SliderRow(
                 visibility = brightnessVisibility,
                 isDualShade = isDualShade,
                 content = { EditModeLayoutTabDefaults.Brightness() },
             )
-        QsShadeComponent.VOLUME -> EditModeLayoutTabDefaults.Volume()
+        QsShadeComponent.VOLUME ->
+            SliderRow(
+                visibility = volumeVisibility,
+                isDualShade = isDualShade,
+                content = { EditModeLayoutTabDefaults.Volume() },
+            )
         QsShadeComponent.MEDIA -> EditModeLayoutTabDefaults.Media()
         QsShadeComponent.TILES_GRID -> EditModeLayoutTabDefaults.TilesGrid()
     }
 }
 
 @Composable
-private fun BrightnessRow(
+private fun SliderRow(
     visibility: QsSliderVisibility,
     isDualShade: Boolean,
     modifier: Modifier = Modifier,
@@ -368,7 +417,7 @@ private fun BrightnessRow(
     val clickModifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
     Box(modifier) {
         Box(
-            Modifier.graphicsLayer { alpha = if (hidden) HiddenBrightnessAlpha else 1f }
+            Modifier.graphicsLayer { alpha = if (hidden) HiddenSliderAlpha else 1f }
                 .then(clickModifier)
         ) {
             content()
@@ -403,7 +452,8 @@ private fun VisibilityChip(
 }
 
 @Composable
-private fun BrightnessVisibilitySheet(
+private fun SliderVisibilitySheet(
+    title: String,
     visibility: QsSliderVisibility,
     isDualShade: Boolean,
     onVisibilityChange: (QsSliderVisibility) -> Unit,
@@ -481,7 +531,7 @@ private fun BrightnessVisibilitySheet(
                             }
                     )
                     Text(
-                        text = brightnessVisibilityTitle(),
+                        text = title,
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     )
@@ -715,7 +765,7 @@ private fun Transition<EditModeLayoutTabViewModel.DragState?>.componentVerticalO
 private val ContainerGridRadiusDp = 28.dp
 private const val ContainerBackgroundAlpha = .15f
 private const val DraggedContainerBackgroundAlpha = .5f
-private const val HiddenBrightnessAlpha = .4f
+private const val HiddenSliderAlpha = .4f
 private val BorderWidth = 2.dp
 private val SheetCornerRadius = ContainerGridRadiusDp
 private val SheetBlurRadius = 30.dp

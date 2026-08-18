@@ -84,7 +84,7 @@ fun QsShadeComponentsColumn(
     }
 }
 
-/** Lays out brightness, tiles, and media according to [components] (volume is omitted in QQS). */
+/** Lays out brightness, volume, tiles, and media according to [components]. */
 @Composable
 fun QqsShadeComponentsLayout(
     components: List<QsShadeComponent>,
@@ -95,6 +95,7 @@ fun QqsShadeComponentsLayout(
     horizontalArrangement: Arrangement.Horizontal,
     modifier: Modifier = Modifier,
     brightness: @Composable () -> Unit = {},
+    volume: @Composable () -> Unit = {},
 ) {
     val firstOfTilesMedia =
         components.firstOrNull {
@@ -119,7 +120,9 @@ fun QqsShadeComponentsLayout(
                     QsShadeComponent.BRIGHTNESS -> {
                         key(QsShadeComponent.BRIGHTNESS) { brightness() }
                     }
-                    QsShadeComponent.VOLUME -> {}
+                    QsShadeComponent.VOLUME -> {
+                        key(QsShadeComponent.VOLUME) { volume() }
+                    }
                     QsShadeComponent.TILES_GRID,
                     QsShadeComponent.MEDIA -> {
                         if (component == firstOfTilesMedia) {
@@ -135,7 +138,7 @@ fun QqsShadeComponentsLayout(
                 key(component) {
                     when (component) {
                         QsShadeComponent.BRIGHTNESS -> brightness()
-                        QsShadeComponent.VOLUME -> {}
+                        QsShadeComponent.VOLUME -> volume()
                         QsShadeComponent.TILES_GRID -> tiles()
                         QsShadeComponent.MEDIA -> media()
                     }

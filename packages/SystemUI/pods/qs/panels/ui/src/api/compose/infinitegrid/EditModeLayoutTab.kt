@@ -33,6 +33,8 @@ public interface EditModeLayoutTab {
         volume: @Composable () -> Unit,
         brightnessVisibility: QsSliderVisibility,
         onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+        volumeVisibility: QsSliderVisibility,
+        onVolumeVisibilityChange: (QsSliderVisibility) -> Unit,
         isDualShade: Boolean,
         modifier: Modifier,
     )
@@ -54,6 +56,7 @@ public interface EditModeLayoutTab {
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
         brightnessVisibility: QsSliderVisibility,
+        volumeVisibility: QsSliderVisibility,
         isDualShade: Boolean,
         modifier: Modifier,
     )

@@ -52,6 +52,8 @@ fun EditLayoutTabScreen(
             { Volume() },
             QsSliderVisibility.EXPANDED,
             {},
+            QsSliderVisibility.EXPANDED,
+            {},
             false,
             Modifier,
         )
@@ -61,6 +63,7 @@ fun EditLayoutTabScreen(
             { TilesGrid() },
             { Media() },
             { Volume() },
+            QsSliderVisibility.EXPANDED,
             QsSliderVisibility.EXPANDED,
             false,
             Modifier,

@@ -87,7 +87,7 @@ fun ContentScope.QuickSettingsContent(
             },
         volume =
             @Composable {
-                if (volumeSliderViewModel != null) {
+                if (viewModel.isVolumeSliderVisible && volumeSliderViewModel != null) {
                     QsVolumeSliderRow(
                         viewModel = volumeSliderViewModel,
                         onSettingsClicked = {

@@ -16,6 +16,8 @@
 
 package com.android.systemui.qs.ui.viewmodel
 
+import android.platform.test.annotations.DisableFlags
+import android.platform.test.annotations.EnableFlags
 import android.testing.TestableLooper
 import android.view.Display
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -30,7 +32,10 @@ import com.android.systemui.lifecycle.activateIn
 import com.android.systemui.media.controls.shared.model.MediaData
 import com.android.systemui.media.remedia.data.repository.mediaPipelineRepository
 import com.android.systemui.qs.composefragment.dagger.usingMediaInComposeFragment
+import com.android.systemui.qs.flags.ExpandedAudioDetailedView
+import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.panels.domain.interactor.fakeQsBrightnessSliderVisibilityInteractor
+import com.android.systemui.qs.panels.domain.interactor.fakeQsVolumeSliderVisibilityInteractor
 import com.android.systemui.qs.panels.ui.model.QsSliderVisibility
 import com.android.systemui.shade.data.repository.fakeShadeDisplaysRepository
 import com.android.systemui.testKosmos
@@ -178,6 +183,54 @@ class QuickSettingsContainerViewModelTest : SysuiTestCase() {
 
                 assertThat(underTest.isBrightnessSliderVisible).isFalse()
                 assertThat(underTest.isBrightnessSliderVisibleInQqs).isFalse()
+            }
+        }
+
+    @DisableFlags(QsDetailedView.FLAG_NAME)
+    @Test
+    fun isVolumeSliderVisible_featureDisabled_isInvisible() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsVolumeSliderVisibilityInteractor.setVisibility(QsSliderVisibility.ALWAYS)
+
+                assertThat(underTest.isVolumeSliderVisible).isFalse()
+                assertThat(underTest.isVolumeSliderVisibleInQqs).isFalse()
+            }
+        }
+
+    @EnableFlags(QsDetailedView.FLAG_NAME, ExpandedAudioDetailedView.FLAG_NAME)
+    @Test
+    fun isVolumeSliderVisible_hidden_isInvisible() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsVolumeSliderVisibilityInteractor.setVisibility(QsSliderVisibility.HIDDEN)
+
+                assertThat(underTest.isVolumeSliderVisible).isFalse()
+                assertThat(underTest.isVolumeSliderVisibleInQqs).isFalse()
+            }
+        }
+
+    @EnableFlags(QsDetailedView.FLAG_NAME, ExpandedAudioDetailedView.FLAG_NAME)
+    @Test
+    fun isVolumeSliderVisible_expanded_visibleInQsOnly() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsVolumeSliderVisibilityInteractor.setVisibility(QsSliderVisibility.EXPANDED)
+
+                assertThat(underTest.isVolumeSliderVisible).isTrue()
+                assertThat(underTest.isVolumeSliderVisibleInQqs).isFalse()
+            }
+        }
+
+    @EnableFlags(QsDetailedView.FLAG_NAME, ExpandedAudioDetailedView.FLAG_NAME)
+    @Test
+    fun isVolumeSliderVisible_always_visibleInQsAndQqs() =
+        with(kosmos) {
+            testScope.runTest {
+                fakeQsVolumeSliderVisibilityInteractor.setVisibility(QsSliderVisibility.ALWAYS)
+
+                assertThat(underTest.isVolumeSliderVisible).isTrue()
+                assertThat(underTest.isVolumeSliderVisibleInQqs).isTrue()
             }
         }
 

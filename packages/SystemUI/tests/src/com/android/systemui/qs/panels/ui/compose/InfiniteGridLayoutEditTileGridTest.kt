@@ -56,6 +56,7 @@ import com.android.systemui.qs.flags.QsSplitInternetTile
 import com.android.systemui.qs.panels.domain.interactor.iconTilesInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
+import com.android.systemui.qs.panels.domain.interactor.qsVolumeSliderVisibilityInteractor
 import com.android.systemui.shade.domain.interactor.shadeModeInteractor
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.FakeEditModeLayoutTabViewModel
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.InfiniteGridLayout
@@ -108,6 +109,7 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                 editModeLayoutTabViewModel = FakeEditModeLayoutTabViewModel(),
                 qsPreferencesInteractor = qsPreferencesInteractor,
                 brightnessSliderVisibilityInteractor = qsBrightnessSliderVisibilityInteractor,
+                volumeSliderVisibilityInteractor = qsVolumeSliderVisibilityInteractor,
                 shadeModeInteractor = shadeModeInteractor,
                 brightnessSliderViewModelFactory = brightnessSliderViewModelFactory,
                 audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,

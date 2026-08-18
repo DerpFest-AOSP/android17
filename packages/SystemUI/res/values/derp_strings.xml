@@ -118,6 +118,7 @@
     <string name="qs_edit_brightness_visibility_hidden">Hidden</string>
     <string name="qs_edit_brightness_visibility_show">Show</string>
     <string name="qs_edit_brightness_visibility_hide">Hide</string>
+    <string name="qs_edit_volume_visibility_title">Volume slider</string>
 
     <!-- DerpFest Tile -->
     <string name="quick_derpfest_label">DerpFest Customizations</string>

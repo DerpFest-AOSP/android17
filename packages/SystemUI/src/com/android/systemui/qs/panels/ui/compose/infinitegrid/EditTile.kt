@@ -267,6 +267,8 @@ fun DefaultEditTileGrid(
     layoutVolume: @Composable () -> Unit = { Volume() },
     brightnessVisibility: QsSliderVisibility = QsSliderVisibility.EXPANDED,
     onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit = {},
+    volumeVisibility: QsSliderVisibility = QsSliderVisibility.EXPANDED,
+    onVolumeVisibilityChange: (QsSliderVisibility) -> Unit = {},
     isDualShade: Boolean = false,
     onEditAction: (EditAction) -> Unit = {},
 ) {
@@ -439,6 +441,8 @@ fun DefaultEditTileGrid(
                         volume = layoutVolume,
                         brightnessVisibility = brightnessVisibility,
                         onBrightnessVisibilityChange = onBrightnessVisibilityChange,
+                        volumeVisibility = volumeVisibility,
+                        onVolumeVisibilityChange = onVolumeVisibilityChange,
                         isDualShade = isDualShade,
                         modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
                     )
@@ -456,6 +460,7 @@ fun DefaultEditTileGrid(
                 media = { Media() },
                 volume = layoutVolume,
                 brightnessVisibility = brightnessVisibility,
+                volumeVisibility = volumeVisibility,
                 isDualShade = isDualShade,
                 modifier = Modifier,
             )

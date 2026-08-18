@@ -123,6 +123,9 @@ fun brightnessVisibilityTitle(): String =
     stringResource(R.string.qs_edit_brightness_visibility_title)
 
 @Composable
+fun volumeVisibilityTitle(): String = stringResource(R.string.qs_edit_volume_visibility_title)
+
+@Composable
 fun QsSliderVisibility.label(isDualShade: Boolean, short: Boolean = false): String =
     stringResource(
         if (isDualShade) {

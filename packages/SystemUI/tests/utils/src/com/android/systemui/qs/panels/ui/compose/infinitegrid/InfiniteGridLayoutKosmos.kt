@@ -28,6 +28,7 @@ import com.android.systemui.haptics.msdl.tileHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
+import com.android.systemui.qs.panels.domain.interactor.qsVolumeSliderVisibilityInteractor
 import com.android.systemui.shade.domain.interactor.shadeModeInteractor
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTabs.EditModeTabsColors
 import com.android.systemui.qs.panels.ui.model.QsShadeComponent
@@ -64,6 +65,8 @@ object NoOpEditModeLayoutTab : EditModeLayoutTab {
         volume: @Composable () -> Unit,
         brightnessVisibility: QsSliderVisibility,
         onBrightnessVisibilityChange: (QsSliderVisibility) -> Unit,
+        volumeVisibility: QsSliderVisibility,
+        onVolumeVisibilityChange: (QsSliderVisibility) -> Unit,
         isDualShade: Boolean,
         modifier: Modifier,
     ) {}
@@ -76,6 +79,7 @@ object NoOpEditModeLayoutTab : EditModeLayoutTab {
         media: @Composable () -> Unit,
         volume: @Composable () -> Unit,
         brightnessVisibility: QsSliderVisibility,
+        volumeVisibility: QsSliderVisibility,
         isDualShade: Boolean,
         modifier: Modifier,
     ) {}
@@ -118,6 +122,7 @@ val Kosmos.infiniteGridLayout by
             FakeEditModeLayoutTabViewModel(),
             qsPreferencesInteractor,
             qsBrightnessSliderVisibilityInteractor,
+            qsVolumeSliderVisibilityInteractor,
             shadeModeInteractor,
             brightnessSliderViewModelFactory,
             audioStreamSliderViewModelFactory,

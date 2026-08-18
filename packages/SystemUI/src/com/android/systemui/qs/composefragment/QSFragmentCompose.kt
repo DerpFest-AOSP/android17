@@ -760,6 +760,18 @@ constructor(
                             }
                         }
                     }
+                val volumeSliderViewModel =
+                    rememberQsVolumeSliderViewModel(viewModel.containerViewModel)
+                val VolumeSlider =
+                    @Composable {
+                        if (viewModel.isVolumeSliderVisibleInQqs && volumeSliderViewModel != null) {
+                            QsVolumeSliderRow(
+                                viewModel = volumeSliderViewModel,
+                                onSettingsClicked = {},
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
                 val Media =
                     @Composable {
                         if (viewModel.qqsMediaVisible) {
@@ -800,6 +812,7 @@ constructor(
                             tiles = Tiles,
                             media = Media,
                             brightness = BrightnessSlider,
+                            volume = VolumeSlider,
                             mediaInRow = viewModel.qqsMediaInRow,
                             components = viewModel.containerViewModel.shadeComponents,
                         )
@@ -907,7 +920,9 @@ constructor(
                             }
                         val VolumeSlider =
                             @Composable {
-                                if (volumeSliderViewModel != null) {
+                                if (
+                                    viewModel.isVolumeSliderVisible && volumeSliderViewModel != null
+                                ) {
                                     QsVolumeSliderRow(
                                         viewModel = volumeSliderViewModel,
                                         onSettingsClicked = {
@@ -1484,12 +1499,14 @@ fun QuickQuickSettingsLayout(
     mediaInRow: Boolean,
     components: List<QsShadeComponent> = QsShadeComponent.DEFAULT_ORDER,
     brightness: @Composable () -> Unit = {},
+    volume: @Composable () -> Unit = {},
 ) {
     QqsShadeComponentsLayout(
         components = components,
         tiles = tiles,
         media = media,
         brightness = brightness,
+        volume = volume,
         mediaInRow = mediaInRow,
         verticalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
         horizontalArrangement = spacedBy(QuickSettingsShade.Dimensions.HorizontalPadding),
