@@ -85,6 +85,7 @@ import com.android.systemui.media.remedia.ui.compose.MediaPresentationStyle
 import com.android.systemui.notifications.ui.composable.SnoozableHeadsUpNotificationPlaceholder
 import com.android.systemui.qs.composefragment.ui.GridAnchor
 import com.android.systemui.qs.flags.QsDetailedView
+import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsDataUsageViewModel
 import com.android.systemui.qs.panels.ui.compose.EditMode
 import com.android.systemui.qs.panels.ui.compose.QsShadeComponentsColumn
 import com.android.systemui.qs.panels.ui.compose.TileDetails
@@ -323,6 +324,7 @@ private fun ContentScope.QuickSettingsContainer(
                     qsContainerViewModel = containerViewModel,
                     toolbarViewModelFactory = contentViewModel.toolbarViewModelFactory,
                     buildNumberViewModelFactory = contentViewModel.buildNumberViewModelFactory,
+                    dataUsageViewModel = contentViewModel.dataUsageViewModel,
                     isTransparencyEnabled = contentViewModel.isTransparencyEnabled,
                     volumeSliderViewModel = contentViewModel.volumeSliderViewModel,
                     audioDetailsViewModelFactory = contentViewModel.audioDetailsViewModelFactory,
@@ -339,6 +341,7 @@ private fun ContentScope.QuickSettingsLayout(
     qsContainerViewModel: QuickSettingsContainerViewModel,
     toolbarViewModelFactory: ToolbarViewModel.Factory,
     buildNumberViewModelFactory: BuildNumberViewModel.Factory,
+    dataUsageViewModel: FooterActionsDataUsageViewModel,
     isTransparencyEnabled: Boolean,
     volumeSliderViewModel: AudioStreamSliderViewModel?,
     audioDetailsViewModelFactory: AudioDetailsViewModel.Factory,
@@ -468,14 +471,20 @@ private fun ContentScope.QuickSettingsLayout(
                 rememberViewModel("QuickSettingsShadeOverlay.BuildNumber") {
                     buildNumberViewModelFactory.create()
                 }
+            val dataUsageText by dataUsageViewModel.dataUsageText.collectAsStateWithLifecycle()
+            val isDataUsageVisible by dataUsageViewModel.isVisible.collectAsStateWithLifecycle()
 
-            if (buildNumberViewModel.buildNumber != null) {
+            if (
+                buildNumberViewModel.buildNumber != null ||
+                    (isDataUsageVisible && dataUsageText != null)
+            ) {
                 VerticalSeparator(QuickSettingsShade.Dimensions.ShortPadding)
                 BuildNumber(
                     viewModel = buildNumberViewModel,
                     modifier =
                         Modifier.align(Alignment.Start)
                             .padding(start = QuickSettingsShade.Dimensions.HorizontalPadding),
+                    dataUsageViewModel = dataUsageViewModel,
                 )
             }
 

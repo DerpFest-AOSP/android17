@@ -22,6 +22,7 @@ import com.android.systemui.development.ui.viewmodel.buildNumberViewModelFactory
 import com.android.systemui.keyguard.ui.transitions.blurConfig
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.kosmos.testDispatcher
+import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsDataUsageViewModel
 import com.android.systemui.qs.panels.domain.interactor.qsPanelAppearanceInteractor
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.toolbarViewModelFactory
 import com.android.systemui.qs.tiles.dialog.audioDetailsViewModelFactory
@@ -30,6 +31,7 @@ import com.android.systemui.shade.domain.interactor.shadeInteractor
 import com.android.systemui.shade.domain.interactor.shadeModeInteractor
 import com.android.systemui.statusbar.notification.stack.domain.interactor.notificationStackAppearanceInteractor
 import com.android.systemui.statusbar.ui.systemBarUtilsState
+import com.android.systemui.util.mockito.mock
 import com.android.systemui.volume.dialog.domain.interactor.expandedAudioTileDetailsFeatureInteractor
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.audioStreamSliderViewModelFactory
 import com.android.systemui.window.domain.interactor.windowRootViewBlurInteractor
@@ -54,6 +56,7 @@ val Kosmos.quickSettingsShadeOverlayContentViewModelFactory:
                     audioDetailsViewModelFactory = audioDetailsViewModelFactory,
                     audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,
                     buildNumberViewModelFactory = buildNumberViewModelFactory,
+                    dataUsageViewModel = mock<FooterActionsDataUsageViewModel>(),
                     volumeSliderCoroutineScope = volumeSliderCoroutineScope,
                     toolbarViewModelFactory = toolbarViewModelFactory,
                     blurConfig = blurConfig,
