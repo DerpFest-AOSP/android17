@@ -54,6 +54,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -86,6 +87,8 @@ import com.android.compose.modifiers.height
 import com.android.compose.modifiers.padding
 import com.android.compose.modifiers.thenIf
 import com.android.internal.jank.InteractionJankMonitor
+import com.android.systemui.brightness.ui.compose.BrightnessSliderContainer
+import com.android.systemui.brightness.ui.compose.ContainerColors
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.lifecycle.ExclusiveActivatable
@@ -100,12 +103,16 @@ import com.android.systemui.qs.composefragment.ui.GridAnchor
 import com.android.systemui.qs.flags.QsDetailedView
 import com.android.systemui.qs.footer.ui.compose.FooterActionsWithAnimatedVisibility
 import com.android.systemui.qs.panels.ui.compose.EditMode
+import com.android.systemui.qs.panels.ui.compose.QqsShadeComponentsLayout
 import com.android.systemui.qs.panels.ui.compose.QuickQuickSettings
 import com.android.systemui.qs.panels.ui.compose.TileDetails
+import com.android.systemui.qs.panels.ui.model.QsShadeComponent
 import com.android.systemui.qs.shared.ui.QuickSettings
 import com.android.systemui.qs.shared.ui.QuickSettings.Elements.SplitShadeQuickSettings
+import com.android.systemui.qs.ui.composable.QsVolumeSliderRow
 import com.android.systemui.qs.ui.composable.QuickSettingsContent
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
+import com.android.systemui.qs.ui.composable.rememberQsVolumeSliderViewModel
 import com.android.systemui.res.R
 import com.android.systemui.scene.session.ui.composable.SaveableSession
 import com.android.systemui.scene.shared.model.Scenes
@@ -311,6 +318,12 @@ private fun ContentScope.SingleShade(
     val mediaInRow = viewModel.showMediaInRow
     val notificationStackPadding = dimensionResource(id = R.dimen.notification_side_paddings_single)
 
+    val qsContainerViewModel =
+        rememberViewModel(traceName = "SingleShade.QSContainerViewModel") {
+            viewModel.qsContainerViewModelFactory.create(supportsBrightnessMirroring = false)
+        }
+    val volumeSliderViewModel = rememberQsVolumeSliderViewModel(qsContainerViewModel)
+
     val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
     val navBarHeight = { systemBarsPadding.calculateBottomPadding() }
 
@@ -433,6 +446,48 @@ private fun ContentScope.SingleShade(
                         }
                     },
                     mediaInRow = mediaInRow,
+                    components = qsContainerViewModel.shadeComponents,
+                    brightness = {
+                        if (
+                            viewModel.isQsEnabled &&
+                                qsContainerViewModel.isBrightnessSliderVisibleInQqs &&
+                                isAlwaysComposedContentVisible()
+                        ) {
+                            Element(
+                                key = QuickSettings.Elements.BrightnessSlider,
+                                modifier = Modifier,
+                            ) {
+                                BrightnessSliderContainer(
+                                    viewModel = qsContainerViewModel.brightnessSliderViewModel,
+                                    containerColors =
+                                        ContainerColors(
+                                            Color.Transparent,
+                                            ContainerColors.defaultContainerColor,
+                                        ),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    },
+                    volume = {
+                        if (
+                            viewModel.isQsEnabled &&
+                                qsContainerViewModel.isVolumeSliderVisibleInQqs &&
+                                volumeSliderViewModel != null &&
+                                isAlwaysComposedContentVisible()
+                        ) {
+                            Element(
+                                key = QuickSettings.Elements.VolumeSlider,
+                                modifier = Modifier,
+                            ) {
+                                QsVolumeSliderRow(
+                                    viewModel = volumeSliderViewModel,
+                                    onSettingsClicked = {},
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                    },
                 )
             },
             scrollableScrim = { onContentHeightChanged, isScrimAtRest ->
@@ -476,25 +531,23 @@ private fun MediaAndQqsLayout(
     tiles: @Composable () -> Unit,
     media: @Composable () -> Unit,
     mediaInRow: Boolean,
+    components: List<QsShadeComponent>,
+    brightness: @Composable () -> Unit,
+    volume: @Composable () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val modifierAnimated =
-        modifier.animateContentSizeNoClip(MaterialTheme.motionScheme.defaultSpatialSpec())
-    if (mediaInRow) {
-        Row(
-            modifier = modifierAnimated,
-            horizontalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(modifier = Modifier.weight(1f)) { tiles() }
-            Box(modifier = Modifier.weight(1f)) { media() }
-        }
-    } else {
-        Column(modifier = modifierAnimated, verticalArrangement = spacedBy(16.dp)) {
-            tiles()
-            media()
-        }
-    }
+    QqsShadeComponentsLayout(
+        components = components,
+        tiles = tiles,
+        media = media,
+        brightness = brightness,
+        volume = volume,
+        mediaInRow = mediaInRow,
+        verticalArrangement = spacedBy(16.dp),
+        horizontalArrangement = spacedBy(dimensionResource(R.dimen.qs_tile_margin_vertical)),
+        modifier =
+            modifier.animateContentSizeNoClip(MaterialTheme.motionScheme.defaultSpatialSpec()),
+    )
 }
 
 @Composable

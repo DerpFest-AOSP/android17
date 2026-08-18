@@ -58,7 +58,7 @@ fun ContentScope.QuickSettingsContent(
     QuickSettingsPanelLayout(
         brightness =
             @Composable {
-                if (viewModel.isBrightnessSliderVisible) {
+                if (viewModel.isBrightnessSliderVisible && isAlwaysComposedContentVisible()) {
                     var isBrightnessSliderInteractable by remember { mutableStateOf(false) }
                     LaunchedEffect(Unit) {
                         snapshotFlow { Elements.QuickSettingsContent.currentAlpha() }
@@ -87,15 +87,21 @@ fun ContentScope.QuickSettingsContent(
             },
         volume =
             @Composable {
-                if (viewModel.isVolumeSliderVisible && volumeSliderViewModel != null) {
-                    QsVolumeSliderRow(
-                        viewModel = volumeSliderViewModel,
-                        onSettingsClicked = {
-                            viewModel.detailsViewModel.onVolumeSettingsButtonClicked(
-                                viewModel.audioDetailsViewModelFactory.create()
-                            )
-                        },
-                    )
+                if (
+                    viewModel.isVolumeSliderVisible &&
+                        volumeSliderViewModel != null &&
+                        isAlwaysComposedContentVisible()
+                ) {
+                    Element(modifier = Modifier, key = Elements.VolumeSlider) {
+                        QsVolumeSliderRow(
+                            viewModel = volumeSliderViewModel,
+                            onSettingsClicked = {
+                                viewModel.detailsViewModel.onVolumeSettingsButtonClicked(
+                                    viewModel.audioDetailsViewModelFactory.create()
+                                )
+                            },
+                        )
+                    }
                 }
             },
         tiles =
