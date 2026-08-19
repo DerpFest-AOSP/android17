@@ -527,10 +527,6 @@ constructor(
 
     private fun View.capturePadding() = Padding(paddingStart, paddingTop, paddingEnd, paddingBottom)
 
-    private fun dpToPx(context: Context, dp: Int): Int {
-        return (dp * context.resources.displayMetrics.density).toInt()
-    }
-
     private fun applyClockChip(
         context: Context,
         chipStyle: Int,
