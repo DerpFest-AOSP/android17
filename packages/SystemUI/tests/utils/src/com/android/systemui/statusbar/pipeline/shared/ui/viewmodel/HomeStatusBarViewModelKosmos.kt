@@ -53,6 +53,7 @@ import com.android.systemui.statusbar.pipeline.shared.domain.interactor.statusBa
 import com.android.systemui.plugins.fakeDarkIconDispatcher
 import com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinder
 import com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarViewBinderImpl
+import com.android.systemui.statusbar.policy.fakeConfigurationController
 import com.android.systemui.statusbar.policy.domain.interactor.deviceProvisioningInteractor
 import com.android.systemui.statusbar.quickactions.ime.domain.interactor.imeIndicatorChipInteractor
 import com.android.systemui.statusbar.quickactions.popups.ui.viewmodel.statusBarPopupChipsViewModelFactory
@@ -60,7 +61,9 @@ import com.android.systemui.statusbar.systemstatusicons.ui.viewmodel.systemStatu
 import com.android.systemui.user.domain.interactor.userLogoutInteractor
 
 var Kosmos.homeStatusBarViewBinder: HomeStatusBarViewBinder by
-    Kosmos.Fixture { HomeStatusBarViewBinderImpl(fakeDarkIconDispatcher) }
+    Kosmos.Fixture {
+        HomeStatusBarViewBinderImpl(fakeDarkIconDispatcher, fakeConfigurationController)
+    }
 
 var Kosmos.homeStatusBarViewModel: HomeStatusBarViewModel by
     Kosmos.Fixture { homeStatusBarViewModelFactory.invoke(testableContext.displayId) }

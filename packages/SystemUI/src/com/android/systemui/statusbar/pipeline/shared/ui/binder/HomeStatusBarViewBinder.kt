@@ -54,6 +54,7 @@ import com.android.systemui.statusbar.pipeline.shared.ui.viewmodel.HomeStatusBar
 import com.android.systemui.statusbar.phone.ui.StatusBarIconController
 import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.plugins.DarkIconDispatcher
+import com.android.systemui.statusbar.policy.ConfigurationController
 import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -89,6 +90,7 @@ class HomeStatusBarViewBinderImpl
 @Inject
 constructor(
     private val darkIconDispatcher: DarkIconDispatcher,
+    private val configurationController: ConfigurationController,
 ) : HomeStatusBarViewBinder {
     private data class ClockState(
         val autoHide: Boolean,
@@ -304,6 +306,22 @@ constructor(
                 }
 
                 if (!ClockModernization.isEnabled) {
+                    val chipAppearanceGeneration = MutableStateFlow(0)
+                    val configListener =
+                        object : ConfigurationController.ConfigurationListener {
+                            override fun onThemeChanged() {
+                                chipAppearanceGeneration.update { it + 1 }
+                            }
+
+                            override fun onUiModeChanged() {
+                                chipAppearanceGeneration.update { it + 1 }
+                            }
+                        }
+                    configurationController.addCallback(configListener)
+                    coroutineContext[Job]?.invokeOnCompletion {
+                        configurationController.removeCallback(configListener)
+                    }
+
                     launch {
                         combine(
                                 viewModel.isClockVisible,
@@ -324,8 +342,12 @@ constructor(
                     launch {
                         var lastChipStyle: Int? = null
                         var lastClockPosition: Int? = null
+                        var lastChipAppearanceGeneration = 0
 
-                        clockState.collect { state ->
+                        combine(clockState, chipAppearanceGeneration) { state, generation ->
+                                state to generation
+                            }
+                            .collect { (state, generation) ->
                             // We only want to hide left clock for HUN
                             val hunBlocksClock =
                                 state.position == CLOCK_POSITION_LEFT && state.hideForHun
@@ -360,9 +382,11 @@ constructor(
                             // Show only the active one
                             activeClock?.adjustVisibility(finalVisibility)
 
-                            // Only touch chip UI when needed
-                            val chipNeedsUpdate = (lastChipStyle != state.chipStyle)
-                                        || (lastClockPosition != state.position)
+                            // Only touch chip UI when style, position, or theme/ui mode changes
+                            val chipNeedsUpdate =
+                                lastChipStyle != state.chipStyle ||
+                                    lastClockPosition != state.position ||
+                                    lastChipAppearanceGeneration != generation
                             if (chipNeedsUpdate) {
                                 applyClockChip(
                                     context = context,
@@ -377,6 +401,7 @@ constructor(
                                 )
                                 lastChipStyle = state.chipStyle
                                 lastClockPosition = state.position
+                                lastChipAppearanceGeneration = generation
                             }
                         }
                     }
