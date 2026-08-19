@@ -6978,9 +6978,9 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK_DATE_FORMAT = "status_bar_clock_date_format";
 
         /**
-         * Statusbar clock background
-         * 0 - hide accented chip  (default)
-         * 1 - show accented chip
+         * Status bar clock chip style.
+         * 0 - off (default)
+         * 1-12 - {@code sb_date_bg1} through {@code sb_date_bg12}
          * @hide
          */
         public static final String STATUSBAR_CLOCK_CHIP = "statusbar_clock_chip";
