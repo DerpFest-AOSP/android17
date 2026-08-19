@@ -316,6 +316,10 @@ constructor(
                             override fun onUiModeChanged() {
                                 chipAppearanceGeneration.update { it + 1 }
                             }
+
+                            override fun onDensityOrFontScaleChanged() {
+                                chipAppearanceGeneration.update { it + 1 }
+                            }
                         }
                     configurationController.addCallback(configListener)
                     coroutineContext[Job]?.invokeOnCompletion {
@@ -382,7 +386,7 @@ constructor(
                             // Show only the active one
                             activeClock?.adjustVisibility(finalVisibility)
 
-                            // Only touch chip UI when style, position, or theme/ui mode changes
+                            // Only touch chip UI when style, position, theme, or density changes
                             val chipNeedsUpdate =
                                 lastChipStyle != state.chipStyle ||
                                     lastClockPosition != state.position ||
@@ -569,6 +573,7 @@ constructor(
             clock.setPaddingRelative(padding.start, padding.top, padding.end, padding.bottom)
             clock.setChipTextColorOverride(null)
             clock.setStaticColor(false)
+            clock.setShouldApplyPadding(true)
             // Reset text color - Clock will handle it via DarkIconDispatcher
         }
 
@@ -596,8 +601,11 @@ constructor(
             if (style < 1 || style > clockBackgrounds.size) {
                 clock.setChipTextColorOverride(null)
                 clock.setStaticColor(false)
+                clock.setShouldApplyPadding(true)
                 return
             }
+
+            clock.setShouldApplyPadding(false)
 
             val chipTopBottomPadding = context.resources.getDimensionPixelSize(
                 R.dimen.status_bar_clock_chip_tb_padding)
