@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Statusbar clock chip colors -->
+    <color name="neumorph_outline_start">#FF5C5C5C</color>
+    <color name="neumorph_outline_end">#FF2A2A2A</color>
+</resources>
