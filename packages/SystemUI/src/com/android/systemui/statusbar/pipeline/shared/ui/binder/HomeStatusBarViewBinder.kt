@@ -629,6 +629,8 @@ constructor(
                 0.5f,
             )
             7, 11, 12 -> ColorUtils.blendARGB(accent2, accent1, 0.5f)
+            // Full-size scrim sits under the text (styles 7/12 only use it as a frame).
+            9 -> ColorUtils.compositeColors(context.getColor(R.color.clock_chip_overlay), accent1)
             else -> accent1
         }
     }

@@ -14,4 +14,6 @@
     <!-- Statusbar clock chip colors -->
     <color name="neumorph_outline_start">#FFBDBDBD</color>
     <color name="neumorph_outline_end">#FFF0F0F0</color>
+    <color name="clock_chip_overlay">#40000000</color>
+    <color name="clock_chip_overlay_soft">#30000000</color>
 </resources>
