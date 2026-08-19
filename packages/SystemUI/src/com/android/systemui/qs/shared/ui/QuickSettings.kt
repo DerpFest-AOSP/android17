@@ -33,8 +33,9 @@ object QuickSettings {
         val QuickSettingsTiles = ElementKey("QuickSettingsTiles")
         val GridAnchor = ElementKey("QuickSettingsGridAnchor")
         val FooterActions = ElementKey("QuickSettingsFooterActions")
-        val BrightnessSlider = ElementKey("BrightnessSlider")
-        val VolumeSlider = ElementKey("VolumeSlider")
+        val BrightnessSlider =
+            ElementKey("BrightnessSlider", contentPicker = SharedQsTileContentPicker)
+        val VolumeSlider = ElementKey("VolumeSlider", contentPicker = SharedQsTileContentPicker)
 
         fun TileSpec.toElementKey() =
             ElementKey(this.spec, TileIdentity(this), contentPicker = SharedQsTileContentPicker)
@@ -57,8 +58,8 @@ object QuickSettings {
     }
 
     /**
-     * When we come close to Qs, we want the shared tiles to be placed by the Qs scene such that
-     * gestures work and they are in sync with non-shared tiles.
+     * When we come close to Qs, we want shared QS elements (tiles and Always sliders) to be placed
+     * by the Qs scene such that gestures work and they are in sync with non-shared tiles.
      */
     const val SHARED_TILE_PICKER_THRESHOLD = 0.05f
 

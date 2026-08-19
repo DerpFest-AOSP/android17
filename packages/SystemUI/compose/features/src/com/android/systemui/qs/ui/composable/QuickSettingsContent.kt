@@ -58,7 +58,9 @@ fun ContentScope.QuickSettingsContent(
     QuickSettingsPanelLayout(
         brightness =
             @Composable {
-                if (viewModel.isBrightnessSliderVisible && isAlwaysComposedContentVisible()) {
+                // Keep the Element composed whenever the slider belongs in QS so shared
+                // transitions (Always in QQS) have a stable target size/offset from frame 0.
+                if (viewModel.isBrightnessSliderVisible) {
                     var isBrightnessSliderInteractable by remember { mutableStateOf(false) }
                     LaunchedEffect(Unit) {
                         snapshotFlow { Elements.QuickSettingsContent.currentAlpha() }
@@ -87,11 +89,7 @@ fun ContentScope.QuickSettingsContent(
             },
         volume =
             @Composable {
-                if (
-                    viewModel.isVolumeSliderVisible &&
-                        volumeSliderViewModel != null &&
-                        isAlwaysComposedContentVisible()
-                ) {
+                if (viewModel.isVolumeSliderVisible && volumeSliderViewModel != null) {
                     Element(modifier = Modifier, key = Elements.VolumeSlider) {
                         QsVolumeSliderRow(
                             viewModel = volumeSliderViewModel,

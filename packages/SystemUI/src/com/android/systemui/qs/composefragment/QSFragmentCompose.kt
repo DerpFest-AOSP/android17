@@ -746,17 +746,26 @@ constructor(
                 val BrightnessSlider =
                     @Composable {
                         if (viewModel.isBrightnessSliderVisibleInQqs) {
-                            AlwaysDarkMode {
-                                BrightnessSliderContainer(
-                                    viewModel =
-                                        viewModel.containerViewModel.brightnessSliderViewModel,
-                                    containerColors =
-                                        ContainerColors(
-                                            Color.Transparent,
-                                            ContainerColors.defaultContainerColor,
-                                        ),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
+                            Element(Elements.BrightnessSlider, Modifier) {
+                                AlwaysDarkMode {
+                                    BrightnessSliderContainer(
+                                        viewModel =
+                                            viewModel.containerViewModel.brightnessSliderViewModel,
+                                        containerColors =
+                                            ContainerColors(
+                                                Color.Transparent,
+                                                ContainerColors.defaultContainerColor,
+                                            ),
+                                        modifier =
+                                            Modifier.fillMaxWidth()
+                                                .padding(
+                                                    vertical =
+                                                        dimensionResource(
+                                                            id = R.dimen.qs_brightness_margin_top
+                                                        )
+                                                ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -765,11 +774,13 @@ constructor(
                 val VolumeSlider =
                     @Composable {
                         if (viewModel.isVolumeSliderVisibleInQqs && volumeSliderViewModel != null) {
-                            QsVolumeSliderRow(
-                                viewModel = volumeSliderViewModel,
-                                onSettingsClicked = {},
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                            Element(Elements.VolumeSlider, Modifier) {
+                                QsVolumeSliderRow(
+                                    viewModel = volumeSliderViewModel,
+                                    onSettingsClicked = {},
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
                     }
                 val Media =
@@ -888,33 +899,44 @@ constructor(
                         } else {
                         val BrightnessSlider =
                             @Composable {
-                                Box(
-                                    Modifier.systemGestureExclusionInShade(
-                                        enabled = {
-                                            /*
-                                             * While we are transitioning into QS (either from QQS
-                                             * or from gone), the global position of the brightness
-                                             * slider will change in every frame. This causes
-                                             * the modifier to send a new gesture exclusion
-                                             * rectangle on every frame. Instead, only apply the
-                                             * modifier when this is settled.
-                                             */
-                                            layoutState.transitionState is TransitionState.Idle &&
-                                                viewModel.isNotTransitioning
-                                        }
-                                    )
-                                ) {
-                                    AlwaysDarkMode {
-                                        BrightnessSliderContainer(
-                                            viewModel =
-                                                containerViewModel.brightnessSliderViewModel,
-                                            containerColors =
-                                                ContainerColors(
-                                                    Color.Transparent,
-                                                    ContainerColors.defaultContainerColor,
-                                                ),
-                                            modifier = Modifier.fillMaxWidth(),
+                                Element(Elements.BrightnessSlider, Modifier) {
+                                    Box(
+                                        Modifier.systemGestureExclusionInShade(
+                                            enabled = {
+                                                /*
+                                                 * While we are transitioning into QS (either from QQS
+                                                 * or from gone), the global position of the brightness
+                                                 * slider will change in every frame. This causes
+                                                 * the modifier to send a new gesture exclusion
+                                                 * rectangle on every frame. Instead, only apply the
+                                                 * modifier when this is settled.
+                                                 */
+                                                layoutState.transitionState is TransitionState.Idle &&
+                                                    viewModel.isNotTransitioning
+                                            }
                                         )
+                                    ) {
+                                        AlwaysDarkMode {
+                                            BrightnessSliderContainer(
+                                                viewModel =
+                                                    containerViewModel.brightnessSliderViewModel,
+                                                containerColors =
+                                                    ContainerColors(
+                                                        Color.Transparent,
+                                                        ContainerColors.defaultContainerColor,
+                                                    ),
+                                                modifier =
+                                                    Modifier.fillMaxWidth()
+                                                        .padding(
+                                                            vertical =
+                                                                dimensionResource(
+                                                                    id =
+                                                                        R.dimen
+                                                                            .qs_brightness_margin_top
+                                                                )
+                                                        ),
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -923,16 +945,19 @@ constructor(
                                 if (
                                     viewModel.isVolumeSliderVisible && volumeSliderViewModel != null
                                 ) {
-                                    QsVolumeSliderRow(
-                                        viewModel = volumeSliderViewModel,
-                                        onSettingsClicked = {
-                                            containerViewModel.detailsViewModel
-                                                .onVolumeSettingsButtonClicked(
-                                                    containerViewModel.audioDetailsViewModelFactory
-                                                        .create()
-                                                )
-                                        },
-                                    )
+                                    Element(Elements.VolumeSlider, Modifier) {
+                                        QsVolumeSliderRow(
+                                            viewModel = volumeSliderViewModel,
+                                            onSettingsClicked = {
+                                                containerViewModel.detailsViewModel
+                                                    .onVolumeSettingsButtonClicked(
+                                                        containerViewModel
+                                                            .audioDetailsViewModelFactory
+                                                            .create()
+                                                    )
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         // When always compose is false, this will always be true, and

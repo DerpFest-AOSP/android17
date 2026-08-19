@@ -450,8 +450,7 @@ private fun ContentScope.SingleShade(
                     brightness = {
                         if (
                             viewModel.isQsEnabled &&
-                                qsContainerViewModel.isBrightnessSliderVisibleInQqs &&
-                                isAlwaysComposedContentVisible()
+                                qsContainerViewModel.isBrightnessSliderVisibleInQqs
                         ) {
                             Element(
                                 key = QuickSettings.Elements.BrightnessSlider,
@@ -464,7 +463,14 @@ private fun ContentScope.SingleShade(
                                             Color.Transparent,
                                             ContainerColors.defaultContainerColor,
                                         ),
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier =
+                                        Modifier.fillMaxWidth()
+                                            .padding(
+                                                vertical =
+                                                    dimensionResource(
+                                                        id = R.dimen.qs_brightness_margin_top
+                                                    )
+                                            ),
                                 )
                             }
                         }
@@ -473,8 +479,7 @@ private fun ContentScope.SingleShade(
                         if (
                             viewModel.isQsEnabled &&
                                 qsContainerViewModel.isVolumeSliderVisibleInQqs &&
-                                volumeSliderViewModel != null &&
-                                isAlwaysComposedContentVisible()
+                                volumeSliderViewModel != null
                         ) {
                             Element(
                                 key = QuickSettings.Elements.VolumeSlider,
