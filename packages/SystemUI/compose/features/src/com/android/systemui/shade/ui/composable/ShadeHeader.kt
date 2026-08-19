@@ -76,8 +76,10 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.max
@@ -177,6 +179,16 @@ object ShadeHeader {
         const val BatteryTestTag = "battery_meter_composable_view"
     }
 }
+
+/** Horizontal inset used by overlay shade headers so they clear rounded panel corners. */
+@Composable
+@ReadOnlyComposable
+private fun overlayHeaderHorizontalPadding(): Dp =
+    maxOf(
+        LocalScreenCornerRadius.current / 2f,
+        Shade.Dimensions.HorizontalPadding,
+        OverlayShade.Dimensions.PanelPaddingHorizontal,
+    )
 
 /** The status bar that appears above the Shade scene */
 @Composable
@@ -376,12 +388,7 @@ fun ContentScope.OverlayShadeHeader(
     showClock: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val horizontalPadding =
-        maxOf(
-            LocalScreenCornerRadius.current / 2f,
-            Shade.Dimensions.HorizontalPadding,
-            OverlayShade.Dimensions.PanelPaddingHorizontal,
-        )
+    val horizontalPadding = overlayHeaderHorizontalPadding()
 
     // This layout assumes it is globally positioned at (0, 0) and is the same width as the screen.
     CutoutAwareShadeHeader(
@@ -475,10 +482,17 @@ fun ContentScope.OverlayShadeHeader(
 /** The header that appears at the top of the Quick Settings shade overlay. */
 @Composable
 fun QuickSettingsOverlayHeader(viewModel: ShadeHeaderViewModel, modifier: Modifier = Modifier) {
+    // Parent column is already inset by Shade.Dimensions.HorizontalPadding. Match the overlay
+    // clock: its chip is inset by overlayHeaderHorizontalPadding plus ChipPaddingHorizontal.
+    val extraHorizontalPadding =
+        (overlayHeaderHorizontalPadding() +
+                ShadeHeader.Dimensions.ChipPaddingHorizontal -
+                Shade.Dimensions.HorizontalPadding)
+            .coerceAtLeast(0.dp)
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().padding(horizontal = extraHorizontalPadding),
     ) {
         ShadeCarrierGroup(viewModel = viewModel)
         BatteryInfo(viewModel = viewModel, showIcon = false, useExpandedFormat = true)
