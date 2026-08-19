@@ -78,6 +78,9 @@
 
     <!-- Statusbar clock chip -->
     <dimen name="chip_corner_radius">28dp</dimen>
+    <dimen name="chip_corner_radius_inset_2">26dp</dimen>
+    <dimen name="chip_corner_radius_inset_3">25dp</dimen>
+    <dimen name="chip_corner_radius_inset_4">24dp</dimen>
     <dimen name="status_bar_clock_chip_tb_padding">0dp</dimen>
     <dimen name="status_bar_clock_chip_lr_padding">8dp</dimen>
 </resources>

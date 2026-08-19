@@ -7,7 +7,7 @@
                 android:angle="270.0"
                 android:startColor="@android:color/system_accent1_300"
                 android:endColor="@android:color/system_accent3_300" />
-            <corners android:radius="24dp" />
+            <corners android:radius="@dimen/chip_corner_radius" />
         </shape>
     </item>
     <item
@@ -20,7 +20,7 @@
                 android:angle="90.0"
                 android:startColor="@android:color/system_accent1_300"
                 android:endColor="@android:color/system_accent3_300" />
-            <corners android:radius="21dp" />
+            <corners android:radius="@dimen/chip_corner_radius_inset_3" />
         </shape>
     </item>
 </layer-list>

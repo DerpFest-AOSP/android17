@@ -7,13 +7,13 @@
                 android:angle="270.0"
                 android:endColor="@android:color/system_accent1_300"
                 android:startColor="@android:color/system_accent2_300" />
-            <corners android:radius="24dp" />
+            <corners android:radius="@dimen/chip_corner_radius" />
         </shape>
     </item>
     <item android:top="0dp" android:bottom="0dp">
         <shape android:shape="rectangle">
             <solid android:color="#30000000" />
-            <corners android:radius="24dp" />
+            <corners android:radius="@dimen/chip_corner_radius" />
         </shape>
     </item>
     <item
@@ -26,7 +26,7 @@
                 android:angle="90.0"
                 android:endColor="@android:color/system_accent1_300"
                 android:startColor="@android:color/system_accent2_300" />
-            <corners android:radius="20dp" />
+            <corners android:radius="@dimen/chip_corner_radius_inset_4" />
         </shape>
     </item>
 </layer-list>
