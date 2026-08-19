@@ -28,11 +28,11 @@ import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.View
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.app.animation.Interpolators
-import com.android.settingslib.Utils
 import com.android.systemui.clock.ClockModernization
 import com.android.systemui.derpfest.logo.LogoImage
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
@@ -549,7 +549,7 @@ constructor(
 
         // Chip styles that are outline-only (transparent fill). Use normal icon color
         // so DarkIconDispatcher can adapt to light/dark status bar; filled chips use
-        // luminance-aware contrast against the accent.
+        // luminance-aware contrast against the color the text actually sits on.
         val outlineChipStyles = setOf(2, 8)
 
         fun apply(clock: Clock, style: Int) {
@@ -589,7 +589,7 @@ constructor(
             clock.setTextAlignment(View.TEXT_ALIGNMENT_CENTER)
             if (style !in outlineChipStyles) {
                 clock.setStaticColor(true)
-                val chipBgColor = Utils.getColorAccentDefaultColor(context)
+                val chipBgColor = chipContrastBackground(context, style)
                 val chipTextColor = BatteryColors.textColorOnBackground(context, chipBgColor)
                 clock.setTextColor(chipTextColor)
                 clock.setChipTextColorOverride(chipTextColor)
@@ -610,6 +610,27 @@ constructor(
         if (chipStyle == 0) return
 
         activeClock?.let { apply(it, chipStyle) }
+    }
+
+    /**
+     * Background color the clock text sits on for [style], matching the visible inner fill of
+     * `sb_date_bg{style}` rather than theme [android.R.attr.colorAccent].
+     */
+    private fun chipContrastBackground(context: Context, style: Int): Int {
+        val accent1 = context.getColor(android.R.color.system_accent1_300)
+        val accent2 = context.getColor(android.R.color.system_accent2_300)
+        val accent3 = context.getColor(android.R.color.system_accent3_300)
+        return when (style) {
+            3, 6 -> ColorUtils.blendARGB(accent1, accent3, 0.5f)
+            4, 10 -> ColorUtils.blendARGB(accent2, accent3, 0.5f)
+            5 -> ColorUtils.blendARGB(
+                context.getColor(R.color.neumorph_outline_start),
+                context.getColor(R.color.neumorph_outline_end),
+                0.5f,
+            )
+            7, 11, 12 -> ColorUtils.blendARGB(accent2, accent1, 0.5f)
+            else -> accent1
+        }
     }
 
     /**
