@@ -332,7 +332,7 @@ fun ContentScope.ExpandedShadeHeader(
                 )
                 if (!viewModel.isPrivacyChipVisible) {
                     // Full-width shared element (stable on expand); vertically centered on the clock.
-                    Box(modifier = Modifier.align(Alignment.CenterVertically).fillMaxWidth()) {
+                    Box(modifier = Modifier.align(Alignment.Center).fillMaxWidth()) {
                         Box(
                             modifier =
                                 Modifier.element(ShadeHeader.Elements.ShadeCarrierGroup)
