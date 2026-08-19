@@ -319,13 +319,15 @@ fun ContentScope.ExpandedShadeHeader(
                             .wrapContentSize(Alignment.CenterStart),
                 )
                 if (!viewModel.isPrivacyChipVisible) {
+                    // Align to the clock row so the carrier is vertically centered with it.
                     Box(
                         modifier =
-                            Modifier.element(ShadeHeader.Elements.ShadeCarrierGroup).fillMaxWidth()
+                            Modifier.element(ShadeHeader.Elements.ShadeCarrierGroup)
+                                .align(Alignment.CenterEnd),
                     ) {
                         ShadeCarrierGroup(
                             viewModel = viewModel,
-                            modifier = Modifier.align(Alignment.CenterEnd).widthIn(max = 180.dp),
+                            modifier = Modifier.widthIn(max = 180.dp),
                         )
                     }
                 }
