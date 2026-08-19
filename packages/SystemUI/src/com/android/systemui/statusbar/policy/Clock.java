@@ -387,6 +387,10 @@ public class Clock extends TextView implements
         final Context context = new ContextThemeWrapper(mContext,
                 lightTheme ? R.style.Theme_SystemUI_LightWallpaper : R.style.Theme_SystemUI);
         lastDynamicColor = Utils.getColorAttrDefaultColor(context, R.attr.wallpaperTextColor);
+        if (mChipTextColorOverride != null) {
+            setTextColor(mChipTextColorOverride);
+            return;
+        }
         if (useStaticColor) return;
         setTextColor(lastDynamicColor);
     }
