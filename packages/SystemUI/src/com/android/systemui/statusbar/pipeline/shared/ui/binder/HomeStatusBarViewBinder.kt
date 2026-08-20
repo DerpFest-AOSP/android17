@@ -33,6 +33,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.android.app.animation.Interpolators
+import com.android.settingslib.Utils
 import com.android.systemui.clock.ClockModernization
 import com.android.systemui.derpfest.logo.LogoImage
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
@@ -579,7 +580,7 @@ constructor(
 
         // Chip styles that are outline-only (transparent fill). Use normal icon color
         // so DarkIconDispatcher can adapt to light/dark status bar; filled chips use
-        // luminance-aware contrast against the color the text actually sits on.
+        // luminance-aware contrast against colorAccent, same as the battery icon glyph.
         val outlineChipStyles = setOf(2, 8)
 
         fun apply(clock: Clock, style: Int) {
@@ -646,25 +647,22 @@ constructor(
     }
 
     /**
-     * Background color the clock text sits on for [style], matching the visible inner fill of
-     * `sb_date_bg{style}` rather than theme [android.R.attr.colorAccent].
+     * Background color used for chip text contrast. Must match the battery icon, which tints glyphs
+     * against [Utils.getColorAccentDefaultColor] (light accent in dark theme → dark text).
+     *
+     * Style 5 sits on neumorph paper rather than accent; style 9 has a full-size scrim.
      */
     private fun chipContrastBackground(context: Context, style: Int): Int {
-        val accent1 = context.getColor(android.R.color.system_accent1_300)
-        val accent2 = context.getColor(android.R.color.system_accent2_300)
-        val accent3 = context.getColor(android.R.color.system_accent3_300)
+        val accent = Utils.getColorAccentDefaultColor(context)
         return when (style) {
-            3, 6 -> ColorUtils.blendARGB(accent1, accent3, 0.5f)
-            4, 10 -> ColorUtils.blendARGB(accent2, accent3, 0.5f)
-            5 -> ColorUtils.blendARGB(
-                context.getColor(R.color.neumorph_outline_start),
-                context.getColor(R.color.neumorph_outline_end),
-                0.5f,
-            )
-            7, 11, 12 -> ColorUtils.blendARGB(accent2, accent1, 0.5f)
-            // Full-size scrim sits under the text (styles 7/12 only use it as a frame).
-            9 -> ColorUtils.compositeColors(context.getColor(R.color.clock_chip_overlay), accent1)
-            else -> accent1
+            5 ->
+                ColorUtils.blendARGB(
+                    context.getColor(R.color.neumorph_outline_start),
+                    context.getColor(R.color.neumorph_outline_end),
+                    0.5f,
+                )
+            9 -> ColorUtils.compositeColors(context.getColor(R.color.clock_chip_overlay), accent)
+            else -> accent
         }
     }
 
