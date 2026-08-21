@@ -19,6 +19,7 @@ package com.android.systemui.derpfest.logo;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -93,6 +94,12 @@ public abstract class LogoImage extends ImageView implements DarkReceiver {
         updateSettings();
 
         Dependency.get(DarkIconDispatcher.class).addDarkReceiver(this);
+    }
+
+    @Override
+    protected void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        updateLogoSpacing();
     }
 
     @Override
@@ -255,6 +262,7 @@ public abstract class LogoImage extends ImageView implements DarkReceiver {
                 Settings.System.STATUS_BAR_LOGO_POSITION, 0, UserHandle.USER_CURRENT);
         mLogoStyle = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.STATUS_BAR_LOGO_STYLE, 0, UserHandle.USER_CURRENT);
+        updateLogoSpacing();
         if (!mShowLogo || !isLogoVisible()) {
             setImageDrawable(null);
             setVisibility(View.GONE);
@@ -262,5 +270,29 @@ public abstract class LogoImage extends ImageView implements DarkReceiver {
         }
         updateLogo();
         setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Notification icons are drawn smaller than their view (see
+     * {@code status_bar_icon_drawing_size} inside {@code status_bar_icon_size_sp}), so they have
+     * an optical inset on each side. The left logo is {@code wrap_content} and would otherwise sit
+     * closer to the clock than those icons. Add that inset to the clock-facing padding so both
+     * gaps match.
+     */
+    private void updateLogoSpacing() {
+        if (mLogoPosition != 0) {
+            return;
+        }
+        final int startPadding = mContext.getResources().getDimensionPixelSize(
+                R.dimen.status_bar_left_clock_starting_padding);
+        final int clockGap = mContext.getResources().getDimensionPixelSize(
+                R.dimen.status_bar_left_clock_end_padding);
+        final int iconSize = mContext.getResources().getDimensionPixelSize(
+                R.dimen.status_bar_icon_size_sp);
+        final int drawingSize = mContext.getResources().getDimensionPixelSize(
+                R.dimen.status_bar_icon_drawing_size);
+        final int iconOpticalInset = Math.max(0, (iconSize - drawingSize) / 2);
+        setPaddingRelative(startPadding, getPaddingTop(), clockGap + iconOpticalInset,
+                getPaddingBottom());
     }
 }
