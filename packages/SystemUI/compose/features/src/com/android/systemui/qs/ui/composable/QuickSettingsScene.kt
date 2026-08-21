@@ -403,8 +403,14 @@ private fun ContentScope.QuickSettingsContent(
         // ############# Media ###############
         val mediaInRow = viewModel.qsContainerViewModel.showMediaInRow
         val detailsViewModel = viewModel.qsContainerViewModel.detailsViewModel
+        // This scene is always-composed. Dual shade shows the same details in the overlay, so only
+        // compose them here when this scene is actually visible.
         val tileDetails =
-            if (QsDetailedView.isEnabled) detailsViewModel.activeTileDetails else null
+            if (QsDetailedView.isEnabled && isAlwaysComposedContentVisible()) {
+                detailsViewModel.activeTileDetails
+            } else {
+                null
+            }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,

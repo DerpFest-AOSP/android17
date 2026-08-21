@@ -690,9 +690,11 @@ private fun ContentScope.SplitShade(
 
                                 Element(QS.rootElementKey, Modifier) {
                                     val tileDetails =
-                                        if (QsDetailedView.isEnabled)
+                                        if (QsDetailedView.isEnabled) {
                                             qsContainerViewModel.detailsViewModel.activeTileDetails
-                                        else null
+                                        } else {
+                                            null
+                                        }
                                     Column {
                                         Box(
                                             Modifier.weight(1f)
