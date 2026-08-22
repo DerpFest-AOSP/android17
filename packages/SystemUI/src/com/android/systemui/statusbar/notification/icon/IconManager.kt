@@ -124,6 +124,12 @@ constructor(
             settingsObserver,
             UserHandle.USER_ALL,
         )
+        shadeContext.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE),
+            false,
+            settingsObserver,
+            UserHandle.USER_ALL,
+        )
     }
 
     private val settingsObserver =
@@ -159,6 +165,19 @@ constructor(
      * colored is enabled and the Pink Bean setting is on).
      */
     private fun readColoredAndPinkBeanIconStyle(contentResolver: ContentResolver): Pair<Boolean, Boolean> {
+        val mode =
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE,
+                -1,
+                UserHandle.USER_CURRENT,
+            )
+        if (mode >= 0) {
+            val pinkBean = mode == Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE_PINK_BEAN
+            val colored = pinkBean
+                    || mode == Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE_APP_ICONS
+            return Pair(colored, pinkBean)
+        }
         val colored =
             Settings.System.getIntForUser(
                 contentResolver,

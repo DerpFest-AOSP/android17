@@ -7413,6 +7413,27 @@ public final class Settings {
         public static final String STATUSBAR_COMBINED_NOTIF_COUNT = "statusbar_combined_notif_count";
 
         /**
+         * Status bar notification icon display mode:
+         * 0 = show individual icons, 1 = combined count, 2 = hidden, 3 = Pink Bean icons,
+         * 4 = app / colored icons.
+         * When unset, {@link #STATUSBAR_COMBINED_NOTIF_COUNT}, {@link #STATUSBAR_COLORED_ICONS}
+         * and {@link #STATUSBAR_PINKBEAN_NOTIFICATION_ICONS} are used for backward compatibility.
+         * @hide
+         */
+        public static final String STATUSBAR_NOTIFICATION_ICON_MODE =
+                "statusbar_notification_icon_mode";
+        /** @hide */
+        public static final int STATUSBAR_NOTIFICATION_ICON_MODE_ICONS = 0;
+        /** @hide */
+        public static final int STATUSBAR_NOTIFICATION_ICON_MODE_COUNT = 1;
+        /** @hide */
+        public static final int STATUSBAR_NOTIFICATION_ICON_MODE_HIDDEN = 2;
+        /** @hide */
+        public static final int STATUSBAR_NOTIFICATION_ICON_MODE_PINK_BEAN = 3;
+        /** @hide */
+        public static final int STATUSBAR_NOTIFICATION_ICON_MODE_APP_ICONS = 4;
+
+        /**
          * Per-app refresh rate config
          * @hide
          */

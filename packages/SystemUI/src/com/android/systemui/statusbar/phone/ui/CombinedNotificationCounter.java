@@ -43,6 +43,7 @@ public class CombinedNotificationCounter extends FrameLayout
     private TextView mCountText;
     private int mTotalCount = 0;
     private boolean mShowCombinedCount = false;
+    private boolean mHideNotificationIcons = false;
     private boolean mIsForceHidden = false;
     private boolean mUpdatePending = false;
     private long mLastUpdateTime = 0;
@@ -97,6 +98,9 @@ public class CombinedNotificationCounter extends FrameLayout
         // Register observer
         mContext.getContentResolver().registerContentObserver(
             Settings.System.getUriFor(Settings.System.STATUSBAR_COMBINED_NOTIF_COUNT),
+            false, mSettingsObserver, UserHandle.USER_CURRENT);
+        mContext.getContentResolver().registerContentObserver(
+            Settings.System.getUriFor(Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE),
             false, mSettingsObserver, UserHandle.USER_CURRENT);
         
         updateCombinedCountSetting();
@@ -175,7 +179,16 @@ public class CombinedNotificationCounter extends FrameLayout
         if (mIsForceHidden || mHeadsUpPinned) {
             setVisibility(View.GONE);
             if (mNotificationContainer != null) {
-                mNotificationContainer.setVisibility(View.VISIBLE);
+                mNotificationContainer.setVisibility(
+                        mHideNotificationIcons ? View.GONE : View.VISIBLE);
+            }
+            return;
+        }
+
+        if (mHideNotificationIcons) {
+            setVisibility(View.GONE);
+            if (mNotificationContainer != null) {
+                mNotificationContainer.setVisibility(View.GONE);
             }
             return;
         }
@@ -205,13 +218,22 @@ public class CombinedNotificationCounter extends FrameLayout
     }
 
     private void updateCombinedCountSetting() {
-        boolean newShowCombinedCount = Settings.System.getIntForUser(
+        int mode = Settings.System.getIntForUser(
+            mContext.getContentResolver(),
+            Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE, -1,
+            UserHandle.USER_CURRENT);
+        boolean legacyCombined = Settings.System.getIntForUser(
             mContext.getContentResolver(),
             Settings.System.STATUSBAR_COMBINED_NOTIF_COUNT, 0,
             UserHandle.USER_CURRENT) == 1;
+        boolean newHideIcons = mode == Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE_HIDDEN;
+        boolean newShowCombinedCount = mode == Settings.System.STATUSBAR_NOTIFICATION_ICON_MODE_COUNT
+                || (mode < 0 && legacyCombined);
             
-        if (mShowCombinedCount != newShowCombinedCount) {
+        if (mShowCombinedCount != newShowCombinedCount
+                || mHideNotificationIcons != newHideIcons) {
             mShowCombinedCount = newShowCombinedCount;
+            mHideNotificationIcons = newHideIcons;
             requestUiUpdate();
         }
     }
