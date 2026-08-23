@@ -34,6 +34,7 @@ import com.android.systemui.statusbar.phone.statusBarKeyguardViewManager
 import com.android.systemui.util.settings.data.repository.userAwareSecureSettingsRepository
 import com.android.systemui.util.time.fakeSystemClock
 import com.android.systemui.wallpapers.domain.interactor.wallpaperFocalAreaInteractor
+import kotlinx.coroutines.flow.flowOf
 
 val Kosmos.keyguardTouchHandlingInteractor by
     Kosmos.Fixture {
@@ -56,5 +57,6 @@ val Kosmos.keyguardTouchHandlingInteractor by
             pointerDeviceRepository = pointerDeviceRepository,
             secureLockDeviceInteractor = { secureLockDeviceInteractor },
             wallpaperFocalAreaInteractor = wallpaperFocalAreaInteractor,
+            lineageDoubleTapToSleep = flowOf(false),
         )
     }

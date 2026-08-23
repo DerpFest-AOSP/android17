@@ -16,11 +16,14 @@
 
 package com.android.systemui.shade.ui.viewmodel
 
+import android.content.applicationContext
+import android.os.powerManager
 import com.android.systemui.battery.batteryMeterViewControllerFactory
 import com.android.systemui.clock.domain.interactor.clockInteractor
 import com.android.systemui.desktop.domain.interactor.desktopInteractor
 import com.android.systemui.kairos.kairos
 import com.android.systemui.kosmos.Kosmos
+import com.android.systemui.classifier.falsingManager
 import com.android.systemui.plugins.activityStarter
 import com.android.systemui.scene.domain.interactor.dualShadeEducationInteractor
 import com.android.systemui.scene.domain.interactor.sceneInteractor
@@ -37,6 +40,7 @@ import com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.mobileIconsVi
 import com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.mobileIconsViewModelKairos
 import com.android.systemui.statusbar.systemstatusicons.ui.viewmodel.systemStatusIconsViewModelFactory
 import com.android.systemui.statusbar.ui.systemBarUtilsState
+import com.android.systemui.util.time.fakeSystemClock
 import org.mockito.kotlin.mock
 
 val Kosmos.shadeHeaderViewModelFactory: ShadeHeaderViewModel.Factory by
@@ -44,7 +48,11 @@ val Kosmos.shadeHeaderViewModelFactory: ShadeHeaderViewModel.Factory by
         object : ShadeHeaderViewModel.Factory {
             override fun create(ignoreTestHarness: Boolean): ShadeHeaderViewModel {
                 return ShadeHeaderViewModel(
+                    context = applicationContext,
                     activityStarter = activityStarter,
+                    powerManager = powerManager,
+                    systemClock = fakeSystemClock,
+                    falsingManager = falsingManager,
                     sceneInteractor = sceneInteractor,
                     shadeInteractor = shadeInteractor,
                     carrierTextInteractor = fakeCarrierTextInteractor,

@@ -20,6 +20,7 @@ package com.android.systemui.keyguard.domain.interactor
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.ContentObserver
 import android.graphics.Point
 import android.graphics.Rect
 import android.os.PowerManager
@@ -49,12 +50,14 @@ import com.android.systemui.shared.settings.data.repository.SecureSettingsReposi
 import com.android.systemui.statusbar.phone.StatusBarKeyguardViewManager
 import com.android.systemui.statusbar.policy.AccessibilityManagerWrapper
 import com.android.systemui.util.time.SystemClock
+import com.android.systemui.utils.coroutines.flow.conflatedCallbackFlow
 import com.android.systemui.wallpapers.domain.interactor.WallpaperFocalAreaInteractor
 import dagger.Lazy
 import javax.inject.Inject
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -67,12 +70,11 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import lineageos.providers.LineageSettings
 
 /** Business logic for use-cases related to top-level touch handling in the lock screen. */
 @SysUISingleton
-class KeyguardTouchHandlingInteractor
-@Inject
-constructor(
+class KeyguardTouchHandlingInteractor(
     @ShadeDisplayAware private val context: Context,
     @Application private val scope: CoroutineScope,
     transitionInteractor: KeyguardTransitionInteractor,
@@ -91,7 +93,49 @@ constructor(
     private val pointerDeviceRepository: PointerDeviceRepository,
     private val wallpaperFocalAreaInteractor: WallpaperFocalAreaInteractor,
     secureLockDeviceInteractor: Lazy<SecureLockDeviceInteractor>,
+    private val lineageDoubleTapToSleep: Flow<Boolean>,
 ) {
+    @Inject
+    constructor(
+        @ShadeDisplayAware context: Context,
+        @Application scope: CoroutineScope,
+        transitionInteractor: KeyguardTransitionInteractor,
+        repository: KeyguardRepository,
+        logger: UiEventLogger,
+        broadcastDispatcher: BroadcastDispatcher,
+        accessibilityManager: AccessibilityManagerWrapper,
+        statusBarKeyguardViewManager: StatusBarKeyguardViewManager,
+        pulsingGestureListener: PulsingGestureListener,
+        faceAuthInteractor: DeviceEntryFaceAuthInteractor,
+        deviceEntryInteractor: DeviceEntryInteractor,
+        powerInteractor: PowerInteractor,
+        secureSettingsRepository: SecureSettingsRepository,
+        powerManager: PowerManager,
+        systemClock: SystemClock,
+        pointerDeviceRepository: PointerDeviceRepository,
+        wallpaperFocalAreaInteractor: WallpaperFocalAreaInteractor,
+        secureLockDeviceInteractor: Lazy<SecureLockDeviceInteractor>,
+    ) : this(
+        context,
+        scope,
+        transitionInteractor,
+        repository,
+        logger,
+        broadcastDispatcher,
+        accessibilityManager,
+        statusBarKeyguardViewManager,
+        pulsingGestureListener,
+        faceAuthInteractor,
+        deviceEntryInteractor,
+        powerInteractor,
+        secureSettingsRepository,
+        powerManager,
+        systemClock,
+        pointerDeviceRepository,
+        wallpaperFocalAreaInteractor,
+        secureLockDeviceInteractor,
+        lineageDoubleTapToSleepSetting(context),
+    )
     private val _udfpsAccessibilityOverlayBounds: MutableStateFlow<Rect?> = MutableStateFlow(null)
 
     /** Bounds of the UDFPS accessibility overlay */
@@ -128,24 +172,20 @@ constructor(
 
     /** Whether the double tap handling handling feature should be enabled. */
     val isDoubleTapHandlingEnabled: StateFlow<Boolean> =
-        if (isDoubleTapFeatureEnabled()) {
-                combine(
-                    transitionInteractor.transitionValue(KeyguardState.LOCKSCREEN),
-                    repository.isQuickSettingsVisible,
-                    isDoubleTapSettingEnabled(),
-                    secureLockDeviceInteractor.get().isSecureLockDeviceEnabled,
-                ) {
-                    isFullyTransitionedToLockScreen,
-                    isQuickSettingsVisible,
-                    isDoubleTapSettingEnabled,
-                    isSecureLockDeviceEnabled ->
-                    isFullyTransitionedToLockScreen == 1f &&
-                        !isQuickSettingsVisible &&
-                        isDoubleTapSettingEnabled &&
-                        !isSecureLockDeviceEnabled
-                }
-            } else {
-                flowOf(false)
+        combine(
+                transitionInteractor.transitionValue(KeyguardState.LOCKSCREEN),
+                repository.isQuickSettingsVisible,
+                isDoubleTapSettingEnabled(),
+                secureLockDeviceInteractor.get().isSecureLockDeviceEnabled,
+            ) {
+                isFullyTransitionedToLockScreen,
+                isQuickSettingsVisible,
+                isDoubleTapSettingEnabled,
+                isSecureLockDeviceEnabled ->
+                isFullyTransitionedToLockScreen == 1f &&
+                    !isQuickSettingsVisible &&
+                    isDoubleTapSettingEnabled &&
+                    !isSecureLockDeviceEnabled
             }
             .stateIn(
                 scope = scope,
@@ -274,7 +314,15 @@ constructor(
     }
 
     private fun isDoubleTapSettingEnabled(): Flow<Boolean> {
-        return secureSettingsRepository.boolSetting(Settings.Secure.DOUBLE_TAP_TO_SLEEP)
+        val aospSetting =
+            if (isAospDoubleTapFeatureEnabled()) {
+                secureSettingsRepository.boolSetting(Settings.Secure.DOUBLE_TAP_TO_SLEEP)
+            } else {
+                flowOf(false)
+            }
+        return combine(aospSetting, lineageDoubleTapToSleep) { aospEnabled, lineageEnabled ->
+            aospEnabled || lineageEnabled
+        }
     }
 
     private fun showSettings() {
@@ -285,7 +333,7 @@ constructor(
         return context.resources.getBoolean(R.bool.long_press_keyguard_customize_lockscreen_enabled)
     }
 
-    private fun isDoubleTapFeatureEnabled(): Boolean {
+    private fun isAospDoubleTapFeatureEnabled(): Boolean {
         return doubleTapToSleep() &&
             context.resources.getBoolean(com.android.internal.R.bool.config_supportDoubleTapSleep)
     }
@@ -357,5 +405,36 @@ constructor(
     companion object {
         private const val TAG = "KeyguardTouchHandlingInteractor"
         @VisibleForTesting const val DEFAULT_POPUP_AUTO_HIDE_TIMEOUT_MS = 5000L
+
+        @VisibleForTesting
+        fun lineageDoubleTapToSleepSetting(context: Context): Flow<Boolean> {
+            return conflatedCallbackFlow {
+                val observer =
+                    object : ContentObserver(null) {
+                        override fun onChange(selfChange: Boolean) {
+                            trySend(isLineageDoubleTapToSleepEnabled(context))
+                        }
+                    }
+                trySend(isLineageDoubleTapToSleepEnabled(context))
+                context.contentResolver.registerContentObserver(
+                    LineageSettings.System.getUriFor(LineageSettings.System.DOUBLE_TAP_SLEEP_GESTURE),
+                    false,
+                    observer,
+                )
+                awaitClose { context.contentResolver.unregisterContentObserver(observer) }
+            }
+        }
+
+        private fun isLineageDoubleTapToSleepEnabled(context: Context): Boolean {
+            val defaultEnabled =
+                context.resources.getBoolean(
+                    org.lineageos.platform.internal.R.bool.config_dt2sGestureEnabledByDefault
+                )
+            return LineageSettings.System.getInt(
+                context.contentResolver,
+                LineageSettings.System.DOUBLE_TAP_SLEEP_GESTURE,
+                if (defaultEnabled) 1 else 0,
+            ) != 0
+        }
     }
 }

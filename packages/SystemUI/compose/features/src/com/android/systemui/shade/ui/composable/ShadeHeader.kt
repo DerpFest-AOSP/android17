@@ -30,6 +30,9 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,6 +65,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -180,6 +185,29 @@ object ShadeHeader {
     }
 }
 
+/**
+ * Observes double-taps on shade headers without consuming the gesture, so clock/chip clicks still
+ * work. Used for both single-shade and dual-shade compose headers.
+ */
+private fun Modifier.shadeHeaderDoubleTapToSleep(viewModel: ShadeHeaderViewModel): Modifier {
+    return pointerInput(viewModel) {
+        var lastUpUptime = 0L
+        awaitEachGesture {
+            awaitFirstDown(pass = PointerEventPass.Initial)
+            val up = waitForUpOrCancellation(pass = PointerEventPass.Initial)
+            if (up != null) {
+                val now = up.uptimeMillis
+                if (now - lastUpUptime <= viewConfiguration.doubleTapTimeoutMillis) {
+                    viewModel.onHeaderDoubleTapped()
+                    lastUpUptime = 0L
+                } else {
+                    lastUpUptime = now
+                }
+            }
+        }
+    }
+}
+
 /** Horizontal inset used by overlay shade headers so they clear rounded panel corners. */
 @Composable
 @ReadOnlyComposable
@@ -213,7 +241,10 @@ fun ContentScope.CollapsedShadeHeader(
     // This layout assumes it is globally positioned at (0, 0) and is the same size as the screen.
     CutoutAwareShadeHeader(
         statusBarHeightPx = viewModel.statusBarHeightPx,
-        modifier = modifier.sysuiResTag(ShadeHeader.TestTags.Root),
+        modifier =
+            modifier
+                .shadeHeaderDoubleTapToSleep(viewModel)
+                .sysuiResTag(ShadeHeader.TestTags.Root),
         startContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -304,7 +335,10 @@ fun ContentScope.ExpandedShadeHeader(
     val textColor = ShadeHeader.Colors.textColor
     val statusBarHeight = viewModel.statusBarHeightPx.toDp(LocalContext.current).dp
 
-    Box(modifier = modifier.sysuiResTag(ShadeHeader.TestTags.Root)) {
+    Box(
+        modifier =
+            modifier.shadeHeaderDoubleTapToSleep(viewModel).sysuiResTag(ShadeHeader.TestTags.Root)
+    ) {
         if (viewModel.isPrivacyChipVisible) {
             Box(modifier = Modifier.height(statusBarHeight).fillMaxWidth()) {
                 PrivacyChip(
@@ -396,7 +430,7 @@ fun ContentScope.OverlayShadeHeader(
     // This layout assumes it is globally positioned at (0, 0) and is the same width as the screen.
     CutoutAwareShadeHeader(
         statusBarHeightPx = viewModel.statusBarHeightPx,
-        modifier = modifier,
+        modifier = modifier.shadeHeaderDoubleTapToSleep(viewModel),
         startContent = {
             Box(modifier = Modifier.layoutId(ShadeHeader.LayoutId.StartContent)) {
                 ShadeHighlightChip(
@@ -495,7 +529,11 @@ fun QuickSettingsOverlayHeader(viewModel: ShadeHeaderViewModel, modifier: Modifi
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth().padding(horizontal = extraHorizontalPadding),
+        modifier =
+            modifier
+                .shadeHeaderDoubleTapToSleep(viewModel)
+                .fillMaxWidth()
+                .padding(horizontal = extraHorizontalPadding),
     ) {
         ShadeCarrierGroup(viewModel = viewModel)
         BatteryInfo(viewModel = viewModel, showIcon = false, useExpandedFormat = true)

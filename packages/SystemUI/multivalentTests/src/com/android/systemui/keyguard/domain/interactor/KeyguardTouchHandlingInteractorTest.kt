@@ -62,6 +62,7 @@ import com.android.systemui.util.time.fakeSystemClock
 import com.android.systemui.wallpapers.domain.interactor.wallpaperFocalAreaInteractor
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -100,6 +101,7 @@ class KeyguardTouchHandlingInteractorTest : SysuiTestCase() {
 
     @Mock private lateinit var pulsingGestureListener: PulsingGestureListener
     @Mock private lateinit var powerManager: PowerManager
+    private val lineageDoubleTapToSleep = MutableStateFlow(false)
 
     @Before
     fun setUp() {
@@ -112,6 +114,7 @@ class KeyguardTouchHandlingInteractorTest : SysuiTestCase() {
         statusBarKeyguardViewManager = kosmos.statusBarKeyguardViewManager
 
         MockitoAnnotations.initMocks(this)
+        lineageDoubleTapToSleep.value = false
         overrideResource(R.bool.long_press_keyguard_customize_lockscreen_enabled, true)
         overrideResource(com.android.internal.R.bool.config_supportDoubleTapSleep, true)
         whenever(kosmos.accessibilityManagerWrapper.getRecommendedTimeoutMillis(anyInt(), anyInt()))
@@ -408,6 +411,25 @@ class KeyguardTouchHandlingInteractorTest : SysuiTestCase() {
     }
 
     @Test
+    @DisableFlags(FLAG_DOUBLE_TAP_TO_SLEEP)
+    fun isDoubleTapEnabled_lineageSettingEnabled_onlyTrueInLockScreenState() {
+        testScope.runTest {
+            lineageDoubleTapToSleep.value = true
+
+            val isEnabled = collectLastValue(underTest.isDoubleTapHandlingEnabled)
+            KeyguardState.entries.forEach { keyguardState ->
+                setUpState(keyguardState = keyguardState)
+
+                if (keyguardState == KeyguardState.LOCKSCREEN) {
+                    assertThat(isEnabled()).isTrue()
+                } else {
+                    assertThat(isEnabled()).isFalse()
+                }
+            }
+        }
+    }
+
+    @Test
     @EnableFlags(FLAG_DOUBLE_TAP_TO_SLEEP)
     fun onDoubleClick_doubleTapDisabled() {
         testScope.runTest {
@@ -460,6 +482,7 @@ class KeyguardTouchHandlingInteractorTest : SysuiTestCase() {
                 pointerDeviceRepository = kosmos.pointerDeviceRepository,
                 secureLockDeviceInteractor = { kosmos.secureLockDeviceInteractor },
                 wallpaperFocalAreaInteractor = kosmos.wallpaperFocalAreaInteractor,
+                lineageDoubleTapToSleep = lineageDoubleTapToSleep,
             )
         setUpState()
     }

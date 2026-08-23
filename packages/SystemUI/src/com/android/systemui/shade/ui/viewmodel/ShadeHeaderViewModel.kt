@@ -17,7 +17,9 @@
 package com.android.systemui.shade.ui.viewmodel
 
 import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
+import android.os.PowerManager
 import android.provider.Settings
 import android.view.ViewGroup
 import androidx.compose.runtime.derivedStateOf
@@ -27,8 +29,10 @@ import com.android.systemui.battery.BatteryMeterViewController
 import com.android.systemui.clock.domain.interactor.ClockInteractor
 import com.android.systemui.desktop.domain.interactor.DesktopInteractor
 import com.android.systemui.kairos.KairosNetwork
+import com.android.systemui.keyguard.domain.interactor.KeyguardTouchHandlingInteractor
 import com.android.systemui.lifecycle.HydratedActivatable
 import com.android.systemui.plugins.ActivityStarter
+import com.android.systemui.plugins.FalsingManager
 import com.android.systemui.privacy.AbstractOngoingPrivacyChip
 import com.android.systemui.privacy.PrivacyItem
 import com.android.systemui.scene.domain.interactor.DualShadeEducationInteractor
@@ -54,6 +58,7 @@ import com.android.systemui.statusbar.pipeline.mobile.ui.viewmodel.MobileIconsVi
 import com.android.systemui.statusbar.systemstatusicons.domain.interactor.EmptySystemStatusIconBlockListInteractor
 import com.android.systemui.statusbar.systemstatusicons.ui.viewmodel.SystemStatusIconsViewModel
 import com.android.systemui.statusbar.ui.SystemBarUtilsState
+import com.android.systemui.util.time.SystemClock
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -63,7 +68,11 @@ import kotlinx.coroutines.flow.map
 class ShadeHeaderViewModel
 @AssistedInject
 constructor(
+    @ShadeDisplayAware private val context: Context,
     private val activityStarter: ActivityStarter,
+    private val powerManager: PowerManager,
+    private val systemClock: SystemClock,
+    private val falsingManager: FalsingManager,
     private val sceneInteractor: SceneInteractor,
     private val shadeInteractor: ShadeInteractor,
     private val carrierTextInteractor: CarrierTextInteractor,
@@ -149,6 +158,10 @@ constructor(
 
     val shorterDateText: String by clockInteractor.shorterDateText.hydratedStateOf(initialValue = "")
 
+    private val isDoubleTapToSleepEnabled: Boolean by
+        KeyguardTouchHandlingInteractor.lineageDoubleTapToSleepSetting(context)
+            .hydratedStateOf(initialValue = false)
+
     val inactiveChipHighlight: ChipHighlightModel
         get() =
             if (useDesktopStatusBar) {
@@ -167,6 +180,14 @@ constructor(
         desktopInteractor.useDesktopStatusBar.hydratedStateOf(
             initialValue = desktopInteractor.useDesktopStatusBar.value
         )
+
+    /** Double-tap on single-shade or dual-shade compose headers. */
+    fun onHeaderDoubleTapped() {
+        if (!isDoubleTapToSleepEnabled || falsingManager.isFalseDoubleTap) {
+            return
+        }
+        powerManager.goToSleep(systemClock.uptimeMillis())
+    }
 
     /** Notifies that the privacy chip was clicked. */
     fun onPrivacyChipClicked(privacyChip: AbstractOngoingPrivacyChip) {
