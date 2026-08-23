@@ -16,6 +16,7 @@
 
 package com.android.systemui.scene.domain.startable
 
+import android.content.applicationContext
 import com.android.systemui.animation.activityTransitionAnimator
 import com.android.systemui.authentication.domain.interactor.authenticationInteractor
 import com.android.systemui.bouncer.domain.interactor.alternateBouncerInteractor
@@ -65,6 +66,7 @@ val Kosmos.sceneContainerStartable by Fixture {
         // go/keep-sorted start
         activityTransitionAnimator = activityTransitionAnimator,
         alternateBouncerInteractor = alternateBouncerInteractor,
+        applicationContext = applicationContext,
         applicationScope = testScope.backgroundScope,
         authenticationInteractor = { authenticationInteractor },
         bootInteractor = onBootTransitionInteractor,

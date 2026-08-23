@@ -17,7 +17,10 @@
 package com.android.systemui.scene.domain.startable
 
 import android.app.StatusBarManager
+import android.content.Context
 import android.os.PowerManager
+import android.os.UserHandle
+import android.provider.Settings
 import android.view.SurfaceControl
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.snapshotFlow
@@ -132,6 +135,7 @@ constructor(
     // go/keep-sorted start by_regex=(?:@\S+)?\s*(?:private|internal|public)?\s*(?:val|var)?\s*(.*)
     private val activityTransitionAnimator: ActivityTransitionAnimator,
     private val alternateBouncerInteractor: AlternateBouncerInteractor,
+    @Application private val applicationContext: Context,
     @Application private val applicationScope: CoroutineScope,
     private val authenticationInteractor: Lazy<AuthenticationInteractor>,
     private val bootInteractor: OnBootTransitionInteractor,
@@ -566,6 +570,9 @@ constructor(
                         launch {
                             deviceEntryHapticsInteractor.playSuccessHapticOnDeviceEntry.collect {
                                 currentScene ->
+                                if (!isFpHapticEnabled(Settings.System.FP_SUCCESS_VIBRATE)) {
+                                    return@collect
+                                }
                                 if (Flags.msdlFeedback()) {
                                     msdlPlayer.playToken(
                                         MSDLToken.UNLOCK,
@@ -581,6 +588,9 @@ constructor(
 
                         launch {
                             deviceEntryHapticsInteractor.playErrorHaptic.collect { currentScene ->
+                                if (!isFpHapticEnabled(Settings.System.FP_ERROR_VIBRATE)) {
+                                    return@collect
+                                }
                                 if (Flags.msdlFeedback()) {
                                     msdlPlayer.playToken(
                                         MSDLToken.FAILURE,
@@ -597,6 +607,15 @@ constructor(
                 }
             }
         }
+    }
+
+    private fun isFpHapticEnabled(key: String): Boolean {
+        return Settings.System.getIntForUser(
+            applicationContext.contentResolver,
+            key,
+            1,
+            UserHandle.USER_CURRENT,
+        ) == 1
     }
 
     /** Keeps [SysUiState] up-to-date */
