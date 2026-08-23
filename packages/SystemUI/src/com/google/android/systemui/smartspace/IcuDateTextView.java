@@ -14,8 +14,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 
 import com.android.systemui.plugins.BcSmartspaceDataPlugin;
-
 import com.android.systemui.res.R;
+import com.android.systemui.util.time.ChineseLunarCalendarUtil;
 
 import java.util.Locale;
 import java.util.Objects;
@@ -29,6 +29,8 @@ public class IcuDateTextView extends DoubleShadowTextView {
     public final BroadcastReceiver mIntentReceiver;
     public boolean mIsAodEnabled;
     public Boolean mIsInteractive;
+    public final ContentObserver mLunarCalendarObserver;
+    public boolean mShowLunarCalendar;
     public String mText;
     public final Runnable mTimeChangedCallback;
     public BcSmartspaceDataPlugin.TimeChangedDelegate mTimeChangedDelegate;
@@ -97,9 +99,22 @@ public class IcuDateTextView extends DoubleShadowTextView {
         if (mBgHandler == null) {
             Log.w(TAG, "mBgHandler is not set! Fallback to make binder calls on main thread.");
             getContext().registerReceiver(mIntentReceiver, intentFilter, Context.RECEIVER_EXPORTED);
+            getContext().getContentResolver().registerContentObserver(
+                    Settings.System.getUriFor(Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR),
+                    false,
+                    mLunarCalendarObserver,
+                    -1);
         } else {
-            mBgHandler.post(() -> getContext().registerReceiver(mIntentReceiver, intentFilter, Context.RECEIVER_EXPORTED));
+            mBgHandler.post(() -> {
+                getContext().registerReceiver(mIntentReceiver, intentFilter, Context.RECEIVER_EXPORTED);
+                getContext().getContentResolver().registerContentObserver(
+                        Settings.System.getUriFor(Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR),
+                        false,
+                        mLunarCalendarObserver,
+                        -1);
+            });
         }
+        mShowLunarCalendar = isLunarCalendarEnabled();
 
         if (mTimeChangedDelegate == null) {
             DefaultTimeChangedDelegate delegate = new DefaultTimeChangedDelegate();
@@ -116,11 +131,13 @@ public class IcuDateTextView extends DoubleShadowTextView {
             if (mBgHandler == null) {
                 Log.w(TAG, "mBgHandler is not set! Fallback to make binder calls on main thread.");
                 getContext().unregisterReceiver(mIntentReceiver);
+                getContext().getContentResolver().unregisterContentObserver(mLunarCalendarObserver);
             } else {
                 mBgHandler.post(() -> {
                     try {
                         getContext().unregisterReceiver(mIntentReceiver);
                     } catch (IllegalArgumentException ignored) {}
+                    getContext().getContentResolver().unregisterContentObserver(mLunarCalendarObserver);
                 });
             }
             mTimeChangedDelegate.unregister();
@@ -142,12 +159,33 @@ public class IcuDateTextView extends DoubleShadowTextView {
             mFormatter.setContext(DisplayContext.CAPITALIZATION_FOR_BEGINNING_OF_SENTENCE);
         }
         String newText = mFormatter.format(Long.valueOf(System.currentTimeMillis()));
+        if (mShowLunarCalendar) {
+            String lunarText = ChineseLunarCalendarUtil.getLunarDateString();
+            newText = newText.isEmpty() ? lunarText : newText + " " + lunarText;
+        }
         if (Objects.equals(mText, newText)) {
             return;
         }
         mText = newText;
         setText(newText);
         setContentDescription(newText);
+    }
+
+    private boolean isLunarCalendarEnabled() {
+        return Settings.System.getIntForUser(
+                getContext().getContentResolver(),
+                Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR,
+                0,
+                getContext().getUserId()) == 1;
+    }
+
+    private void updateShowLunarCalendar() {
+        boolean enabled = isLunarCalendarEnabled();
+        if (mShowLunarCalendar == enabled) {
+            return;
+        }
+        mShowLunarCalendar = enabled;
+        onTimeChanged(false);
     }
 
     @Override
@@ -178,6 +216,13 @@ public class IcuDateTextView extends DoubleShadowTextView {
                 }
                 mIsAodEnabled = isAodEnabled;
                 rescheduleTicker();
+            }
+        };
+
+        mLunarCalendarObserver = new ContentObserver(new Handler()) {
+            @Override
+            public void onChange(boolean selfChange) {
+                updateShowLunarCalendar();
             }
         };
 
