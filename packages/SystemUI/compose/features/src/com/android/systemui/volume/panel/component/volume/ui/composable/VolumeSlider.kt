@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -54,6 +55,7 @@ import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.qs.ui.compose.borderOnFocus
 import com.android.systemui.res.R
 import com.android.systemui.volume.dialog.sliders.ui.compose.SliderTrack
+import com.android.systemui.volume.dialog.sliders.ui.compose.rememberVolumeSliderGradient
 import com.android.systemui.volume.haptics.ui.VolumeHapticsConfigsProvider
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.SliderState
 import com.android.systemui.volume.panel.component.volume.ui.composable.InternalDimensions.SliderTrackRoundedCorner
@@ -79,6 +81,18 @@ fun VolumeSlider(
     materialSliderColors: SliderColors = SystemUISliderColors.Defaults,
     trackCornerSize: Dp = SliderTrackRoundedCorner,
 ) {
+    val gradient = rememberVolumeSliderGradient(isVertical = false)
+    val trackAndThumbColors =
+        if (gradient != null) {
+            materialSliderColors.copy(
+                activeTrackColor = Color.Transparent,
+                inactiveTrackColor = Color.Transparent,
+                thumbColor = gradient.endColor,
+                disabledThumbColor = gradient.endColor.copy(alpha = 0.38f),
+            )
+        } else {
+            materialSliderColors
+        }
     Column(
         modifier =
             modifier
@@ -110,7 +124,7 @@ fun VolumeSlider(
                     valueRange = state.valueRange,
                     onValueChanged = onValueChange,
                     onValueChangeFinished = { onValueChangeFinished?.invoke() },
-                    colors = materialSliderColors,
+                    colors = trackAndThumbColors,
                     isEnabled = state.isEnabled,
                     stepDistance = state.step,
                     accessibilityParams =
@@ -121,7 +135,7 @@ fun VolumeSlider(
                     track = { sliderState ->
                         SliderTrack(
                             sliderState = sliderState,
-                            colors = materialSliderColors,
+                            colors = trackAndThumbColors,
                             isEnabled = state.isEnabled,
                             trackSize = dimensions.trackHeight,
                             activeTrackEndIcon =
@@ -172,7 +186,7 @@ fun VolumeSlider(
                             sliderState = sliderState,
                             interactionSource = interactionSource,
                             enabled = state.isEnabled,
-                            colors = materialSliderColors,
+                            colors = trackAndThumbColors,
                             thumbSize = DpSize(dimensions.thumbWidth, dimensions.thumbHeight),
                         )
                     },

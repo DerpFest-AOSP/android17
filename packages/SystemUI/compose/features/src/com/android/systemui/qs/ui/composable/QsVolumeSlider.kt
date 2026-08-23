@@ -5,6 +5,7 @@
 
 package com.android.systemui.qs.ui.composable
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.android.compose.modifiers.thenIf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.PlatformSliderDefaults
 import com.android.systemui.brightness.ui.compose.qsSliderButtonShape
@@ -30,6 +33,7 @@ import com.android.systemui.brightness.ui.compose.rememberSliderShapeMode
 import com.android.systemui.qs.ui.viewmodel.QuickSettingsContainerViewModel
 import com.android.systemui.res.R
 import com.android.systemui.volume.panel.component.volume.slider.ui.viewmodel.AudioStreamSliderViewModel
+import com.android.systemui.volume.dialog.sliders.ui.compose.rememberVolumeSliderGradient
 import com.android.systemui.volume.panel.component.volume.ui.composable.VolumeSlider
 import com.android.systemui.volume.panel.component.volume.ui.composable.VolumeSliderDimensions
 
@@ -55,6 +59,7 @@ fun QsVolumeSliderRow(
     val shapeMode = rememberSliderShapeMode()
     val trackCornerSize = qsSliderTrackCornerSize(shapeMode)
     val buttonShape = qsSliderButtonShape(shapeMode)
+    val gradient = rememberVolumeSliderGradient(isVertical = false)
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -76,11 +81,17 @@ fun QsVolumeSliderRow(
         )
         Spacer(Modifier.width(8.dp))
         IconButton(
-            modifier = Modifier.size(dimensions.trackHeight),
+            modifier =
+                Modifier.size(dimensions.trackHeight)
+                    .thenIf(gradient != null) {
+                        Modifier.background(requireNotNull(gradient).brush, buttonShape)
+                    },
             shape = buttonShape,
             colors =
                 IconButtonDefaults.iconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor =
+                        if (gradient != null) Color.Transparent
+                        else MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             onClick = onSettingsClicked,
