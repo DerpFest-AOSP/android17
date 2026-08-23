@@ -476,11 +476,17 @@ public class PowerUITest extends SysuiTestCase {
         assertThat(shouldShow).isFalse();
 
         state.mBatteryStatus = BatteryManager.BATTERY_HEALTH_GOOD;
-        // Already shown both warnings
+        // Already shown both warnings, but not yet at the extreme threshold
+        state.mBatteryLevel = 5;
         mPowerUI.mLowWarningShownThisChargeCycle = true;
         mPowerUI.mSevereWarningShownThisChargeCycle = true;
         shouldShow = mPowerUI.shouldShowHybridWarning(state.get());
         assertThat(shouldShow).isFalse();
+
+        // Extreme warning can still escalate even if lower tiers were already shown
+        state.mBatteryLevel = 1;
+        shouldShow = mPowerUI.shouldShowHybridWarning(state.get());
+        assertThat(shouldShow).isTrue();
 
         // Can show severe warning
         mPowerUI.mSevereWarningShownThisChargeCycle = false;
