@@ -16,13 +16,11 @@
 
 package com.android.systemui.qs.tiles.impl.cell.domain.interactor
 
-import android.content.DialogInterface
 import android.provider.Settings
 import android.telephony.SubscriptionManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.android.systemui.SysuiTestCase
-import com.android.systemui.animation.DialogTransitionAnimator
 import com.android.systemui.kosmos.testDispatcher
 import com.android.systemui.kosmos.testScope
 import com.android.systemui.qs.tiles.base.domain.actions.QSTileIntentUserInputHandlerSubject
@@ -31,7 +29,6 @@ import com.android.systemui.qs.tiles.base.domain.model.QSTileInputTestKtx
 import com.android.systemui.qs.tiles.dialog.InternetDialogManager
 import com.android.systemui.qs.tiles.impl.cell.domain.model.MobileDataTileModel
 import com.android.systemui.statusbar.connectivity.AccessPointController
-import com.android.systemui.statusbar.phone.SystemUIDialog
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.FakeMobileConnectionsRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.fake
@@ -45,13 +42,9 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.anyBoolean
-import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
-import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @SmallTest
@@ -62,24 +55,14 @@ class MobileDataTileUserActionInteractorTest : SysuiTestCase() {
     private val mobileConnectionsRepository: FakeMobileConnectionsRepository =
         kosmos.mobileConnectionsRepository.fake
     private val intentHandler = kosmos.qsTileIntentUserInputHandler
-    private val dialogTransitionAnimator: DialogTransitionAnimator = mock()
-
-    private val dialog: SystemUIDialog = mock()
-    private val dialogFactory: SystemUIDialog.Factory = mock {
-        whenever(mock.create()).thenReturn(dialog)
-    }
-
     private val internetDialogManager: InternetDialogManager = mock()
     private val accessPointController: AccessPointController = mock()
 
     private val underTest =
         MobileDataTileUserActionInteractor(
-            context,
             mobileConnectionsRepository,
             intentHandler,
-            dialogFactory,
             kosmos.testDispatcher,
-            dialogTransitionAnimator,
             internetDialogManager,
             accessPointController,
         )
@@ -198,9 +181,10 @@ class MobileDataTileUserActionInteractorTest : SysuiTestCase() {
         }
 
     @Test
-    fun handleToggleClick_whenDataIsDisabled_showsDialog() =
+    fun handleToggleClick_whenDataIsDisabled_setsEnabledTrue() =
         testScope.runTest {
             getDataRepo()?.setDataEnabled(false)
+            runCurrent()
 
             val testData =
                 MobileDataTileModel(
@@ -209,26 +193,6 @@ class MobileDataTileUserActionInteractorTest : SysuiTestCase() {
                     isAirplaneModeEnabled = false,
                 )
             underTest.handleInput(QSTileInputTestKtx.toggleClick(testData))
-
-            verify(dialogFactory).create()
-            verify(dialog).show()
-        }
-
-    @Test
-    fun dialogPositiveButtonClick_enablesMobileData() =
-        testScope.runTest {
-            getDataRepo()?.setDataEnabled(false)
-            val captor = argumentCaptor<DialogInterface.OnClickListener>()
-            val testData =
-                MobileDataTileModel(
-                    isSimActive = true,
-                    isEnabled = true,
-                    isAirplaneModeEnabled = false,
-                )
-            underTest.handleInput(QSTileInputTestKtx.toggleClick(testData))
-
-            verify(dialog).setPositiveButton(any(), captor.capture())
-            captor.firstValue.onClick(mock(), 0)
             runCurrent()
 
             assertThat(getDataRepo()?.dataEnabled?.value).isTrue()

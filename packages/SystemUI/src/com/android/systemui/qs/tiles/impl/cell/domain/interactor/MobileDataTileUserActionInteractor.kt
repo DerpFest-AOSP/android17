@@ -16,12 +16,9 @@
 
 package com.android.systemui.qs.tiles.impl.cell.domain.interactor
 
-import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import com.android.systemui.animation.DialogTransitionAnimator
 import com.android.systemui.animation.Expandable
-import com.android.systemui.animation.TransitionAnimator
 import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.qs.tiles.base.domain.actions.QSTileIntentUserInputHandler
 import com.android.systemui.qs.tiles.base.domain.interactor.QSTileUserActionInteractor
@@ -29,10 +26,7 @@ import com.android.systemui.qs.tiles.base.domain.model.QSTileInput
 import com.android.systemui.qs.tiles.base.shared.model.QSTileUserAction
 import com.android.systemui.qs.tiles.dialog.InternetDialogManager
 import com.android.systemui.qs.tiles.impl.cell.domain.model.MobileDataTileModel
-import com.android.systemui.res.R
-import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.statusbar.connectivity.AccessPointController
-import com.android.systemui.statusbar.phone.SystemUIDialog
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.repository.MobileConnectionsRepository
 import javax.inject.Inject
@@ -42,12 +36,9 @@ import kotlinx.coroutines.withContext
 class MobileDataTileUserActionInteractor
 @Inject
 constructor(
-    @ShadeDisplayAware private val context: Context,
     private val mobileConnectionsRepository: MobileConnectionsRepository,
     private val qsTileIntentUserActionHandler: QSTileIntentUserInputHandler,
-    private val systemUIDialogFactory: SystemUIDialog.Factory,
     @Main val mainDispatcher: CoroutineDispatcher,
-    private val dialogTransitionAnimator: DialogTransitionAnimator,
     private val internetDialogManager: InternetDialogManager,
     private val accessPointController: AccessPointController,
 ) : QSTileUserActionInteractor<MobileDataTileModel> {
@@ -80,42 +71,7 @@ constructor(
 
     suspend fun handleSecondaryClick(expandable: Expandable?) {
         val activeRepo = getDataRepo() ?: return
-        // If mobile data is disabled, show a confirmation dialog to turn it on.
-        if (!activeRepo.dataEnabled.value) {
-            withContext(mainDispatcher) { showEnableConfirmationDialog(expandable) }
-        } else {
-            // Otherwise, just turn it off without a dialog.
-            activeRepo.setDataEnabled(false)
-        }
-    }
-
-    private fun showEnableConfirmationDialog(expandable: Expandable?) {
-        val dialog: SystemUIDialog = systemUIDialogFactory.create()
-        dialog.setTitle(context.getString(R.string.mobile_data_enable_title))
-        dialog.setMessage(context.getString(R.string.mobile_data_enable_message))
-
-        dialog.setPositiveButton(R.string.mobile_data_enable_turn_on) { _, _ ->
-            getDataRepo()?.setDataEnabled(true)
-        }
-
-        dialog.setNegativeButton(android.R.string.cancel) { _, _ -> /* Do nothing */ }
-
-        val controller = expandable?.dialogTransitionController()
-        if (controller != null) {
-            // If we have a controller, show the dialog using the animator.
-            if (TransitionAnimator.dynamicTargetResolutionEnabled()) {
-                dialogTransitionAnimator.show(
-                    dialog,
-                    expandable::dialogTransitionController,
-                    controller.cuj,
-                )
-            } else {
-                dialogTransitionAnimator.show(dialog, controller)
-            }
-        } else {
-            // Otherwise, show the dialog without the custom animation.
-            dialog.show()
-        }
+        activeRepo.setDataEnabled(!activeRepo.dataEnabled.value)
     }
 
     private fun getDataRepo(): MobileConnectionRepository? {
