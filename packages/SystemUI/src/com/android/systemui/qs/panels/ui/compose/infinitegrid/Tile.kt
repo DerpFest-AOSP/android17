@@ -31,7 +31,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -122,6 +121,7 @@ import com.android.systemui.qs.pipeline.shared.TileSpec
 import com.android.systemui.qs.tileimpl.QSTileImpl
 import com.android.systemui.qs.ui.composable.QuickSettingsShade
 import com.android.systemui.qs.ui.compose.borderOnFocus
+import com.android.systemui.qs.ui.compose.rememberQsGradientColors
 import com.android.systemui.res.R
 import kotlinx.coroutines.CoroutineScope
 import platform.test.motion.compose.values.MotionTestValueKey
@@ -852,24 +852,8 @@ private object TileDefaults {
         if (!gradientEnabled) {
             return null
         }
-        val context = LocalContext.current
-        val resources = LocalResources.current
-        val isDark = isSystemInDarkTheme()
-        val startId =
-            if (isDark) {
-                R.color.derpfestui_color_gradient_start_dark
-            } else {
-                R.color.derpfestui_color_gradient_start_light
-            }
-        val endId =
-            if (isDark) {
-                R.color.derpfestui_color_gradient_end_dark
-            } else {
-                R.color.derpfestui_color_gradient_end_light
-            }
-        val start = Color(resources.getColor(startId, context.theme))
-        val end = Color(resources.getColor(endId, context.theme))
-        return Brush.linearGradient(listOf(start, end))
+        val colors = rememberQsGradientColors()
+        return Brush.linearGradient(listOf(colors.start, colors.end))
     }
 }
 

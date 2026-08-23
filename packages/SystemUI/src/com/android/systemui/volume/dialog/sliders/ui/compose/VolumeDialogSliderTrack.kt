@@ -21,7 +21,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,14 +55,13 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastFirst
 import androidx.core.graphics.ColorUtils
-import com.android.systemui.res.R
+import com.android.systemui.qs.ui.compose.rememberQsGradientColors
 import kotlin.math.min
 
 @Composable
@@ -544,34 +542,15 @@ fun rememberVolumeSliderGradient(isVertical: Boolean = false): VolumeSliderGradi
     if (!gradientEnabled) {
         return null
     }
-    val context = LocalContext.current
-    val resources = LocalResources.current
-    val isDark = isSystemInDarkTheme()
-    val (start, end) =
-        remember(isDark, resources, context.theme) {
-            val startId =
-                if (isDark) {
-                    R.color.derpfestui_color_gradient_start_dark
-                } else {
-                    R.color.derpfestui_color_gradient_start_light
-                }
-            val endId =
-                if (isDark) {
-                    R.color.derpfestui_color_gradient_end_dark
-                } else {
-                    R.color.derpfestui_color_gradient_end_light
-                }
-            Pair(
-                Color(resources.getColor(startId, context.theme)),
-                Color(resources.getColor(endId, context.theme)),
-            )
-        }
+    val resolved = rememberQsGradientColors()
+    val startOpaque = resolved.start.copy(alpha = 1f)
+    val endOpaque = resolved.end.copy(alpha = 1f)
     val colors =
-        remember(start, end) {
-            if (start == end) {
-                listOf(start.lighten(0.2f), start, start.darken(0.2f))
+        remember(startOpaque, endOpaque) {
+            if (startOpaque == endOpaque) {
+                listOf(startOpaque.lighten(0.2f), startOpaque, startOpaque.darken(0.2f))
             } else {
-                listOf(start, end)
+                listOf(startOpaque, endOpaque)
             }
         }
     val brush =

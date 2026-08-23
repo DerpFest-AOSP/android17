@@ -33,7 +33,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -89,7 +88,6 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -127,6 +125,7 @@ import com.android.systemui.haptics.slider.SliderHapticFeedbackConfig
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.ui.compose.borderOnFocus
+import com.android.systemui.qs.ui.compose.rememberQsGradientColors
 import com.android.systemui.res.R
 import com.android.systemui.util.policy.PolicyRestriction
 import lineageos.providers.LineageSettings
@@ -850,34 +849,15 @@ private fun brightnessGradient(): BrightnessGradient? {
     if (!gradientEnabled) {
         return null
     }
-    val context = LocalContext.current
-    val resources = LocalResources.current
-    val isDark = isSystemInDarkTheme()
-    val (start, end) =
-        remember(isDark, resources, context.theme) {
-            val startId =
-                if (isDark) {
-                    R.color.derpfestui_color_gradient_start_dark
-                } else {
-                    R.color.derpfestui_color_gradient_start_light
-                }
-            val endId =
-                if (isDark) {
-                    R.color.derpfestui_color_gradient_end_dark
-                } else {
-                    R.color.derpfestui_color_gradient_end_light
-                }
-            Pair(
-                Color(resources.getColor(startId, context.theme)),
-                Color(resources.getColor(endId, context.theme)),
-            )
-        }
+    val resolved = rememberQsGradientColors()
+    val startOpaque = resolved.start.copy(alpha = 1f)
+    val endOpaque = resolved.end.copy(alpha = 1f)
     val colors =
-        remember(start, end) {
-            if (start == end) {
-                listOf(start.lighten(0.2f), start, start.darken(0.2f))
+        remember(startOpaque, endOpaque) {
+            if (startOpaque == endOpaque) {
+                listOf(startOpaque.lighten(0.2f), startOpaque, startOpaque.darken(0.2f))
             } else {
-                listOf(start, end)
+                listOf(startOpaque, endOpaque)
             }
         }
     val brush = remember(colors) { Brush.linearGradient(colors) }
