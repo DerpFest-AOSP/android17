@@ -127,6 +127,7 @@ import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.ui.compose.borderOnFocus
 import com.android.systemui.qs.ui.compose.rememberQsGradientColors
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 import com.android.systemui.util.policy.PolicyRestriction
 import lineageos.providers.LineageSettings
 import platform.test.motion.compose.values.MotionTestValueKey
@@ -450,6 +451,7 @@ fun BrightnessSlider(
                 onIconClick = onIconClick,
                 size = dimensions.trackHeight,
                 gradientBrush = if (autoMode) gradientBrush else null,
+                gradientEndColor = if (autoMode) gradient?.endColor else null,
             )
         }
     }
@@ -573,8 +575,10 @@ private fun drawAutoBrightnessButton(
     onIconClick: suspend () -> Unit,
     size: Dp,
     gradientBrush: Brush? = null,
+    gradientEndColor: Color? = null,
 ) {
     val view = LocalView.current
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val shapeMode = rememberSliderShapeMode()
     val autoIconShape = qsSliderButtonShape(shapeMode)
@@ -585,13 +589,17 @@ private fun drawAutoBrightnessButton(
             LocalAndroidColorScheme.current.surfaceEffect1
         }
     )
-    val iconTint by animateColorAsState(
-        targetValue = if (autoMode) {
+    val defaultIconTint =
+        if (autoMode) {
             MaterialTheme.colorScheme.onPrimary
         } else {
             MaterialTheme.colorScheme.onSurface
         }
-    )
+    val contrastIconTint =
+        remember(gradientEndColor, context) {
+            gradientEndColor?.let { Color(BatteryColors.textColorOnBackground(context, it.toArgb())) }
+        }
+    val iconTint by animateColorAsState(targetValue = contrastIconTint ?: defaultIconTint)
     val painterRes = if (autoMode) {
         R.drawable.ic_qs_brightness_auto_on
     } else {
