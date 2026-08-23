@@ -7,8 +7,4 @@
     <!-- Statusbar clock chip colors -->
     <color name="neumorph_outline_start">#FF5C5C5C</color>
     <color name="neumorph_outline_end">#FF2A2A2A</color>
-
-    <!-- Fallback shade colors (dual tone / NothingOS style) -->
-    <color name="shade_panel_fallback_fg">@android:color/system_neutral1_900</color>
-    <color name="shade_panel_fallback_bg">@android:color/system_neutral1_1000</color>
 </resources>
