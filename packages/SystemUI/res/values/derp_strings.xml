@@ -165,6 +165,10 @@
     <string name="flashlight_strength_turn_off">Turn off</string>
     <string name="flashlight_strength_turn_on">Turn on</string>
 
+    <!-- Per-app volume panel -->
+    <string name="app_volume">App volume</string>
+    <string name="app_volume_no_active_apps">No active audio playback</string>
+
     <!-- VPN tethering QS tile -->
     <string name="vpn_tethering_label">VPN tethering</string>
     <string name="vpn_tethering_changed_off">VPN tethering turned off.</string>
