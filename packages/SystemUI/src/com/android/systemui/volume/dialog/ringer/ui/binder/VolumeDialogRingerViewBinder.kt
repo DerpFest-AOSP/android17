@@ -17,6 +17,7 @@
 package com.android.systemui.volume.dialog.ringer.ui.binder
 
 import android.animation.ArgbEvaluator
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.database.ContentObserver
 import android.graphics.drawable.Drawable
@@ -65,10 +66,10 @@ import javax.inject.Inject
 import kotlin.properties.Delegates
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.job
 
 private const val CLOSE_DRAWER_DELAY = 300L
 // Ensure roundness and color of button is updated when progress is changed by a minimum fraction.
@@ -185,46 +186,35 @@ constructor(
 
         var gradientColorsForRinger: Pair<Int, Int>? = resolveVolumeSliderGradientArgb(view.context)
         var selectedRingerButtonRef: ImageButton? = null
-        launchTraced("VDRVB#gradientObserver") {
-            val contentResolver = view.context.contentResolver
-            val observer =
-                object : ContentObserver(Handler(Looper.getMainLooper())) {
-                    override fun onChange(selfChange: Boolean) {
-                        gradientColorsForRinger = resolveVolumeSliderGradientArgb(view.context)
-                        view.post {
-                            selectedRingerButtonRef?.let {
-                                applySelectedButtonAppearance(
-                                    it,
-                                    gradientColorsForRinger,
-                                    view.context,
-                                )
-                            }
-                        }
-                    }
+        val contentResolver = view.context.contentResolver
+        val gradientObserver =
+            object : ContentObserver(Handler(Looper.getMainLooper())) {
+                override fun onChange(selfChange: Boolean) {
+                    gradientColorsForRinger = resolveVolumeSliderGradientArgb(view.context)
+                    if (!view.isAttachedToWindow) return
+                    selectedRingerButtonRef?.applySelectedAppearance(gradientColorsForRinger)
                 }
-            contentResolver.registerContentObserver(
-                Settings.System.getUriFor(Settings.System.QS_VOLUME_GRADIENT_ENABLED),
-                false,
-                observer,
-                UserHandle.USER_ALL,
-            )
-            contentResolver.registerContentObserver(
-                Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
-                false,
-                observer,
-                UserHandle.USER_ALL,
-            )
-            contentResolver.registerContentObserver(
-                Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR),
-                false,
-                observer,
-                UserHandle.USER_ALL,
-            )
-            try {
-                awaitCancellation()
-            } finally {
-                contentResolver.unregisterContentObserver(observer)
             }
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.QS_VOLUME_GRADIENT_ENABLED),
+            false,
+            gradientObserver,
+            UserHandle.USER_ALL,
+        )
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.GRADIENT_START_COLOR),
+            false,
+            gradientObserver,
+            UserHandle.USER_ALL,
+        )
+        contentResolver.registerContentObserver(
+            Settings.System.getUriFor(Settings.System.GRADIENT_END_COLOR),
+            false,
+            gradientObserver,
+            UserHandle.USER_ALL,
+        )
+        coroutineContext.job.invokeOnCompletion {
+            contentResolver.unregisterContentObserver(gradientObserver)
         }
 
         viewModel.ringerViewModel
@@ -443,8 +433,11 @@ constructor(
             // progress update once because these changes should be applied once on volume dialog
             // background and ringer drawer views.
             coroutineScope {
-                val selectedCornerRadius = selectedButton.backgroundShape().cornerRadius
-                if (selectedCornerRadius.toInt() != selectedButtonUiModel.cornerRadius) {
+                val selectedCornerRadius = selectedButton.backgroundShape()?.cornerRadius
+                if (
+                    selectedCornerRadius != null &&
+                        selectedCornerRadius.toInt() != selectedButtonUiModel.cornerRadius
+                ) {
                     launchTraced("VDRVB#selectedButtonAnimation") {
                         selectedButton.animateTo(
                             selectedButtonUiModel,
@@ -459,8 +452,11 @@ constructor(
                 if (previousIndex >= 0) {
                     val unselectedButton = getChildAt(count - previousIndex) as ImageButton
 
-                    val unselectedCornerRadius = unselectedButton.backgroundShape().cornerRadius
-                    if (unselectedCornerRadius.toInt() != unselectedButtonUiModel.cornerRadius) {
+                    val unselectedCornerRadius = unselectedButton.backgroundShape()?.cornerRadius
+                    if (
+                        unselectedCornerRadius != null &&
+                            unselectedCornerRadius.toInt() != unselectedButtonUiModel.cornerRadius
+                    ) {
                         launchTraced("VDRVB#unselectedButtonAnimation") {
                             unselectedButton.animateTo(
                                 unselectedButtonUiModel,
@@ -548,22 +544,11 @@ constructor(
             } else {
                 ringerContentDesc
             }
-        if (isSelected && !isAnimated) {
+        if (isSelected) {
             onSelectedButtonBound?.invoke()
-            if (gradientColorsForRinger != null) {
-                applyGradientSelectionBackground(this, gradientColorsForRinger, context)
-                val iconTint =
-                    BatteryColors.textColorOnBackground(context, gradientColorsForRinger.second)
-                setColorFilter(iconTint)
-            } else {
-                setBackgroundResource(R.drawable.volume_drawer_selection_bg)
-                setColorFilter(context.getColor(internalR.color.materialColorOnPrimary))
-                background = background.mutate()
-            }
+            applySelectedAppearance(gradientColorsForRinger)
         } else if (!isAnimated) {
-            setBackgroundResource(R.drawable.volume_ringer_item_bg)
-            setColorFilter(context.getColor(internalR.color.materialColorOnSurface))
-            background = background.mutate()
+            applyUnselectedAppearance()
         }
         setOnClickListener {
             viewModel.onRingerButtonClicked(buttonViewModel.ringerMode, isSelected)
@@ -606,38 +591,43 @@ constructor(
         ringerButtonUiModel: RingerButtonUiModel,
         onProgressChanged: (Float, Boolean) -> Unit = { _, _ -> },
     ) {
+        background = background.mutate()
+        val shape = backgroundShape() ?: return
+        val startIconColor = currentIconColor() ?: ringerButtonUiModel.tintColor
+        val startBgColor = shape.solidOrEndColor() ?: ringerButtonUiModel.backgroundColor
         val roundnessAnimation =
             SpringAnimation(FloatValueHolder(0F), 1F).setSpring(roundnessSpringForce)
         val colorAnimation = SpringAnimation(FloatValueHolder(0F), 1F).setSpring(colorSpringForce)
-        val radius = backgroundShape().cornerRadius
-        val cornerRadiusDiff = ringerButtonUiModel.cornerRadius - backgroundShape().cornerRadius
+        val radius = shape.cornerRadius
+        val cornerRadiusDiff = ringerButtonUiModel.cornerRadius - radius
 
         roundnessAnimation.minimumVisibleChange = BUTTON_MIN_VISIBLE_CHANGE
         colorAnimation.minimumVisibleChange = BUTTON_MIN_VISIBLE_CHANGE
         coroutineScope {
             launchTraced("VDRVB#colorAnimation") {
                 colorAnimation.suspendAnimate { value ->
+                    val fraction = value.coerceIn(0F, 1F)
                     val currentIconColor =
                         rgbEvaluator.evaluate(
-                            value.coerceIn(0F, 1F),
-                            imageTintList?.colors?.first(),
+                            fraction,
+                            startIconColor,
                             ringerButtonUiModel.tintColor,
                         ) as Int
                     val currentBgColor =
                         rgbEvaluator.evaluate(
-                            value.coerceIn(0F, 1F),
-                            backgroundShape().color?.colors?.get(0),
+                            fraction,
+                            startBgColor,
                             ringerButtonUiModel.backgroundColor,
                         ) as Int
 
-                    backgroundShape().setColor(currentBgColor)
+                    shape.setColor(currentBgColor)
                     background.invalidateSelf()
-                    setColorFilter(currentIconColor)
+                    setIconTint(currentIconColor)
                 }
             }
             roundnessAnimation.suspendAnimate { value ->
                 onProgressChanged(value, cornerRadiusDiff > 0F)
-                backgroundShape().cornerRadius = radius + value * cornerRadiusDiff
+                shape.cornerRadius = radius + value * cornerRadiusDiff
                 background.invalidateSelf()
             }
         }
@@ -674,40 +664,45 @@ constructor(
         }
     }
 
+    private fun ImageButton.applySelectedAppearance(gradientColors: Pair<Int, Int>?) {
+        if (gradientColors != null) {
+            applyGradientSelectionBackground(gradientColors)
+            setIconTint(BatteryColors.textColorOnBackground(context, gradientColors.second))
+        } else {
+            setBackgroundResource(R.drawable.volume_drawer_selection_bg)
+            background = background.mutate()
+            setIconTint(context.getColor(internalR.color.materialColorOnPrimary))
+        }
+    }
+
+    private fun ImageButton.applyUnselectedAppearance() {
+        setBackgroundResource(R.drawable.volume_ringer_item_bg)
+        background = background.mutate()
+        setIconTint(context.getColor(internalR.color.materialColorOnSurface))
+    }
+
     /** Sets the selected ringer button background to a gradient, matching the volume slider. */
-    private fun applyGradientSelectionBackground(
-        button: ImageButton,
-        gradientColors: Pair<Int, Int>,
-        context: android.content.Context,
-    ) {
+    private fun ImageButton.applyGradientSelectionBackground(gradientColors: Pair<Int, Int>) {
         val (start, end) = gradientColors
         val radiusPx =
-            context.resources
+            resources
                 .getDimensionPixelSize(R.dimen.volume_dialog_ringer_selected_button_background_radius)
                 .toFloat()
         val gradientDrawable =
             GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(start, end)).apply {
                 setCornerRadius(radiusPx)
             }
-        val insetPx = (4 * context.resources.displayMetrics.density).toInt()
-        button.background = InsetDrawable(gradientDrawable, insetPx, insetPx, insetPx, insetPx)
+        val insetPx = (4 * resources.displayMetrics.density).toInt()
+        background = InsetDrawable(gradientDrawable, insetPx, insetPx, insetPx, insetPx)
     }
 
-    private fun applySelectedButtonAppearance(
-        button: ImageButton,
-        gradientColors: Pair<Int, Int>?,
-        context: android.content.Context,
-    ) {
-        if (gradientColors != null) {
-            applyGradientSelectionBackground(button, gradientColors, context)
-            button.setColorFilter(
-                BatteryColors.textColorOnBackground(context, gradientColors.second)
-            )
-        } else {
-            button.setBackgroundResource(R.drawable.volume_drawer_selection_bg)
-            button.background = button.background.mutate()
-            button.setColorFilter(context.getColor(internalR.color.materialColorOnPrimary))
-        }
+    private fun ImageButton.setIconTint(color: Int) {
+        clearColorFilter()
+        imageTintList = ColorStateList.valueOf(color)
+    }
+
+    private fun ImageButton.currentIconColor(): Int? {
+        return imageTintList?.defaultColor
     }
 
     companion object {
@@ -715,5 +710,19 @@ constructor(
     }
 }
 
-private fun ImageButton.backgroundShape(): GradientDrawable =
-    (background as InsetDrawable).drawable as GradientDrawable
+private fun ImageButton.backgroundShape(): GradientDrawable? {
+    return when (val bg = background) {
+        is InsetDrawable -> bg.drawable as? GradientDrawable
+        is GradientDrawable -> bg
+        else -> null
+    }
+}
+
+/** Solid fill, or the gradient end color when the button is using a two-stop gradient. */
+private fun GradientDrawable.solidOrEndColor(): Int? {
+    color?.defaultColor?.let {
+        return it
+    }
+    val colors = colors ?: return null
+    return colors.getOrNull(1) ?: colors.getOrNull(0)
+}
