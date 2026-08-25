@@ -122,6 +122,8 @@ class EdgeLightView(context: Context) : FrameLayout(context) {
     init {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        isClickable = false
+        isFocusable = false
         setWillNotDraw(false)
         visible = false
 

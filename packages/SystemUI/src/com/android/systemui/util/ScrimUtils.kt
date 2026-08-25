@@ -226,9 +226,5 @@ class ScrimUtils private constructor() {
     fun isKeyguardShowing(): Boolean = mKeyguardShowing == true
 
     fun isPanelFullyCollapsed(): Boolean =
-        if (mStateIsKeyguard) {
-            !mQsVisible.get()
-        } else {
-            (mExpandedFraction ?: 0.0f) <= 0.0f
-        }
+        !mQsVisible.get() && (mExpandedFraction ?: 0.0f) <= 0.0f
 }

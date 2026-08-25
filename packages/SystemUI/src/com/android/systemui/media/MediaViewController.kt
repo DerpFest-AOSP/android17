@@ -85,6 +85,9 @@ class MediaViewController @Inject constructor(
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         scaleType = ImageView.ScaleType.CENTER_CROP
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        isClickable = false
+        isFocusable = false
     }
 
     private var mediaArtJob: Job? = null

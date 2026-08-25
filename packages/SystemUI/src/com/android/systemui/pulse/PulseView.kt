@@ -38,6 +38,9 @@ class PulseView @JvmOverloads constructor(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
+        isClickable = false
+        isFocusable = false
     }
 
     fun initialize(settingsRepo: PulseSettingsRepository) {
