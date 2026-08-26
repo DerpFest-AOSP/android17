@@ -27,6 +27,7 @@ import com.android.systemui.classifier.falsingManager
 import com.android.systemui.plugins.activityStarter
 import com.android.systemui.scene.domain.interactor.dualShadeEducationInteractor
 import com.android.systemui.scene.domain.interactor.sceneInteractor
+import com.android.systemui.shared.settings.data.repository.systemSettingsRepository
 import com.android.systemui.shade.domain.interactor.privacyChipInteractor
 import com.android.systemui.shade.domain.interactor.shadeInteractor
 import com.android.systemui.shade.domain.interactor.shadeModeInteractor
@@ -56,6 +57,7 @@ val Kosmos.shadeHeaderViewModelFactory: ShadeHeaderViewModel.Factory by
                     sceneInteractor = sceneInteractor,
                     shadeInteractor = shadeInteractor,
                     carrierTextInteractor = fakeCarrierTextInteractor,
+                    systemSettingsRepository = systemSettingsRepository,
                     shadeModeInteractor = shadeModeInteractor,
                     shadeDarkIconInteractor = shadeDarkIconInteractor,
                     mobileIconsInteractor = mobileIconsInteractor,

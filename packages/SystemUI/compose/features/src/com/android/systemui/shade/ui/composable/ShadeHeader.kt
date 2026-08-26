@@ -785,8 +785,12 @@ private fun CarrierTextWithSubscriptionId(
 
 @Composable
 private fun CarrierTextNoSubscriptionId(viewModel: ShadeHeaderViewModel) {
+    val customText = viewModel.customCarrierText
+    val text =
+        if (!customText.isNullOrEmpty()) customText
+        else viewModel.carrierText?.toString().orEmpty()
     Text(
-        text = viewModel.carrierText.toString(),
+        text = text,
         modifier = Modifier.basicMarquee(),
         color = ShadeHeader.Colors.textColor,
         style =
@@ -809,9 +813,10 @@ private fun ShadeCarrierGroup(viewModel: ShadeHeaderViewModel, modifier: Modifie
     val textColor = ShadeHeader.Colors.textColor
     val inverseTextColor = ShadeHeader.Colors.inverseTextColor
     val mobileSubIds = viewModel.mobileSubIds
+    val useCustomCarrier = !viewModel.customCarrierText.isNullOrEmpty()
 
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        if (mobileSubIds.isEmpty()) {
+        if (useCustomCarrier || mobileSubIds.isEmpty()) {
             CarrierTextNoSubscriptionId(viewModel)
         } else {
             for (subId in mobileSubIds) {
@@ -834,7 +839,7 @@ private fun ShadeCarrierGroupKairos(
             kairosNetwork = viewModel.kairosNetwork,
             name = nameTag("ShadeCarrierGroupKairos"),
         ) { iconsViewModel: MobileIconsViewModelKairosComposeWrapper ->
-            if (iconsViewModel.icons.isEmpty()) {
+            if (!viewModel.customCarrierText.isNullOrEmpty() || iconsViewModel.icons.isEmpty()) {
                 CarrierTextNoSubscriptionId(viewModel)
             } else {
                 for ((subId, icon) in iconsViewModel.icons) {

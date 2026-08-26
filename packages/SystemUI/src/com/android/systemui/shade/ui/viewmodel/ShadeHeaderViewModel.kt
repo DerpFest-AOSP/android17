@@ -33,6 +33,7 @@ import com.android.systemui.keyguard.domain.interactor.KeyguardTouchHandlingInte
 import com.android.systemui.lifecycle.HydratedActivatable
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.plugins.FalsingManager
+import com.android.systemui.shared.settings.data.repository.SystemSettingsRepository
 import com.android.systemui.privacy.AbstractOngoingPrivacyChip
 import com.android.systemui.privacy.PrivacyItem
 import com.android.systemui.scene.domain.interactor.DualShadeEducationInteractor
@@ -76,6 +77,7 @@ constructor(
     private val sceneInteractor: SceneInteractor,
     private val shadeInteractor: ShadeInteractor,
     private val carrierTextInteractor: CarrierTextInteractor,
+    private val systemSettingsRepository: SystemSettingsRepository,
     private val shadeModeInteractor: ShadeModeInteractor,
     shadeDarkIconInteractor: ShadeDarkIconInteractor,
     mobileIconsInteractor: MobileIconsInteractor,
@@ -115,6 +117,11 @@ constructor(
             .hydratedStateOf(initialValue = emptyList())
 
     val carrierText: CharSequence? by carrierTextInteractor.carrierText.hydratedStateOf()
+
+    val customCarrierText: String? by
+        systemSettingsRepository
+            .stringSetting(Settings.System.LOCKSCREEN_SHOW_CUSTOM_CARRIER_TEXT)
+            .hydratedStateOf(initialValue = null)
 
     /** The list of PrivacyItems to be displayed by the privacy chip. */
     val privacyItems: List<PrivacyItem> by privacyChipInteractor.privacyItems.hydratedStateOf()
