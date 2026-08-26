@@ -229,7 +229,7 @@ fun ContentScope.Tile(
                 Modifier.verticalTactileSurfaceReveal(
                     deltaY = marginBottom,
                     effectSpec =
-                        remember(inactiveCornerRadius) {
+                        remember(inactiveCornerRadius, shapeMode) {
                             VerticalTactileSurfaceRevealEffect(
                                 maxCornerSize = { animatedCornerRadius },
                                 phase1MarginX = inactiveCornerRadius,
@@ -636,6 +636,8 @@ fun rememberTileShapeMode(): Int {
     var shapeMode by remember { mutableIntStateOf(readShapeMode()) }
 
     DisposableEffect(contentResolver) {
+        // Scene-container QS can compose before Settings is ready; re-read on subscribe.
+        shapeMode = readShapeMode()
         val observer =
             object : ContentObserver(null) {
                 override fun onChange(selfChange: Boolean) {
@@ -834,12 +836,14 @@ private object TileDefaults {
     @Composable
     fun animateShapeAsState(targetValue: Dp, label: String): State<RoundedCornerShape> {
         val animatedCornerRadius by animateDpAsState(targetValue = targetValue, label = label)
+        val animatedCornerRadiusState = rememberUpdatedState(animatedCornerRadius)
 
-        return remember {
+        // New Shape when the target radius changes so clip/background caches update.
+        return remember(targetValue) {
             val corner =
                 object : CornerSize {
                     override fun toPx(shapeSize: Size, density: Density): Float {
-                        return with(density) { animatedCornerRadius.toPx() }
+                        return with(density) { animatedCornerRadiusState.value.toPx() }
                     }
                 }
             mutableStateOf(RoundedCornerShape(corner))
