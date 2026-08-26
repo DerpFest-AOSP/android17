@@ -6277,13 +6277,13 @@
   <java-symbol type="string" name="config_wearRemoteIntentAction" />
 
   <!-- Whether desktop mode is supported on the current device  -->
-  <java-symbol type="bool" name="config_isDesktopModeSupported" />
+  <java-symbol type="bool" name="config_isDesktopModeSupported" id="0x011101f3" />
 
   <!-- Whether the developer option for desktop mode is supported on the current device  -->
-  <java-symbol type="bool" name="config_isDesktopModeDevOptionSupported" />
+  <java-symbol type="bool" name="config_isDesktopModeDevOptionSupported" id="0x011101f2" />
 
   <!-- Whether the current device's internal display can host desktop sessions.  -->
-  <java-symbol type="bool" name="config_canInternalDisplayHostDesktops" />
+  <java-symbol type="bool" name="config_canInternalDisplayHostDesktops" id="0x0111006e" />
 
   <!-- Maximum number of active tasks on a given Desktop Windowing session. Set to 0 for unlimited. -->
   <java-symbol type="integer" name="config_maxDesktopWindowingActiveTasks"/>
