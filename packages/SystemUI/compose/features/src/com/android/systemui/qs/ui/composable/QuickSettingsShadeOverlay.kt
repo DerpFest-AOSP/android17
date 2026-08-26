@@ -105,6 +105,7 @@ import com.android.systemui.scene.ui.composable.Overlay
 import com.android.systemui.shade.ui.composable.ChipHighlightModel
 import com.android.systemui.shade.ui.composable.OverlayShade
 import com.android.systemui.shade.ui.composable.OverlayShadeHeader
+import com.android.systemui.shade.ui.composable.QsHeaderImage
 import com.android.systemui.shade.ui.composable.QuickSettingsOverlayHeader
 import com.android.systemui.shade.ui.composable.QuickSettingsOverlayPrivacyChip
 import com.android.systemui.statusbar.notification.stack.shared.model.ShadeScrimBounds
@@ -207,6 +208,12 @@ constructor(
                             topRadius = topCornerRadius.roundToInt(),
                             bottomRadius = bottomCornerRadius.roundToInt(),
                         )
+                    )
+                },
+                panelOverlay = {
+                    QsHeaderImage(
+                        viewModel = contentViewModel.qsHeaderImageViewModel,
+                        modifier = Modifier.align(Alignment.TopCenter),
                     )
                 },
                 header = {

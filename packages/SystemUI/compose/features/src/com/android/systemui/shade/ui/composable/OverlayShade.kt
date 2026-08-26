@@ -18,6 +18,7 @@ package com.android.systemui.shade.ui.composable
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -74,6 +75,7 @@ fun ContentScope.OverlayShade(
     onBackgroundPlaced: (bounds: Rect, topCornerRadius: Float, bottomCornerRadius: Float) -> Unit =
         { _, _, _ ->
         },
+    panelOverlay: @Composable BoxScope.() -> Unit = {},
     header: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -124,6 +126,7 @@ fun ContentScope.OverlayShade(
                             onBackgroundPlaced(bounds, topCornerRadius, bottomCornerRadius)
                         },
                 header = header.takeIf { isFullWidth },
+                overlay = panelOverlay,
                 content = {
                     Box(
                         Modifier
@@ -168,6 +171,7 @@ private fun ContentScope.Panel(
     spec: VerticalExpandContainerSpec,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)?,
+    overlay: @Composable BoxScope.() -> Unit,
     content: @Composable () -> Unit,
 ) {
     Box(
@@ -176,6 +180,7 @@ private fun ContentScope.Panel(
                 .disableSwipesWhenScrolling()
                 .verticalExpandContainerBackground(Colors.panelBackground(enableTransparency), spec)
     ) {
+        overlay()
         Column {
             header?.invoke()
             content()

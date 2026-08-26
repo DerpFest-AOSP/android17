@@ -25,6 +25,7 @@ import com.android.compose.animation.scene.content.state.TransitionState
 import com.android.settingslib.volume.shared.model.AudioStream
 import com.android.systemui.Flags
 import com.android.systemui.dagger.qualifiers.Main
+import com.android.systemui.derpfest.header.QsHeaderImageViewModel
 import com.android.systemui.desktop.domain.interactor.DesktopInteractor
 import com.android.systemui.development.ui.viewmodel.BuildNumberViewModel
 import com.android.systemui.keyguard.ui.transitions.BlurConfig
@@ -90,6 +91,7 @@ constructor(
     private val blurConfig: BlurConfig,
     private val windowRootViewBlurInteractor: WindowRootViewBlurInteractor,
     private val qsPanelAppearanceInteractor: QSPanelAppearanceInteractor,
+    val qsHeaderImageViewModel: QsHeaderImageViewModel,
 ) : HydratedActivatable() {
 
     /**

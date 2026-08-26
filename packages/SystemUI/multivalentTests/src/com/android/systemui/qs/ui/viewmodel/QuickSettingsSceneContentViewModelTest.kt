@@ -34,6 +34,7 @@ import com.android.systemui.kosmos.testDispatcher
 import com.android.systemui.kosmos.testScope
 import com.android.systemui.kosmos.useUnconfinedTestDispatcher
 import com.android.systemui.lifecycle.activateIn
+import com.android.systemui.derpfest.header.qsHeaderImageViewModel
 import com.android.systemui.qs.FooterActionsController
 import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsViewModel
 import com.android.systemui.scene.domain.interactor.sceneInteractor
@@ -92,6 +93,7 @@ class QuickSettingsSceneContentViewModelTest : SysuiTestCase() {
                     mainDispatcher = testDispatcher,
                     windowRootViewBlurInteractor = windowRootViewBlurInteractor,
                     blurConfig = blurConfig,
+                    qsHeaderImageViewModel = qsHeaderImageViewModel,
                 )
             underTest.activateIn(testScope)
             testScope.backgroundScope.launch { underTest.detectShadeModeChanges() }

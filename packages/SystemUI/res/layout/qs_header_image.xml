@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<com.bosphere.fadingedgelayout.FadingEdgeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:sysui="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/qs_header_image_layout"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/qs_header_image_height"
+    android:background="@android:color/transparent"
+    android:clickable="false"
+    android:focusable="false"
+    android:importantForAccessibility="noHideDescendants"
+    sysui:fel_edge="bottom"
+    sysui:fel_size_bottom="@dimen/qs_header_image_fade_size">
+
+    <ImageView
+        android:id="@+id/qs_header_image_view_compose"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/qs_header_image_view_outline"
+        android:clickable="false"
+        android:focusable="false"
+        android:scaleType="centerCrop" />
+</com.bosphere.fadingedgelayout.FadingEdgeLayout>

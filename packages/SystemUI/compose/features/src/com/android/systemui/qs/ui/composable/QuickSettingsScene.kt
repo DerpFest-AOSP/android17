@@ -99,6 +99,7 @@ import com.android.systemui.scene.shared.model.Scenes
 import com.android.systemui.scene.ui.composable.Scene
 import com.android.systemui.shade.ui.composable.CollapsedShadeHeader
 import com.android.systemui.shade.ui.composable.ExpandedShadeHeader
+import com.android.systemui.shade.ui.composable.QsHeaderImage
 import com.android.systemui.shade.ui.composable.ShadePanelScrim
 import com.android.systemui.shade.ui.viewmodel.ShadeHeaderViewModel
 import com.android.systemui.statusbar.notification.stack.ui.view.NotificationScrollView
@@ -238,6 +239,13 @@ private fun ContentScope.QuickSettingsScene(
         // This is the background for the whole scene, as the elements don't necessarily provide
         // a background that extends to the edges.
         ShadePanelScrim(viewModel.isTransparencyEnabled)
+
+        if (isAlwaysComposedContentVisible()) {
+            QsHeaderImage(
+                viewModel = viewModel.qsHeaderImageViewModel,
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+        }
 
         val sceneState =
             rememberMutableSceneTransitionLayoutState(

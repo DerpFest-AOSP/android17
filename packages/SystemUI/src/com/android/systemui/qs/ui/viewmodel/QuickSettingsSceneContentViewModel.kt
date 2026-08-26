@@ -22,6 +22,7 @@ import com.android.app.tracing.coroutines.launchTraced as launch
 import com.android.compose.animation.scene.content.state.TransitionState
 import com.android.systemui.Flags
 import com.android.systemui.dagger.qualifiers.Main
+import com.android.systemui.derpfest.header.QsHeaderImageViewModel
 import com.android.systemui.keyguard.ui.transitions.BlurConfig
 import com.android.systemui.lifecycle.HydratedActivatable
 import com.android.systemui.qs.FooterActionsController
@@ -60,6 +61,7 @@ constructor(
     @Main private val mainDispatcher: CoroutineDispatcher,
     windowRootViewBlurInteractor: WindowRootViewBlurInteractor,
     private val blurConfig: BlurConfig,
+    val qsHeaderImageViewModel: QsHeaderImageViewModel,
 ) : HydratedActivatable() {
     val qsContainerViewModel =
         qsContainerViewModelFactory.create(supportsBrightnessMirroring = true)

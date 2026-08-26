@@ -17,6 +17,7 @@
 package com.android.systemui.qs.ui.viewmodel
 
 import android.content.res.mainResources
+import com.android.systemui.derpfest.header.qsHeaderImageViewModel
 import com.android.systemui.desktop.domain.interactor.desktopInteractor
 import com.android.systemui.development.ui.viewmodel.buildNumberViewModelFactory
 import com.android.systemui.keyguard.ui.transitions.blurConfig
@@ -64,6 +65,7 @@ val Kosmos.quickSettingsShadeOverlayContentViewModelFactory:
                     qsPanelAppearanceInteractor = qsPanelAppearanceInteractor,
                     expandedAudioTileDetailsFeatureInteractor =
                         expandedAudioTileDetailsFeatureInteractor,
+                    qsHeaderImageViewModel = qsHeaderImageViewModel,
                 )
             }
         }
