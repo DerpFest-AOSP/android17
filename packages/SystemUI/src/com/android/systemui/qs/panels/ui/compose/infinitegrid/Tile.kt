@@ -353,7 +353,13 @@ fun ContentScope.Tile(
                                 Modifier.size(TileHeight)
                                     .align(Alignment.Center)
                                     .clip(CircleShape)
-                                    .background(animatedColor)
+                                    .then(
+                                        if (backgroundBrush != null) {
+                                            Modifier.background(backgroundBrush)
+                                        } else {
+                                            Modifier.background(animatedColor)
+                                        }
+                                    )
                                     .indication(circleInteraction, LocalIndication.current)
                                     .tileCombinedClickable(
                                         onClick = { click?.invoke() },
