@@ -81,6 +81,8 @@ public class NotificationBackgroundView extends View implements Dumpable,
     private final int convexR = 9;
     private final int concaveR = 22;
     private BackgroundBlurDrawable mBackgroundBlurDrawable;
+    // When true, the blur region is forced to alpha 0 (dropped from the aggregator) but kept around.
+    private boolean mBlurRegionSuppressed;
     @VisibleForTesting
     protected View.OnAttachStateChangeListener mOnAttachStateChangeListener;
 
@@ -355,6 +357,9 @@ public class NotificationBackgroundView extends View implements Dumpable,
                                         NotificationBackgroundView.this);
                                 mBackgroundBlurDrawable.setColor(
                                         mTintColor != 0 ? mTintColor : mNormalColor);
+                                if (mBlurRegionSuppressed) {
+                                    mBackgroundBlurDrawable.setAlpha(0);
+                                }
 
                                 updateBackgroundRadii();
                                 invalidate();
@@ -499,7 +504,19 @@ public class NotificationBackgroundView extends View implements Dumpable,
         }
         mBackground.setAlpha(drawableAlpha);
         if (mBackgroundBlurDrawable != null) {
-            mBackgroundBlurDrawable.setAlpha(drawableAlpha);
+            mBackgroundBlurDrawable.setAlpha(mBlurRegionSuppressed ? 0 : drawableAlpha);
+        }
+    }
+
+    /** Drops the blur region without tearing down the drawable; blur regions ignore ancestor alpha. */
+    public void setBlurRegionSuppressed(boolean suppressed) {
+        if (mBlurRegionSuppressed == suppressed) {
+            return;
+        }
+        mBlurRegionSuppressed = suppressed;
+        if (mBackgroundBlurDrawable != null) {
+            mBackgroundBlurDrawable.setAlpha(suppressed ? 0 : mDrawableAlpha);
+            invalidate();
         }
     }
 
