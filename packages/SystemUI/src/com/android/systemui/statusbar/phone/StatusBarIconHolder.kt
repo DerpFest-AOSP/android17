@@ -109,7 +109,7 @@ open class StatusBarIconHolder protected constructor() {
         /** Only applicable to [BindableIconHolder] */
         const val TYPE_BINDABLE = 5
 
-        /**  */
+        /** Bluetooth connected icon plus optional battery level. */
         const val TYPE_BLUETOOTH = 6
 
         /** Custom status bar network speed indicator. */

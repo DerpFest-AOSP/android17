@@ -85,7 +85,7 @@ public interface StatusBarIconController {
      */
     void setNewWifiIcon();
 
-    /** */
+    /** Sets the bluetooth connected icon and optional battery level for the given slot. */
     void setBluetoothIcon(String slot, BluetoothIconState state);
 
     /**
