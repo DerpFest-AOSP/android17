@@ -26,7 +26,6 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -207,7 +206,7 @@ public class StatusBarBluetoothView extends FrameLayout implements StatusIconDis
         boolean needsLayout = mState.batteryLevel != state.batteryLevel;
 
         if (mState.visible != state.visible && !mBlocked) {
-            needsLayout |= true;
+            needsLayout = true;
             setVisibility(state.visible ? View.VISIBLE : View.GONE);
         }
 
