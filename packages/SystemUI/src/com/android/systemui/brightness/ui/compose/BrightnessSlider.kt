@@ -106,7 +106,6 @@ import com.android.compose.lifecycle.DisposableEffectWithLifecycle
 import com.android.compose.modifiers.padding
 import com.android.compose.modifiers.sliderPercentage
 import com.android.compose.modifiers.thenIf
-import com.android.compose.theme.LocalAndroidColorScheme
 import com.android.compose.ui.graphics.drawInOverlay
 import com.android.systemui.biometrics.Utils.toBitmap
 import com.android.systemui.brightness.domain.model.GammaBrightness
@@ -450,8 +449,8 @@ fun BrightnessSlider(
                 hapticsEnabled = hapticsEnabled,
                 onIconClick = onIconClick,
                 size = dimensions.trackHeight,
-                gradientBrush = if (autoMode) gradientBrush else null,
-                gradientEndColor = if (autoMode) gradient?.endColor else null,
+                gradientBrush = gradientBrush,
+                gradientEndColor = gradient?.endColor,
             )
         }
     }
@@ -582,24 +581,13 @@ private fun drawAutoBrightnessButton(
     val coroutineScope = rememberCoroutineScope()
     val shapeMode = rememberSliderShapeMode()
     val autoIconShape = qsSliderButtonShape(shapeMode)
-    val backgroundColor by animateColorAsState(
-        targetValue = if (autoMode) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            LocalAndroidColorScheme.current.surfaceEffect1
-        }
-    )
-    val defaultIconTint =
-        if (autoMode) {
-            MaterialTheme.colorScheme.onPrimary
-        } else {
-            MaterialTheme.colorScheme.onSurface
-        }
+    val backgroundColor = MaterialTheme.colorScheme.primary
+    val defaultIconTint = MaterialTheme.colorScheme.onPrimary
     val contrastIconTint =
         remember(gradientEndColor, context) {
             gradientEndColor?.let { Color(BatteryColors.textColorOnBackground(context, it.toArgb())) }
         }
-    val iconTint by animateColorAsState(targetValue = contrastIconTint ?: defaultIconTint)
+    val iconTint = contrastIconTint ?: defaultIconTint
     val painterRes = if (autoMode) {
         R.drawable.ic_qs_brightness_auto_on
     } else {
