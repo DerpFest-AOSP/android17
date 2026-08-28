@@ -60,7 +60,7 @@ open class StatusBarIconHolder protected constructor() {
             }
         set(visible) {
             if (isVisible == visible) {
-                //return
+                return
             }
             when (type) {
                 TYPE_ICON -> icon!!.visible = visible
