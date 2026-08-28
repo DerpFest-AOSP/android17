@@ -32,6 +32,7 @@ import androidx.annotation.WorkerThread;
 
 import com.android.internal.annotations.GuardedBy;
 import com.android.settingslib.bluetooth.BluetoothCallback;
+import com.android.settingslib.bluetooth.BluetoothUtils;
 import com.android.settingslib.bluetooth.CachedBluetoothDevice;
 import com.android.settingslib.bluetooth.LocalBluetoothManager;
 import com.android.settingslib.bluetooth.LocalBluetoothProfile;
@@ -287,10 +288,7 @@ public class BluetoothControllerImpl implements BluetoothController, BluetoothCa
         boolean isActive = false;
 
         for (CachedBluetoothDevice device : getDevices()) {
-            isActive |= device.isActiveDevice(BluetoothProfile.HEADSET)
-                    || device.isActiveDevice(BluetoothProfile.A2DP)
-                    || device.isActiveDevice(BluetoothProfile.HEARING_AID)
-                    || device.isActiveDevice(BluetoothProfile.LE_AUDIO);
+            isActive |= isAudioActiveDevice(device);
         }
 
         if (mIsActive != isActive) {
@@ -335,12 +333,37 @@ public class BluetoothControllerImpl implements BluetoothController, BluetoothCa
             if (mConnectedDevices.isEmpty()) {
                 return BluetoothDevice.BATTERY_LEVEL_UNKNOWN;
             }
-            return mConnectedDevices.stream()
-                .mapToInt(device -> device.getBatteryLevel())
-                .filter(level -> level != BluetoothDevice.BATTERY_LEVEL_UNKNOWN)
-                .findFirst()
-                .orElse(BluetoothDevice.BATTERY_LEVEL_UNKNOWN);
+            int fallback = BluetoothDevice.BATTERY_LEVEL_UNKNOWN;
+            for (CachedBluetoothDevice device : mConnectedDevices) {
+                int level = getDeviceBatteryLevel(device);
+                if (level == BluetoothDevice.BATTERY_LEVEL_UNKNOWN) {
+                    continue;
+                }
+                if (isAudioActiveDevice(device)) {
+                    return level;
+                }
+                if (fallback == BluetoothDevice.BATTERY_LEVEL_UNKNOWN) {
+                    fallback = level;
+                }
+            }
+            return fallback;
         }
+    }
+
+    private static boolean isAudioActiveDevice(CachedBluetoothDevice device) {
+        return device.isActiveDevice(BluetoothProfile.HEADSET)
+                || device.isActiveDevice(BluetoothProfile.A2DP)
+                || device.isActiveDevice(BluetoothProfile.HEARING_AID)
+                || device.isActiveDevice(BluetoothProfile.LE_AUDIO);
+    }
+
+    private static int getDeviceBatteryLevel(CachedBluetoothDevice device) {
+        int metadataLevel = BluetoothUtils.getIntMetaData(
+                device.getDevice(), BluetoothDevice.METADATA_MAIN_BATTERY);
+        if (metadataLevel > BluetoothUtils.META_INT_ERROR) {
+            return metadataLevel;
+        }
+        return device.getMinBatteryLevelWithMemberDevices();
     }
 
     private void updateBattery() {
