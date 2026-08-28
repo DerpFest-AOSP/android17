@@ -98,6 +98,7 @@ import com.android.systemui.util.time.DateFormatUtil;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Locale;
 import java.util.concurrent.Executor;
 
@@ -942,6 +943,22 @@ public class PhoneStatusBarPolicy
             this.visible = visible;
             this.batteryLevel = batteryLevel;
             this.contentDescription = contentDescription;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            BluetoothIconState other = (BluetoothIconState) obj;
+            return visible == other.visible
+                    && batteryLevel == other.batteryLevel
+                    && Objects.equals(contentDescription, other.contentDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(visible, batteryLevel, contentDescription);
         }
 
         @Override
