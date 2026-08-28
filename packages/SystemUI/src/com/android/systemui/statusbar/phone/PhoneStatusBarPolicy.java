@@ -53,6 +53,7 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.Observer;
 
 import com.android.internal.statusbar.StatusBarIcon;
+import com.android.settingslib.Utils;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.common.shared.model.Icon;
 import com.android.systemui.dagger.qualifiers.DisplayId;
@@ -540,6 +541,11 @@ public class PhoneStatusBarPolicy
             batteryLevel = mShowBluetoothBatteryLevel ? mBluetooth.getBatteryLevel() : -1;
             contentDescription = mResources.getString(
                     R.string.accessibility_bluetooth_connected);
+            if (batteryLevel >= 0) {
+                contentDescription += " " + mResources.getString(
+                        R.string.quick_settings_bluetooth_secondary_label_battery_level,
+                        Utils.formatPercentage(batteryLevel));
+            }
         }
 
         mIconController.setBluetoothIcon(mSlotBluetooth,
