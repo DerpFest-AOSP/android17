@@ -56,6 +56,7 @@ import com.android.systemui.statusbar.policy.RotationLockController
 import com.android.systemui.statusbar.policy.SensorPrivacyController
 import com.android.systemui.statusbar.policy.UserInfoController
 import com.android.systemui.statusbar.policy.ZenModeController
+import com.android.systemui.tuner.TunerService
 import com.android.systemui.statusbar.policy.data.repository.fakeZenModeRepository
 import com.android.systemui.statusbar.policy.domain.interactor.zenModeInteractor
 import com.android.systemui.testKosmos
@@ -129,6 +130,7 @@ class PhoneStatusBarPolicyTest : SysuiTestCase() {
     private lateinit var ringerModeTracker: RingerModeTracker
     @Mock private lateinit var privacyItemController: PrivacyItemController
     @Mock private lateinit var privacyLogger: PrivacyLogger
+    @Mock private lateinit var tunerService: TunerService
     @Captor
     private lateinit var alarmCallbackCaptor:
         ArgumentCaptor<NextAlarmController.NextAlarmChangeCallback>
@@ -399,6 +401,7 @@ class PhoneStatusBarPolicyTest : SysuiTestCase() {
             fakeConnectedDisplayStateProvider,
             kosmos.zenModeInteractor,
             kosmos.javaAdapter,
+            tunerService,
         )
     }
 
