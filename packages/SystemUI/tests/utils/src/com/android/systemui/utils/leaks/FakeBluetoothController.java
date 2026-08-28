@@ -15,6 +15,7 @@
 package com.android.systemui.utils.leaks;
 
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.testing.LeakCheck;
 
 import com.android.settingslib.bluetooth.CachedBluetoothDevice;
@@ -101,6 +102,6 @@ public class FakeBluetoothController extends BaseLeakChecker<Callback> implement
 
     @Override
     public int getBatteryLevel() {
-        return 0;
+        return BluetoothDevice.BATTERY_LEVEL_UNKNOWN;
     }
 }

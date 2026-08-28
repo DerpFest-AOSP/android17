@@ -16,6 +16,7 @@
 package com.android.systemui.statusbar.policy
 
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import com.android.internal.annotations.VisibleForTesting
 import com.android.settingslib.bluetooth.CachedBluetoothDevice
 import com.android.systemui.statusbar.policy.BluetoothController.Callback
@@ -76,7 +77,7 @@ class FakeBluetoothController : BluetoothController {
         listener: BluetoothAdapter.OnMetadataChangedListener?,
     ) {}
 
-    override fun getBatteryLevel(): Int = 0
+    override fun getBatteryLevel(): Int = BluetoothDevice.BATTERY_LEVEL_UNKNOWN
 
     /** Trigger the [Callback.onBluetoothDevicesChanged] method for all registered callbacks. */
     @VisibleForTesting
