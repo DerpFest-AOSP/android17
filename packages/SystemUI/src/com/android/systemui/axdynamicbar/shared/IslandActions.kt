@@ -2,6 +2,7 @@ package com.android.systemui.axdynamicbar.shared
 
 import android.net.Uri
 import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
 
 val EVENT_TYPE_IDS: Map<Class<out IslandEvent>, String> =
     mapOf(
@@ -33,6 +34,8 @@ interface IslandActions {
         get() = kotlinx.coroutines.flow.MutableStateFlow(null)
 
     val onFocusableRequested: ((Boolean) -> Unit)?
+        get() = null
+    val sliderHapticsViewModelFactory: SliderHapticsViewModel.Factory?
         get() = null
     fun collapseIsland()
     fun dismissEvent(event: IslandEvent)

@@ -49,7 +49,7 @@ constructor(
     val settings: AxDynamicBarSettings,
     private val statusBarStateController: StatusBarStateController,
     private val keyguardStateController: KeyguardStateController,
-    val sliderHapticsViewModelFactory: SliderHapticsViewModel.Factory,
+    override val sliderHapticsViewModelFactory: SliderHapticsViewModel.Factory,
     private val activityStarter: ActivityStarter,
     private val indicationController: KeyguardIndicationController,
     private val shadeInteractor: ShadeInteractor,
