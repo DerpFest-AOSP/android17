@@ -22,6 +22,7 @@ import com.android.systemui.statusbar.quickactions.assistant.data.repository.Ass
 import com.android.systemui.statusbar.quickactions.assistant.data.repository.AssistantRepositoryImpl
 import com.android.systemui.statusbar.quickactions.assistant.domain.interactor.AssistantIconInteractor
 import com.android.systemui.statusbar.quickactions.assistant.domain.interactor.AssistantIconInteractorImpl
+import com.android.systemui.statusbar.quickactions.island.DynamicIslandStartable
 import com.android.systemui.statusbar.quickactions.sharescreen.domain.interactor.ShareScreenPrivacyIndicatorInteractor
 import dagger.Binds
 import dagger.Module
@@ -45,4 +46,9 @@ interface StatusBarFeaturePodsModule {
     fun bindShareScreenPrivacyIndicatorInteractor(
         impl: ShareScreenPrivacyIndicatorInteractor
     ): CoreStartable
+
+    @Binds
+    @IntoMap
+    @ClassKey(DynamicIslandStartable::class)
+    fun bindDynamicIslandStartable(impl: DynamicIslandStartable): CoreStartable
 }
