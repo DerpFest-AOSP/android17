@@ -48,5 +48,6 @@ val Kosmos.statusBarRootFactory by
             headlineViewModelFactory = displayAwareHeadlineViewModelImplFactory,
             keyguardStateController = mock(),
             headsUpManager = mock(),
+            mediaHierarchyManager = mock(),
         )
     }

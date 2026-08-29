@@ -296,5 +296,6 @@ public class SystemSettingsValidators {
         VALIDATORS.put(System.GRADIENT_END_COLOR, ANY_INTEGER_VALIDATOR);
         VALIDATORS.put(System.BOUNCER_USER_SWITCHER_ENABLED,
                 new InclusiveIntegerRangeValidator(-1, 1));
+        VALIDATORS.put(System.STATUS_BAR_SHOW_DYNAMIC_ISLAND, BOOLEAN_VALIDATOR);
     }
 }

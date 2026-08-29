@@ -76,6 +76,9 @@ class FakeHomeStatusBarViewModel(
 
     override val popupChips = emptyList<QuickActionChipModel.PopupChip>()
 
+    override val dynamicIslandChips =
+        emptyList<com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel.Shown>()
+
     override val mediaProjectionStopDialogDueToCallEndedState =
         MutableStateFlow(MediaProjectionStopDialogModel.Hidden)
 

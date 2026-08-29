@@ -56,6 +56,7 @@ import com.android.systemui.statusbar.pipeline.shared.ui.binder.HomeStatusBarVie
 import com.android.systemui.statusbar.policy.fakeConfigurationController
 import com.android.systemui.statusbar.policy.domain.interactor.deviceProvisioningInteractor
 import com.android.systemui.statusbar.quickactions.ime.domain.interactor.imeIndicatorChipInteractor
+import com.android.systemui.statusbar.quickactions.island.ui.viewmodel.dynamicIslandViewModelFactory
 import com.android.systemui.statusbar.quickactions.popups.ui.viewmodel.statusBarPopupChipsViewModelFactory
 import com.android.systemui.statusbar.systemstatusicons.ui.viewmodel.systemStatusIconsViewModelFactory
 import com.android.systemui.user.domain.interactor.userLogoutInteractor
@@ -111,6 +112,7 @@ var Kosmos.homeStatusBarViewModelFactory: (Int) -> HomeStatusBarViewModel by
                 shareToAppChipViewModel,
                 ongoingActivityChipsViewModel,
                 statusBarPopupChipsViewModelFactory,
+                dynamicIslandViewModelFactory,
                 systemStatusEventAnimationInteractor,
                 statusBarContentInsetsViewModel,
                 backgroundScope,

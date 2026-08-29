@@ -18,6 +18,7 @@ package com.android.systemui.statusbar.quickactions.island.media.domain.interact
 
 import android.app.PendingIntent
 import android.content.Context
+import android.database.ContentObserver
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSession
@@ -25,6 +26,7 @@ import android.media.session.PlaybackState
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.os.UserHandle
 import androidx.compose.runtime.snapshotFlow
 import com.android.systemui.ActivityIntentHelper
 import com.android.systemui.common.shared.model.ContentDescription
@@ -61,6 +63,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import android.provider.Settings
 
 private const val PLAYBACK_POSITION_POLL_INTERVAL_MS = 1000L
 
@@ -84,7 +87,14 @@ constructor(
     private val keyguardStateController: KeyguardStateController,
 ) {
     private val isEnabled = MutableStateFlow(false)
+    private val isDynamicIslandEnabled = MutableStateFlow(false)
     private var isInitialized = false
+    private val dynamicIslandObserver =
+        object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                updateDynamicIslandState()
+            }
+        }
 
     private val mediaControlChipModelForScene: Flow<MediaControlState> = snapshotFlow {
         mediaRepository.currentMedia.firstOrNull { it.isActive }?.toMediaControlState(
@@ -135,8 +145,9 @@ constructor(
             mediaControlState,
             livePlaybackInfo,
             isEnabled,
-        ) { mediaControlState, playbackInfo, isEnabled ->
-                if (isEnabled) {
+            isDynamicIslandEnabled,
+        ) { mediaControlState, playbackInfo, isEnabled, isDynamicIslandEnabled ->
+                if (isEnabled && isDynamicIslandEnabled) {
                     mediaControlState.model?.withPlaybackInfo(playbackInfo)
                 } else {
                     null
@@ -150,7 +161,26 @@ constructor(
             return
         }
         isInitialized = true
+        context.contentResolver.registerContentObserver(
+            Settings.System.getUriFor(
+                Settings.System.STATUS_BAR_SHOW_DYNAMIC_ISLAND
+            ),
+            false,
+            dynamicIslandObserver,
+            UserHandle.USER_ALL
+        )
+        updateDynamicIslandState()
         isEnabled.value = true
+    }
+
+    private fun updateDynamicIslandState() {
+        isDynamicIslandEnabled.value =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.STATUS_BAR_SHOW_DYNAMIC_ISLAND,
+                0,
+                UserHandle.USER_CURRENT
+            ) != 0
     }
 }
 

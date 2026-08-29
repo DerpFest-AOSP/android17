@@ -18,6 +18,11 @@ package com.android.systemui.statusbar.chips.screenrecord.ui.viewmodel
 
 import android.app.ActivityManager
 import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.os.UserHandle
+import android.provider.Settings
 import androidx.annotation.DrawableRes
 import com.android.internal.jank.Cuj
 import com.android.systemui.animation.DialogCuj
@@ -53,8 +58,12 @@ import com.android.systemui.util.kotlin.pairwise
 import com.android.systemui.util.time.SystemClock
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -63,6 +72,7 @@ import kotlinx.coroutines.flow.stateIn
 class ScreenRecordChipViewModel
 @Inject
 constructor(
+    @Application private val context: Context,
     @Application private val scope: CoroutineScope,
     private val interactor: ScreenRecordChipInteractor,
     private val shareToAppChipViewModel: ShareToAppChipViewModel,
@@ -79,8 +89,13 @@ constructor(
 
     /** A direct mapping from [ScreenRecordChipModel] to [OngoingActivityChipModel]. */
     private val simpleChip: StateFlow<OngoingActivityChipModel> =
-        interactor.screenRecordState
-            .map { state ->
+        combine(
+                interactor.screenRecordState,
+                observeDynamicIslandEnabled(context),
+            ) { state, dynamicIslandEnabled ->
+                if (dynamicIslandEnabled) {
+                    return@combine OngoingActivityChipModel.Inactive()
+                }
                 when (state) {
                     is ScreenRecordChipModel.DoingNothing -> OngoingActivityChipModel.Inactive()
                     is ScreenRecordChipModel.Starting -> state.toOngoingActivityChipModel()
@@ -216,6 +231,32 @@ constructor(
     }
 
     companion object {
+        private fun observeDynamicIslandEnabled(context: Context): Flow<Boolean> = callbackFlow {
+            val observer =
+                object : ContentObserver(Handler(Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) {
+                        trySend(readDynamicIslandEnabled(context))
+                    }
+                }
+            context.contentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.STATUS_BAR_SHOW_DYNAMIC_ISLAND),
+                false,
+                observer,
+                UserHandle.USER_ALL,
+            )
+            trySend(readDynamicIslandEnabled(context))
+            awaitClose { context.contentResolver.unregisterContentObserver(observer) }
+        }
+
+        private fun readDynamicIslandEnabled(context: Context): Boolean {
+            return Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.STATUS_BAR_SHOW_DYNAMIC_ISLAND,
+                0,
+                UserHandle.USER_CURRENT,
+            ) != 0
+        }
+
         const val KEY = "ScreenRecord"
         @DrawableRes val ICON = R.drawable.ic_screenrecord
         private val DIALOG_CUJ =
