@@ -1100,11 +1100,13 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces,
             detachFromParent(mPulseViewController.getPulseView());
             detachFromParent(mEdgeLightViewController.getEdgeLightView());
 
+            // Media art and pulse sit behind the scene container so lockscreen clocks, shortcuts,
+            // and the UDFPS/lock icon stay on top. Edge light stays in front as a screen-edge glow.
             background.addView(mMediaViewController.getMediaArtScrim(),
                     new FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
-            foreground.addView(mPulseViewController.getPulseView(),
+            background.addView(mPulseViewController.getPulseView(),
                     new FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT));
