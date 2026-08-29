@@ -35,6 +35,8 @@ import com.android.systemui.statusbar.NotificationLockscreenUserManager
 import com.android.systemui.statusbar.quickactions.island.shared.toSendAction
 import com.android.systemui.statusbar.quickactions.island.shared.model.PopupActionModel
 import com.android.systemui.statusbar.quickactions.island.shared.toActivityLaunchAction
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.STOPWATCH
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.observeDynamicIslandFeatureEnabled
 import com.android.systemui.statusbar.quickactions.island.ui.model.ChipIcon
 import com.android.systemui.statusbar.quickactions.island.ui.model.ColorsModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipId
@@ -50,6 +52,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import java.util.Locale
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 
@@ -109,7 +112,12 @@ constructor(
                             }
                             .firstOrNull()
                     }
-                    .map(::toPopupChipModel),
+                    .map(::toPopupChipModel)
+                    .combine(
+                        observeDynamicIslandFeatureEnabled(context, STOPWATCH)
+                    ) { model, enabled ->
+                        if (enabled) model else PopupChipModel.Hidden(PopupChipId.Stopwatch)
+                    },
         )
 
     override suspend fun onActivated(): Nothing {

@@ -141,7 +141,13 @@ public class SystemSettings {
                 Settings.System.QS_VOLUME_GRADIENT_ENABLED,
                 Settings.System.GRADIENT_START_COLOR,
                 Settings.System.GRADIENT_END_COLOR,
-                Settings.System.STATUS_BAR_SHOW_DYNAMIC_ISLAND
+                Settings.System.STATUS_BAR_SHOW_DYNAMIC_ISLAND,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_MEDIA_CONTROLS,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_SCREEN_RECORDING,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_ALARMS,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_FLASHLIGHT,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_STOPWATCH,
+                Settings.System.STATUS_BAR_DYNAMIC_ISLAND_LIVE_SCORES
         ));
         return settings.toArray(new String[0]);
     }

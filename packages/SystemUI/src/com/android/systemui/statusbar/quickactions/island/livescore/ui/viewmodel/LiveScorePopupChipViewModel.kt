@@ -27,6 +27,8 @@ import com.android.systemui.lifecycle.Hydrator
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.statusbar.NotificationLockscreenUserManager
 import com.android.systemui.statusbar.quickactions.island.livescore.shared.model.LiveScoreChipModel
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.LIVE_SCORES
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.observeDynamicIslandFeatureEnabled
 import com.android.systemui.statusbar.quickactions.island.shared.toActivityLaunchAction
 import com.android.systemui.statusbar.quickactions.island.ui.model.ChipIcon
 import com.android.systemui.statusbar.quickactions.island.ui.model.ColorsModel
@@ -77,6 +79,9 @@ constructor(
                             keyguardStateController = keyguardStateController,
                         )
                     )
+                }
+                .combine(observeDynamicIslandFeatureEnabled(context, LIVE_SCORES)) { model, enabled ->
+                    if (enabled) model else PopupChipModel.Hidden(PopupChipId.LiveScore)
                 },
         )
 

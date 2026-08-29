@@ -44,6 +44,8 @@ import com.android.systemui.media.remedia.shared.model.MediaSessionState
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.quickactions.island.media.shared.model.MediaControlChipModel
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.MEDIA_CONTROLS
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.observeDynamicIslandFeatureEnabled
 import com.android.systemui.statusbar.NotificationLockscreenUserManager
 import com.android.systemui.statusbar.policy.KeyguardStateController
 import javax.inject.Inject
@@ -146,8 +148,14 @@ constructor(
             livePlaybackInfo,
             isEnabled,
             isDynamicIslandEnabled,
-        ) { mediaControlState, playbackInfo, isEnabled, isDynamicIslandEnabled ->
-                if (isEnabled && isDynamicIslandEnabled) {
+            observeDynamicIslandFeatureEnabled(context, MEDIA_CONTROLS),
+        ) {
+            mediaControlState,
+            playbackInfo,
+            isEnabled,
+            isDynamicIslandEnabled,
+            mediaControlsEnabled ->
+                if (isEnabled && isDynamicIslandEnabled && mediaControlsEnabled) {
                     mediaControlState.model?.withPlaybackInfo(playbackInfo)
                 } else {
                     null

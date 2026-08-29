@@ -7280,6 +7280,48 @@ public final class Settings {
                 "status_bar_show_dynamic_island";
 
         /**
+         * Whether media controls are shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_MEDIA_CONTROLS =
+                "status_bar_dynamic_island_media_controls";
+
+        /**
+         * Whether screen recording status is shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_SCREEN_RECORDING =
+                "status_bar_dynamic_island_screen_recording";
+
+        /**
+         * Whether the next alarm is shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_ALARMS =
+                "status_bar_dynamic_island_alarms";
+
+        /**
+         * Whether flashlight status is shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_FLASHLIGHT =
+                "status_bar_dynamic_island_flashlight";
+
+        /**
+         * Whether stopwatch status is shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_STOPWATCH =
+                "status_bar_dynamic_island_stopwatch";
+
+        /**
+         * Whether live scores are shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_LIVE_SCORES =
+                "status_bar_dynamic_island_live_scores";
+
+        /**
          * Defines the screen-off animation to display
          * @hide
          */

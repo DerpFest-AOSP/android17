@@ -35,11 +35,14 @@ import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipMode
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupContentModel
 import com.android.systemui.statusbar.quickactions.island.ui.viewmodel.IslandChipViewModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.shared.model.ScreenRecordPopupModel
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.SCREEN_RECORDING
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.observeDynamicIslandFeatureEnabled
 import com.android.systemui.util.kotlin.pairwise
 import com.android.systemui.util.time.SystemClock
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 /** ViewModel backing the screen-recording page inside the dynamic island. */
@@ -85,7 +88,13 @@ constructor(
             traceName = "chip",
             initialValue = PopupChipModel.Hidden(PopupChipId.ScreenRecord),
             source =
-                popupModel.map { model -> toPopupChipModel(model) },
+                popupModel
+                    .map { model -> toPopupChipModel(model) }
+                    .combine(
+                        observeDynamicIslandFeatureEnabled(context, SCREEN_RECORDING)
+                    ) { model, enabled ->
+                        if (enabled) model else PopupChipModel.Hidden(PopupChipId.ScreenRecord)
+                    },
         )
 
     override suspend fun onActivated(): Nothing {
