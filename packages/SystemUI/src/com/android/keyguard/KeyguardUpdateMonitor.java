@@ -2518,7 +2518,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
             // Don't override if a valid battery status update has come in
             final BatteryStatus status = new BatteryStatus(BATTERY_STATUS_UNKNOWN,
                     /* level= */ level, /* plugged= */ 0, CHARGING_POLICY_DEFAULT,
-                    /* maxChargingWattage= */0, /* present= */true, 0, 0, 0);
+                    /* maxChargingWattage= */0, /* present= */true, 0, 0, 0, false);
             mMainExecutor.execute(() -> {
                 if (mBatteryStatus == null) {
                     handleBatteryUpdate(status);
@@ -3847,6 +3847,11 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, CoreSt
               (current.maxChargingWattage != old.maxChargingWattage ||
                current.maxChargingCurrent != old.maxChargingCurrent ||
                current.maxChargingVoltage != old.maxChargingVoltage)) {
+            return true;
+        }
+
+        // change in OEM charging while plugged in
+        if (nowPluggedIn && current.oemChargeStatus != old.oemChargeStatus) {
             return true;
         }
 
