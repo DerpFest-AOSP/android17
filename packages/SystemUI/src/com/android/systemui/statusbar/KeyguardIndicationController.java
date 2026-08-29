@@ -136,6 +136,9 @@ import dagger.Lazy;
 
 import java.io.PrintWriter;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -1412,19 +1415,24 @@ public class KeyguardIndicationController {
         boolean showbatteryInfo = Settings.System.getIntForUser(mContext.getContentResolver(),
                 Settings.System.LOCKSCREEN_BATTERY_INFO, 1, UserHandle.USER_CURRENT) == 1;
         if (showbatteryInfo) {
-            if (mChargingCurrent > 0) {
-                batteryInfo = batteryInfo + (mChargingCurrent / mCurrentDivider) + "mA";
+            List<String> chargingDetails = new ArrayList<>();
+            if (mChargingCurrent >= mCurrentDivider * 1000) {
+                chargingDetails.add(String.format(Locale.US, "%.1f",
+                        (mChargingCurrent / (float) mCurrentDivider / 1000f)) + "A");
+            } else if (mChargingCurrent > 0) {
+                chargingDetails.add(String.format(Locale.US, "%.0f",
+                        (mChargingCurrent / (float) mCurrentDivider)) + "mA");
             }
             if (mChargingVoltage > 0) {
-                batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " • ") +
-                        String.format("%.1f", (mChargingVoltage / 1000 / 1000)) + "V";
+                chargingDetails.add(String.format(Locale.US, "%.1f",
+                        (mChargingVoltage / 1000000f)) + "V");
             }
             if (mTemperature > 0) {
-                batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " • ") +
-                        (mTemperature / 10) + "°C";
+                chargingDetails.add(String.format(Locale.US, "%.1f",
+                        (mTemperature / 10f)) + "°C");
             }
-            if (batteryInfo != "") {
-                batteryInfo = "\n" + batteryInfo;
+            if (!chargingDetails.isEmpty()) {
+                batteryInfo = "\n" + TextUtils.join(" • ", chargingDetails);
             }
         }
 
