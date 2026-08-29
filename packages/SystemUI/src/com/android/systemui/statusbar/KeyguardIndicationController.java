@@ -245,6 +245,7 @@ public class KeyguardIndicationController {
     private int mChargingCurrent;
     private double mChargingVoltage;
     private int mTemperature;
+    private int mCurrentDivider;
     private boolean mInited;
     private boolean mFaceDetectionRunning;
 
@@ -457,6 +458,8 @@ public class KeyguardIndicationController {
 
         mStatusBarStateListener.onDozingChanged(mStatusBarStateController.isDozing());
         mStatusBarStateListener.onDreamingChanged(mStatusBarStateController.isDreaming());
+
+        mCurrentDivider = mContext.getResources().getInteger(R.integer.config_currentInfoDivider);
     }
 
     @Nullable
@@ -711,7 +714,7 @@ public class KeyguardIndicationController {
         if (mBatteryPresent && (mPowerPluggedIn || mEnableBatteryDefender)) {
             String powerIndication = computePowerIndication();
             if (DEBUG_CHARGING_SPEED) {
-                powerIndication += ",  " + (mChargingWattage / 1000) + " mW";
+                powerIndication += ",  " + (mChargingWattage / mCurrentDivider) + " mW";
             }
 
             mKeyguardLogger.logUpdateBatteryIndication(powerIndication, mPowerPluggedIn);
@@ -1381,7 +1384,7 @@ public class KeyguardIndicationController {
                 Settings.System.LOCKSCREEN_BATTERY_INFO, 1, UserHandle.USER_CURRENT) == 1;
         if (showbatteryInfo) {
             if (mChargingCurrent > 0) {
-                batteryInfo = batteryInfo + (mChargingCurrent / 1000) + "mA";
+                batteryInfo = batteryInfo + (mChargingCurrent / mCurrentDivider) + "mA";
             }
             if (mChargingVoltage > 0) {
                 batteryInfo = (batteryInfo == "" ? "" : batteryInfo + " • ") +
