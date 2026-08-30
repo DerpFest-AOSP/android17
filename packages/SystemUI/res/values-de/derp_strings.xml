@@ -40,6 +40,10 @@
     <!-- WiFi standard numbering on statusbar -->
     <string name="status_bar_wifi_standard">WLAN-Standardnummer</string>
 
+    <!-- Status bar tuner: theme store link for network icons -->
+    <string name="custom_system_theme_title">Netzwerk-Icon-Themen</string>
+    <string name="custom_system_theme_summary">Erscheinungsbild der Netzwerk-Icons anpassen</string>
+
     <!-- CPUInfo tile -->
     <string name="quick_settings_cpuinfo_label">CPU-Info</string>
 
