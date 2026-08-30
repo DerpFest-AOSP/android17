@@ -35,4 +35,5 @@ data class MediaControlChipModel(
     val positionMs: Long,
     val canBeScrubbed: Boolean,
     val isPlaying: Boolean,
+    val packageName: String? = null,
 )

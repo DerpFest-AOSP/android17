@@ -2,6 +2,12 @@ package com.android.systemui.axdynamicbar.ui.compose
 
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
+import androidx.compose.ui.platform.LocalContext
+import com.android.internal.R as InternalR
+import com.android.systemui.common.shared.model.Icon as SysUISharedIcon
+import com.android.systemui.common.ui.compose.Icon as SysUIIcon
+import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
+import com.android.systemui.statusbar.chips.ui.model.Chronometer
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -24,9 +30,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FlashlightOn
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -47,6 +57,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -60,21 +71,92 @@ import androidx.compose.ui.res.stringResource
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.model.RecordingState
 import com.android.systemui.axdynamicbar.shared.*
+import androidx.compose.ui.graphics.graphicsLayer
 import com.android.systemui.res.R
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import java.lang.Math.toRadians
 import kotlinx.coroutines.delay
 
+private val CircleChipSize = 28.dp
+private val CircleChipStroke = 2.5.dp
+private val CircleChipIconSize = 16.dp
+
 @Composable
-internal fun PillEventIcon(event: IslandEvent, tint: Color? = null) {
+internal fun CircleChip(
+    event: IslandEvent,
+    accent: Color,
+    contentColor: Color,
+    progress: Float?,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.size(CircleChipSize),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val strokePx = CircleChipStroke.toPx()
+            val inset = strokePx / 2f
+            val ringSize = Size(size.width - strokePx, size.height - strokePx)
+            val topLeft = Offset(inset, inset)
+
+            drawCircle(
+                color = accent.copy(alpha = 0.4f),
+                radius = (size.minDimension - strokePx) / 2f,
+            )
+
+            if (progress != null) {
+                drawArc(
+                    color = lerp(accent, contentColor, 0.2f).copy(alpha = 0.7f),
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    style = Stroke(strokePx, cap = StrokeCap.Round),
+                    topLeft = topLeft,
+                    size = ringSize,
+                )
+                drawArc(
+                    color = lerp(accent, contentColor, 0.6f).copy(alpha = 1f),
+                    startAngle = -90f,
+                    sweepAngle = 360f * progress.coerceIn(0f, 1f),
+                    useCenter = false,
+                    style = Stroke(strokePx, cap = StrokeCap.Round),
+                    topLeft = topLeft,
+                    size = ringSize,
+                )
+            } else {
+                drawArc(
+                    color = accent.copy(alpha = 0.5f),
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    style = Stroke(strokePx, cap = StrokeCap.Round),
+                    topLeft = topLeft,
+                    size = ringSize,
+                )
+            }
+        }
+
+        Box(modifier = Modifier.size(CircleChipIconSize), contentAlignment = Alignment.Center) {
+            PillEventIcon(event, tint = contentColor, animated = false)
+        }
+    }
+}
+
+@Composable
+internal fun PillEventIcon(
+    event: IslandEvent,
+    tint: Color? = null,
+    animated: Boolean = true,
+) {
+    if (!animated) {
+        StaticPillEventIcon(event, tint)
+        return
+    }
     when (event) {
-        is IslandEvent.ScreenRecording -> BlinkingDotIcon(tint ?: RedAccent, isAnimating = !event.isCountdown)
-        is IslandEvent.MicCamActive -> PrivacyDotIcon(event, tint)
-        is IslandEvent.AudioRecording ->
-            BlinkingDotIcon(tint ?: RedAccent, isAnimating = event.state == RecordingState.RECORDING)
-        is IslandEvent.Casting -> AnimatedCastIcon(tint ?: TealAccent)
+        is IslandEvent.AudioRecording -> AudioRecordingPillIcon(event, tint)
         is IslandEvent.Media -> MediaPillIcon(event)
         is IslandEvent.PromotedOngoing -> PromotedOngoingPillIcon(event, tint)
         is IslandEvent.Sports -> SportsPillIcon(event)
@@ -88,13 +170,151 @@ internal fun PillEventIcon(event: IslandEvent, tint: Color? = null) {
         is IslandEvent.RingerMode -> RingerIcon(event, tint)
         is IslandEvent.Vpn -> AnimatedShieldIcon(tint ?: IndigoAccent)
         is IslandEvent.Clipboard -> AnimatedClipboardIcon(tint ?: IndigoAccent)
+        is IslandEvent.Call -> CallPillIcon(event)
         is IslandEvent.Notification -> NotificationPillIcon(event)
         is IslandEvent.AppSwitch -> AppSwitchPillIcon(event)
         is IslandEvent.Torch ->
             Icon(Icons.Filled.FlashlightOn, null, tint = tint ?: YellowAccent, modifier = Modifier.size(SizeBadge))
         is IslandEvent.BiometricUnlock -> BiometricUnlockIcon(tint)
         is IslandEvent.KeyguardIndication -> KeyguardIndicationIcon(event, tint)
+        is IslandEvent.AospChip -> AospChipPillIcon(event, tint)
     }
+}
+
+@Composable
+private fun StaticPillEventIcon(event: IslandEvent, tint: Color? = null) {
+    when (event) {
+        is IslandEvent.Media -> MediaPillIcon(event, animated = false)
+        is IslandEvent.Notification -> NotificationPillIcon(event)
+        is IslandEvent.AppSwitch -> AppSwitchPillIcon(event)
+        is IslandEvent.AospChip -> AospChipPillIcon(event, tint, animated = false)
+        is IslandEvent.PromotedOngoing ->
+            if (event.appIcon != null) {
+                Image(
+                    bitmap = event.appIcon.toScaledBitmap(16.dp),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp).clip(ShapeXs),
+                    contentScale = ContentScale.Crop,
+                )
+            } else {
+                Icon(
+                    Icons.Filled.Notifications,
+                    null,
+                    tint = tint ?: BlueAccent,
+                    modifier = Modifier.size(SizeBadge),
+                )
+            }
+        else -> {
+            val style = eventStyleFor(event)
+            style.icon?.let {
+                Icon(
+                    it,
+                    null,
+                    tint = tint ?: style.accent,
+                    modifier = Modifier.size(SizeBadge),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AospChipPillIcon(
+    event: IslandEvent.AospChip,
+    tint: Color? = null,
+    animated: Boolean = true,
+) {
+    val color = tint ?: aospChipAccent(event.active)
+    val context = LocalContext.current
+    val isCountdown = event.active.content is OngoingActivityChipModel.Content.Countdown
+    val isIconOnly = event.active.content is OngoingActivityChipModel.Content.IconOnly
+    val isCall = event.active.key.startsWith("callChip-")
+    val useScreenRecFallback = isCountdown && event.active.key == "ScreenRecord"
+
+    val renderIcon: OngoingActivityChipModel.ChipIcon = when {
+        isCall -> OngoingActivityChipModel.ChipIcon.SingleColorIcon(
+            SysUISharedIcon.Resource(InternalR.drawable.ic_phone, null)
+        )
+        event.active.icon != null -> event.active.icon!!
+        useScreenRecFallback -> OngoingActivityChipModel.ChipIcon.SingleColorIcon(
+            SysUISharedIcon.Resource(R.drawable.ic_screenrecord, null)
+        )
+        else -> return
+    }
+
+    val iconContent: @Composable () -> Unit = {
+        when (renderIcon) {
+            is OngoingActivityChipModel.ChipIcon.SingleColorIcon -> {
+                SysUIIcon(
+                    icon = renderIcon.impl,
+                    tint = color,
+                    modifier = Modifier.size(SizeBadge),
+                )
+            }
+            is OngoingActivityChipModel.ChipIcon.StatusBarNotificationIcon -> {
+                val drawable = remember(event.active.managingPackageName) {
+                    event.active.managingPackageName?.let { pkg ->
+                        try { context.packageManager.getApplicationIcon(pkg) } catch (_: Exception) { null }
+                    }
+                }
+                if (drawable != null) {
+                    Image(
+                        bitmap = drawable.toScaledBitmap(SizeBadge),
+                        contentDescription = null,
+                        modifier = Modifier.size(SizeBadge),
+                    )
+                }
+            }
+        }
+    }
+
+    val isScreenRec = event.active.key == "ScreenRecord"
+    when {
+        !animated -> iconContent()
+        isCall -> {
+            val transition = rememberInfiniteTransition(label = "aosp_call_shake")
+            val shake by transition.animateFloat(
+                initialValue = -0.8f,
+                targetValue = 0.8f,
+                animationSpec = infiniteRepeatable(tween(90), RepeatMode.Reverse),
+                label = "aosp_call_shake_anim",
+            )
+            Box(modifier = Modifier.size(SizeBadge).offset(x = shake.dp)) {
+                iconContent()
+            }
+        }
+        isIconOnly -> {
+            val transition = rememberInfiniteTransition(label = "aosp_icononly")
+            val pulseAlpha by transition.animateFloat(
+                initialValue = 1f,
+                targetValue = AlphaDisabled,
+                animationSpec = infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "aosp_icononly_alpha",
+            )
+            Box(modifier = Modifier.size(SizeBadge).graphicsLayer { this.alpha = pulseAlpha }) {
+                iconContent()
+            }
+        }
+        isScreenRec -> {
+            val transition = rememberInfiniteTransition(label = "aosp_screenrec")
+            val pulseAlpha by transition.animateFloat(
+                initialValue = 1f,
+                targetValue = AlphaSubtle,
+                animationSpec = infiniteRepeatable(tween(600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "aosp_screenrec_alpha",
+            )
+            Box(modifier = Modifier.size(SizeBadge).graphicsLayer { this.alpha = pulseAlpha }) {
+                iconContent()
+            }
+        }
+        else -> iconContent()
+    }
+}
+
+@Composable
+private fun aospChipAccent(active: OngoingActivityChipModel.Active): Color {
+    val context = LocalContext.current
+    return Color(active.colors.background(context).defaultColor)
 }
 
 @Composable
@@ -113,40 +333,6 @@ private fun BlinkingDotIcon(color: Color, isAnimating: Boolean = true) {
     } else {
         
         Canvas(modifier = Modifier.size(SizeBadge)) { drawCircle(color = color.copy(alpha = AlphaTertiary)) }
-    }
-}
-
-@Composable
-private fun PrivacyDotIcon(event: IslandEvent.MicCamActive, tint: Color? = null) {
-    val transition = rememberInfiniteTransition(label = "privacy_pulse")
-    val alpha by
-        transition.animateFloat(
-            initialValue = 1f,
-            targetValue = AlphaDisabled,
-            animationSpec =
-                infiniteRepeatable(tween(600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-            label = "privacy_alpha",
-        )
-    Canvas(modifier = Modifier.size(SizeBadge)) {
-        val spacing = size.width * 0.35f
-        if (event.isCam) {
-            drawCircle(
-                color = (tint ?: RedAccent).copy(alpha = alpha),
-                radius = size.minDimension * 0.25f,
-                center = Offset(size.width / 2 - spacing / 2, size.height / 2),
-            )
-        }
-        if (event.isMic) {
-            drawCircle(
-                color = (tint ?: OrangeAccent).copy(alpha = alpha),
-                radius = size.minDimension * 0.25f,
-                center =
-                    Offset(
-                        if (event.isCam) size.width / 2 + spacing / 2 else size.width / 2,
-                        size.height / 2,
-                    ),
-            )
-        }
     }
 }
 
@@ -196,7 +382,7 @@ private fun AnimatedTrophyIcon(color: Color) {
 }
 
 @Composable
-private fun MediaPillIcon(event: IslandEvent.Media) {
+private fun MediaPillIcon(event: IslandEvent.Media, animated: Boolean = true) {
     event.albumArt?.let { art ->
         Image(
             bitmap = art.toScaledBitmap(16.dp),
@@ -210,7 +396,12 @@ private fun MediaPillIcon(event: IslandEvent.Media) {
                 Modifier.size(16.dp).clip(CircleShape).background(OrangeAccent.copy(alpha = AlphaSubtle + 0.05f)),
             contentAlignment = Alignment.Center,
         ) {
-            WaveformAnimation(OrangeAccent, Modifier.size(10.dp), isAnimating = event.isPlaying, barCount = 3)
+            WaveformAnimation(
+                OrangeAccent,
+                Modifier.size(10.dp),
+                isAnimating = animated && event.isPlaying,
+                barCount = 3,
+            )
         }
 }
 
@@ -242,47 +433,6 @@ private fun AnimatedHotspotIcon(color: Color) {
             )
         }
         drawCircle(color, radius = size.minDimension * 0.1f, center = Offset(cx, cy))
-    }
-}
-
-@Composable
-private fun AnimatedCastIcon(color: Color) {
-    val transition = rememberInfiniteTransition(label = "cast")
-    val sweep by
-        transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 3f,
-            animationSpec =
-                infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Restart),
-            label = "cast_sweep",
-        )
-    Canvas(modifier = Modifier.size(SizeBadge)) {
-        val sw = SizeStrokeThin.dp.toPx()
-        val w = size.width
-        val h = size.height
-        drawRoundRect(
-            color = color.copy(alpha = 0.5f),
-            topLeft = Offset(0f, h * 0.15f),
-            size = Size(w, h * 0.7f),
-            cornerRadius = CornerRadius(w * 0.12f),
-            style = Stroke(sw),
-        )
-        val bx = w * 0.15f
-        val by = h * 0.85f
-        for (i in 0 until 3) {
-            val r = w * (0.1f + i * 0.12f)
-            val a = if (sweep > i) ((sweep - i).coerceIn(0f, 1f) * 0.7f) else AlphaFaint
-            drawArc(
-                color = color.copy(alpha = a),
-                startAngle = 180f,
-                sweepAngle = 90f,
-                useCenter = false,
-                topLeft = Offset(bx - r, by - r),
-                size = Size(r * 2, r * 2),
-                style = Stroke(sw, cap = StrokeCap.Round),
-            )
-        }
-        drawCircle(color, radius = w * 0.06f, center = Offset(bx, by))
     }
 }
 
@@ -567,40 +717,54 @@ private fun AnimatedTickIcon(color: Color, isRunning: Boolean) {
 
 @Composable
 private fun RingerIcon(event: IslandEvent.RingerMode, tint: Color? = null) {
-    val color = tint ?: eventStyleFor(event).accent
-    val offset = if (event.mode == AudioManager.RINGER_MODE_VIBRATE) {
-        val transition = rememberInfiniteTransition(label = "ringer")
-        val anim by transition.animateFloat(
-            initialValue = -1f,
-            targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(120), RepeatMode.Reverse),
-            label = "ringer_offset",
-        )
-        anim
-    } else {
-        0f
-    }
-    Canvas(modifier = Modifier.size(SizeBadge)) {
-        val cx =
-            size.width / 2 +
-                if (event.mode == AudioManager.RINGER_MODE_VIBRATE) offset * SizeStrokeThin.dp.toPx() else 0f
-        val cy = size.height / 2
-        val r = size.minDimension / 2 * 0.85f
-        drawRoundRect(
-            color = color,
-            topLeft = Offset(cx - r * 0.4f, cy - r * 0.6f),
-            size = Size(r * 0.8f, r * 1.2f),
-            cornerRadius = CornerRadius(r * 0.2f),
-        )
-        if (event.mode == AudioManager.RINGER_MODE_SILENT) {
-
-            drawLine(
-                color,
-                Offset(cx - r * 0.6f, cy + r * 0.6f),
-                Offset(cx + r * 0.6f, cy - r * 0.6f),
-                strokeWidth = SizeStrokeThin.dp.toPx(),
+    val style = eventStyleFor(event)
+    val color = tint ?: style.accent
+    val vector = style.icon ?: return
+    when (event.mode) {
+        AudioManager.RINGER_MODE_VIBRATE -> {
+            val transition = rememberInfiniteTransition(label = "ringer_shake")
+            val anim by transition.animateFloat(
+                initialValue = -0.8f,
+                targetValue = 0.8f,
+                animationSpec = infiniteRepeatable(tween(90), RepeatMode.Reverse),
+                label = "ringer_shake_anim",
+            )
+            Icon(vector, null, tint = color, modifier = Modifier.size(SizeBadge).offset(x = anim.dp))
+        }
+        AudioManager.RINGER_MODE_NORMAL -> {
+            val transition = rememberInfiniteTransition(label = "ringer_normal")
+            val scale by transition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.12f,
+                animationSpec = infiniteRepeatable(tween(750, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "ringer_normal_scale",
+            )
+            Icon(
+                vector,
+                null,
+                tint = color,
+                modifier = Modifier.size(SizeBadge).graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
             )
         }
+        AudioManager.RINGER_MODE_SILENT -> {
+            val transition = rememberInfiniteTransition(label = "ringer_silent")
+            val alpha by transition.animateFloat(
+                initialValue = 1f,
+                targetValue = AlphaDisabled,
+                animationSpec = infiniteRepeatable(tween(1200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                label = "ringer_silent_alpha",
+            )
+            Icon(
+                vector,
+                null,
+                tint = color,
+                modifier = Modifier.size(SizeBadge).graphicsLayer { this.alpha = alpha },
+            )
+        }
+        else -> Icon(vector, null, tint = color, modifier = Modifier.size(SizeBadge))
     }
 }
 
@@ -647,6 +811,20 @@ private fun AnimatedRecentsIcon(color: Color) {
         drawRoundRect(color, Offset(pad, pad + half + gap), Size(half, half), CornerRadius(w * 0.06f), style = Stroke(sw))
         drawRoundRect(color.copy(alpha = AlphaTertiary), Offset(pad + half + gap, pad + half + gap), Size(half, half), CornerRadius(w * 0.06f), style = Stroke(sw))
     }
+}
+
+@Composable
+private fun CallPillIcon(event: IslandEvent.Call) {
+    val icon = event.appIcon
+    icon?.let {
+        Image(
+            bitmap = it.toScaledBitmap(16.dp),
+            contentDescription = null,
+            modifier =
+                Modifier.size(16.dp)
+                    .clip(ShapeXs),
+        )
+    } ?: Icon(Icons.Filled.Call, null, tint = GreenAccent, modifier = Modifier.size(SizeBadge))
 }
 
 @Composable
@@ -745,11 +923,21 @@ private fun AnimatedDownloadIcon(color: Color) {
 
 @Composable
 private fun PromotedOngoingText(event: IslandEvent.PromotedOngoing, modifier: Modifier, overrideColor: Color? = null) {
-    val label = event.shortText.ifEmpty {
-        if ((event.progress >= 0f || event.isIndeterminate) && event.text.isNotEmpty()) event.text
-        else event.title.ifEmpty { event.appName }
+    val color = overrideColor ?: BlueAccent
+    val base = when {
+        event.shortText.isNotEmpty() -> event.shortText
+        event.title.isNotEmpty() -> event.title
+        event.appName.isNotEmpty() -> event.appName
+        else -> ""
     }
-    MarqueeLabel(label, overrideColor ?: BlueAccent, modifier)
+    val percent = if (event.progress in 0f..1f) "${(event.progress * 100).toInt()}%" else null
+    val label = when {
+        base.isNotEmpty() && percent != null -> "$base · $percent"
+        base.isNotEmpty() -> base
+        percent != null -> percent
+        else -> return
+    }
+    MarqueeLabel(label, color, modifier)
 }
 
 @Composable
@@ -974,10 +1162,7 @@ internal fun PillEventText(
     overrideColor: Color? = null,
 ) {
     when (event) {
-        is IslandEvent.ScreenRecording -> RecordingText(event, modifier, overrideColor ?: RedAccent)
-        is IslandEvent.MicCamActive -> MicCamText(event, modifier, overrideColor)
         is IslandEvent.AudioRecording -> AudioRecText(event, modifier, overrideColor)
-        is IslandEvent.Casting -> MarqueeLabel(event.deviceName.take(12), overrideColor ?: TealAccent, modifier)
         is IslandEvent.Media -> MediaText(event, modifier, overrideColor)
         is IslandEvent.PromotedOngoing -> PromotedOngoingText(event, modifier, overrideColor)
         is IslandEvent.Sports -> SportsText(event, modifier, overrideColor)
@@ -1003,18 +1188,19 @@ internal fun PillEventText(
         is IslandEvent.Vpn -> MarqueeLabel(stringResource(R.string.ax_dynamic_bar_vpn_active), overrideColor ?: IndigoAccent, modifier)
         is IslandEvent.Clipboard ->
             MarqueeLabel(event.preview.ifEmpty { stringResource(R.string.ax_dynamic_bar_copied) }, overrideColor ?: IndigoAccent, modifier)
-        is IslandEvent.Notification -> {
-            if (event.callStartTimeMs > 0L && event.appName.startsWith("Phone:")) {
+        is IslandEvent.Call -> {
+            if (event.callStartTimeMs > 0L) {
                 CallTimerText(event, modifier, overrideColor)
             } else {
-                val name = event.senderName ?: if (event.isConversation) event.title else null
-                if (name != null) {
-                    val label = if (event.isGroupConversation && event.conversationTitle != null)
-                        "$name · ${event.conversationTitle}" else name
-                    MarqueeLabel(label, overrideColor ?: BlueAccent, modifier)
-                } else {
-                    NotifBellBadge(modifier, notifCount)
-                }
+                NotifBellBadge(modifier, notifCount)
+            }
+        }
+        is IslandEvent.Notification -> {
+            val name = event.title
+            if (name != null) {
+                MarqueeLabel(name, overrideColor ?: BlueAccent, modifier)
+            } else {
+                NotifBellBadge(modifier, notifCount)
             }
         }
         is IslandEvent.AppSwitch ->
@@ -1028,6 +1214,91 @@ internal fun PillEventText(
         }
         is IslandEvent.BiometricUnlock -> MarqueeLabel(stringResource(R.string.ax_dynamic_bar_unlocked), overrideColor ?: GreenAccent, modifier)
         is IslandEvent.KeyguardIndication -> MarqueeLabel(event.text, overrideColor ?: IndigoAccent, modifier)
+        is IslandEvent.AospChip -> AospChipText(event, modifier, overrideColor)
+    }
+}
+
+@Composable
+private fun AospChipText(event: IslandEvent.AospChip, modifier: Modifier, overrideColor: Color? = null) {
+    val color = overrideColor ?: aospChipAccent(event.active)
+    when (val c = event.active.content) {
+        is OngoingActivityChipModel.Content.Text -> MarqueeLabel(c.text, color, modifier)
+        is OngoingActivityChipModel.Content.Timer -> AospChipTimerText(c, color, modifier)
+        is OngoingActivityChipModel.Content.ShortTimeDelta -> AospChipDeltaText(c, color, modifier)
+        is OngoingActivityChipModel.Content.Countdown ->
+            Text(
+                formatCountdownLong(c.secondsUntilStarted * 1000L),
+                color = color,
+                style = PillMono,
+                modifier = modifier,
+            )
+        is OngoingActivityChipModel.Content.IconOnly -> {}
+        is OngoingActivityChipModel.Content.TextVariants -> {
+            c.textVariants.firstOrNull()?.let { text ->
+                if (text.isNotBlank()) MarqueeLabel(text, color, modifier)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AospChipTimerText(content: OngoingActivityChipModel.Content.Timer, color: Color, modifier: Modifier) {
+    var elapsedMs by remember(content.value, content.timeSource) {
+        mutableLongStateOf(aospTimerElapsedMs(content))
+    }
+    LaunchedEffect(content.value, content.timeSource) {
+        while (true) {
+            elapsedMs = aospTimerElapsedMs(content)
+            when (val chronometer = content.value) {
+                is Chronometer.Paused -> break
+                is Chronometer.Running -> {
+                    val zeroMs = chronometer.eventTime.asElapsedRealtime(content.timeSource)
+                    val nowMs = content.timeSource.elapsedRealtime()
+                    delay(1000L - abs(nowMs - zeroMs) % 1000L)
+                }
+            }
+        }
+    }
+    Text(formatCountdownLong(elapsedMs), color = color, style = PillMono, modifier = modifier)
+}
+
+private fun aospTimerElapsedMs(content: OngoingActivityChipModel.Content.Timer): Long {
+    return when (val chronometer = content.value) {
+        is Chronometer.Paused -> chronometer.atDuration.toMillis().coerceAtLeast(0L)
+        is Chronometer.Running -> {
+            val zeroMs = chronometer.eventTime.asElapsedRealtime(content.timeSource)
+            val nowMs = content.timeSource.elapsedRealtime()
+            if (chronometer.isCountdown) {
+                (zeroMs - nowMs).coerceAtLeast(0L)
+            } else {
+                (nowMs - zeroMs).coerceAtLeast(0L)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AospChipDeltaText(content: OngoingActivityChipModel.Content.ShortTimeDelta, color: Color, modifier: Modifier) {
+    var deltaMs by remember(content.time) {
+        mutableLongStateOf(System.currentTimeMillis() - content.time)
+    }
+    LaunchedEffect(content.time) {
+        while (true) {
+            deltaMs = System.currentTimeMillis() - content.time
+            delay(30_000)
+        }
+    }
+    MarqueeLabel(aospShortDeltaText(deltaMs), color, modifier)
+}
+
+@Composable
+private fun aospShortDeltaText(deltaMs: Long): String {
+    val mins = abs(deltaMs) / 60_000L
+    return when {
+        mins < 1L -> stringResource(R.string.ax_dynamic_bar_just_now)
+        mins < 60L -> stringResource(R.string.ax_dynamic_bar_mins_ago, mins.toInt())
+        mins < 1440L -> stringResource(R.string.ax_dynamic_bar_hours_ago, (mins / 60L).toInt())
+        else -> stringResource(R.string.ax_dynamic_bar_days_ago, (mins / 1440L).toInt())
     }
 }
 
@@ -1044,34 +1315,34 @@ private fun MarqueeLabel(text: String, color: Color, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun RecordingText(event: IslandEvent.ScreenRecording, modifier: Modifier, color: Color) {
-    if (event.isCountdown) {
-        Text(formatCountdownSeconds(event.countdownSeconds), color = color, style = PillMono, modifier = modifier)
-        return
+private fun AudioRecordingPillIcon(event: IslandEvent.AudioRecording, tint: Color? = null) {
+    val color = tint ?: when (event.state) {
+        RecordingState.RECORDING -> RedAccent
+        RecordingState.PAUSED -> SubtleGray
+        RecordingState.SAVED -> GreenAccent
     }
-    var elapsedMs by remember(event.startTimeMs) {
-        mutableLongStateOf((System.currentTimeMillis() - event.startTimeMs).coerceAtLeast(0L))
+    val vector = when (event.state) {
+        RecordingState.RECORDING -> Icons.Filled.Mic
+        RecordingState.PAUSED -> Icons.Filled.MicOff
+        RecordingState.SAVED -> Icons.Filled.CheckCircle
     }
-    LaunchedEffect(event.startTimeMs) {
-        while (true) {
-            delay(1000)
-            elapsedMs = (System.currentTimeMillis() - event.startTimeMs).coerceAtLeast(0L)
-        }
+    if (event.state == RecordingState.RECORDING) {
+        val transition = rememberInfiniteTransition(label = "audio_rec")
+        val pulseAlpha by transition.animateFloat(
+            initialValue = 1f,
+            targetValue = AlphaSubtle,
+            animationSpec = infiniteRepeatable(tween(700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "audio_rec_alpha",
+        )
+        Icon(
+            vector,
+            null,
+            tint = color,
+            modifier = Modifier.size(SizeBadge).graphicsLayer { this.alpha = pulseAlpha },
+        )
+    } else {
+        Icon(vector, null, tint = color, modifier = Modifier.size(SizeBadge))
     }
-    Text(formatElapsedTime(elapsedMs), color = color, style = PillMono, modifier = modifier)
-}
-
-@Composable
-private fun MicCamText(event: IslandEvent.MicCamActive, modifier: Modifier, overrideColor: Color? = null) {
-    val cam = stringResource(R.string.ax_dynamic_bar_cam_short)
-    val mic = stringResource(R.string.ax_dynamic_bar_mic_short)
-    val label = buildString {
-        if (event.isCam) append(cam)
-        if (event.isMic && event.isCam) append(" · ")
-        if (event.isMic) append(mic)
-    }
-    val color = overrideColor ?: if (event.isCam) RedAccent else OrangeAccent
-    MarqueeLabel(event.appName.ifEmpty { label }, color, modifier)
 }
 
 @Composable
@@ -1094,7 +1365,7 @@ private fun AudioRecText(event: IslandEvent.AudioRecording, modifier: Modifier, 
                 }
             }
             val color = overrideColor ?: eventStyleFor(event).accent
-            Text(formatElapsedTime(elapsedMs), color = color, style = PillMono, modifier = modifier)
+            Text(formatCountdownLong(elapsedMs), color = color, style = PillMono, modifier = modifier)
         }
         RecordingState.SAVED -> MarqueeLabel(stringResource(R.string.ax_dynamic_bar_saved), overrideColor ?: GreenAccent, modifier)
     }
@@ -1105,8 +1376,21 @@ private fun MediaText(event: IslandEvent.Media, modifier: Modifier, overrideColo
     val baseColor = overrideColor ?: OrangeAccent
     val alpha = if (event.isPlaying) 1f else AlphaHint
     val color = baseColor.copy(alpha = alpha)
-    val text = if (event.artist.isNotBlank()) "${event.track} - ${event.artist}" else event.track
+    val text =
+        sanitizeCollapsedMediaTrack(event.track)
+            ?: event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_music) }
     MarqueeLabel(text, color, modifier.widthIn(max = 66.dp))
+}
+
+private fun sanitizeCollapsedMediaTrack(raw: String?): String? {
+    if (raw.isNullOrBlank()) return null
+
+    val parenIndex = raw.indexOf('(').let { if (it >= 0) it else Int.MAX_VALUE }
+    val pipeIndex = raw.indexOf('|').let { if (it >= 0) it else Int.MAX_VALUE }
+    val cutIndex = minOf(parenIndex, pipeIndex)
+    val sanitized = if (cutIndex == Int.MAX_VALUE) raw else raw.substring(0, cutIndex)
+
+    return sanitized.trim().takeIf { it.isNotEmpty() }
 }
 
 @Composable
@@ -1171,8 +1455,8 @@ private fun StopwatchText(event: IslandEvent.Stopwatch, modifier: Modifier, over
 }
 
 @Composable
-private fun CallTimerText(event: IslandEvent.Notification, modifier: Modifier, overrideColor: Color? = null) {
-    val isActive = event.appName == "Phone:active"
+private fun CallTimerText(event: IslandEvent.Call, modifier: Modifier, overrideColor: Color? = null) {
+    val isActive = event.callType == "Phone:active"
     if (isActive) {
         var elapsedMs by remember(event.callStartTimeMs) {
             mutableLongStateOf((System.currentTimeMillis() - event.callStartTimeMs).coerceAtLeast(0L))
@@ -1186,7 +1470,7 @@ private fun CallTimerText(event: IslandEvent.Notification, modifier: Modifier, o
         val color = overrideColor ?: GreenAccent
         Text(formatElapsedTime(elapsedMs), color = color, style = PillMono, modifier = modifier)
     } else {
-        MarqueeLabel(event.senderName ?: event.title ?: stringResource(R.string.ax_dynamic_bar_incoming_call), overrideColor ?: BlueAccent, modifier)
+        MarqueeLabel(stringResource(R.string.ax_dynamic_bar_incoming_call), overrideColor ?: BlueAccent, modifier)
     }
 }
 
@@ -1293,4 +1577,3 @@ fun WaveformAnimation(color: Color, modifier: Modifier = Modifier.size(34.dp, 20
         }
     }
 }
-

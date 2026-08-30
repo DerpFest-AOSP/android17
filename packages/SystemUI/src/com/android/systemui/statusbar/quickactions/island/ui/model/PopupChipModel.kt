@@ -22,6 +22,7 @@ import com.android.systemui.common.shared.model.Icon
 import com.android.systemui.statusbar.quickactions.island.livescore.shared.model.LiveScoreChipModel
 import com.android.systemui.statusbar.quickactions.island.media.shared.model.MediaControlChipModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.shared.model.ScreenRecordPopupModel
+import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.statusbar.quickactions.island.stopwatch.shared.model.StopwatchPopupModel
 
 /**
@@ -40,6 +41,10 @@ sealed class PopupChipId(val value: String) {
     data object Stopwatch : PopupChipId("Stopwatch")
 
     data object Alarm : PopupChipId("Alarm")
+
+    data object OngoingCall : PopupChipId("OngoingCall")
+
+    data object PromotedOngoing : PopupChipId("PromotedOngoing")
 
     data object AvControlsIndicator : PopupChipId("AvControlsIndicator")
 
@@ -73,6 +78,10 @@ sealed interface PopupContentModel {
     data class Stopwatch(val model: StopwatchPopupModel) : PopupContentModel
 
     data class Alarm(val model: AlarmPopupModel) : PopupContentModel
+
+    data class PromotedOngoing(val event: IslandEvent.PromotedOngoing) : PopupContentModel
+
+    data class OngoingCall(val event: IslandEvent.Call) : PopupContentModel
 }
 
 /** Model for individual status bar popup chips. */

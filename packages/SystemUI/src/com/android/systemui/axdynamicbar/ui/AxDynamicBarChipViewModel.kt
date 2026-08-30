@@ -1,7 +1,9 @@
 package com.android.systemui.axdynamicbar.ui
 
+import com.android.systemui.animation.Expandable
 import com.android.systemui.axdynamicbar.domain.AxDynamicBarInteractor
 import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.statusbar.chips.ui.model.OngoingActivityChipModel
 import com.android.systemui.biometrics.AuthController
 import com.android.systemui.biometrics.domain.interactor.UdfpsOverlayInteractor
 import com.android.systemui.dagger.SysUISingleton
@@ -12,21 +14,13 @@ import com.android.systemui.statusbar.policy.BatteryController
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -57,7 +51,9 @@ constructor(
     private val batteryController: BatteryController,
     authController: AuthController,
     udfpsOverlayInteractor: UdfpsOverlayInteractor,
-    keyguardIndicationController: KeyguardIndicationController,
+    val keyguardExpansion: AxDynamicBarKeyguardExpansion,
+    val statusBarExpansion: AxDynamicBarStatusBarExpansion,
+    private val keyguardIndicationController: KeyguardIndicationController,
 ) {
     val isLowUdfps: StateFlow<Boolean> =
         udfpsOverlayInteractor.udfpsOverlayParams
@@ -75,21 +71,33 @@ constructor(
         interactor.uiState
             .map { uiState ->
                 if (!uiState.shouldShow) return@map null
+                val filteredEvents = uiState.events.filter { event ->
+                    interactor.settings.isEventEnabled(event) ||
+                        (event is IslandEvent.Media && interactor.isOnKeyguard.value &&
+                            (interactor.settings.isLockscreenMediaEnabled.value || interactor.settings.isLockscreenMediaLyricsEnabled.value))
+                }
+                if (filteredEvents.isEmpty() && uiState.notificationAlert == null) return@map null
+
                 val alert = uiState.notificationAlert
-                val topEvent = uiState.topEvent ?: alert ?: return@map null
+                val topEvent = filteredEvents.getOrNull(uiState.pinnedEventIndex) ?: filteredEvents.firstOrNull() ?: alert ?: return@map null
                 AxDynamicBarChipState(
                     event = topEvent,
-                    eventCount = uiState.activeEvents.size,
-                    pinnedIndex = uiState.pinnedEventIndex,
-                    allEvents = uiState.events,
+                    eventCount = filteredEvents.filter { it !is IslandEvent.Notification }.size,
+                    pinnedIndex = filteredEvents.indexOf(topEvent).coerceAtLeast(0),
+                    allEvents = filteredEvents,
                     notificationAlert = alert,
                 )
             }
+            .distinctUntilChanged()
             .stateIn(applicationScope, SharingStarted.Lazily, null)
 
     val isEnabled: StateFlow<Boolean> = interactor.settings.isEnabled
     val isKeyguardEnabled: StateFlow<Boolean> = interactor.settings.isKeyguardEnabled
+    val isLockscreenMediaEnabled: StateFlow<Boolean> = interactor.settings.isLockscreenMediaEnabled
+    val isLockscreenMediaLyricsEnabled: StateFlow<Boolean> = interactor.settings.isLockscreenMediaLyricsEnabled
+    val isDozing: StateFlow<Boolean> = interactor.isDozing
     val keyguardBatteryChipMode: StateFlow<Int> = interactor.settings.keyguardBatteryChipMode
+    val chipStyle: StateFlow<Int> = interactor.settings.chipStyle
 
     val keyguardBatteryInfo: StateFlow<KeyguardBatteryInfo> =
         combine(
@@ -111,25 +119,45 @@ constructor(
             KeyguardBatteryInfo(0, false, false, false, null),
         )
 
-    // Re-compute charging string whenever battery info changes
+    init {
+        applicationScope.launch {
+            interactor.uiState
+                .map { state ->
+                    state.events
+                        .filterIsInstance<IslandEvent.Call>()
+                        .firstOrNull { it.callType == "Phone:incoming" }
+                        ?.id
+                }
+                .distinctUntilChanged()
+                .collect { incomingCallId ->
+                    if (incomingCallId != null) {
+                        interactor.dismissNotificationAlert()
+                        if (interactor.isOnKeyguard.value) {
+                            keyguardExpansion.expand()
+                        } else {
+                            statusBarExpansion.expand()
+                        }
+                    } else {
+                        statusBarExpansion.collapse()
+                        keyguardExpansion.collapse()
+                    }
+                }
+        }
+    }
+
+    // Re-compute charging string only when battery state changes. Polling this while idle is costly
+    // because KeyguardIndicationController formats through Resources on the main thread.
     val batteryString: StateFlow<String> =
         keyguardBatteryInfo
-            .map { it.isCharging }
-            .distinctUntilChanged()
-            .flatMapLatest { charging ->
-                if (charging) {
-                    flow {
-                        while (true) {
-                            emit(keyguardIndicationController.powerChargingString)
-                            delay(BATTERY_STRING_REFRESH_MS)
-                        }
-                    }
+            .map {
+                if (it.isCharging) {
+                    formatChargingString(keyguardIndicationController.powerChargingString)
                 } else {
-                    flowOf(keyguardIndicationController.powerChargingString)
+                    ""
                 }
             }
             .distinctUntilChanged()
-            .stateIn(applicationScope, SharingStarted.Eagerly, "")
+            .stateIn(applicationScope, SharingStarted.Lazily, "")
 
     val isOnKeyguard: StateFlow<Boolean> = interactor.isOnKeyguard
 
@@ -151,56 +179,9 @@ constructor(
         _chipCenterXFraction.value = fraction
     }
 
-    private val _isExpanded = MutableStateFlow(false)
-    val isExpanded: StateFlow<Boolean> = _isExpanded.asStateFlow()
-    @Volatile private var collapseOnNullJob: Job? = null
+    val isExpanded: StateFlow<Boolean> = statusBarExpansion.isExpanded
 
-    val isKeyguardExpanded: StateFlow<Boolean> =
-        combine(isExpanded, isOnKeyguard) { exp, kg -> exp && kg }
-            .stateIn(applicationScope, SharingStarted.Lazily, false)
-
-    init {
-        
-        chipState.onEach { state ->
-            if (state == null) {
-                collapseOnNullJob?.cancel()
-                collapseOnNullJob = applicationScope.launch {
-                    delay(200)
-                    _isExpanded.value = false
-                }
-            } else {
-                collapseOnNullJob?.cancel()
-                collapseOnNullJob = null
-            }
-        }.launchIn(applicationScope)
-        
-        interactor.isPanelExpanded.onEach { if (it) _isExpanded.value = false }.launchIn(applicationScope)
-        interactor.qsExpansion.map { it > 0f }.distinctUntilChanged().onEach { if (it) _isExpanded.value = false }.launchIn(applicationScope)
-        
-        isBouncerShowing.onEach { if (it) _isExpanded.value = false }.launchIn(applicationScope)
-        
-        isOnKeyguard.onEach { if (!it) _isExpanded.value = false }.launchIn(applicationScope)
-        
-        combine(interactor.legacyShadeExpansion, isOnKeyguard) { expansion, onKg ->
-            onKg && expansion < 0.95f
-        }.onEach { dismissing -> if (dismissing) _isExpanded.value = false }.launchIn(applicationScope)
-        
-        interactor.isDozing.drop(1).onEach { _isExpanded.value = false }.launchIn(applicationScope)
-        
-        interactor.dozeAmount.map { it > 0f }.distinctUntilChanged().onEach { if (it) _isExpanded.value = false }.launchIn(applicationScope)
-    }
-
-    fun expandPanel() {
-        if (chipState.value != null) _isExpanded.value = true
-    }
-
-    fun collapsePanel() {
-        _isExpanded.value = false
-    }
-
-    fun togglePanel() {
-        if (_isExpanded.value) collapsePanel() else expandPanel()
-    }
+    val isKeyguardExpanded: StateFlow<Boolean> = keyguardExpansion.isExpanded
 
     fun cycleNext() = interactor.cycleNext()
 
@@ -216,14 +197,35 @@ constructor(
 
     fun toggleTorch() = interactor.toggleTorch()
 
-    fun stopScreenRecording() = interactor.stopScreenRecording()
-
     fun launchNotificationFromKeyguard(event: IslandEvent.Notification) {
         interactor.launchNotificationDismissingKeyguard(event)
     }
 
+    fun handleAospChipTap(event: IslandEvent.AospChip, expandable: Expandable): Boolean {
+        val active = event.active
+        return when (val behavior = active.clickBehavior) {
+            is OngoingActivityChipModel.ClickBehavior.ShowHeadsUpNotification -> {
+                behavior.onClick()
+                true
+            }
+            is OngoingActivityChipModel.ClickBehavior.HideHeadsUpNotification -> {
+                behavior.onClick()
+                true
+            }
+            is OngoingActivityChipModel.ClickBehavior.ExpandAction -> {
+                behavior.onClick(expandable)
+                true
+            }
+            is OngoingActivityChipModel.ClickBehavior.None -> false
+        }
+    }
+
     companion object {
         private const val LOW_UDFPS_THRESHOLD = 0.93f
-        private const val BATTERY_STRING_REFRESH_MS = 2_000L
+    }
+
+    private fun formatChargingString(text: String?): String {
+        val cleaned = text?.trim()
+        return if (cleaned.isNullOrEmpty()) "" else cleaned
     }
 }

@@ -35,10 +35,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
@@ -46,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.android.systemui.common.ui.compose.Icon
+import com.android.systemui.statusbar.quickactions.island.shared.DynamicIslandFeatureSettings.observeDynamicIslandWidth
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupContentModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.shared.model.ScreenRecordPopupModel
@@ -90,7 +94,10 @@ fun StatusBarDynamicIslandChip(
         return
     }
 
-    val compactWidth = compactIslandWidthFor(viewModel.popupContent)
+    val configuredWidthDp by
+        observeDynamicIslandWidth(LocalContext.current).collectAsState(initial = 110)
+    val configuredMaxWidth = configuredWidthDp.dp
+    val compactWidth = compactIslandWidthFor(viewModel.popupContent) ?: configuredMaxWidth
     val hasInlineTimer = viewModel.popupContent is PopupContentModel.Stopwatch
     val trailingDecorationWidth =
         when (val popupContent = viewModel.popupContent) {
@@ -121,8 +128,8 @@ fun StatusBarDynamicIslandChip(
             modifier
                 .defaultMinSize(minHeight = 32.dp)
                 .widthIn(
-                    min = compactWidth ?: 0.dp,
-                    max = compactWidth ?: CompactIslandMaxWidth,
+                    min = compactWidth,
+                    max = compactWidth.coerceAtMost(CompactIslandMaxWidth),
                 )
                 .clip(chipShape)
                 .background(chipBackgroundColor)
@@ -406,6 +413,8 @@ private fun compactIslandWidthFor(content: PopupContentModel): Dp? {
         is PopupContentModel.Stopwatch -> CompactTimerIslandWidth
         is PopupContentModel.Alarm -> CompactAlarmIslandWidth
         is PopupContentModel.Flashlight -> CompactUtilityIslandWidth
+        is PopupContentModel.OngoingCall -> CompactTimerIslandWidth
+        is PopupContentModel.PromotedOngoing -> CompactMediaIslandWidth
         else -> null
     }
 }

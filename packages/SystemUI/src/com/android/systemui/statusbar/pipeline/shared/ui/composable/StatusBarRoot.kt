@@ -430,6 +430,7 @@ fun StatusBarRoot(
                 onMediaControlPopupVisibilityChanged = { popupShowing ->
                     mediaHierarchyManager?.isMediaControlPopupShowing = popupShowing
                 },
+                islandActions = axDynamicBarChipViewModel.interactor,
                 modifier = Modifier.align(Alignment.Center),
             )
         }

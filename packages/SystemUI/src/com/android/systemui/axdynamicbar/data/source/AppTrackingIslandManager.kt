@@ -1,9 +1,13 @@
 package com.android.systemui.axdynamicbar.data.source
 
 import android.app.ActivityManager
+import android.app.ActivityTaskManager
+import android.app.IActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.RemoteException
+import android.os.UserHandle
 import android.util.Log
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.dagger.SysUISingleton
@@ -36,13 +40,15 @@ class AppTrackingIslandManager @Inject constructor(@Application private val cont
     @Volatile private var currentForegroundPkg: String? = null
 
     private fun emitEvent() {
-        _appSwitchEvent.value =
+        val event =
             if (recentApps.isNotEmpty())
                 IslandEvent.AppSwitch(
                     recentApps = recentApps.toList(),
                     previousApp = _appSwitchEvent.value?.previousApp,
                 )
             else null
+        logEvent("emit", event)
+        _appSwitchEvent.value = event
     }
 
     private val listener =
@@ -59,6 +65,12 @@ class AppTrackingIslandManager @Inject constructor(@Application private val cont
                     return
                 }
                 if (!hasLauncherIntent(pkg)) return
+                if (pkg == currentForegroundPkg) {
+                    if (Log.isLoggable(TAG, Log.DEBUG)) {
+                        Log.d(TAG, "skip duplicate front pkg=$pkg task=${taskInfo.taskId}")
+                    }
+                    return
+                }
 
                 val leavingPkg = currentForegroundPkg
                 currentForegroundPkg = pkg
@@ -107,13 +119,15 @@ class AppTrackingIslandManager @Inject constructor(@Application private val cont
                             _appSwitchEvent.value?.previousApp
                         }
 
-                    _appSwitchEvent.value =
+                    val event =
                         if (recentApps.isNotEmpty())
                             IslandEvent.AppSwitch(
                                 recentApps = recentApps.toList(),
                                 previousApp = newPreviousApp,
                             )
                         else null
+                    logEvent("front pkg=$pkg leaving=$leavingPkg", event)
+                    _appSwitchEvent.value = event
                 }
             }
 
@@ -144,6 +158,9 @@ class AppTrackingIslandManager @Inject constructor(@Application private val cont
     }
 
     fun clear() {
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, "clear")
+        }
         _appSwitchEvent.value = null
     }
 
@@ -164,6 +181,46 @@ class AppTrackingIslandManager @Inject constructor(@Application private val cont
                 recentApps.removeAll { it.taskId == taskId }
                 emitEvent()
             }
+        }
+    }
+
+    fun killApp(taskId: Int) {
+        synchronized(recentApps) {
+            val app = recentApps.find { it.taskId == taskId } ?: return
+            val pkg = app.packageName
+
+            try {
+                val atm = ActivityTaskManager.getService()
+                if (atm.lockTaskModeState == ActivityManager.LOCK_TASK_MODE_PINNED) {
+                    Log.w(TAG, "Cannot kill app while in pinned lock task mode")
+                    return
+                }
+
+                val am = ActivityManager.getService() as IActivityManager
+                am.forceStopPackage(pkg, UserHandle.myUserId())
+                am.removeTask(taskId)
+            } catch (e: RemoteException) {
+                Log.w(TAG, "Failed to kill app $pkg (task $taskId)", e)
+            } catch (e: SecurityException) {
+                Log.w(TAG, "Failed to kill app $pkg (task $taskId)", e)
+            }
+
+            recentApps.removeAll { it.taskId == taskId }
+            if (pkg == currentForegroundPkg) currentForegroundPkg = null
+
+            val newPreviousApp =
+                if (_appSwitchEvent.value?.previousApp?.taskId == taskId) null
+                else _appSwitchEvent.value?.previousApp
+
+            val event =
+                if (recentApps.isNotEmpty())
+                    IslandEvent.AppSwitch(
+                        recentApps = recentApps.toList(),
+                        previousApp = newPreviousApp,
+                    )
+                else null
+            logEvent("kill task=$taskId pkg=$pkg", event)
+            _appSwitchEvent.value = event
         }
     }
 
@@ -188,5 +245,15 @@ class AppTrackingIslandManager @Inject constructor(@Application private val cont
         } catch (_: Exception) {
             null
         }
-}
 
+    private fun logEvent(reason: String, event: IslandEvent.AppSwitch?) {
+        if (!Log.isLoggable(TAG, Log.DEBUG)) return
+        Log.d(
+            TAG,
+            "$reason emit=${event != null} " +
+                "count=${event?.recentApps?.size ?: 0} " +
+                "top=${event?.recentApps?.firstOrNull()?.packageName} " +
+                "prev=${event?.previousApp?.packageName}",
+        )
+    }
+}

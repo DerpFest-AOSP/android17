@@ -35,6 +35,9 @@ object DynamicIslandFeatureSettings {
     const val FLASHLIGHT = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_FLASHLIGHT
     const val STOPWATCH = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_STOPWATCH
     const val LIVE_SCORES = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_LIVE_SCORES
+    const val ONGOING_ACTIVITIES = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_ONGOING_ACTIVITIES
+    const val CALLS = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_CALLS
+    const val WIDTH = Settings.System.STATUS_BAR_DYNAMIC_ISLAND_WIDTH
 
     fun ContentResolver.readDynamicIslandFeatureEnabled(
         key: String,
@@ -78,4 +81,26 @@ object DynamicIslandFeatureSettings {
 
     fun observeDynamicIslandEnabled(context: Context): Flow<Boolean> =
         observeDynamicIslandFeatureEnabled(context, SHOW_DYNAMIC_ISLAND, defaultValue = false)
+
+    fun ContentResolver.readDynamicIslandWidth(defaultValue: Int = 110): Int {
+        return Settings.System.getIntForUser(this, WIDTH, defaultValue, UserHandle.USER_CURRENT)
+    }
+
+    fun observeDynamicIslandWidth(context: Context, defaultValue: Int = 110): Flow<Int> =
+        callbackFlow {
+            val observer =
+                object : ContentObserver(Handler(Looper.getMainLooper())) {
+                    override fun onChange(selfChange: Boolean) {
+                        trySend(context.contentResolver.readDynamicIslandWidth(defaultValue))
+                    }
+                }
+            context.contentResolver.registerContentObserver(
+                Settings.System.getUriFor(WIDTH),
+                false,
+                observer,
+                UserHandle.USER_ALL,
+            )
+            trySend(context.contentResolver.readDynamicIslandWidth(defaultValue))
+            awaitClose { context.contentResolver.unregisterContentObserver(observer) }
+        }
 }

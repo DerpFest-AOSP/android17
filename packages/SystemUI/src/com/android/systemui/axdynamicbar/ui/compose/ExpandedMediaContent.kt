@@ -1,9 +1,7 @@
+@file:OptIn(ExperimentalTextApi::class)
+
 package com.android.systemui.axdynamicbar.ui.compose
 
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
-import android.util.TypedValue
-import android.widget.SeekBar
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,7 +33,12 @@ import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.font.DeviceFontFamilyName
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.MaterialTheme
+import com.android.compose.theme.PlatformTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,7 +48,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.toArgb
@@ -56,9 +61,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.android.systemui.axdynamicbar.shared.IslandActions
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.android.systemui.statusbar.quickactions.island.media.ui.compose.LyricsCard
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.axdynamicbar.shared.*
-import com.android.systemui.media.controls.ui.drawable.SquigglyProgress
+import com.android.systemui.media.controls.ui.view.WaveformSeekBar
 import com.android.systemui.res.R
 import kotlinx.coroutines.delay
 
@@ -70,85 +77,118 @@ private val SeekBarHeight = 28.dp
 
 @Composable
 internal fun MediaCard(event: IslandEvent.Media, interactor: IslandActions) {
-    val colors = rememberMediaColors(event)
-    val accent = colors.accent
+    PlatformTheme(isDarkTheme = true) {
+        val colors = rememberMediaColors(event)
+        val accent = colors.accent
 
-    Surface(
-        modifier = Modifier.fillMaxWidth().border(1.dp, CardBorderBrush, ShapeCard),
-        shape = ShapeCard,
-        color = CardBg,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        interactor.openMediaApp()
-                        interactor.collapseIsland()
-                    }
-                    .padding(SpaceXxl),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(SpaceXxl),
-            ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().border(1.dp, CardBorderBrush, ShapeCard),
+            shape = ShapeCard,
+            color = CardBg,
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+
                 event.albumArt?.let { art ->
                     Image(
-                        bitmap = art.toScaledBitmap(AlbumArtSize),
+                        bitmap = art.toScaledBitmap(350.dp),
                         contentDescription = null,
-                        modifier = Modifier.size(AlbumArtSize).clip(ShapeLg),
+                        modifier = Modifier
+                            .matchParentSize()
+                            .blur(12.dp),
                         contentScale = ContentScale.Crop,
                     )
                 } ?: Box(
                     modifier = Modifier
-                        .size(AlbumArtSize)
-                        .clip(ShapeLg)
-                        .background(accent.copy(alpha = AlphaFaint)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(Icons.Filled.MusicNote, null, tint = accent, modifier = Modifier.size(36.dp))
-                }
+                        .matchParentSize()
+                        .background(CardBg),
+                )
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(SpaceXs),
-                ) {
-                    Text(
-                        event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_now_playing) },
-                        color = OnCardText,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (event.artist.isNotEmpty()) {
-                        Text(
-                            event.artist,
-                            color = accent,
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                0.0f to Color(0xFF000000).copy(alpha = 0.45f),
+                                0.45f to Color(0xFF000000).copy(alpha = 0.7f),
+                                1.0f to Color(0xFF000000).copy(alpha = 1.0f),
+                            )
                         )
+                )
+
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                interactor.openMediaApp()
+                                interactor.collapseIsland()
+                            }
+                            .padding(SpaceXxl),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(SpaceXxl),
+                    ) {
+                        event.albumArt?.let { art ->
+                            Image(
+                                bitmap = art.toScaledBitmap(AlbumArtSize),
+                                contentDescription = null,
+                                modifier = Modifier.size(AlbumArtSize).clip(ShapeLg),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } ?: Box(
+                            modifier = Modifier
+                                .size(AlbumArtSize)
+                                .clip(ShapeLg)
+                                .background(accent.copy(alpha = AlphaFaint)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(Icons.Filled.MusicNote, null, tint = accent, modifier = Modifier.size(36.dp))
+                        }
+
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(SpaceXs),
+                        ) {
+                            Text(
+                                event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_now_playing) },
+                                color = OnCardText,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontFamily = FontFamily(Font(DeviceFontFamilyName("variable-title-medium-emphasized")))
+                                ),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (event.artist.isNotEmpty()) {
+                                Text(
+                                    event.artist,
+                                    color = accent,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        event.appIcon?.let { icon ->
+                            Image(
+                                bitmap = icon.toScaledBitmap(SizeIconSm),
+                                contentDescription = null,
+                                modifier = Modifier.size(SizeIconSm).clip(ShapeXs),
+                                colorFilter = ColorFilter.tint(OnCardText),
+                            )
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = SpaceXxl, vertical = SpaceLg),
+                        verticalArrangement = Arrangement.spacedBy(SpaceLg),
+                    ) {
+                        if (event.duration > 0L) {
+                            MediaSeekBar(event, interactor, accent)
+                        }
+                        MediaControls(event, interactor, accent)
                     }
                 }
-                event.appIcon?.let { icon ->
-                    Image(
-                        bitmap = icon.toScaledBitmap(SizeIconSm),
-                        contentDescription = null,
-                        modifier = Modifier.size(SizeIconSm).clip(ShapeXs),
-                        colorFilter = ColorFilter.tint(OnCardText),
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(accent.copy(alpha = AlphaFaint))
-                    .padding(horizontal = SpaceXxl, vertical = SpaceLg),
-                verticalArrangement = Arrangement.spacedBy(SpaceLg),
-            ) {
-                if (event.duration > 0L) {
-                    MediaSeekBar(event, interactor, accent)
-                }
-                MediaControls(event, interactor, accent)
             }
         }
     }
@@ -160,74 +200,86 @@ internal fun MediaExpanded(
     interactor: IslandActions,
     modifier: Modifier = Modifier,
 ) {
-    val colors = rememberMediaColors(event)
-    val accent = colors.accent
+    PlatformTheme(isDarkTheme = true) {
+        val colors = rememberMediaColors(event)
+        val accent = colors.accent
+        val mediaControlModel by interactor.mediaControlChipModel.collectAsStateWithLifecycle()
+        val isLyricsEnabled by interactor.isLyricsEnabled.collectAsStateWithLifecycle()
 
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(SpaceXxl)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().clickable {
-                interactor.openMediaApp()
-                interactor.collapseIsland()
-            },
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(SpaceXxl),
-        ) {
-            event.albumArt?.let { art ->
-                Image(
-                    bitmap = art.toScaledBitmap(SizeAlbumSm),
-                    contentDescription = null,
-                    modifier = Modifier.size(SizeAlbumSm).clip(ShapeLg),
-                    contentScale = ContentScale.Crop,
-                )
-            } ?: Surface(
-                modifier = Modifier.size(SizeAlbumSm),
-                shape = ShapeLg,
-                color = accent.copy(alpha = AlphaSubtle),
+        val model = mediaControlModel
+        val hasLyrics = isLyricsEnabled && model != null && (!model.lyrics.isNullOrBlank() || !model.syncedLyrics.isNullOrBlank())
+
+        Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(SpaceXxl)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    interactor.openMediaApp()
+                    interactor.collapseIsland()
+                },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(SpaceXxl),
             ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    Icon(
-                        Icons.Filled.MusicNote, null,
-                        tint = accent,
-                        modifier = Modifier.size(SpacePanel),
+                event.albumArt?.let { art ->
+                    Image(
+                        bitmap = art.toScaledBitmap(SizeAlbumSm),
+                        contentDescription = null,
+                        modifier = Modifier.size(SizeAlbumSm).clip(ShapeLg),
+                        contentScale = ContentScale.Crop,
                     )
+                } ?: Surface(
+                    modifier = Modifier.size(SizeAlbumSm),
+                    shape = ShapeLg,
+                    color = accent.copy(alpha = AlphaSubtle),
+                ) {
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(
+                            Icons.Filled.MusicNote, null,
+                            tint = accent,
+                            modifier = Modifier.size(SpacePanel),
+                        )
+                    }
                 }
-            }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(SpaceXs),
-            ) {
-                Text(
-                    event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_now_playing) },
-                    color = OnCardText,
-                    style = MaterialTheme.typography.titleSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (event.artist.isNotEmpty()) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(SpaceXs),
+                ) {
                     Text(
-                        event.artist,
-                        color = accent,
-                        style = MaterialTheme.typography.bodySmall,
+                        event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_now_playing) },
+                        color = OnCardText,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontFamily = FontFamily(Font(DeviceFontFamilyName("variable-title-medium-emphasized")))
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (event.artist.isNotEmpty()) {
+                        Text(
+                            event.artist,
+                            color = accent,
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                event.appIcon?.let { icon ->
+                    Image(
+                        bitmap = icon.toScaledBitmap(SizeIconSm),
+                        contentDescription = null,
+                        modifier = Modifier.size(SizeIconSm).clip(ShapeXs),
+                        colorFilter = ColorFilter.tint(OnCardText),
+                    )
                 }
             }
 
-            event.appIcon?.let { icon ->
-                Image(
-                    bitmap = icon.toScaledBitmap(SizeIconSm),
-                    contentDescription = null,
-                    modifier = Modifier.size(SizeIconSm).clip(ShapeXs),
-                    colorFilter = ColorFilter.tint(OnCardText),
-                )
+            MediaControls(event, interactor, accent)
+            if (event.duration > 0L) {
+                MediaSeekBar(event, interactor, accent)
             }
-        }
-
-        MediaControls(event, interactor, accent)
-        if (event.duration > 0L) {
-            MediaSeekBar(event, interactor, accent)
+            if (hasLyrics && model != null) {
+                LyricsCard(model = model)
+            }
         }
     }
 }
@@ -317,22 +369,16 @@ private fun MediaSeekBar(
     var displayFraction by remember { mutableStateOf(serverFraction) }
 
     val interactorRef = rememberUpdatedState(interactor)
-
-    // Read the dismiss swipe lock provided by MagneticSwipeToDismiss
     val swipeLock = LocalDismissSwipeLock.current
 
-    // Smooth frame-interpolated progress when playing, snaps when paused or scrubbing
     LaunchedEffect(positionMs, durationMs, isPlaying) {
         if (isScrubbing) return@LaunchedEffect
-
         displayFraction = serverFraction
-
         if (!isPlaying || durationMs <= 0L) return@LaunchedEffect
-
         val startWallMs = System.currentTimeMillis()
         val startProgressMs = positionMs
         while (true) {
-            delay(16L) // ~60 fps
+            delay(16L)
             if (isScrubbing) break
             val elapsed = System.currentTimeMillis() - startWallMs
             val interpolated = ((startProgressMs + elapsed).toFloat() / durationMs).coerceIn(0f, 1f)
@@ -343,32 +389,25 @@ private fun MediaSeekBar(
 
     val displayMs = (displayFraction * durationMs).toLong()
     val accentArgb = accent.toArgb()
-    val trackAlphaArgb = accent.copy(alpha = AlphaSubtle).toArgb()
 
-    Column(verticalArrangement = Arrangement.spacedBy(SpaceXs)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                formatElapsedTime(displayMs),
-                color = SubtleGray,
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Text(
-                formatElapsedTime(durationMs),
-                color = SubtleGray,
-                style = MaterialTheme.typography.labelSmall,
-            )
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(SpaceXs),
+    ) {
+        Text(
+            formatElapsedTime(displayMs),
+            color = SubtleGray,
+            style = MaterialTheme.typography.labelSmall,
+        )
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .weight(1f)
                 .height(SeekBarHeight)
                 .pointerInput(swipeLock) {
                     awaitEachGesture {
-                        awaitPointerEvent() // DOWN
+                        awaitPointerEvent()
                         swipeLock.value = true
                         try {
                             do {
@@ -408,110 +447,37 @@ private fun MediaSeekBar(
         ) {
             AndroidView(
                 factory = { context ->
-                    SeekBar(context).apply {
+                    WaveformSeekBar(context).apply {
                         max = 10_000
-                        splitTrack = false
-                        setPadding(0, 0, 0, 0)
-                        // Disable direct touch — Compose handles all gestures above
+                        setWaveformColor(accentArgb)
+                        setThumbColor(accentArgb)
                         isEnabled = false
-
-                        // Pill-shaped thumb
-                        thumb = createSeekBarThumb(context, accentArgb)
-                        thumbOffset = thumb.intrinsicWidth / 2
-
-                        // Set up SquigglyProgress on the progress layer
-                        val layer = (progressDrawable?.mutate() as? LayerDrawable)
-                        if (layer != null) {
-                            layer.findDrawableByLayerId(android.R.id.background)
-                                ?.mutate()?.setTint(trackAlphaArgb)
-
-                            layer.findDrawableByLayerId(android.R.id.secondaryProgress)
-                                ?.mutate()?.setTint(
-                                    com.android.internal.graphics.ColorUtils
-                                        .setAlphaComponent(accentArgb, 60)
-                                )
-
-                            val squiggle = SquigglyProgress().apply {
-                                waveLength = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_wavelength
-                                ).toFloat()
-                                lineAmplitude = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_amplitude
-                                ).toFloat()
-                                phaseSpeed = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_phase
-                                ).toFloat()
-                                strokeWidth = context.resources.getDimensionPixelSize(
-                                    R.dimen.qs_media_seekbar_progress_stroke_width
-                                ).toFloat()
-                                setTint(accentArgb)
-                                drawRemainingLine = false
-                                transitionEnabled = false
-                                animate = false
-                            }
-                            layer.setDrawableByLayerId(android.R.id.progress, squiggle)
-                            progressDrawable = layer
-                        }
                     }
                 },
                 update = { bar ->
                     val target = (displayFraction * 10_000f).toInt().coerceIn(0, 10_000)
-                    bar.progress = target
-
-                    // Re-tint thumb for accent color changes (e.g. track switch)
-                    (bar.thumb as? GradientDrawable)?.setColor(accentArgb)
-
-                    val alpha = if (isPlaying) 255 else (255 * 0.55f).toInt()
-                    bar.thumb?.alpha = alpha
-
-                    val layer = bar.progressDrawable as? LayerDrawable
-
-                    // Re-tint track colors
-                    layer?.findDrawableByLayerId(android.R.id.background)
-                        ?.setTint(trackAlphaArgb)
-                    layer?.findDrawableByLayerId(android.R.id.secondaryProgress)
-                        ?.setTint(
-                            com.android.internal.graphics.ColorUtils
-                                .setAlphaComponent(accentArgb, 60)
-                        )
-
-                    val squiggle = layer
-                        ?.findDrawableByLayerId(android.R.id.progress) as? SquigglyProgress
-
-                    squiggle?.apply {
-                        setTint(accentArgb)
-                        setAlpha(alpha)
-                        animate = isPlaying && !isScrubbing
+                    if (bar.progress != target) {
+                        bar.progress = target
                     }
-
-                    layer?.alpha = alpha
+                    bar.setWaveformColor(accentArgb)
+                    bar.setThumbColor(accentArgb)
+                    when {
+                        isPlaying && !bar.isPlaying -> bar.startWaveAnimation()
+                        !isPlaying && bar.isPlaying -> bar.stopWaveAnimation()
+                    }
                 },
                 modifier = Modifier.fillMaxWidth().height(SeekBarHeight),
             )
         }
+
+        Text(
+            formatElapsedTime(durationMs),
+            color = SubtleGray,
+            style = MaterialTheme.typography.labelSmall,
+        )
     }
 }
 
-/**
- * Creates a pill-shaped thumb drawable for the seekbar.
- */
-private fun createSeekBarThumb(context: android.content.Context, tintColor: Int): GradientDrawable {
-    val wPx = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP, 4f, context.resources.displayMetrics
-    ).toInt().coerceAtLeast(1)
-    val hPx = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP, 16f, context.resources.displayMetrics
-    ).toInt().coerceAtLeast(1)
-    val radiusPx = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP, 16f, context.resources.displayMetrics
-    )
-    return GradientDrawable().apply {
-        shape = GradientDrawable.RECTANGLE
-        setSize(wPx, hPx)
-        cornerRadius = radiusPx
-        setColor(tintColor)
-    }
-}
 
 @Composable
 private fun MediaCustomActionButton(
@@ -529,7 +495,15 @@ private fun MediaCustomActionButton(
             modifier = Modifier.size(ControlButtonSize),
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                CustomActionIcon(ca, tint = accent, modifier = Modifier.size(ControlIconSize))
+                if (ca.isShuffleAction()) {
+                    Icon(
+                        Icons.Filled.Shuffle, ca.label,
+                        tint = accent,
+                        modifier = Modifier.size(ControlIconSize),
+                    )
+                } else {
+                    CustomActionIcon(ca, tint = accent, modifier = Modifier.size(ControlIconSize))
+                }
             }
         }
     } else {
@@ -567,7 +541,15 @@ private fun MediaEndActionButton(
             modifier = Modifier.size(ControlButtonSize),
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                CustomActionIcon(ca, tint = accent, modifier = Modifier.size(ControlIconSize))
+                if (ca.isShuffleAction()) {
+                    Icon(
+                        Icons.Filled.Shuffle, ca.label,
+                        tint = accent,
+                        modifier = Modifier.size(ControlIconSize),
+                    )
+                } else {
+                    CustomActionIcon(ca, tint = accent, modifier = Modifier.size(ControlIconSize))
+                }
             }
         }
     } else {
@@ -596,56 +578,62 @@ internal fun RowScope.CompactMediaRow(
     event: IslandEvent.Media,
     interactor: IslandActions,
 ) {
-    event.albumArt?.let {
-        Image(
-            bitmap = it.toScaledBitmap(SizeCompactIcon),
-            null,
-            modifier = Modifier.size(SizeCompactIcon).clip(ShapeCompact),
-            contentScale = ContentScale.Crop,
-        )
-    } ?: run {
-        val accent = rememberMediaColors(event).accent
-        Box(
-            modifier = Modifier.size(SizeCompactIcon)
-                .clip(ShapeCompact)
-                .background(accent.copy(alpha = AlphaIconBg)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Filled.MusicNote, null, tint = accent, modifier = Modifier.size(20.dp))
-        }
-    }
-    Spacer(Modifier.width(SpaceLg))
-    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(SpaceXxs)) {
-        Text(
-            event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_music) },
-            color = OnCardText,
-            style = MaterialTheme.typography.bodySmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (event.artist.isNotEmpty())
-            Text(
-                event.artist,
-                color = SubtleGray,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-    }
-    Spacer(Modifier.width(SpaceMd))
-    Surface(
-        onClick = { interactor.togglePlayPause() },
-        shape = CircleShape,
-        color = ActionBg,
-        modifier = Modifier.size(36.dp),
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                if (event.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                null,
-                tint = OnActionText,
-                modifier = Modifier.size(18.dp),
-            )
+    PlatformTheme(isDarkTheme = true) {
+        with(this@CompactMediaRow) {
+            event.albumArt?.let {
+                Image(
+                    bitmap = it.toScaledBitmap(SizeCompactIcon),
+                    null,
+                    modifier = Modifier.size(SizeCompactIcon).clip(ShapeCompact),
+                    contentScale = ContentScale.Crop,
+                )
+            } ?: run {
+                val accent = rememberMediaColors(event).accent
+                Box(
+                    modifier = Modifier.size(SizeCompactIcon)
+                        .clip(ShapeCompact)
+                        .background(accent.copy(alpha = AlphaIconBg)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.MusicNote, null, tint = accent, modifier = Modifier.size(20.dp))
+                }
+            }
+            Spacer(Modifier.width(SpaceLg))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(SpaceXxs)) {
+                Text(
+                    event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_music) },
+                    color = OnCardText,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = FontFamily(Font(DeviceFontFamilyName("variable-title-medium-emphasized")))
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (event.artist.isNotEmpty())
+                    Text(
+                        event.artist,
+                        color = SubtleGray,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+            }
+            Spacer(Modifier.width(SpaceMd))
+            Surface(
+                onClick = { interactor.togglePlayPause() },
+                shape = CircleShape,
+                color = ActionBg,
+                modifier = Modifier.size(36.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        if (event.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        null,
+                        tint = OnActionText,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
         }
     }
 }

@@ -21,6 +21,8 @@ import com.android.systemui.statusbar.quickactions.island.alarm.ui.viewmodel.Ala
 import com.android.systemui.statusbar.quickactions.island.flashlight.ui.viewmodel.FlashlightPopupChipViewModel
 import com.android.systemui.statusbar.quickactions.island.livescore.ui.viewmodel.LiveScorePopupChipViewModel
 import com.android.systemui.statusbar.quickactions.island.media.ui.viewmodel.MediaControlChipViewModel
+import com.android.systemui.statusbar.quickactions.island.ongoingcall.ui.viewmodel.OngoingCallsPopupChipViewModel
+import com.android.systemui.statusbar.quickactions.island.promotedongoing.ui.viewmodel.PromotedOngoingPopupChipViewModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.ui.viewmodel.ScreenRecordPopupChipViewModel
 import com.android.systemui.statusbar.quickactions.island.stopwatch.ui.viewmodel.StopwatchPopupChipViewModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipId
@@ -44,6 +46,8 @@ internal constructor(
     private val flashlightChip: IslandChipViewModel,
     private val stopwatchChip: IslandChipViewModel,
     private val alarmChip: IslandChipViewModel,
+    private val ongoingCallChip: IslandChipViewModel,
+    private val promotedOngoingChip: IslandChipViewModel,
 ) : ExclusiveActivatable() {
 
     @AssistedInject
@@ -55,6 +59,8 @@ internal constructor(
         flashlightChipFactory: FlashlightPopupChipViewModel.Factory,
         stopwatchChipFactory: StopwatchPopupChipViewModel.Factory,
         alarmChipFactory: AlarmPopupChipViewModel.Factory,
+        ongoingCallChipFactory: OngoingCallsPopupChipViewModel.Factory,
+        promotedOngoingChipFactory: PromotedOngoingPopupChipViewModel.Factory,
     ) : this(
         context = context,
         mediaControlChip = mediaControlChipFactory.create(),
@@ -63,6 +69,8 @@ internal constructor(
         flashlightChip = flashlightChipFactory.create(),
         stopwatchChip = stopwatchChipFactory.create(),
         alarmChip = alarmChipFactory.create(),
+        ongoingCallChip = ongoingCallChipFactory.create(),
+        promotedOngoingChip = promotedOngoingChipFactory.create(),
     )
 
     private var isDynamicIslandEnabled by mutableStateOf(readDynamicIslandEnabled())
@@ -87,6 +95,8 @@ internal constructor(
             flashlight = flashlightChip.chip,
             stopwatch = stopwatchChip.chip,
             alarm = alarmChip.chip,
+            ongoingCall = ongoingCallChip.chip,
+            promotedOngoing = promotedOngoingChip.chip,
         )
     }
 
@@ -103,6 +113,8 @@ internal constructor(
                 bundle.stopwatch,
                 bundle.alarm,
                 bundle.flashlight,
+                bundle.ongoingCall,
+                bundle.promotedOngoing,
             )
             .filterIsInstance<PopupChipModel.Shown>()
             .map { chip ->
@@ -133,6 +145,8 @@ internal constructor(
             launch { flashlightChip.activate() }
             launch { stopwatchChip.activate() }
             launch { alarmChip.activate() }
+            launch { ongoingCallChip.activate() }
+            launch { promotedOngoingChip.activate() }
             try {
                 awaitCancellation()
             } finally {
@@ -148,6 +162,9 @@ internal constructor(
         val flashlight: PopupChipModel = PopupChipModel.Hidden(chipId = PopupChipId.Flashlight),
         val stopwatch: PopupChipModel = PopupChipModel.Hidden(chipId = PopupChipId.Stopwatch),
         val alarm: PopupChipModel = PopupChipModel.Hidden(chipId = PopupChipId.Alarm),
+        val ongoingCall: PopupChipModel = PopupChipModel.Hidden(chipId = PopupChipId.OngoingCall),
+        val promotedOngoing: PopupChipModel =
+            PopupChipModel.Hidden(chipId = PopupChipId.PromotedOngoing),
     )
 
     private fun readDynamicIslandEnabled(): Boolean {

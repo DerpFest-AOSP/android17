@@ -37,11 +37,11 @@ class NotificationIslandManager
 constructor(
     @Application private val context: Context,
     @Application private val applicationScope: CoroutineScope,
+    private val settings: com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings,
 ) {
     companion object {
         private const val TAG = "NotificationIslandManager"
 
-        private const val SCREEN_RECORD_PACKAGE = "com.android.systemui"
         private val CLOCK_PACKAGES = setOf("com.google.android.deskclock", "com.android.deskclock")
         private val ALARM_PACKAGES = setOf("com.google.android.deskclock", "com.android.deskclock")
 
@@ -112,6 +112,9 @@ constructor(
     private val _nowPlayingEvent = MutableStateFlow<IslandEvent.NowPlaying?>(null)
     val nowPlayingEvent: StateFlow<IslandEvent.NowPlaying?> = _nowPlayingEvent.asStateFlow()
 
+    private val _callEvents = MutableStateFlow<List<IslandEvent.Call>>(emptyList())
+    val callEvents: StateFlow<List<IslandEvent.Call>> = _callEvents.asStateFlow()
+
     @Volatile var disabledTypes: Set<String> = emptySet()
 
     private var recorderPackage: String? = null
@@ -127,12 +130,12 @@ constructor(
 
     var activeMediaPackageProvider: (() -> String?)? = null
 
-    private val seenNotificationPostTimes = mutableMapOf<String, Long>()
+    private val seenNotificationKeys = mutableSetOf<String>()
+    private val seenMessagingTimestamps = mutableMapOf<String, Long>()
 
     var onTimerEvent: ((IslandEvent.Timer) -> Unit)? = null
     var onAlarmEvent: ((IslandEvent.Alarm) -> Unit)? = null
     var onNotificationPosted: ((IslandEvent.Notification) -> Unit)? = null
-    var onScreenRecordNotificationTime: ((Long) -> Unit)? = null
 
     @Volatile private var listening = false
     @Volatile private var timerJob: Job? = null
@@ -145,7 +148,8 @@ constructor(
         object : ScrimUtils.ScrimEventListener {
             override fun onNotificationRemoved(sbn: StatusBarNotification) {
                 val pkg = sbn.packageName ?: return
-                seenNotificationPostTimes.remove(sbn.key)
+                seenNotificationKeys.remove(sbn.key)
+                seenMessagingTimestamps.remove(sbn.key)
 
                 if (sbn.key == timerNotificationKey) {
                     timerNotificationKey = null
@@ -169,6 +173,9 @@ constructor(
                     }
                 }
 
+                _callEvents.value =
+                    _callEvents.value.filter { it.sbn.key != sbn.key }
+
                 _promotedOngoingEvents.value =
                     _promotedOngoingEvents.value.filter { it.sbn.key != sbn.key }
 
@@ -189,37 +196,46 @@ constructor(
                 val pkg = sbn.packageName ?: return
                 val extras = sbn.notification?.extras ?: return
 
-                if (
-                    pkg == SCREEN_RECORD_PACKAGE &&
-                    sbn.isOngoing &&
-                    extras.getBoolean("android.showChronometer", false) &&
-                    sbn.notification.`when` > 0L
-                ) {
-                    onScreenRecordNotificationTime?.invoke(sbn.notification.`when`)
-                }
-
                 if (pkg in CLOCK_PACKAGES) {
                     val channelId = sbn.notification?.channelId?.lowercase() ?: ""
                     val actionLabels =
                         sbn.notification?.actions?.map { it.title?.toString()?.lowercase() ?: "" }
                             ?: emptyList()
+                    val actionIntents =
+                        sbn.notification?.actions?.map { actionIntentString(it) ?: "" }
+                            ?: emptyList()
+                    val hasStopwatchIntent = actionIntents.any {
+                        it == DeskClockActions.START_STOPWATCH ||
+                            it == DeskClockActions.PAUSE_STOPWATCH ||
+                            it == DeskClockActions.RESET_STOPWATCH ||
+                            it == DeskClockActions.LAP_STOPWATCH ||
+                            it == DeskClockActions.SHOW_STOPWATCH
+                    }
+                    val hasTimerIntent = actionIntents.any {
+                        it == DeskClockActions.START_TIMER ||
+                            it == DeskClockActions.PAUSE_TIMER ||
+                            it == DeskClockActions.RESET_TIMER ||
+                            it == DeskClockActions.ADD_MINUTE_TIMER ||
+                            it == DeskClockActions.SHOW_TIMER
+                    }
                     val hasLap = actionLabels.any { it.contains("lap") }
                     val isCountDown = extras.getBoolean("android.chronometerCountDown", false)
 
-                    val isStopwatch = channelId.contains("stopwatch") || hasLap
-                    val isTimer =
-                        !isStopwatch &&
-                            (channelId.contains("timer") ||
-                                channelId.contains("firing") ||
-                                isCountDown ||
-                                actionLabels.any { it.contains("+1") || it.contains("add") })
+                    val isStopwatch = hasStopwatchIntent || channelId.contains("stopwatch") || hasLap
+                    val isTimer = !isStopwatch && (
+                        hasTimerIntent ||
+                            channelId.contains("timer") ||
+                            channelId.contains("firing") ||
+                            isCountDown ||
+                            actionLabels.any { it.contains("+1") || it.contains("add") }
+                    )
 
                     if (isStopwatch && "stopwatch" !in disabledTypes) {
-                        handleStopwatch(sbn, extras, actionLabels)
+                        handleStopwatch(sbn, extras, actionLabels, actionIntents)
                         return
                     }
                     if (isTimer && "timer" !in disabledTypes) {
-                        handleTimer(sbn, extras, actionLabels)
+                        handleTimer(sbn, extras, actionLabels, actionIntents)
                         return
                     }
                     if (isStopwatch || isTimer) return
@@ -237,8 +253,10 @@ constructor(
                             extras.containsKey(Notification.EXTRA_DECLINE_INTENT) ||
                             extras.containsKey(Notification.EXTRA_HANG_UP_INTENT)
                     if (isCallStyle) {
-                        handleCallNotification(sbn, extras)
-                        return
+                        if (isOngoingCallAllowed()) {
+                            handleCallNotification(sbn, extras)
+                            return
+                        }
                     }
                 }
 
@@ -248,20 +266,38 @@ constructor(
                         Notification.EXTRA_MEDIA_SESSION
                     ) == true
                 if (sbn.isOngoing && !isMedia && "audio_recording" !in disabledTypes) {
-                    val recActions =
-                        allActions.filter { a ->
-                            val lbl = a.title?.toString()?.lowercase() ?: ""
-                            lbl.contains("stop") || lbl.contains("pause") || lbl.contains("resume")
-                        }
-                    val hasStop =
-                        recActions.any { a ->
-                            (a.title?.toString()?.lowercase() ?: "").contains("stop")
-                        }
-                    if (hasStop && recActions.size >= 2) {
-                        val isPaused =
-                            recActions.any { a ->
-                                (a.title?.toString()?.lowercase() ?: "").contains("resume")
+                    val actionIntentMap = allActions.associateWith { actionIntentString(it) }
+                    val iconResMap = allActions.associateWith { actionIconResName(it, pkg)?.lowercase() }
+                    val recActions = allActions.filter { a ->
+                        val intent = actionIntentMap[a]
+                        val icon = iconResMap[a] ?: ""
+                        when {
+                            intent == "STOP" || intent == "PAUSE" || intent == "RESUME" -> true
+                            icon.matchesMaterial(MaterialIconSet.Stop) -> true
+                            icon.matchesMaterial(MaterialIconSet.Pause) -> true
+                            icon.matchesMaterial(MaterialIconSet.Play) -> true
+                            else -> {
+                                val lbl = a.title?.toString()?.lowercase() ?: ""
+                                lbl.contains("stop") || lbl.contains("pause") || lbl.contains("resume")
                             }
+                        }
+                    }
+                    val hasStop = recActions.any { a ->
+                        actionIntentMap[a] == "STOP" ||
+                            (iconResMap[a] ?: "").matchesMaterial(MaterialIconSet.Stop) ||
+                            (a.title?.toString()?.lowercase() ?: "").contains("stop")
+                    }
+                    if (hasStop && recActions.size >= 2) {
+                        val hasResumeAction = recActions.any { actionIntentMap[it] == "RESUME" }
+                        val hasPauseAction = recActions.any { actionIntentMap[it] == "PAUSE" }
+                        val isPaused = when {
+                            hasResumeAction -> true
+                            hasPauseAction -> false
+                            else -> recActions.any { a ->
+                                (iconResMap[a] ?: "").matchesMaterial(MaterialIconSet.Play) ||
+                                    (a.title?.toString()?.lowercase() ?: "").contains("resume")
+                            }
+                        }
                         val notifActions =
                             recActions.mapNotNull { a ->
                                 a.title?.let {
@@ -270,25 +306,20 @@ constructor(
                             }
                         val appName = resolveAppName(pkg)
                         val existing = _audioRecordingEvent.value
-                        val prevState = existing?.state
-
-                        val startTime =
-                            if (
-                                sbn.notification?.extras?.getBoolean("android.showChronometer") ==
-                                    true
-                            )
-                                sbn.notification.`when`
-                            else existing?.startTimeMs ?: System.currentTimeMillis()
-
                         val now = System.currentTimeMillis()
-                        if (isPaused && prevState != RecordingState.PAUSED) {
-                            pauseStartMs = now
-                        } else if (
-                            !isPaused && prevState == RecordingState.PAUSED
-                        ) {
-                            accumulatedPauseMs += (now - pauseStartMs).coerceAtLeast(0L)
-                            pauseStartMs = 0L
+                        val parsedElapsedMs = parseRecorderElapsedMs(extras)
+
+                        val startTime = when {
+                            parsedElapsedMs != null -> now - parsedElapsedMs
+                            existing != null && existing.state != RecordingState.SAVED &&
+                                recorderNotifKey == sbn.key -> existing.startTimeMs
+                            sbn.notification?.extras?.getBoolean("android.showChronometer") == true ->
+                                sbn.notification.`when`
+                            else -> now
                         }
+
+                        accumulatedPauseMs = 0L
+                        pauseStartMs = 0L
 
                         recorderPackage = pkg
                         recorderNotifKey = sbn.key
@@ -300,7 +331,7 @@ constructor(
                                     else RecordingState.RECORDING,
                                 startTimeMs = startTime,
                                 actions = notifActions,
-                                pausedDurationMs = accumulatedPauseMs,
+                                pausedDurationMs = 0L,
                             )
                         return
                     }
@@ -345,7 +376,7 @@ constructor(
                 }
 
                 if (sbn.isOngoing && isPromotable(sbn, extras)) {
-                    if ("promoted_ongoing" !in disabledTypes) handlePromotedOngoing(sbn, extras, pkg)
+                    if (isPromotedOngoingAllowed()) handlePromotedOngoing(sbn, extras, pkg)
                     return
                 }
 
@@ -359,7 +390,7 @@ constructor(
                             progressRaw >= 0)
 
                 if (sbn.isOngoing && hasProgress) {
-                    if ("promoted_ongoing" !in disabledTypes) handlePromotedOngoing(sbn, extras, pkg)
+                    if (isPromotedOngoingAllowed()) handlePromotedOngoing(sbn, extras, pkg)
                     return
                 }
                 if (!sbn.isOngoing) {
@@ -367,7 +398,7 @@ constructor(
                         _promotedOngoingEvents.value.filter { it.sbn.key != sbn.key }
                 }
                 if (sbn.isOngoing) return
-                if ("notification" in disabledTypes) return
+                if (!settings.isEnabled.value || "notification" in disabledTypes) return
                 val category = sbn.notification?.category
                 if (category == Notification.CATEGORY_TRANSPORT) return
                 if (category == Notification.CATEGORY_SERVICE && !hasProgress) return
@@ -400,15 +431,11 @@ constructor(
                         } else 0L
                     } else 0L
 
-                val postTime = sbn.postTime
-                val signature =
-                    if (isMessagingStyle && latestMessageTime > 0L) latestMessageTime
-                    else postTime
-                val lastSignature = seenNotificationPostTimes.put(sbn.key, signature)
-                if (lastSignature != null) {
-                    if (signature == lastSignature) return
-                    if (!isMessagingStyle &&
-                        notifFlags and Notification.FLAG_ONLY_ALERT_ONCE != 0) return
+                if (isMessagingStyle && latestMessageTime > 0L) {
+                    val previous = seenMessagingTimestamps.put(sbn.key, latestMessageTime)
+                    if (previous != null && previous == latestMessageTime) return
+                } else {
+                    if (!seenNotificationKeys.add(sbn.key)) return
                 }
 
                 val icon =
@@ -551,12 +578,14 @@ constructor(
         if (!listening) return
         listening = false
         ScrimUtils.get().removeListener(scrimListener)
-        seenNotificationPostTimes.clear()
+        seenNotificationKeys.clear()
+        seenMessagingTimestamps.clear()
         timerJob?.cancel()
         timerJob = null
         _timerEvent.value = null
         _stopwatchEvent.value = null
         _alarmEvent.value = null
+        _callEvents.value = emptyList()
         _notificationEvents.value = emptyList()
         _promotedOngoingEvents.value = emptyList()
         _sportsEvents.value = emptyList()
@@ -600,10 +629,15 @@ constructor(
         _alarmEvent.value = null
     }
 
+    fun clearCall(key: String) {
+        _callEvents.value = _callEvents.value.filter { it.sbn.key != key }
+    }
+
     private fun handleTimer(
         sbn: StatusBarNotification,
         extras: Bundle,
         actionLabels: List<String> = emptyList(),
+        actionIntents: List<String> = emptyList(),
     ) {
         val label = extras.getString("android.title") ?: context.getString(R.string.ax_dynamic_bar_timer)
         val icon =
@@ -613,12 +647,20 @@ constructor(
                 null
             }
 
-        val hasPauseAction = actionLabels.any { it.contains("pause") }
-        val hasResumeAction = actionLabels.any {
-            it.contains("resume") || it.contains("play") ||
-                (it.contains("start") && !it.contains("stop"))
+        val hasPauseIntent = actionIntents.any { it == DeskClockActions.PAUSE_TIMER }
+        val hasStartIntent = actionIntents.any { it == DeskClockActions.START_TIMER }
+        val isPaused = when {
+            hasStartIntent -> true
+            hasPauseIntent -> false
+            else -> {
+                val hasPauseLabel = actionLabels.any { it.contains("pause") }
+                val hasResumeLabel = actionLabels.any {
+                    it.contains("resume") || it.contains("play") ||
+                        (it.contains("start") && !it.contains("stop"))
+                }
+                hasResumeLabel || (actionLabels.isNotEmpty() && !hasPauseLabel)
+            }
         }
-        val isPaused = hasResumeAction || (actionLabels.isNotEmpty() && !hasPauseAction)
 
         var endTimeMs = sbn.notification.`when`
         if (endTimeMs <= System.currentTimeMillis()) {
@@ -671,6 +713,7 @@ constructor(
         sbn: StatusBarNotification,
         extras: Bundle,
         actionLabels: List<String> = emptyList(),
+        actionIntents: List<String> = emptyList(),
     ) {
         val label = extras.getString("android.title") ?: ""
         val icon =
@@ -680,7 +723,14 @@ constructor(
                 null
             }
 
-        val isRunning = actionLabels.any { it.contains("pause") || it.contains("lap") }
+        val hasPauseIntent = actionIntents.any { it == DeskClockActions.PAUSE_STOPWATCH }
+        val hasStartIntent = actionIntents.any { it == DeskClockActions.START_STOPWATCH }
+        val hasLapIntent = actionIntents.any { it == DeskClockActions.LAP_STOPWATCH }
+        val isRunning = when {
+            hasPauseIntent || hasLapIntent -> true
+            hasStartIntent -> false
+            else -> actionLabels.any { it.contains("pause") || it.contains("lap") }
+        }
 
         var startTimeMs = System.currentTimeMillis()
         val chronoBase = extractChronometerBase(sbn)
@@ -776,6 +826,7 @@ constructor(
             } catch (_: Exception) {
                 null
             }
+
         val allActions = sbn.notification?.actions ?: emptyArray()
         val actions =
             allActions
@@ -805,21 +856,77 @@ constructor(
         val callStart = if (callWhen > 0L) callWhen else System.currentTimeMillis()
 
         val event =
-            IslandEvent.Notification(
+            IslandEvent.Call(
                 sbn = sbn,
-                title = callerName,
-                text = number,
+                callerName = callerName,
+                number = number,
                 appIcon = icon,
-                appName = callType,
-                actions = actions,
-                senderIcon = callerPhoto,
-                senderName = callerName,
-                isConversation = false,
+                callerPhoto = callerPhoto,
+                callType = callType,
                 callStartTimeMs = callStart,
+                actions = actions,
             )
-        applicationScope.launch { notificationFlow.emit(event) }
-        onNotificationPosted?.invoke(event)
+
+        val current = _callEvents.value.toMutableList()
+        current.removeAll { it.sbn.key == sbn.key }
+        current.add(0, event)
+        _callEvents.value = current
     }
+
+    private fun actionIconResName(action: Notification.Action, pkg: String): String? {
+        val icon = action.getIcon() ?: return null
+        val resId = try { icon.resId } catch (_: Exception) { 0 }
+        if (resId == 0) return null
+        return try {
+            context.packageManager.getResourcesForApplication(pkg).getResourceEntryName(resId)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun actionIntentString(action: Notification.Action): String? {
+        val pi = action.actionIntent ?: return null
+        return try {
+            pi.intent?.action
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun parseRecorderElapsedMs(extras: Bundle): Long? {
+        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: return null
+        val match = Regex("""(\d+):(\d+)(?::(\d+))?""").find(text) ?: return null
+        val a = match.groupValues[1].toLongOrNull() ?: return null
+        val b = match.groupValues[2].toLongOrNull() ?: return null
+        val c = match.groupValues[3].toLongOrNull()
+        val secs = if (c != null) a * 3600 + b * 60 + c else a * 60 + b
+        return secs * 1000L
+    }
+
+    private enum class MaterialIconSet(val patterns: List<String>) {
+        Play(listOf("play_arrow", "media_play", "play_circle", "play")),
+        Pause(listOf("pause_circle", "media_pause", "pause")),
+        Stop(listOf("stop_circle", "media_stop", "stop")),
+    }
+
+    private object DeskClockActions {
+        private const val PREFIX = "com.android.deskclock.action."
+        const val START_TIMER = PREFIX + "START_TIMER"
+        const val PAUSE_TIMER = PREFIX + "PAUSE_TIMER"
+        const val RESET_TIMER = PREFIX + "RESET_TIMER"
+        const val ADD_MINUTE_TIMER = PREFIX + "ADD_MINUTE_TIMER"
+        const val SHOW_TIMER = PREFIX + "SHOW_TIMER"
+        const val START_STOPWATCH = PREFIX + "START_STOPWATCH"
+        const val PAUSE_STOPWATCH = PREFIX + "PAUSE_STOPWATCH"
+        const val RESET_STOPWATCH = PREFIX + "RESET_STOPWATCH"
+        const val LAP_STOPWATCH = PREFIX + "LAP_STOPWATCH"
+        const val SHOW_STOPWATCH = PREFIX + "SHOW_STOPWATCH"
+        const val ALARM_SNOOZE = "com.android.deskclock.ALARM_SNOOZE"
+        const val ALARM_DISMISS = "com.android.deskclock.ALARM_DISMISS"
+    }
+
+    private fun String.matchesMaterial(set: MaterialIconSet): Boolean =
+        set.patterns.any { this.contains(it) }
 
     private fun isPromotable(sbn: StatusBarNotification, extras: Bundle): Boolean {
         val notification = sbn.notification ?: return false
@@ -1051,6 +1158,14 @@ constructor(
             } catch (_: Exception) {
                 null
             }
+    }
+
+    private fun isPromotedOngoingAllowed(): Boolean {
+        return "promoted_ongoing" !in disabledTypes || settings.isDynamicIslandOngoingActive.value
+    }
+
+    private fun isOngoingCallAllowed(): Boolean {
+        return "call" !in disabledTypes || settings.isDynamicIslandCallsActive.value
     }
 }
 

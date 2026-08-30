@@ -21,4 +21,3 @@ data class IslandUiState(
     val activeEvents: List<IslandEvent>
         get() = events.filter { it !is IslandEvent.Notification }
 }
-

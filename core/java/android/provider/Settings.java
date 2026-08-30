@@ -7322,6 +7322,27 @@ public final class Settings {
                 "status_bar_dynamic_island_live_scores";
 
         /**
+         * Whether ongoing activities / downloads are shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_ONGOING_ACTIVITIES =
+                "status_bar_dynamic_island_ongoing_activities";
+
+        /**
+         * Whether ongoing calls are shown in the dynamic island.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_CALLS =
+                "status_bar_dynamic_island_calls";
+
+        /**
+         * Width of the collapsed dynamic island pill, in dp.
+         * @hide
+         */
+        public static final String STATUS_BAR_DYNAMIC_ISLAND_WIDTH =
+                "status_bar_dynamic_island_width";
+
+        /**
          * Defines the screen-off animation to display
          * @hide
          */

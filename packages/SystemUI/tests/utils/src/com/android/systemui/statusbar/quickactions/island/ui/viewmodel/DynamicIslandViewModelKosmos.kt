@@ -27,6 +27,8 @@ val Kosmos.dynamicIslandViewModelFactory: DynamicIslandViewModel.Factory by
                     flashlightChip = HiddenIslandChip(PopupChipId.Flashlight),
                     stopwatchChip = HiddenIslandChip(PopupChipId.Stopwatch),
                     alarmChip = HiddenIslandChip(PopupChipId.Alarm),
+                    ongoingCallChip = HiddenIslandChip(PopupChipId.OngoingCall),
+                    promotedOngoingChip = HiddenIslandChip(PopupChipId.PromotedOngoing),
                 )
             }
         }

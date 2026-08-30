@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.android.systemui.axdynamicbar.shared.IslandActions
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipId
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel
 import kotlinx.coroutines.delay
@@ -49,6 +50,7 @@ import kotlin.math.abs
 fun StatusBarDynamicIslandContainer(
     chips: List<PopupChipModel.Shown>,
     onMediaControlPopupVisibilityChanged: (Boolean) -> Unit,
+    islandActions: IslandActions,
     modifier: Modifier = Modifier,
 ) {
     val cutoutSpec = rememberDynamicIslandCutoutSpec()
@@ -182,6 +184,7 @@ fun StatusBarDynamicIslandContainer(
             StatusBarPopup(
                 viewModel = anchoredChip,
                 isVisible = popupVisible,
+                islandActions = islandActions,
             )
         }
     }

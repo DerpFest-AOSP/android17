@@ -2,14 +2,7 @@ package com.android.systemui.axdynamicbar.ui.compose
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.LaunchedEffect
-import kotlin.math.abs
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.fadeIn
@@ -32,9 +25,18 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +55,11 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.res.dimensionResource
+import com.android.compose.animation.Expandable
+import com.android.compose.animation.rememberExpandableController
+import com.android.systemui.animation.Expandable as SystemUiExpandable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import android.graphics.drawable.Drawable
@@ -73,7 +80,6 @@ import com.android.systemui.axdynamicbar.shared.TsBadge
 import com.android.systemui.axdynamicbar.shared.chipAccentColorFor
 import com.android.systemui.axdynamicbar.shared.chipContentColorOn
 import com.android.systemui.axdynamicbar.shared.chipProgressFor
-import com.android.systemui.axdynamicbar.shared.iconKeyFor
 import com.android.systemui.axdynamicbar.shared.textKeyFor
 import com.android.systemui.axdynamicbar.shared.toScaledBitmap
 import com.android.systemui.axdynamicbar.ui.AxDynamicBarChipViewModel
@@ -93,13 +99,19 @@ fun AxDynamicBarChip(
     val state by viewModel.chipState.collectAsStateWithLifecycle()
     val isOnKeyguard by viewModel.isOnKeyguard.collectAsStateWithLifecycle()
     val keyguardCarrier by viewModel.keyguardCarrierText.collectAsStateWithLifecycle()
+    val chipStyle by viewModel.chipStyle.collectAsStateWithLifecycle()
+
+    var toggleCount by remember { mutableIntStateOf(0) }
     
     val carrierName = if (isOnKeyguard && ignoreKeyguard) keyguardCarrier.takeIf { it.isNotBlank() } else null
+    val chipTextMaxWidth = dimensionResource(R.dimen.ongoing_activity_chip_max_text_width)
     val screenWidthPx = with(LocalDensity.current) {
         LocalConfiguration.current.screenWidthDp.dp.toPx()
     }
 
     val touchSlop = LocalViewConfiguration.current.touchSlop
+    val expandableController = rememberExpandableController(color = Color.Transparent, shape = ChipShape)
+    var currentExpandable by remember { mutableStateOf<SystemUiExpandable?>(null) }
 
     val motionScheme = MaterialTheme.motionScheme
 
@@ -127,9 +139,18 @@ fun AxDynamicBarChip(
                                 if (totalDx > 0) viewModel.cyclePrev()
                                 else viewModel.cycleNext()
                             } else if (!decided) {
-                                
+
                                 change.consume()
-                                viewModel.togglePanel()
+                                val current = state?.event
+                                if (current is IslandEvent.AospChip) {
+                                    val expandable = currentExpandable
+                                    if (expandable == null ||
+                                        !viewModel.handleAospChipTap(current, expandable)) {
+                                        viewModel.statusBarExpansion.toggle()
+                                    }
+                                } else {
+                                    viewModel.statusBarExpansion.toggle()
+                                }
                             }
                             
                             break
@@ -167,33 +188,56 @@ fun AxDynamicBarChip(
             val displayEvent = chipState.notificationAlert ?: chipState.event
             val isAlert = chipState.notificationAlert != null
 
-            AnimatedContent(
-                targetState = ChipDisplay(displayEvent, isAlert),
-                transitionSpec = {
-                    (fadeIn(motionScheme.defaultEffectsSpec()) + scaleIn(initialScale = 0.92f, animationSpec = motionScheme.defaultSpatialSpec())) togetherWith
-                        (fadeOut(motionScheme.fastEffectsSpec()) + scaleOut(targetScale = 0.92f, animationSpec = motionScheme.fastSpatialSpec())) using
-                        SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() })
-                },
-                contentKey = { if (it.isAlert) "alert" else it.event::class.simpleName },
-                label = "chip_event",
-            ) { display ->
-                val rawAccent = chipAccentColorFor(display.event)
-                val accent by animateColorAsState(rawAccent, MaterialTheme.motionScheme.fastEffectsSpec(), label = "accent")
-                val contentColor by animateColorAsState(
-                    chipContentColorOn(rawAccent), MaterialTheme.motionScheme.fastEffectsSpec(), label = "content",
-                )
-                val rawProgress = chipProgressFor(display.event)
-                val progressTarget = rawProgress ?: 0f
-                val progressAnim = remember { Animatable(progressTarget) }
-                LaunchedEffect(progressTarget) {
-                    if (abs(progressTarget - progressAnim.value) > 0.05f) {
-                        progressAnim.animateTo(progressTarget, tween(300, easing = FastOutSlowInEasing))
-                    } else {
-                        progressAnim.snapTo(progressTarget)
-                    }
-                }
-                val progress = if (rawProgress != null) progressAnim.value else null
+            Expandable(
+                controller = expandableController,
+                onClick = null,
+                defaultMinSize = false,
+            ) { expandable ->
+                currentExpandable = expandable
+                AnimatedContent(
+                    targetState = chipDisplayKey(displayEvent, isAlert),
+                    transitionSpec = {
+                        ((
+                            fadeIn(motionScheme.defaultEffectsSpec()) +
+                                scaleIn(
+                                    initialScale = 0.92f,
+                                    animationSpec = motionScheme.defaultSpatialSpec(),
+                                )
+                            ) togetherWith (
+                            fadeOut(motionScheme.fastEffectsSpec()) +
+                                scaleOut(
+                                    targetScale = 0.92f,
+                                    animationSpec = motionScheme.fastSpatialSpec(),
+                                )
+                            ))
+                            .using(sizeTransform = null)
+                    },
+                    label = "chip_event",
+                ) {
+                    val event = displayEvent
+                    val rawAccent = chipAccentColorFor(event)
+                    val accent by animateColorAsState(rawAccent, MaterialTheme.motionScheme.fastEffectsSpec(), label = "accent")
+                    val contentColor by animateColorAsState(
+                        chipContentColorOn(rawAccent), MaterialTheme.motionScheme.fastEffectsSpec(), label = "content",
+                    )
+                val useCircleStyle = chipStyle == 1 &&
+                        !isAlert &&
+                        event !is IslandEvent.AudioRecording &&
+                        event !is IslandEvent.Timer &&
+                        event !is IslandEvent.Stopwatch &&
+                        !(event is IslandEvent.Sports && event.team2Name.isNotEmpty())
 
+                val progress = chipProgressFor(event, includeMediaProgress = useCircleStyle)
+
+                if (useCircleStyle) {
+                    CircleChip(
+                        event = event,
+                        accent = accent,
+                        contentColor = contentColor,
+                        progress = progress,
+                        modifier = Modifier.squishAnimation(toggleCount),
+                    )
+                } else {
                 Box(
                     modifier = Modifier.fillMaxHeight(),
                     contentAlignment = Alignment.Center,
@@ -201,9 +245,9 @@ fun AxDynamicBarChip(
                     Row(
                         modifier =
                             Modifier.height(ChipHeight)
+                                .widthIn(max = 100.dp)
                                 .clip(ChipShape)
                                 .background(accent)
-                                .animateContentSize(motionScheme.defaultSpatialSpec())
                                 .then(
                                     if (progress != null) {
                                         val trackColor = lerp(accent, contentColor, 0.2f)
@@ -243,19 +287,16 @@ fun AxDynamicBarChip(
                                 color = contentColor.copy(alpha = AlphaTertiary),
                             )
                         }
-                        if (display.isAlert && display.event is IslandEvent.Notification) {
+                        if (isAlert && event is IslandEvent.Notification) {
+                            val notif = event
                             AnimatedContent(
-                                targetState = display.event,
+                                targetState = notif.sbn.key,
                                 transitionSpec = {
                                     (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith fadeOut(motionScheme.fastEffectsSpec()))
                                         .using(sizeTransform = null)
                                 },
-                                contentKey = {
-                                    (it as? IslandEvent.Notification)?.sbn?.key
-                                },
                                 label = "alert_content",
-                            ) { event ->
-                                val notif = event as IslandEvent.Notification
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     notif.appIcon?.let { icon ->
                                         Image(
@@ -274,12 +315,12 @@ fun AxDynamicBarChip(
                                         color = contentColor,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.widthIn(max = 100.dp).basicMarquee(iterations = 1),
+                                        modifier = Modifier.widthIn(max = chipTextMaxWidth).basicMarquee(iterations = 1),
                                     )
                                 }
                             }
-                        } else if (display.event is IslandEvent.Sports && (display.event as IslandEvent.Sports).team2Name.isNotEmpty()) {
-                            val sport = display.event as IslandEvent.Sports
+                        } else if (event is IslandEvent.Sports && event.team2Name.isNotEmpty()) {
+                            val sport = event
                             StatusBarSportsTeamBadge(sport.team1Name, sport.team1Icon, contentColor)
                             Spacer(Modifier.width(SpaceXs))
                             Text(
@@ -293,36 +334,30 @@ fun AxDynamicBarChip(
                             StatusBarSportsTeamBadge(sport.team2Name, sport.team2Icon, contentColor)
                         } else {
                             AnimatedContent(
-                                targetState = display.event,
+                                targetState = chipIconKey(event),
                                 transitionSpec = {
-                                    (fadeIn(motionScheme.defaultEffectsSpec()) +
-                                        scaleIn(initialScale = 0.85f, animationSpec = motionScheme.defaultSpatialSpec())) togetherWith
-                                        (fadeOut(motionScheme.fastEffectsSpec()) +
-                                            scaleOut(targetScale = 0.85f, animationSpec = motionScheme.fastSpatialSpec())) using
-                                        SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() })
+                                    (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                                        fadeOut(motionScheme.fastEffectsSpec()))
+                                        .using(sizeTransform = null)
                                 },
-                                contentKey = { iconKeyFor(it) },
                                 label = "chip_icon",
-                            ) { event ->
-                                PillEventIcon(event, tint = contentColor)
+                            ) {
+                                PillEventIcon(event, tint = contentColor, animated = false)
                             }
                             Spacer(Modifier.width(SpaceXs))
                             AnimatedContent(
-                                targetState = display.event,
+                                targetState = textKeyFor(event),
                                 transitionSpec = {
-                                    (fadeIn(motionScheme.defaultEffectsSpec()) +
-                                        scaleIn(initialScale = 0.85f, animationSpec = motionScheme.defaultSpatialSpec())) togetherWith
-                                        (fadeOut(motionScheme.fastEffectsSpec()) +
-                                            scaleOut(targetScale = 0.85f, animationSpec = motionScheme.fastSpatialSpec())) using
-                                        SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> motionScheme.defaultSpatialSpec() })
+                                    (fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                                        fadeOut(motionScheme.fastEffectsSpec()))
+                                        .using(sizeTransform = null)
                                 },
-                                contentKey = { textKeyFor(it) },
                                 label = "chip_text",
-                                modifier = Modifier.weight(1f, fill = false),
-                            ) { event ->
+                                modifier = Modifier.weight(1f, fill = false).widthIn(max = chipTextMaxWidth),
+                            ) {
                                 PillEventText(
                                     event,
-                                    Modifier.widthIn(max = 88.dp),
+                                    Modifier.widthIn(max = chipTextMaxWidth),
                                     overrideColor = contentColor,
                                 )
                             }
@@ -350,6 +385,8 @@ fun AxDynamicBarChip(
                         }
                     }
                 }
+                }
+            }
             }
         }
     }
@@ -380,5 +417,63 @@ private fun StatusBarSportsTeamBadge(name: String, icon: Drawable?, contentColor
     }
 }
 
-private data class ChipDisplay(val event: IslandEvent, val isAlert: Boolean)
 
+private fun chipDisplayKey(event: IslandEvent, isAlert: Boolean): String =
+    if (isAlert) "alert:${event.id}" else event.id
+
+private fun chipIconKey(event: IslandEvent): Any =
+    when (event) {
+        is IslandEvent.AppSwitch -> {
+            val app = event.previousApp ?: event.recentApps.firstOrNull()
+            app?.taskId ?: app?.packageName ?: event.id
+        }
+        is IslandEvent.Media -> event.albumArt ?: event.packageName
+        is IslandEvent.Notification -> event.sbn.key
+        else -> event.id
+    }
+
+@Composable
+private fun Modifier.squishAnimation(toggleCount: Int): Modifier {
+    val scaleX = remember { androidx.compose.animation.core.Animatable(1f, visibilityThreshold = 0.01f) }
+    val scaleY = remember { androidx.compose.animation.core.Animatable(1f, visibilityThreshold = 0.01f) }
+    val currentToggleCount by rememberUpdatedState(toggleCount)
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { currentToggleCount }
+            .drop(1)
+            .collectLatest { count ->
+                if (count <= 0) return@collectLatest
+                scaleX.snapTo(1f)
+                scaleY.snapTo(1f)
+                kotlinx.coroutines.coroutineScope {
+                    launch {
+                        scaleX.animateTo(
+                            targetValue = 1f,
+                            animationSpec = androidx.compose.animation.core.keyframes {
+                                durationMillis = 500
+                                1.18f at 150 using androidx.compose.animation.core.FastOutSlowInEasing
+                                0.92f at 300
+                                1f at 500
+                            },
+                        )
+                    }
+                    launch {
+                        scaleY.animateTo(
+                            targetValue = 1f,
+                            animationSpec = androidx.compose.animation.core.keyframes {
+                                durationMillis = 500
+                                0.85f at 150 using androidx.compose.animation.core.FastOutSlowInEasing
+                                1.08f at 300
+                                1f at 500
+                            },
+                        )
+                    }
+                }
+            }
+    }
+
+    return this.graphicsLayer {
+        this.scaleX = scaleX.value
+        this.scaleY = scaleY.value
+    }
+}

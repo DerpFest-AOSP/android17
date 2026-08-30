@@ -10,6 +10,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -114,16 +115,16 @@ internal val BatteryNeutralColor: Color
     @Composable get() = MaterialTheme.colorScheme.surfaceVariant
 internal val ChipContentDark = Color(0xFF1B1B1B)
 
-internal val RedAccent = Color(0xFFEF5350)
-internal val PinkAccent = Color(0xFFEC407A)
-internal val OrangeAccent = Color(0xFFFFA726)
-internal val YellowAccent = Color(0xFFFFCA28)
-internal val GreenAccent = Color(0xFF66BB6A)
-internal val MintAccent = Color(0xFF26A69A)
-internal val TealAccent = Color(0xFF29B6F6)
-internal val BlueAccent = Color(0xFF42A5F5)
-internal val IndigoAccent = Color(0xFF7E57C2)
-internal val PurpleAccent = Color(0xFFAB47BC)
+internal val RedAccent = Color(0xFFFF3B30)
+internal val PinkAccent = Color(0xFFFF2D55)
+internal val OrangeAccent = Color(0xFFFF9500)
+internal val YellowAccent = Color(0xFFFFCC00)
+internal val GreenAccent = Color(0xFF34C759)
+internal val MintAccent = Color(0xFF63E6BE)
+internal val TealAccent = Color(0xFF5AC8FA)
+internal val BlueAccent = Color(0xFF007AFF)
+internal val IndigoAccent = Color(0xFF5856D6)
+internal val PurpleAccent = Color(0xFFAF52DE)
 internal val PausedGray = Color(0xFF8E8E93)
 
 internal val ExpandedMaxWidth = 420.dp
@@ -264,6 +265,10 @@ internal fun chipAccentColorFor(event: IslandEvent): Color {
         val isDark = isSystemInDarkTheme()
         val color = rememberPaletteColor(event.appIcon!!)
         if (color != null) return ensureContrast(color, isDark)
+    }
+    if (event is IslandEvent.AospChip) {
+        val ctx = LocalContext.current
+        return Color(event.active.colors.background(ctx).defaultColor)
     }
     return accentColorFor(event)
 }
@@ -481,10 +486,11 @@ internal fun Drawable.toScaledBitmap(sizeDp: Dp): ImageBitmap {
     return remember(this, px) { toBitmap(px, px).asImageBitmap() }
 }
 
-internal fun chipProgressFor(event: IslandEvent): Float? =
+internal fun chipProgressFor(event: IslandEvent, includeMediaProgress: Boolean = false): Float? =
     when (event) {
         is IslandEvent.Media ->
             if (event.duration > 0) (event.position.toFloat() / event.duration).coerceIn(0f, 1f)
+            else if (includeMediaProgress) event.progress.coerceIn(0f, 1f)
             else null
         is IslandEvent.PromotedOngoing ->
             if (event.progress >= 0f) event.progress.coerceIn(0f, 1f) else null
@@ -527,12 +533,24 @@ internal fun resolveLabelIcon(label: String): ImageVector {
     }
 }
 
+internal fun IslandEvent.MediaCustomAction.isShuffleAction(): Boolean {
+    val labelLower = label.lowercase()
+    val actionLower = action.lowercase()
+    return labelLower.contains("shuffle")
+        || actionLower.contains("shuffle")
+        || actionLower.contains("set_shuffle_mode")
+}
+
 @Composable
 internal fun CustomActionIcon(
     ca: IslandEvent.MediaCustomAction,
     tint: Color,
     modifier: Modifier = Modifier,
 ) {
+    if (ca.isShuffleAction()) {
+        Icon(Icons.Filled.Shuffle, ca.label, tint = tint, modifier = modifier)
+        return
+    }
     val appBitmap = ca.icon?.let { drawable ->
         remember(drawable) {
             try { drawable.toBitmap(48, 48).asImageBitmap() } catch (_: Exception) { null }

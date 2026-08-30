@@ -27,9 +27,14 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,11 +45,19 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import com.android.systemui.axdynamicbar.model.IslandEvent
+import com.android.systemui.axdynamicbar.shared.IslandActions
+import com.android.systemui.axdynamicbar.ui.compose.CallExpanded
+import com.android.systemui.axdynamicbar.ui.compose.MediaCard
+import com.android.systemui.axdynamicbar.ui.compose.PrimaryCard
+import com.android.systemui.axdynamicbar.ui.compose.PromotedOngoingExpanded
+import com.android.systemui.axdynamicbar.ui.compose.SportsExpanded
+import com.android.systemui.common.shared.model.Icon
+import com.android.systemui.media.MediaSessionManager
 import com.android.systemui.res.R
 import com.android.systemui.statusbar.quickactions.island.alarm.ui.compose.AlarmPopup
 import com.android.systemui.statusbar.quickactions.island.flashlight.ui.compose.FlashlightPopup
 import com.android.systemui.statusbar.quickactions.island.livescore.ui.compose.LiveScorePopup
-import com.android.systemui.statusbar.quickactions.island.media.ui.compose.MediaControlPopup
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupChipModel
 import com.android.systemui.statusbar.quickactions.island.ui.model.PopupContentModel
 import com.android.systemui.statusbar.quickactions.island.screenrecord.ui.compose.ScreenRecordPopup
@@ -58,6 +71,7 @@ import com.android.systemui.statusbar.quickactions.island.stopwatch.ui.compose.S
 fun StatusBarPopup(
     viewModel: PopupChipModel.Shown,
     isVisible: Boolean,
+    islandActions: IslandActions,
 ) {
     val density = Density(LocalContext.current)
     Popup(
@@ -76,6 +90,17 @@ fun StatusBarPopup(
         onDismissRequest = { viewModel.hidePopup() },
     ) {
         val popupView = LocalView.current
+        var mediaColor by remember { mutableIntStateOf(0) }
+        DisposableEffect(viewModel.popupContent) {
+            val listener =
+                object : MediaSessionManager.MediaDataListener {
+                    override fun onMediaColorsChanged(color: Int) {
+                        mediaColor = color
+                    }
+                }
+            MediaSessionManager.get().addListener(listener)
+            onDispose { MediaSessionManager.get().removeListener(listener) }
+        }
         DisposableEffect(popupView) {
             val listener = ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
                 if (!hasFocus) {
@@ -107,12 +132,84 @@ fun StatusBarPopup(
         ) {
             Box(modifier = Modifier.padding(8.dp).wrapContentSize()) {
                 when (val popupContent = viewModel.popupContent) {
-                    is PopupContentModel.Media -> MediaControlPopup(model = popupContent.model)
+                    is PopupContentModel.Media -> {
+                        val model = popupContent.model
+                        val eventMedia =
+                            remember(model, mediaColor) {
+                                val albumArtDrawable =
+                                    (model.artworkIcon as? Icon.Loaded)?.drawable
+                                val appIconDrawable = (model.appIcon as? Icon.Loaded)?.drawable
+                                IslandEvent.Media(
+                                    track = model.songName?.toString().orEmpty(),
+                                    artist = model.artistName?.toString().orEmpty(),
+                                    isPlaying = model.isPlaying,
+                                    albumArt = albumArtDrawable,
+                                    progress =
+                                        if (model.durationMs > 0L) {
+                                            model.positionMs.toFloat() / model.durationMs
+                                        } else {
+                                            0f
+                                        },
+                                    duration = model.durationMs,
+                                    position = model.positionMs,
+                                    packageName = model.packageName.orEmpty(),
+                                    appIcon = appIconDrawable,
+                                    mediaColor = mediaColor,
+                                )
+                            }
+                        Box(modifier = Modifier.widthIn(min = 320.dp, max = 400.dp)) {
+                            MediaCard(event = eventMedia, interactor = islandActions)
+                        }
+                    }
                     is PopupContentModel.ScreenRecord -> ScreenRecordPopup(model = popupContent.model)
-                    is PopupContentModel.LiveScore -> LiveScorePopup(model = popupContent.model)
+                    is PopupContentModel.LiveScore -> {
+                        val model = popupContent.model
+                        val eventSports =
+                            remember(model) {
+                                val titleParts =
+                                    model.title?.split(
+                                        Regex("\\s*vs\\s*|\\s*-\\s*|\\s*@\\s*"),
+                                        limit = 2,
+                                    ) ?: emptyList()
+                                val scoreParts =
+                                    model.score.split(Regex("\\s*-\\s*|\\s*:\\s*"), limit = 2)
+                                IslandEvent.Sports(
+                                    team1Name = titleParts.getOrNull(0) ?: model.title ?: model.appName,
+                                    team2Name = titleParts.getOrNull(1) ?: "",
+                                    score1 = scoreParts.getOrNull(0) ?: model.score,
+                                    score2 = scoreParts.getOrNull(1) ?: "",
+                                    team1Icon = (model.icon as? Icon.Loaded)?.drawable,
+                                    statusDetail = model.subtitle.orEmpty(),
+                                    league = model.appName,
+                                    key = model.key,
+                                )
+                            }
+                        Box(modifier = Modifier.widthIn(min = 280.dp, max = 340.dp)) {
+                            PrimaryCard {
+                                SportsExpanded(event = eventSports, interactor = islandActions)
+                            }
+                        }
+                    }
                     is PopupContentModel.Flashlight -> FlashlightPopup(model = popupContent.model)
                     is PopupContentModel.Stopwatch -> StopwatchPopup(model = popupContent.model)
                     is PopupContentModel.Alarm -> AlarmPopup(model = popupContent.model)
+                    is PopupContentModel.PromotedOngoing -> {
+                        Box(modifier = Modifier.widthIn(min = 320.dp, max = 400.dp)) {
+                            PrimaryCard {
+                                PromotedOngoingExpanded(
+                                    event = popupContent.event,
+                                    interactor = islandActions,
+                                )
+                            }
+                        }
+                    }
+                    is PopupContentModel.OngoingCall -> {
+                        Box(modifier = Modifier.widthIn(min = 320.dp, max = 400.dp)) {
+                            PrimaryCard {
+                                CallExpanded(event = popupContent.event, interactor = islandActions)
+                            }
+                        }
+                    }
                     PopupContentModel.None -> Unit
                 }
             }

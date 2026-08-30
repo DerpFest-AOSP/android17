@@ -23,6 +23,10 @@ import com.android.systemui.statusbar.policy.KeyguardStateController
 import com.android.systemui.statusbar.policy.ZenModeController
 import com.android.systemui.util.settings.GlobalSettings
 import java.util.concurrent.ConcurrentHashMap
+import com.android.systemui.statusbar.quickactions.island.media.domain.interactor.MediaControlChipInteractor
+import com.android.systemui.statusbar.quickactions.island.media.shared.model.MediaControlChipModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -53,7 +57,20 @@ constructor(
     private val zenModeController: ZenModeController,
     private val globalSettings: GlobalSettings,
     private val audioManager: AudioManager,
+    private val mediaControlChipInteractor: MediaControlChipInteractor,
 ) : IslandActions {
+    override val isLyricsEnabled: StateFlow<Boolean> =
+        combine(
+            settings.isEnabled,
+            settings.disabledEventTypes
+        ) { isEnabled, disabledEvents ->
+            isEnabled && "lyrics" !in disabledEvents
+        }
+        .stateIn(applicationScope, SharingStarted.Eagerly, false)
+
+    override val mediaControlChipModel: StateFlow<MediaControlChipModel?> =
+        mediaControlChipInteractor.mediaControlChipModel
+
     private val _uiState = MutableStateFlow(IslandUiState())
     val uiState: StateFlow<IslandUiState> = _uiState.asStateFlow()
 
@@ -114,8 +131,6 @@ constructor(
         repository.system.onRingerChanged = { scheduleAutoDismiss(it) }
         repository.system.onClipboardCopied = { scheduleAutoDismiss(it) }
 
-        repository.privacy.onCamStarted = { scheduleAutoDismiss(it, 10_000L) }
-
         repository.notification.activeMediaPackageProvider = { repository.media.activeMediaPackage }
         repository.notification.onAlarmEvent = {
             scheduleAutoDismiss(it, if (it.isRinging) 30_000L else 5_000L)
@@ -135,6 +150,7 @@ constructor(
 
         applicationScope.launch {
             repository.notification.notificationFlow.collect { notification ->
+                if (!settings.isEnabled.value) return@collect
                 repository.notification.coalesceNotification(notification)
                 showNotificationAlert(notification)
             }
@@ -155,8 +171,9 @@ constructor(
                 },
                 _isPanelExpanded,
                 qsExpansion.map { it > 0f },
-            ) { mediaActive, panelExpanded, qsOpen ->
-                mediaActive && !panelExpanded && !qsOpen
+                isDozing,
+            ) { mediaActive, panelExpanded, qsOpen, dozing ->
+                mediaActive && !panelExpanded && !qsOpen && !dozing
             }.distinctUntilChanged().collect { needsPolling ->
                 if (needsPolling) repository.media.startProgressPolling()
                 else repository.media.stopProgressPolling()
@@ -208,6 +225,10 @@ constructor(
 
         indicationController.addIndicationListener { type, text ->
             val indicationType = mapIndicationType(type) ?: return@addIndicationListener
+            if (indicationType == IslandEvent.KeyguardIndication.IndicationType.BIOMETRIC &&
+                !settings.isKeyguardBiometricUnlockEventsActive()) {
+                return@addIndicationListener
+            }
             if (text != null && text.isNotEmpty()) {
                 val event = IslandEvent.KeyguardIndication(
                     text = text.toString(),
@@ -221,8 +242,15 @@ constructor(
         }
 
         applicationScope.launch {
-            settings.isEnabled.collect { enabled ->
-                if (enabled) repository.startListening()
+            combine(
+                settings.isEnabled,
+                settings.isLockscreenMediaEnabled,
+                settings.isLockscreenMediaLyricsEnabled,
+                settings.isDynamicIslandOngoingActive,
+            ) { enabled, lockscreenMedia, lockscreenLyrics, ongoingActive ->
+                enabled || lockscreenMedia || lockscreenLyrics || ongoingActive
+            }.collect { active ->
+                if (active) repository.startListening()
                 else {
                     repository.stopListening()
                     autoDismissJobs.values.forEach { it.cancel() }
@@ -251,21 +279,73 @@ constructor(
                 repository.events,
                 settings.disabledEventTypes,
                 _isOnKeyguard,
-            ) { raw, _, kg ->
-                raw.filter { settings.isEventEnabled(it) } to kg
-            }.collect { (rawEvents, onKeyguard) ->
-                if (!settings.isEnabled.value) return@collect
+                settings.isKeyguardEnabled,
+                settings.isLockscreenMediaEnabled,
+                settings.isEnabled,
+                settings.isLockscreenMediaLyricsEnabled,
+                settings.isDynamicIslandOngoingActive,
+                settings.isDynamicIslandCallsActive,
+            ) { args ->
+                @Suppress("UNCHECKED_CAST")
+                val raw = args[0] as List<IslandEvent>
+                val kg = args[2] as Boolean
+                val kgEnabled = args[3] as Boolean
+                val lockscreenMediaEnabled = args[4] as Boolean
+                val isMainEnabled = args[5] as Boolean
+                val lockscreenMediaLyricsEnabled = args[6] as Boolean
+                val isDynamicIslandOngoingActive = args[7] as Boolean
+                val isDynamicIslandCallsActive = args[8] as Boolean
+
+                val filteredRaw = raw.filter { event ->
+                    if (event is IslandEvent.Media) {
+                        settings.isEventEnabled(event) || (kg && (lockscreenMediaEnabled || lockscreenMediaLyricsEnabled))
+                    } else if (event is IslandEvent.PromotedOngoing) {
+                        settings.isEventEnabled(event) || isDynamicIslandOngoingActive
+                    } else if (event is IslandEvent.Call) {
+                        settings.isEventEnabled(event) || isDynamicIslandCallsActive
+                    } else {
+                        settings.isEventEnabled(event)
+                    }
+                }
+                FilteredEventsResult(
+                    rawEvents = filteredRaw,
+                    onKeyguard = kg,
+                    kgEnabled = kgEnabled,
+                    lockscreenMediaEnabled = lockscreenMediaEnabled,
+                    isMainEnabled = isMainEnabled,
+                    lockscreenMediaLyricsEnabled = lockscreenMediaLyricsEnabled,
+                    isDynamicIslandOngoingActive = isDynamicIslandOngoingActive,
+                    isDynamicIslandCallsActive = isDynamicIslandCallsActive,
+                )
+            }.collect { result ->
+                val rawEvents = result.rawEvents
+                val onKeyguard = result.onKeyguard
+                val kgEnabled = result.kgEnabled
+                val lockscreenMediaEnabled = result.lockscreenMediaEnabled
+                val isMainEnabled = result.isMainEnabled
+                val lockscreenMediaLyricsEnabled = result.lockscreenMediaLyricsEnabled
+                val isDynamicIslandOngoingActive = result.isDynamicIslandOngoingActive
+                val isDynamicIslandCallsActive = result.isDynamicIslandCallsActive
+
+                if (!isMainEnabled && !lockscreenMediaEnabled && !lockscreenMediaLyricsEnabled && !isDynamicIslandOngoingActive && !isDynamicIslandCallsActive) return@collect
+
                 dismissedEventIds.removeAll { id -> rawEvents.none { it.id == id } }
                 val events = rawEvents.filter { e ->
                     e.id !in dismissedEventIds &&
-                        
-                        !(onKeyguard && e is IslandEvent.Notification) &&
-                        
-                        !(onKeyguard && e is IslandEvent.Charging) &&
-                        
-                        !(onKeyguard && e is IslandEvent.AppSwitch) &&
-                        
-                        !(!onKeyguard && e is IslandEvent.KeyguardIndication)
+                        if (onKeyguard) {
+                            if (e is IslandEvent.Media) {
+                                lockscreenMediaEnabled || lockscreenMediaLyricsEnabled
+                            } else {
+                                isMainEnabled && kgEnabled &&
+                                    e !is IslandEvent.Notification &&
+                                    (e !is IslandEvent.Charging || settings.keyguardBatteryChipMode.value > 0) &&
+                                    e !is IslandEvent.AppSwitch
+                            }
+                        } else {
+                            (isMainEnabled && e !is IslandEvent.KeyguardIndication) ||
+                                (e is IslandEvent.PromotedOngoing && isDynamicIslandOngoingActive) ||
+                                (e is IslandEvent.Call && isDynamicIslandCallsActive)
+                        }
                 }
 
                 val current = _uiState.value
@@ -290,10 +370,12 @@ constructor(
                             }
                         }
 
+                val isLockscreenMediaActive = onKeyguard && (lockscreenMediaEnabled || lockscreenMediaLyricsEnabled) && events.any { it is IslandEvent.Media }
                 val newState =
                     when {
                         events.isEmpty() -> IslandState.HIDDEN
-                        panelBlocking || statusBlocking -> IslandState.HIDDEN
+                        panelBlocking -> IslandState.HIDDEN
+                        statusBlocking && !isLockscreenMediaActive -> IslandState.HIDDEN
                         else -> IslandState.CHIP
                     }
 
@@ -380,11 +462,10 @@ constructor(
             )
 
         when (event) {
-            is IslandEvent.ScreenRecording -> repository.screenRecord.stopListening()
-            is IslandEvent.MicCamActive -> {}
             is IslandEvent.AudioRecording -> repository.notification.clearAudioRecording()
-            is IslandEvent.Casting -> repository.connectivity.clearCasting()
-            is IslandEvent.Sports -> repository.notification.clearSportsEvent(event.key)
+            is IslandEvent.Sports -> {
+                repository.notification.clearSportsEvent(event.key)
+            }
             is IslandEvent.NowPlaying -> {}
             is IslandEvent.PromotedOngoing ->
                 repository.notification.clearPromotedOngoing(event.sbn.key)
@@ -393,6 +474,7 @@ constructor(
             is IslandEvent.Hotspot -> repository.connectivity.clearHotspot()
             is IslandEvent.Charging -> repository.system.clearCharging()
             is IslandEvent.Alarm -> repository.notification.clearAlarm()
+            is IslandEvent.Call -> repository.notification.clearCall(event.sbn.key)
             is IslandEvent.Timer -> repository.notification.clearTimer()
             is IslandEvent.Stopwatch -> repository.notification.clearStopwatch()
             is IslandEvent.RingerMode -> repository.system.clearRinger()
@@ -406,6 +488,7 @@ constructor(
             }
             is IslandEvent.BiometricUnlock -> repository.biometric.clear()
             is IslandEvent.KeyguardIndication -> repository.clearIndicationEvent(event.indicationType)
+            is IslandEvent.AospChip -> {}
         }
     }
 
@@ -496,8 +579,6 @@ constructor(
         }
     }
 
-    override fun stopScreenRecording() = repository.screenRecord.stopRecording()
-
     override fun togglePlayPause() = repository.media.togglePlayPause()
 
     override fun skipNext() = repository.media.skipNext()
@@ -537,6 +618,8 @@ constructor(
 
     override fun switchToApp(taskId: Int) = repository.appTracking.switchToApp(taskId)
 
+    override fun killApp(taskId: Int) = repository.appTracking.killApp(taskId)
+
     fun onPanelExpandedChanged(expanded: Boolean) {
         panelBlocking = expanded
         _isPanelExpanded.value = expanded
@@ -546,7 +629,8 @@ constructor(
 
     private fun updateChipVisibility() {
         val current = _uiState.value
-        val shouldHide = panelBlocking || statusBlocking
+        val isLockscreenMediaActive = _isOnKeyguard.value && (settings.isLockscreenMediaEnabled.value || settings.isLockscreenMediaLyricsEnabled.value) && current.events.any { it is IslandEvent.Media }
+        val shouldHide = panelBlocking || (statusBlocking && !isLockscreenMediaActive)
         if (shouldHide && current.islandState == IslandState.CHIP) {
             _uiState.value = current.copy(islandState = IslandState.HIDDEN)
         } else if (!shouldHide && current.events.isNotEmpty() && current.islandState == IslandState.HIDDEN && !current.manuallyHidden) {
@@ -599,3 +683,14 @@ constructor(
             else -> null
         }
 }
+
+private data class FilteredEventsResult(
+    val rawEvents: List<IslandEvent>,
+    val onKeyguard: Boolean,
+    val kgEnabled: Boolean,
+    val lockscreenMediaEnabled: Boolean,
+    val isMainEnabled: Boolean,
+    val lockscreenMediaLyricsEnabled: Boolean,
+    val isDynamicIslandOngoingActive: Boolean,
+    val isDynamicIslandCallsActive: Boolean,
+)

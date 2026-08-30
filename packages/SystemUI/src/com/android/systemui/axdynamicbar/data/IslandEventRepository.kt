@@ -1,13 +1,12 @@
 package com.android.systemui.axdynamicbar.data
 
 import android.util.Log
+import com.android.systemui.axdynamicbar.data.source.AospChipIslandManager
 import com.android.systemui.axdynamicbar.data.source.AppTrackingIslandManager
 import com.android.systemui.axdynamicbar.data.source.BiometricIslandManager
 import com.android.systemui.axdynamicbar.data.source.ConnectivityIslandManager
 import com.android.systemui.axdynamicbar.data.source.MediaIslandManager
 import com.android.systemui.axdynamicbar.data.source.NotificationIslandManager
-import com.android.systemui.axdynamicbar.data.source.PrivacyIslandManager
-import com.android.systemui.axdynamicbar.data.source.ScreenRecordIslandManager
 import com.android.systemui.axdynamicbar.data.source.SystemIslandManager
 import com.android.systemui.axdynamicbar.data.source.TorchIslandManager
 import com.android.systemui.axdynamicbar.domain.AxDynamicBarSettings
@@ -25,8 +24,6 @@ import kotlinx.coroutines.flow.map
 class IslandEventRepository
 @Inject
 constructor(
-    val screenRecord: ScreenRecordIslandManager,
-    val privacy: PrivacyIslandManager,
     val media: MediaIslandManager,
     val connectivity: ConnectivityIslandManager,
     val system: SystemIslandManager,
@@ -34,6 +31,7 @@ constructor(
     val appTracking: AppTrackingIslandManager,
     val torch: TorchIslandManager,
     val biometric: BiometricIslandManager,
+    val aospChip: AospChipIslandManager,
     private val settings: AxDynamicBarSettings,
 ) {
     companion object {
@@ -67,32 +65,40 @@ constructor(
         if (listenersStarted) return
         listenersStarted = true
         Log.d(TAG, "Starting event listeners")
-        notification.onScreenRecordNotificationTime = { timeMs ->
-            screenRecord.updateNotificationStartTime(timeMs)
-        }
         syncDisabledTypes()
-        if (isTypeEnabled("screen_recording")) screenRecord.startListening()
-        if (isTypeEnabled("privacy")) privacy.startListening()
-        if (isTypeEnabled("media")) media.startListening()
-        if (isTypeEnabled("bluetooth")) connectivity.startBluetooth()
-        if (isTypeEnabled("hotspot")) connectivity.startHotspot()
-        if (isTypeEnabled("casting")) connectivity.startCast()
-        if (isTypeEnabled("vpn")) connectivity.startVpn()
-        if (isTypeEnabled("charging")) system.startCharging()
-        if (isTypeEnabled("ringer")) system.startRinger()
-        if (isTypeEnabled("clipboard")) system.startClipboard()
-        notification.startListening()
-        if (isTypeEnabled("app_switch")) appTracking.startListening()
-        if (isTypeEnabled("torch")) torch.startListening()
-        if (isTypeEnabled("biometric_unlock")) biometric.startListening()
+
+        val isMainEnabled = settings.isEnabled.value
+        val isLockscreenMediaEnabled = settings.isLockscreenMediaEnabled.value
+        val isLockscreenMediaLyricsEnabled = settings.isLockscreenMediaLyricsEnabled.value
+        val isDynamicIslandOngoingActive = settings.isDynamicIslandOngoingActive.value
+        val isDynamicIslandCallsActive = settings.isDynamicIslandCallsActive.value
+
+        if (isMainEnabled) {
+            if (isTypeEnabled("media") || isLockscreenMediaEnabled || isLockscreenMediaLyricsEnabled) media.startListening()
+            if (isTypeEnabled("bluetooth")) connectivity.startBluetooth()
+            if (isTypeEnabled("hotspot")) connectivity.startHotspot()
+            if (isTypeEnabled("vpn")) connectivity.startVpn()
+            if (isTypeEnabled("charging")) system.startCharging()
+            if (isTypeEnabled("ringer")) system.startRinger()
+            if (isTypeEnabled("clipboard")) system.startClipboard()
+            notification.startListening()
+            if (isTypeEnabled("app_switch")) appTracking.startListening()
+            if (isTypeEnabled("torch")) torch.startListening()
+            if (isTypeEnabled("biometric_unlock")) biometric.startListening()
+        } else {
+            if (isLockscreenMediaEnabled || isLockscreenMediaLyricsEnabled) {
+                media.startListening()
+            }
+            if (isDynamicIslandOngoingActive || isDynamicIslandCallsActive) {
+                notification.startListening()
+            }
+        }
     }
 
     fun stopListening() {
         if (!listenersStarted) return
         listenersStarted = false
         Log.d(TAG, "Stopping event listeners")
-        screenRecord.stopListening()
-        privacy.stopListening()
         media.stopListening()
         connectivity.stopListening()
         system.stopListening()
@@ -106,35 +112,56 @@ constructor(
         if (!listenersStarted) return
         syncDisabledTypes()
 
-        if (isTypeEnabled("screen_recording")) screenRecord.startListening()
-        else screenRecord.stopListening()
-        if (isTypeEnabled("privacy")) privacy.startListening()
-        else privacy.stopListening()
-        if (isTypeEnabled("media")) media.startListening()
-        else media.stopListening()
+        val isMainEnabled = settings.isEnabled.value
+        val isLockscreenMediaEnabled = settings.isLockscreenMediaEnabled.value
+        val isLockscreenMediaLyricsEnabled = settings.isLockscreenMediaLyricsEnabled.value
+        val isDynamicIslandOngoingActive = settings.isDynamicIslandOngoingActive.value
+        val isDynamicIslandCallsActive = settings.isDynamicIslandCallsActive.value
 
-        if (isTypeEnabled("bluetooth")) connectivity.startBluetooth()
-        else connectivity.stopBluetooth()
-        if (isTypeEnabled("hotspot")) connectivity.startHotspot()
-        else connectivity.stopHotspot()
-        if (isTypeEnabled("casting")) connectivity.startCast()
-        else connectivity.stopCast()
-        if (isTypeEnabled("vpn")) connectivity.startVpn()
-        else connectivity.stopVpn()
+        if (isMainEnabled) {
+            if (isTypeEnabled("media") || isLockscreenMediaEnabled || isLockscreenMediaLyricsEnabled) media.startListening()
+            else media.stopListening()
 
-        if (isTypeEnabled("charging")) system.startCharging()
-        else system.stopCharging()
-        if (isTypeEnabled("ringer")) system.startRinger()
-        else system.stopRinger()
-        if (isTypeEnabled("clipboard")) system.startClipboard()
-        else system.stopClipboard()
+            if (isTypeEnabled("bluetooth")) connectivity.startBluetooth()
+            else connectivity.stopBluetooth()
+            if (isTypeEnabled("hotspot")) connectivity.startHotspot()
+            else connectivity.stopHotspot()
+            if (isTypeEnabled("vpn")) connectivity.startVpn()
+            else connectivity.stopVpn()
 
-        if (isTypeEnabled("app_switch")) appTracking.startListening()
-        else appTracking.stopListening()
-        if (isTypeEnabled("torch")) torch.startListening()
-        else torch.stopListening()
-        if (isTypeEnabled("biometric_unlock")) biometric.startListening()
-        else biometric.stopListening()
+            if (isTypeEnabled("charging")) system.startCharging()
+            else system.stopCharging()
+            if (isTypeEnabled("ringer")) system.startRinger()
+            else system.stopRinger()
+            if (isTypeEnabled("clipboard")) system.startClipboard()
+            else system.stopClipboard()
+
+            if (isTypeEnabled("app_switch")) appTracking.startListening()
+            else appTracking.stopListening()
+            if (isTypeEnabled("torch")) torch.startListening()
+            else torch.stopListening()
+            if (isTypeEnabled("biometric_unlock")) biometric.startListening()
+            else biometric.stopListening()
+
+        } else {
+            connectivity.stopListening()
+            system.stopListening()
+            torch.stopListening()
+            appTracking.stopListening()
+            biometric.stopListening()
+
+            if (isLockscreenMediaEnabled || isLockscreenMediaLyricsEnabled) {
+                media.startListening()
+            } else {
+                media.stopListening()
+            }
+
+            if (isDynamicIslandOngoingActive || isDynamicIslandCallsActive) {
+                notification.startListening()
+            } else {
+                notification.stopListening()
+            }
+        }
     }
 
     private fun syncDisabledTypes() {
@@ -143,57 +170,53 @@ constructor(
 
     private fun buildEventsFlow(): Flow<List<IslandEvent>> {
 
-        val micCamFiltered =
-            combine(privacy.micCamEvent, notification.audioRecordingEvent) { micCam, audioRec ->
-                if (audioRec != null && micCam != null && micCam.isMic && !micCam.isCam) null
-                else micCam
-            }
-
-        val castingFiltered =
-            combine(
-                connectivity.castingEvent,
-                screenRecord.screenRecordEvent,
-            ) { cast, rec ->
-                if (rec != null) null else cast
-            }
-
-        val highGroupA =
-            combine(
-                screenRecord.screenRecordEvent,
-                micCamFiltered,
-                castingFiltered,
-            ) { rec, micCam, cast ->
-                listOfNotNull(
-                    rec?.takeIf { isTypeEnabled("screen_recording") },
-                    micCam?.takeIf { isTypeEnabled("privacy") },
-                    cast?.takeIf { isTypeEnabled("casting") },
-                )
-            }
+        val sportsGroup = notification.sportsEvents.map { sports ->
+            if (!isTypeEnabled("sports")) emptyList() else sports
+        }
         val promotedGroup = combine(
             notification.promotedOngoingEvents,
-            notification.sportsEvents,
-        ) { promoted, sports ->
-            (if (isTypeEnabled("promoted_ongoing")) promoted else emptyList()) +
-            (if (isTypeEnabled("sports")) sports else emptyList())
+            sportsGroup,
+            settings.isDynamicIslandOngoingActive,
+        ) { promoted, sports, isDynamicIslandOngoingActive ->
+            (if (isTypeEnabled("promoted_ongoing") || isDynamicIslandOngoingActive) promoted else emptyList()) + sports
         }
-        val highGroupB =
-            combine(highGroupA, torch.torchEvent) { events, t ->
-                events + listOfNotNull(t?.takeIf { isTypeEnabled("torch") })
+        val highGroup = combine(
+            notification.callEvents,
+            torch.torchEvent,
+            biometric.biometricEvent,
+            settings.isDynamicIslandCallsActive,
+        ) { call, t, bio, isDynamicIslandCallsActive ->
+                (if (isTypeEnabled("call") || isDynamicIslandCallsActive) call else emptyList()) +
+                listOfNotNull(
+                    t?.takeIf { isTypeEnabled("torch") },
+                    bio?.takeIf { isTypeEnabled("biometric_unlock") },
+                )
             }
-        val highGroup =
-            combine(highGroupB, biometric.biometricEvent) { events, bio ->
-                events + listOfNotNull(bio?.takeIf { isTypeEnabled("biometric_unlock") })
-            }
+
+        val isLockscreenMediaActiveFlow = combine(
+            settings.isLockscreenMediaEnabled,
+            settings.isLockscreenMediaLyricsEnabled
+        ) { lockscreenMedia, lockscreenLyrics ->
+            lockscreenMedia || lockscreenLyrics
+        }
+
+        val activeMediaEventFlow = combine(
+            media.mediaEvent,
+            isLockscreenMediaActiveFlow
+        ) { m, lockscreenMediaActive ->
+            m?.takeIf { isTypeEnabled("media") || lockscreenMediaActive }
+        }
+
         val midGroup =
             combine(
-                media.mediaEvent,
+                activeMediaEventFlow,
                 connectivity.bluetoothEvent,
                 connectivity.hotspotEvent,
                 system.chargingEvent,
                 notification.alarmEvent,
             ) { m, bt, hotspot, charging, alarm ->
                 listOfNotNull(
-                    m?.takeIf { isTypeEnabled("media") },
+                    m,
                     bt?.takeIf { isTypeEnabled("bluetooth") },
                     hotspot?.takeIf { isTypeEnabled("hotspot") },
                     charging?.takeIf { isTypeEnabled("charging") },
@@ -216,6 +239,7 @@ constructor(
                     clipboard?.takeIf { isTypeEnabled("clipboard") },
                 )
             }
+
         val lowGroup =
             combine(
                 lowGroupA,
@@ -236,8 +260,9 @@ constructor(
             transientGroup,
             promotedGroup,
             indicationGroup,
-        ) { high, transient, promoted, indication ->
-            high + transient + promoted + indication
+            aospChip.aospChipEvents,
+        ) { high, transient, promoted, indication, aosp ->
+            high + transient + promoted + indication + aosp
         }
 
         return allEvents.map { events ->
@@ -249,4 +274,3 @@ constructor(
         }
     }
 }
-

@@ -84,7 +84,7 @@ constructor(
     private var hideOverlayJob: Job? = null
 
     fun init() {
-        viewModel.interactor.onCollapseRequested = { viewModel.collapsePanel() }
+        viewModel.interactor.onCollapseRequested = { viewModel.statusBarExpansion.collapse() }
         viewModel.interactor.onFocusableRequested = { focusable -> setOverlayFocusable(focusable) }
 
         val needsOverlay =
@@ -142,10 +142,13 @@ constructor(
         val statusBarTop = windowMetrics.windowInsets
             .getInsets(WindowInsets.Type.statusBars())
             .top
+        val hasCutout = windowMetrics.windowInsets
+            .getInsets(WindowInsets.Type.displayCutout())
+            .top > 0
 
         val view =
             ComposeView(context).apply {
-                setContent { PlatformTheme { OverlayContent(viewModel, statusBarTop) } }
+                setContent { PlatformTheme { OverlayContent(viewModel, statusBarTop, hasCutout) } }
             }
 
         view.setViewTreeLifecycleOwner(lifecycleOwner)
@@ -234,18 +237,17 @@ constructor(
 }
 
 @Composable
-private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeightPx: Int) {
+private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeightPx: Int, hasCutout: Boolean) {
     val density = LocalDensity.current
     val isLargeScreen = Utilities.isLargeScreen(LocalContext.current)
-    
-    val topPad = if (isLargeScreen) {
-        with(density) { statusBarHeightPx.toDp() } + 4.dp
-    } else 0.dp
+
+    val largeScreenExtra = if (isLargeScreen) 4.dp else 0.dp
+    val topPad = if (hasCutout) largeScreenExtra
+        else with(density) { statusBarHeightPx.toDp() } + largeScreenExtra
     val chipState by viewModel.chipState.collectAsStateWithLifecycle()
     val isExpanded by viewModel.isExpanded.collectAsStateWithLifecycle()
     val uiState by viewModel.interactor.uiState.collectAsStateWithLifecycle()
     val isOnKeyguard by viewModel.isOnKeyguard.collectAsStateWithLifecycle()
-    val chipX by viewModel.chipCenterXFraction.collectAsStateWithLifecycle()
     val notifAlert = uiState.notificationAlert
     val compactNotifs by viewModel.interactor.settings.compactNotifications.collectAsStateWithLifecycle()
 
@@ -259,12 +261,19 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
     LaunchedEffect(isExpanded) {
         expandedVisible.targetState = isExpanded
     }
+
     LaunchedEffect(showNotif) {
         notifVisible.targetState = showNotif
     }
 
-    val originX = chipX
-    val origin = TransformOrigin(originX, 0f)
+    LaunchedEffect(chipState) {
+        val filtered = chipState?.allEvents?.filter { it !is IslandEvent.AospChip }
+        if (filtered.isNullOrEmpty() && isExpanded) {
+            viewModel.statusBarExpansion.collapse()
+        }
+    }
+
+    val origin = TransformOrigin(0.5f, 0f)
 
     AnimatedVisibility(
         visibleState = expandedVisible,
@@ -303,7 +312,7 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
                                     val dx = change.position.x - downPos.x
                                     val dy = change.position.y - downPos.y
                                     if (dx * dx + dy * dy <= slop * slop) {
-                                        viewModel.collapsePanel()
+                                        viewModel.statusBarExpansion.collapse()
                                     }
                                 }
                                 break
@@ -315,10 +324,12 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
             contentAlignment = Alignment.TopCenter,
         ) {
             chipState?.let { state ->
+                val filtered = state.allEvents.filter { it !is IslandEvent.AospChip }
+                if (filtered.isEmpty()) return@let
                 ExpandedIslandContent(
-                    events = state.allEvents,
+                    events = filtered,
                     interactor = viewModel.interactor,
-                    onCollapse = { viewModel.collapsePanel() },
+                    onCollapse = { viewModel.statusBarExpansion.collapse() },
                     pinnedEventId = state.event.id,
                     hapticsViewModelFactory = viewModel.interactor.sliderHapticsViewModelFactory,
                 )
@@ -326,19 +337,17 @@ private fun OverlayContent(viewModel: AxDynamicBarChipViewModel, statusBarHeight
         }
     }
 
-    val alertOrigin = TransformOrigin(0.5f, 0f)
-
     AnimatedVisibility(
         visibleState = notifVisible,
         enter = fadeIn(tween(300)) + scaleIn(
             animationSpec = tween(300),
             initialScale = 0.4f,
-            transformOrigin = alertOrigin,
+            transformOrigin = origin,
         ),
         exit = fadeOut(tween(250)) + scaleOut(
             animationSpec = tween(250),
             targetScale = 0.4f,
-            transformOrigin = alertOrigin,
+            transformOrigin = origin,
         ),
     ) {
         Box(
@@ -387,3 +396,4 @@ private class PanelLifecycleOwner : LifecycleOwner, SavedStateRegistryOwner,
         lifecycleRegistry.handleLifecycleEvent(event)
     }
 }
+

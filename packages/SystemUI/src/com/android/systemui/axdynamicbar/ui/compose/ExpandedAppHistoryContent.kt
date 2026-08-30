@@ -1,5 +1,6 @@
 package com.android.systemui.axdynamicbar.ui.compose
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,21 +10,28 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.android.systemui.axdynamicbar.shared.IslandActions
@@ -62,6 +70,9 @@ internal fun AppHistoryExpanded(event: IslandEvent.AppSwitch, interactor: Island
                             interactor.switchToApp(app.taskId)
                             interactor.collapseIsland()
                         },
+                        onKill = {
+                            interactor.killApp(app.taskId)
+                        },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -76,41 +87,75 @@ internal fun AppHistoryExpanded(event: IslandEvent.AppSwitch, interactor: Island
 private fun AppGridItem(
     app: IslandEvent.RecentApp,
     onClick: () -> Unit,
+    onKill: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier =
-            modifier
-                .clip(ShapeLg)
-                .clickable(onClick = onClick)
-                .background(BlueAccent.copy(alpha = AlphaFaint), ShapeLg),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(SpaceMd),
-    ) {
-        Spacer(Modifier.size(SpaceMd))
-        app.appIcon?.let { icon ->
-            Image(
-                bitmap = icon.toScaledBitmap(48.dp),
-                contentDescription = app.appName,
-                modifier = Modifier.size(48.dp).clip(ShapeIconLarge),
-                contentScale = ContentScale.Crop,
-            )
-        }
-            ?: Box(
-                modifier = Modifier.size(48.dp).clip(ShapeIconLarge).background(CardBg),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Filled.Apps, null, tint = SubtleGray, modifier = Modifier.size(24.dp))
+    Box(modifier = modifier) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(ShapeLg)
+                    .clickable(onClick = onClick)
+                    .background(BlueAccent.copy(alpha = AlphaFaint), ShapeLg),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(SpaceMd),
+        ) {
+            Spacer(Modifier.size(SpaceMd))
+            app.appIcon?.let { icon ->
+                Image(
+                    bitmap = icon.toScaledBitmap(48.dp),
+                    contentDescription = app.appName,
+                    modifier = Modifier.size(48.dp).clip(ShapeIconLarge),
+                    contentScale = ContentScale.Crop,
+                )
             }
+                ?: Box(
+                    modifier = Modifier.size(48.dp).clip(ShapeIconLarge).background(CardBg),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.Apps, null, tint = SubtleGray, modifier = Modifier.size(24.dp))
+                }
 
-        Text(
-            app.appName,
-            color = SubtleGray,
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Spacer(Modifier.size(SpaceSm))
+            Text(
+                app.appName,
+                color = SubtleGray,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+                minLines = 2,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = SpaceXs),
+            )
+            Spacer(Modifier.size(SpaceXs))
+        }
+
+        Surface(
+            onClick = onKill,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .offset(x = 4.dp, y = (-4).dp)
+                .size(22.dp),
+            shape = CircleShape,
+            color = RedAccent,
+            contentColor = Color.White,
+            border = BorderStroke(1.5.dp, Color.White.copy(alpha = 0.9f)),
+            shadowElevation = 3.dp,
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.ax_dynamic_bar_kill_app),
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp),
+                )
+            }
+        }
     }
 }
 
@@ -137,4 +182,3 @@ internal fun RowScope.CompactAppSwitchRow(event: IslandEvent.AppSwitch) {
         Text(stringResource(R.string.ax_dynamic_bar_count_running, event.recentApps.size), color = SubtleGray, style = MaterialTheme.typography.labelSmall)
     }
 }
-
