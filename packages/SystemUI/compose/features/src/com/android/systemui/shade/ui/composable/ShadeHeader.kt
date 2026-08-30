@@ -78,6 +78,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.DeviceFontFamilyName
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
@@ -804,6 +805,7 @@ private fun CarrierTextNoSubscriptionId(viewModel: ShadeHeaderViewModel) {
             TextStyle(
                 fontFamily =
                     FontFamily(Font(DeviceFontFamilyName("variable-body-medium-emphasized"))),
+                fontWeight = FontWeight.Medium,
                 letterSpacing = 0.01.em,
             ),
         maxLines = 1,
