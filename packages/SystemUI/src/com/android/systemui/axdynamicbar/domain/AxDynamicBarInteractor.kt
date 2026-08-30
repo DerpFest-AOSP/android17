@@ -13,6 +13,7 @@ import com.android.systemui.axdynamicbar.shared.IslandActions
 import com.android.systemui.dagger.SysUISingleton
 import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
+import com.android.systemui.media.MediaSessionManager
 import com.android.systemui.plugins.ActivityStarter
 import com.android.systemui.plugins.statusbar.StatusBarStateController
 import com.android.systemui.shade.data.repository.ShadeRepository
@@ -50,6 +51,7 @@ constructor(
     private val statusBarStateController: StatusBarStateController,
     private val keyguardStateController: KeyguardStateController,
     override val sliderHapticsViewModelFactory: SliderHapticsViewModel.Factory,
+    override val mediaSessionManager: MediaSessionManager,
     private val activityStarter: ActivityStarter,
     private val indicationController: KeyguardIndicationController,
     private val shadeInteractor: ShadeInteractor,

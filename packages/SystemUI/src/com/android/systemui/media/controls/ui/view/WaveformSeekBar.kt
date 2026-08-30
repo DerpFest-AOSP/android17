@@ -28,7 +28,6 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.animation.LinearInterpolator
 import android.widget.SeekBar
-import com.android.systemui.media.MediaSessionManager
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -39,7 +38,7 @@ constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = android.R.attr.seekBarStyle,
-) : SeekBar(context, attrs, defStyleAttr), MediaSessionManager.MediaDataListener {
+) : SeekBar(context, attrs, defStyleAttr) {
 
     private val density = resources.displayMetrics.density
 
@@ -146,7 +145,6 @@ constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        MediaSessionManager.get().addListener(this)
 
         if (isPlaying && waveAnimator?.isRunning != true) {
             waveAnimator?.cancel()
@@ -166,12 +164,7 @@ constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        MediaSessionManager.get().removeListener(this)
         waveAnimator?.cancel()
-    }
-
-    override fun onMediaColorsChanged(color: Int) {
-        post { setWaveformColor(color) }
     }
 
     override fun onDraw(canvas: Canvas) {

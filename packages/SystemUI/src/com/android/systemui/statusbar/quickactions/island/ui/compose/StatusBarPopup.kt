@@ -112,15 +112,19 @@ fun StatusBarPopup(
     ) {
         val popupView = LocalView.current
         var mediaColor by remember { mutableIntStateOf(0) }
-        DisposableEffect(viewModel.popupContent) {
+        val mediaSessionManager = islandActions.mediaSessionManager
+        DisposableEffect(viewModel.popupContent, mediaSessionManager) {
+            if (mediaSessionManager == null) {
+                return@DisposableEffect onDispose {}
+            }
             val listener =
                 object : MediaSessionManager.MediaDataListener {
-                    override fun onMediaColorsChanged(color: Int) {
-                        mediaColor = color
+                    override fun onMediaColorsChanged(color: Int?) {
+                        mediaColor = color ?: 0
                     }
                 }
-            MediaSessionManager.get().addListener(listener)
-            onDispose { MediaSessionManager.get().removeListener(listener) }
+            mediaSessionManager.addListener(listener)
+            onDispose { mediaSessionManager.removeListener(listener) }
         }
 
         var popupBoundsInScreen by remember { mutableStateOf<Rect?>(null) }

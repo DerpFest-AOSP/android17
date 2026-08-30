@@ -3,6 +3,7 @@ package com.android.systemui.axdynamicbar.shared
 import android.net.Uri
 import com.android.systemui.axdynamicbar.model.IslandEvent
 import com.android.systemui.haptics.slider.compose.ui.SliderHapticsViewModel
+import com.android.systemui.media.MediaSessionManager
 
 val EVENT_TYPE_IDS: Map<Class<out IslandEvent>, String> =
     mapOf(
@@ -36,6 +37,8 @@ interface IslandActions {
     val onFocusableRequested: ((Boolean) -> Unit)?
         get() = null
     val sliderHapticsViewModelFactory: SliderHapticsViewModel.Factory?
+        get() = null
+    val mediaSessionManager: MediaSessionManager?
         get() = null
     fun collapseIsland()
     fun dismissEvent(event: IslandEvent)

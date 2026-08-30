@@ -34,6 +34,7 @@ constructor(
     @Main private val mainHandler: Handler,
     @Main private val mainExecutor: RepeatableExecutor,
     private val mediaOutputDialogManager: MediaOutputDialogManager,
+    private val mediaSessionManager: MediaSessionManager,
 ) {
     companion object {
         private const val TAG = "MediaIslandManager"
@@ -69,19 +70,19 @@ constructor(
         }
 
     private val mediaSessionListener = object : MediaSessionManager.MediaDataListener {
-        override fun onMediaColorsChanged(color: Int) {
-            sessionMediaColor = color
+        override fun onMediaColorsChanged(color: Int?) {
+            sessionMediaColor = color ?: 0
             val current = _mediaEvent.value ?: return
-            _mediaEvent.value = current.copy(mediaColor = color)
+            _mediaEvent.value = current.copy(mediaColor = color ?: 0)
         }
 
-        override fun onAlbumArtChanged(drawable: Drawable) {
+        override fun onAlbumArtChanged(drawable: Drawable?) {
             sessionAlbumArt = drawable
             val current = _mediaEvent.value ?: return
             _mediaEvent.value = current.copy(albumArt = drawable)
         }
 
-        override fun onAppIconChanged(drawable: Drawable) {
+        override fun onAppIconChanged(drawable: Drawable?) {
             sessionAppIcon = drawable
             val current = _mediaEvent.value ?: return
             _mediaEvent.value = current.copy(appIcon = drawable)
@@ -240,7 +241,7 @@ constructor(
         if (listening) return
         listening = true
         trackHelper.addMediaMetadataListener(trackHelperListener)
-        MediaSessionManager.get().addListener(mediaSessionListener)
+        mediaSessionManager.addListener(mediaSessionListener)
         updateFromHelper()
     }
 
@@ -249,7 +250,7 @@ constructor(
         listening = false
         stopProgressPolling()
         trackHelper.removeMediaMetadataListener(trackHelperListener)
-        MediaSessionManager.get().removeListener(mediaSessionListener)
+        mediaSessionManager.removeListener(mediaSessionListener)
         _mediaEvent.value = null
         activeMediaPackage = null
         sessionMediaColor = 0

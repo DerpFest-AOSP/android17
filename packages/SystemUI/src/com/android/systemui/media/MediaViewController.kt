@@ -53,7 +53,8 @@ enum class MediaScrimState {
 
 @SysUISingleton
 class MediaViewController @Inject constructor(
-    private val context: Context
+    private val context: Context,
+    private val mediaSessionManager: MediaSessionManager,
 ) : MediaSessionManager.MediaDataListener, ScrimUtils.ScrimEventListener {
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -179,11 +180,11 @@ class MediaViewController @Inject constructor(
         }
 
         if (featureEnabled && !listening) {
-            MediaSessionManager.get().addListener(this)
+            mediaSessionManager.addListener(this)
             ScrimUtils.get().addListener(this)
             listening = true
         } else if (!featureEnabled && listening) {
-            MediaSessionManager.get().removeListener(this)
+            mediaSessionManager.removeListener(this)
             ScrimUtils.get().removeListener(this)
             listening = false
         }
@@ -420,7 +421,7 @@ class MediaViewController @Inject constructor(
             .start()
     }
 
-    override fun onAlbumArtChanged(drawable: Drawable) {
+    override fun onAlbumArtChanged(drawable: Drawable?) {
         coroutineScope.launch {
             artworkDrawable = drawable
             onMediaStateChanged()
@@ -528,7 +529,7 @@ class MediaViewController @Inject constructor(
     fun onDetachedFromWindow() {
         context.contentResolver.unregisterContentObserver(settingsObserver)
         if (listening) {
-            MediaSessionManager.get().removeListener(this)
+            mediaSessionManager.removeListener(this)
             ScrimUtils.get().removeListener(this)
             listening = false
         }
