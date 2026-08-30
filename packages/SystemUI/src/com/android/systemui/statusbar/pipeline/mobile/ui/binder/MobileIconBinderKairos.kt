@@ -152,11 +152,29 @@ object MobileIconBinderKairos {
             val icon = lastCellularIconKairos ?: return@Runnable
             val themed = ThemeIconController
                 .getThemedSignalIcon(view.context, icon.level, icon.numberOfLevels)
-            if (themed != null) {
-                iconView.setImageDrawable(themed)
-            } else {
-                iconView.setImageDrawable(mobileDrawable)
-                mobileDrawable.level = icon.toSignalDrawableState()
+            when {
+                themed != null -> {
+                    iconView.setImageDrawable(themed)
+                    ThemeIconController.applyThemedSignalIconSizing(iconView)
+                }
+                ThemeIconController.hasThemedSignalIconForLevel(
+                    view.context,
+                    icon.level,
+                    icon.numberOfLevels,
+                ) -> {
+                    iconView.setImageDrawable(mobileDrawable)
+                    mobileDrawable.level = icon.toSignalDrawableState()
+                    ThemeIconController.applyThemedSignalIconSizing(iconView)
+                }
+                else -> {
+                    iconView.setImageDrawable(mobileDrawable)
+                    mobileDrawable.level = icon.toSignalDrawableState()
+                    if (ThemeIconController.hasSignalIconThemeEnabledInConfig(view.context)) {
+                        ThemeIconController.applyThemedSignalIconSizing(iconView)
+                    } else {
+                        ThemeIconController.resetSignalIconSizing(iconView)
+                    }
+                }
             }
             mobileGroupView.invalidate()
         }
@@ -248,11 +266,32 @@ object MobileIconBinderKairos {
                             newIcon.level,
                             newIcon.numberOfLevels
                         )
-                    if (themedDrawable != null) {
-                        iconView.setImageDrawable(themedDrawable)
-                    } else {
-                        iconView.setImageDrawable(mobileDrawable)
-                        mobileDrawable.level = packedSignalDrawableState
+                    when {
+                        themedDrawable != null -> {
+                            iconView.setImageDrawable(themedDrawable)
+                            ThemeIconController.applyThemedSignalIconSizing(iconView)
+                        }
+                        ThemeIconController.hasThemedSignalIconForLevel(
+                            view.context,
+                            newIcon.level,
+                            newIcon.numberOfLevels,
+                        ) -> {
+                            iconView.setImageDrawable(mobileDrawable)
+                            mobileDrawable.level = packedSignalDrawableState
+                            ThemeIconController.applyThemedSignalIconSizing(iconView)
+                        }
+                        else -> {
+                            iconView.setImageDrawable(mobileDrawable)
+                            mobileDrawable.level = packedSignalDrawableState
+                            if (ThemeIconController.hasSignalIconThemeEnabledInConfig(
+                                    view.context
+                                )
+                            ) {
+                                ThemeIconController.applyThemedSignalIconSizing(iconView)
+                            } else {
+                                ThemeIconController.resetSignalIconSizing(iconView)
+                            }
+                        }
                     }
                     viewModel.verboseLogger?.logBinderSignalIconResult(
                         parentView = view,
@@ -266,6 +305,7 @@ object MobileIconBinderKairos {
                         icon = newIcon,
                     )
                     IconViewBinder.bind(newIcon.icon, iconView)
+                    ThemeIconController.resetSignalIconSizing(iconView)
                 }
                 if (shouldRequestLayout) {
                     iconView.requestLayout()
