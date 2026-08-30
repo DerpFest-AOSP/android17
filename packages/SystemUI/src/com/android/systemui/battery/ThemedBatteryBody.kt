@@ -24,22 +24,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
@@ -67,7 +64,7 @@ fun ThemedBatteryBody(
         context.resources.getBoolean(R.bool.config_themedBatteryPillStyle)
     }
     val drawable = remember(context, themeVersion) { ThemedBatteryDrawable(context, 0) }
-    val tw = drawable.intrinsicWidth.toFloat().coerceAtLeast(1f)
+    val tw = drawable.getTightIntrinsicWidth().toFloat().coerceAtLeast(1f)
     val th = drawable.intrinsicHeight.toFloat().coerceAtLeast(1f)
     val modifier = Modifier.layoutId(BatteryMeasurePolicy.LayoutId.FrameThemed(tw, th))
 
@@ -81,6 +78,9 @@ fun ThemedBatteryBody(
             contentDescription = contentDescription,
         )
     } else {
+        val drawOffsetY = remember(context, themeVersion) {
+            context.resources.getDimension(R.dimen.config_batteryMeterThemedComposeDrawOffsetY)
+        }
         PathBatteryBody(
             drawable = drawable,
             levelProvider = levelProvider,
@@ -89,6 +89,7 @@ fun ThemedBatteryBody(
             attr = attr,
             modifier = modifier,
             contentDescription = contentDescription,
+            drawOffsetY = drawOffsetY,
         )
     }
 }
@@ -102,6 +103,7 @@ private fun PathBatteryBody(
     attr: BatteryGlyph?,
     modifier: Modifier,
     contentDescription: String,
+    drawOffsetY: Float = 0f,
 ) {
     val isCharging = attr is BatteryGlyph.Bolt
 
@@ -110,11 +112,11 @@ private fun PathBatteryBody(
         contentDescription = contentDescription,
     ) {
         val level = levelProvider()
-        val colors = when (val provided = colorsProvider()) {
-            is BatteryColors.DarkTheme -> BatteryColors.DarkTheme.Default
-            is BatteryColors.LightTheme -> BatteryColors.LightTheme.Default
-            else -> provided
-        }
+        // Use the full color profile as-is: includes AccentLightTheme/AccentDarkTheme when
+        // status bar accent tinting is enabled, plus Charging/Error/PowerSave variants.
+        // Do not collapse to Default — Accent* types extend DarkTheme/LightTheme and would
+        // incorrectly lose accent and state colors.
+        val colors = colorsProvider()
         val showLevel = showLevelProvider()
 
         drawable.setBatteryLevel(level ?: 0)
@@ -131,11 +133,13 @@ private fun PathBatteryBody(
         val left: Float
         val top: Float
         if (iw > 0 && ih > 0) {
-            val s = min(size.width / iw, size.height / ih)
-            dw = (iw * s).toInt()
-            dh = (ih * s).toInt()
-            left = (size.width - dw) / 2f
-            top = (size.height - dh) / 2f
+            // Fill height so the icon stays large when the layout slot is narrower than full
+            // intrinsic width (tight path bounds). Clip horizontally to remove overflow.
+            val s = size.height / ih
+            dw = (iw * s).toInt().coerceAtLeast(1)
+            dh = (ih * s).toInt().coerceAtLeast(1)
+            left = 0f
+            top = (size.height - dh) / 2f + drawOffsetY
         } else {
             dw = size.width.toInt()
             dh = size.height.toInt()
@@ -144,12 +148,20 @@ private fun PathBatteryBody(
         }
         drawable.setBounds(0, 0, dw, dh)
 
-        drawIntoCanvas { canvas ->
-            val native = canvas.nativeCanvas
-            val save = native.save()
-            native.translate(left, top)
-            drawable.draw(native)
-            native.restoreToCount(save)
+        clipRect(0f, 0f, size.width, size.height) {
+            drawIntoCanvas { canvas ->
+                val native = canvas.nativeCanvas
+                val save = native.save()
+                native.translate(left, top)
+                val vb = drawable.getPerimeterPathVirtualBounds()
+                val vw = drawable.getVirtualMeterWidth()
+                val vh = drawable.getVirtualMeterHeight()
+                if (vw > 0f && vh > 0f && !vb.isEmpty) {
+                    native.translate(-vb.left * dw / vw, -vb.top * dh / vh)
+                }
+                drawable.draw(native)
+                native.restoreToCount(save)
+            }
         }
     }
 }
@@ -233,7 +245,9 @@ private fun PillBatteryBody(
             drawPath(fullPath, color = accentColor, style = Fill)
         }
 
-        val textColor = if (isOutline) accentColor else Color.White
+        // Match pipeline batteries: glyph/percent use [BatteryColors.glyph] (accent-aware,
+        // charging/error/power-save aware). Avoid hardcoded white so accent tinting reads correctly.
+        val textColor = if (isOutline) accentColor else colors.glyph
         val textResult = if (showLevel && level != null) {
             textMeasurer.measure(
                 text = level.toString(),

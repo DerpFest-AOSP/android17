@@ -37,6 +37,7 @@ import com.android.settingslib.Utils
 import com.android.systemui.res.R as SysUiR
 import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryGlyph
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) : Drawable() {
 
@@ -90,12 +91,14 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
     var charging = false
         set(value) {
             field = value
+            levelColor = batteryColorForLevel(batteryLevel)
             postInvalidate()
         }
 
     var powerSaveEnabled = false
         set(value) {
             field = value
+            levelColor = batteryColorForLevel(batteryLevel)
             postInvalidate()
         }
 
@@ -137,8 +140,9 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
     }
 
     private val dualToneBackgroundFill = Paint(Paint.ANTI_ALIAS_FLAG).also { p ->
+        // Alpha comes only from [setColors] bgColor (BatteryColors). Do not call setAlpha here:
+        // it would replace ARGB alpha after setColor(frameColor) and is unnecessary once colors apply.
         p.color = frameColor
-        p.alpha = 85
         p.isDither = true
         p.strokeWidth = 0f
         p.style = Paint.Style.FILL_AND_STROKE
@@ -179,6 +183,8 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
     )
 
     private val perimeterBoundsF = RectF()
+    /** [perimeterPath] bounds in virtual units (same space as [width] / [height]). */
+    private val perimeterPathVirtualBounds = RectF()
     private val boltBoundsF = RectF()
     private val tmpRect = RectF()
 
@@ -269,7 +275,13 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
         if (dualTone) {
             c.drawPath(unifiedPath, dualToneBackgroundFill)
             c.save()
-            if (horizontalFill) {
+            // Clip using the same [levelRect] geometry as the non-dual fill mask (derived from
+            // [fillRect]). Using full [bounds] here made shaped batteries (e.g. heart in a 24×12
+            // slot) clip far larger than the actual fill region so the level paint covered the
+            // whole path — the icon looked "always full".
+            if (!levelRect.isEmpty) {
+                c.clipRect(levelRect.left, levelRect.top, levelRect.right, levelRect.bottom)
+            } else if (horizontalFill) {
                 if (reverseFill) {
                     c.clipRect(
                             bounds.right - bounds.width() * fillFraction,
@@ -277,12 +289,15 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
                             bounds.right.toFloat(),
                             bounds.bottom.toFloat())
                 } else {
-                    c.clipRect(0f, 0f,
+                    c.clipRect(
+                            0f,
+                            0f,
                             bounds.width() * fillFraction,
                             bounds.bottom.toFloat())
                 }
             } else {
-                c.clipRect(0f,
+                c.clipRect(
+                        0f,
                         bounds.bottom - bounds.height() * fillFraction,
                         bounds.right.toFloat(),
                         bounds.bottom.toFloat())
@@ -506,6 +521,26 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
         return batteryLevel
     }
 
+    /** Virtual canvas width/height (from [config_batterymeterWidth] / Height). */
+    fun getVirtualMeterWidth(): Float = width
+
+    fun getVirtualMeterHeight(): Float = height
+
+    /** [perimeterPath] bounds in virtual coordinates; used for tight Compose layout. */
+    fun getPerimeterPathVirtualBounds(): RectF = RectF(perimeterPathVirtualBounds)
+
+    /**
+     * Horizontal size for Compose [FrameThemed] when the path does not use the full canvas (e.g.
+     * heart biased in the virtual box), so the slot does not reserve empty space beside the shape.
+     */
+    fun getTightIntrinsicWidth(): Int {
+        if (width <= 0f || perimeterPathVirtualBounds.isEmpty) {
+            return intrinsicWidth
+        }
+        val frac = (perimeterPathVirtualBounds.width() / width).coerceIn(0.05f, 1f)
+        return (intrinsicWidth * frac).roundToInt().coerceAtLeast(1)
+    }
+
     override fun onBoundsChange(bounds: Rect) {
         super.onBoundsChange(bounds)
         updateSize()
@@ -527,6 +562,9 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
         fillColorStrokePaint.color = fillColor
 
         backgroundColor = bgColor
+        // Do not call setAlpha() here: Paint.setAlpha replaces the alpha from setColor(bgColor) and
+        // would turn semi-transparent BatteryColors backgrounds opaque, matching the fill so the
+        // level clip appears "always full" on dual-tone shapes (e.g. heart).
         dualToneBackgroundFill.color = bgColor
 
         levelColor = batteryColorForLevel(batteryLevel)
@@ -573,7 +611,7 @@ open class ThemedBatteryDrawable(private val context: Context, frameColor: Int) 
         val pathString = context.resources.getString(
                 SysUiR.string.config_batterymeterPerimeterPath)
         perimeterPath.set(PathParser.createPathFromPathData(pathString))
-        perimeterPath.computeBounds(RectF(), true)
+        perimeterPath.computeBounds(perimeterPathVirtualBounds, true)
 
         val errorPathString = context.resources.getString(
                 SysUiR.string.config_batterymeterErrorPerimeterPath)
