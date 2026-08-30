@@ -251,7 +251,8 @@ fun ContentScope.CollapsedShadeHeader(
         startContent = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                horizontalArrangement =
+                    Arrangement.spacedBy(ShadeHeader.Dimensions.StatusIconsEndSpacing),
                 modifier =
                     Modifier.padding(horizontal = horizontalPadding)
                         .layoutId(ShadeHeader.LayoutId.StartContent),
@@ -261,7 +262,7 @@ fun ContentScope.CollapsedShadeHeader(
                     textColor = textColor,
                     modifier =
                         Modifier.sysuiResTag("expanded_header_clock")
-                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                            .defaultMinSize(minHeight = 48.dp)
                             .wrapContentSize(Alignment.CenterStart),
                 )
                 VariableDayDate(
