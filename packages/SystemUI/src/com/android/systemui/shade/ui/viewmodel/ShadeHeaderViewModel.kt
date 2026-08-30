@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.IntRect
 import com.android.systemui.battery.BatteryMeterViewController
 import com.android.systemui.clock.domain.interactor.ClockInteractor
+import com.android.systemui.clock.ui.viewmodel.ClockViewModel
 import com.android.systemui.desktop.domain.interactor.DesktopInteractor
 import com.android.systemui.kairos.KairosNetwork
 import com.android.systemui.keyguard.domain.interactor.KeyguardTouchHandlingInteractor
@@ -86,6 +87,7 @@ constructor(
     val systemStatusIconsBlockListInteractor: EmptySystemStatusIconBlockListInteractor,
     private val privacyChipInteractor: PrivacyChipInteractor,
     private val clockInteractor: ClockInteractor,
+    val clockViewModelFactory: ClockViewModel.Factory,
     private val batteryMeterViewControllerFactory: BatteryMeterViewController.Factory,
     val statusBarIconController: StatusBarIconController,
     val batteryViewModelFactory: BatteryViewModel.AlwaysShowPercent.Factory,
