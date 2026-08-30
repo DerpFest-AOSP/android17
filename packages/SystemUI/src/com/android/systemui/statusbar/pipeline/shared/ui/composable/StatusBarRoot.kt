@@ -48,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEvent
@@ -503,6 +504,8 @@ private fun addStartSideComposable(
                             textColor = tint,
                             modifier =
                                 Modifier.padding(end = 2.dp)
+                                    // Keep the clock's space reserved while it's hidden.
+                                    .alpha(if (statusBarViewModel.isComposeClockVisible) 1f else 0f)
                                     .wrapContentSize()
                                     .onGloballyPositioned { coordinates ->
                                         val boundsInWindow = coordinates.boundsInWindow()
