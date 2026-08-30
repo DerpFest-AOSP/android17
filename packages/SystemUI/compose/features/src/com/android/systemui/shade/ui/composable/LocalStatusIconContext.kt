@@ -17,6 +17,7 @@
 package com.android.systemui.shade.ui.composable
 
 import android.view.ContextThemeWrapper
+import android.view.Gravity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -27,6 +28,7 @@ import com.android.systemui.res.R
 import com.android.systemui.statusbar.phone.StatusBarLocation
 import com.android.systemui.statusbar.phone.StatusIconContainer
 import com.android.systemui.statusbar.phone.ui.TintedIconManager
+import com.android.systemui.statusbar.pipeline.shared.ui.view.SystemStatusIconsLayoutHelper
 import com.android.systemui.statusbar.systemstatusicons.ui.compose.MovableSystemStatusIconLegacy
 import com.android.systemui.statusbar.systemstatusicons.ui.compose.movableSystemStatusIconsLegacyAndroidView
 
@@ -100,7 +102,12 @@ fun rememberStatusIconContext(
                     StatusIconContainer(
                         ContextThemeWrapper(context, R.style.Theme_SystemUI_QuickSettings_Header),
                         null,
-                    )
+                    ).apply {
+                        clipChildren = false
+                        clipToPadding = false
+                        gravity = Gravity.CENTER_VERTICAL
+                        SystemStatusIconsLayoutHelper.configurePaddingForNewStatusBarIcons(this)
+                    }
                 }
             }
 

@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -36,8 +35,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import com.android.compose.modifiers.clickableWithoutFocus
 import com.android.compose.modifiers.thenIf
@@ -153,7 +152,6 @@ fun ShadeHighlightChip(
             modifier =
                 modifier
                     .align(Alignment.CenterStart)
-                    .clip(CircleShape)
                     .indication(
                         interactionSource = interactionSource,
                         indication = ripple(color = rippleColor),
@@ -161,7 +159,10 @@ fun ShadeHighlightChip(
                     .drawBehind {
                         val bgColor = animatedBackgroundColor.value
                         if (bgColor != Color.Unspecified) {
-                            drawRoundRect(color = bgColor)
+                            drawRoundRect(
+                                color = bgColor,
+                                cornerRadius = CornerRadius(size.minDimension / 2f),
+                            )
                         }
                     }
                     .thenIf(backgroundColor != Color.Unspecified && includePadding) {

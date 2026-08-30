@@ -162,6 +162,8 @@ public class StatusBarBluetoothView extends FrameLayout implements StatusIconDis
         mBluetoothGroup = findViewById(R.id.bluetooth_group);
         mBluetoothIcon = findViewById(R.id.bluetooth_icon);
         mBatteryIcon = findViewById(R.id.bluetooth_battery);
+        setClipChildren(false);
+        setClipToPadding(false);
 
         initDotView();
     }
