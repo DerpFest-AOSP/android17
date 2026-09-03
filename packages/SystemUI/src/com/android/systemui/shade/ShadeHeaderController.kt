@@ -367,6 +367,11 @@ constructor(
 
         val fgColor = getFgColor()
         val bgColor = getBgColor()
+        mShadeCarrierGroup.updateTextAppearanceAndTint(
+            R.style.TextAppearance_QS_Status,
+            fgColor,
+            bgColor,
+        )
 
         iconManager = tintedIconManagerFactory.create(iconContainer, StatusBarLocation.QS)
         iconManager.setTint(fgColor, bgColor)

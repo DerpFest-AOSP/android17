@@ -53,14 +53,32 @@ class ModernShadeCarrierGroupMobileView(context: Context, attrs: AttributeSet?) 
 
     var subId: Int = -1
 
-    private lateinit var binding: ModernShadeCarrierGroupMobileViewBinding
+    private var binding: ModernShadeCarrierGroupMobileViewBinding? = null
+    private var pendingStyleAndTint: StyleAndTint? = null
+
+    private data class StyleAndTint(
+        @StyleRes val style: Int,
+        val fgColor: Int,
+        val bgColor: Int,
+    )
 
     /**
      * Update the appearance of the mobile carrier group. The text itself can use the text
      * appearance resId, but the mobile icon needs to know specifically about fg/bg colors.
      */
     fun setStyleAndTint(@StyleRes styleResId: Int, fgColor: Int, bgColor: Int) {
-        binding.setStyleAndTint(style = styleResId, fgColor = fgColor, bgColor = bgColor)
+        pendingStyleAndTint = StyleAndTint(styleResId, fgColor, bgColor)
+        applyPendingStyleAndTint()
+    }
+
+    private fun applyPendingStyleAndTint() {
+        pendingStyleAndTint?.let { styleAndTint ->
+            binding?.setStyleAndTint(
+                style = styleAndTint.style,
+                fgColor = styleAndTint.fgColor,
+                bgColor = styleAndTint.bgColor,
+            )
+        }
     }
 
     override fun toString(): String {
@@ -175,6 +193,7 @@ class ModernShadeCarrierGroupMobileView(context: Context, attrs: AttributeSet?) 
                                 shadeCarrierBinding.setTextAppearance(style)
                             }
                         }
+                    view.applyPendingStyleAndTint()
                 }
         }
     }
