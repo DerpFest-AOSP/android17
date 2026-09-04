@@ -42,7 +42,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
@@ -290,7 +289,8 @@ fun ContentScope.Tile(
                         }
                         .sysuiResTag("tile_expandable")
                         .fillMaxWidth()
-                        .thenIf(classicStyle) { Modifier.height(tileHeight) }
+                        // Pin height for circle/classic; otherwise QQS max-height stretches rows.
+                        .thenIf(classicStyle || wantCircle) { Modifier.height(tileHeight) }
                         .bounceable(
                             currentBounceableInfo.bounceable,
                             currentBounceableInfo.previousTile,
@@ -365,7 +365,7 @@ fun ContentScope.Tile(
                     // the only visible/clickable surface for the tile. Classic tiles paint their
                     // own badge in [ClassicTileContent], so the container stays undecorated.
                     val circleInteraction = remember { MutableInteractionSource() }
-                    Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxWidth().height(tileHeight)) {
                         Box(
                             modifier =
                                 Modifier.size(tileHeight)
