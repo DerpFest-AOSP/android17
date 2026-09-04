@@ -125,6 +125,8 @@ constructor(
         val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
 
+        val classicStyle = rememberQSPanelStyle()
+
         val bounceables =
             remember(sizedTiles) { List(sizedTiles.size) { BounceableTileViewModel() } }
         val spans by remember(sizedTiles) { derivedStateOf { sizedTiles.fastMap { it.width } } }
@@ -141,7 +143,7 @@ constructor(
             Element(it.tile.spec.toElementKey(), Modifier) {
                 Tile(
                     tile = it.tile,
-                    iconOnly = iconTilesViewModel.isIconTile(it.tile.spec),
+                    iconOnly = classicStyle || iconTilesViewModel.isIconTile(it.tile.spec),
                     squishiness = { squishiness },
                     tileHapticsViewModelFactory = tileHapticsViewModelFactory,
                     coroutineScope = scope,

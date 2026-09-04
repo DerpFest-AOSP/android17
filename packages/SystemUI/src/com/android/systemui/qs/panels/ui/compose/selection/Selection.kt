@@ -82,6 +82,7 @@ import com.android.systemui.qs.flags.QsEditModeFocusFixes
 import com.android.systemui.qs.flags.QsEditModeHoverFixes
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.ActiveTileCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.CommonTileDefaults.InactiveTileCornerRadius
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberTileShapeMode
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BADGE_ANGLE_RAD
 import com.android.systemui.qs.panels.ui.compose.selection.SelectionDefaults.BadgeIconSize
@@ -231,7 +232,8 @@ private fun Modifier.selectionBorder(
             2 -> ActiveTileCornerRadius // Rounded square
             else -> InactiveTileCornerRadius
         }
-    val wantCircle = shapeMode == 3 && iconOnly
+    val panelStyle = rememberQSPanelStyle()
+    val wantCircle = panelStyle || (shapeMode == 3 && iconOnly)
 
     return drawWithContent {
         drawContent()

@@ -16,16 +16,24 @@
 
 package com.android.systemui.qs.panels.data.repository
 
+import android.content.Context
 import android.content.res.Resources
+import android.database.ContentObserver
+import android.net.Uri
+import android.os.UserHandle
+import android.provider.Settings
 import com.android.systemui.common.ui.data.repository.ConfigurationRepository
 import com.android.systemui.dagger.SysUISingleton
+import com.android.systemui.dagger.qualifiers.Application
 import com.android.systemui.res.R
 import com.android.systemui.shade.ShadeDisplayAware
 import com.android.systemui.util.kotlin.emitOnStart
 import com.android.systemui.util.kotlin.mapDirect
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,6 +41,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 class LargeTileSpanRepository
 @Inject
 constructor(
+    @Application private val context: Context,
     @ShadeDisplayAware private val resources: Resources,
     @ShadeDisplayAware configurationRepository: ConfigurationRepository,
 ) {
@@ -56,8 +65,46 @@ constructor(
     val currentTileMaxWidth: Int
         get() = resources.getInteger(R.integer.quick_settings_infinite_grid_tile_max_width)
 
+    private fun settingsChanges(): Flow<Unit> = callbackFlow {
+        val observer =
+            object : ContentObserver(/* handler */ null) {
+                override fun onChange(selfChange: Boolean, uri: Uri?) {
+                    trySend(Unit)
+                }
+            }
+        val cr = context.contentResolver
+        cr.registerContentObserver(
+            Settings.Secure.getUriFor(QS_PANEL_STYLE),
+            /* notifyForDescendants */ false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+        awaitClose { cr.unregisterContentObserver(observer) }
+    }
+
+    private fun readQSPanelStyleEnabled(): Boolean {
+        return try {
+            Settings.Secure.getIntForUser(
+                context.contentResolver,
+                QS_PANEL_STYLE,
+                0,
+                UserHandle.USER_CURRENT,
+            ) != 0
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    /** Whether classic circular tiles are selected instead of the default card tiles. */
+    val classicStyle: Flow<Boolean> =
+        settingsChanges()
+            .emitOnStart()
+            .mapDirect { readQSPanelStyleEnabled() }
+            .distinctUntilChanged()
+
     private companion object {
         const val FONT_SCALE_THRESHOLD = 1.8f
         const val DEFAULT_LARGE_TILE_WIDTH = 2
+        const val QS_PANEL_STYLE = "qs_panel_style"
     }
 }

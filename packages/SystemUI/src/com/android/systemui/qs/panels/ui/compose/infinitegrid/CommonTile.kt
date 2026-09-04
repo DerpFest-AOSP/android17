@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -85,9 +86,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.android.compose.modifiers.size
 import com.android.compose.modifiers.thenIf
 import com.android.compose.ui.graphics.painter.rememberDrawablePainter
@@ -114,6 +119,59 @@ private const val TEST_TAG_TILE_ICON = "qs_tile_icon"
 private const val TEST_TAG_TOGGLE = "qs_tile_toggle_target"
 private const val TEST_TAG_SMALL = "qs_tile_small"
 private const val TEST_TAG_LARGE = "qs_tile_large"
+
+/** Classic tile content: a circular icon badge with the tile label underneath. */
+@Composable
+fun ClassicTileContent(
+    label: String,
+    iconProvider: Context.() -> Icon,
+    colors: TileColors,
+    modifier: Modifier = Modifier,
+) {
+    val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
+
+    val tileHeight = CommonTileDefaults.TileHeight - 8.dp
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Box(
+            modifier =
+                Modifier.size(tileHeight).clip(CircleShape).drawBehind {
+                    val brush = colors.backgroundBrush
+                    if (brush != null) {
+                        drawRect(brush = brush)
+                    } else {
+                        drawRect(color = animatedColor)
+                    }
+                }
+        ) {
+            SmallTileContent(
+                iconProvider = iconProvider,
+                color = colors.icon,
+                size = { CommonTileDefaults.LargeTileIconSize },
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+
+        val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+        BasicText(
+            text = label,
+            style =
+                TextStyle(
+                    fontSize = CommonTileDefaults.ClassicLabelSize,
+                    textAlign = TextAlign.Center,
+                    hyphens = Hyphens.Auto,
+                ),
+            color = { labelColor },
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
+        )
+    }
+}
 
 @Composable
 fun LargeTileContent(
@@ -494,6 +552,7 @@ object CommonTileDefaults {
     val TileEndPadding = 12.dp
     val TileArrangementPadding = 6.dp
     val TileLabelBlurWidth = 32.dp
+    val ClassicLabelSize = 10.sp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000
 

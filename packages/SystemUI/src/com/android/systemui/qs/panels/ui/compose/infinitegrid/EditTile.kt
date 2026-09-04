@@ -193,6 +193,7 @@ import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaul
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.CurrentTilesGridPadding
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.GridBackgroundCornerRadius
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.EditModeTileDefaults.TilePlacementSpec
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberTileShapeMode
 import com.android.systemui.qs.panels.ui.compose.selection.InteractiveTileContainer
 import com.android.systemui.qs.panels.ui.compose.selection.MutableSelectionState
@@ -1475,8 +1476,9 @@ private fun Modifier.tileBackground(
     iconOnly: Boolean = false,
     color: () -> Color,
 ): Modifier {
+    val panelStyle = rememberQSPanelStyle()
     val shapeMode = rememberTileShapeMode()
-    return if (shapeMode == 3 && iconOnly) {
+    return if (panelStyle || (shapeMode == 3 && iconOnly)) {
         // Draw a centered circle that fits the tile's min dimension instead of clipping to a
         // rounded rect
         drawBehind {

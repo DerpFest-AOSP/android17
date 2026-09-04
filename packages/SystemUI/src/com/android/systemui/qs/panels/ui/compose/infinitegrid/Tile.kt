@@ -130,6 +130,9 @@ import platform.test.motion.compose.values.motionTestValues
 private val TileViewModel.traceName
     get() = spec.toString().takeLast(Trace.MAX_SECTION_NAME_LEN)
 
+/** [Settings.Secure] key selecting card tiles (0) or classic circular tiles (1). */
+private const val QS_PANEL_STYLE = "qs_panel_style"
+
 /**
  * This composable function is responsible for rendering a tile based on the provided
  * [TileViewModel]. It handles different states of the tile (e.g., available, unavailable),
@@ -196,6 +199,9 @@ fun ContentScope.Tile(
             return@trace
         }
 
+        val classicStyle = rememberQSPanelStyle()
+        val tileHeight = if (classicStyle) TileHeight + 8.dp else TileHeight
+
         val shapeMode = rememberTileShapeMode()
         val wantCircle = shapeMode == 3 && iconOnly
 
@@ -208,10 +214,11 @@ fun ContentScope.Tile(
         // When a full circle is requested, the outer expandable container is made invisible
         // (transparent, unrounded) and a separate circular clickable is drawn centered within it.
         val backgroundBrush = colors.backgroundBrush
-        val outerShape: RoundedCornerShape = if (wantCircle) RoundedCornerShape(0.dp) else tileShape
+        val outerShape: RoundedCornerShape =
+            if (wantCircle && !classicStyle) RoundedCornerShape(0.dp) else tileShape
         val outerColor: () -> Color =
             when {
-                wantCircle -> ({ Color.Transparent })
+                wantCircle || classicStyle -> ({ Color.Transparent })
                 backgroundBrush != null -> ({ Color.Transparent })
                 else -> ({ animatedColor })
             }
@@ -260,10 +267,11 @@ fun ContentScope.Tile(
                 shape = outerShape,
                 squishiness = squishiness,
                 hapticsViewModel = hapticsViewModel,
+                classicStyle = classicStyle,
                 modifier =
                     modifier
                         .then(surfaceRevealModifier)
-                        .thenIf(backgroundBrush != null && !wantCircle) {
+                        .thenIf(backgroundBrush != null && !wantCircle && !classicStyle) {
                             Modifier.background(requireNotNull(backgroundBrush), outerShape)
                         }
                         .thenIf(!wantCircle) {
@@ -274,6 +282,7 @@ fun ContentScope.Tile(
                         }
                         .sysuiResTag("tile_expandable")
                         .fillMaxWidth()
+                        .thenIf(classicStyle) { Modifier.height(tileHeight) }
                         .bounceable(
                             currentBounceableInfo.bounceable,
                             currentBounceableInfo.previousTile,
@@ -342,24 +351,27 @@ fun ContentScope.Tile(
                     }
                 }
 
-                if (wantCircle) {
+                if (wantCircle || classicStyle) {
                     // Draw a standalone circular clickable centered in the tile's bounds. The
                     // outer expandable container was made transparent/unrounded above, so this is
-                    // the only visible/clickable surface for the tile.
+                    // the only visible/clickable surface for the tile. Classic tiles paint their
+                    // own badge in [ClassicTileContent], so the container stays undecorated.
                     val circleInteraction = remember { MutableInteractionSource() }
                     Box(Modifier.fillMaxSize()) {
                         Box(
                             modifier =
-                                Modifier.size(TileHeight)
+                                Modifier.size(tileHeight)
                                     .align(Alignment.Center)
-                                    .clip(CircleShape)
-                                    .then(
-                                        if (backgroundBrush != null) {
-                                            Modifier.background(backgroundBrush)
-                                        } else {
-                                            Modifier.background(animatedColor)
-                                        }
-                                    )
+                                    .thenIf(!classicStyle) {
+                                        Modifier.clip(CircleShape)
+                                            .then(
+                                                if (backgroundBrush != null) {
+                                                    Modifier.background(backgroundBrush)
+                                                } else {
+                                                    Modifier.background(animatedColor)
+                                                }
+                                            )
+                                    }
                                     .indication(circleInteraction, LocalIndication.current)
                                     .tileCombinedClickable(
                                         onClick = { click?.invoke() },
@@ -374,14 +386,26 @@ fun ContentScope.Tile(
                                     .tileTestTag(iconOnly)
                         ) {
                             val iconProvider: Context.() -> Icon = { getTileIcon(icon = icon) }
-                            SmallTileContent(
-                                iconProvider = iconProvider,
-                                color = colors.icon,
-                                modifier =
-                                    Modifier.align(Alignment.Center).bounceScale {
-                                        currentBounceableInfo.bounceable.iconBounceScale
-                                    },
-                            )
+                            if (classicStyle) {
+                                ClassicTileContent(
+                                    label = uiState.label,
+                                    iconProvider = iconProvider,
+                                    colors = colors,
+                                    modifier =
+                                        Modifier.align(Alignment.Center).bounceScale {
+                                            currentBounceableInfo.bounceable.iconBounceScale
+                                        },
+                                )
+                            } else {
+                                SmallTileContent(
+                                    iconProvider = iconProvider,
+                                    color = colors.icon,
+                                    modifier =
+                                        Modifier.align(Alignment.Center).bounceScale {
+                                            currentBounceableInfo.bounceable.iconBounceScale
+                                        },
+                                )
+                            }
                         }
                     }
                 } else {
@@ -447,6 +471,7 @@ private fun TileExpandable(
     shape: Shape,
     squishiness: () -> Float,
     hapticsViewModel: TileHapticsViewModel?,
+    classicStyle: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable (Expandable) -> Unit,
 ) {
@@ -455,7 +480,7 @@ private fun TileExpandable(
         controller = rememberExpandableController(color = color, shape = shape),
         modifier =
             modifier
-                .clip(shape)
+                .thenIf(!classicStyle) { Modifier.clip(shape) }
                 .motionTestValues { squishiness() exportAs TileMotionTestKeys.Squishness }
                 .verticalSquish(squishiness),
         useModifierBasedImplementation = true,
@@ -662,6 +687,53 @@ fun rememberTileShapeMode(): Int {
     }
 
     return shapeMode
+}
+
+/**
+ * Reads and observes [Settings.Secure] `qs_panel_style`, which switches quick settings between the
+ * default card tiles (0) and classic circular tiles (1).
+ */
+@Composable
+fun rememberQSPanelStyle(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readPanelStyleEnabled(): Boolean {
+        return try {
+            Settings.Secure.getIntForUser(
+                contentResolver,
+                QS_PANEL_STYLE,
+                0,
+                UserHandle.USER_CURRENT,
+            ) != 0
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    var classicStyleEnabled by remember { mutableStateOf(readPanelStyleEnabled()) }
+
+    DisposableEffect(contentResolver) {
+        // Scene-container QS can compose before Settings is ready; re-read on subscribe.
+        classicStyleEnabled = readPanelStyleEnabled()
+        val observer =
+            object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    context.mainExecutor.execute { classicStyleEnabled = readPanelStyleEnabled() }
+                }
+            }
+
+        contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(QS_PANEL_STYLE),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+
+    return classicStyleEnabled
 }
 
 @Composable
