@@ -19,15 +19,22 @@ package com.android.systemui.statusbar.pipeline.shared.ui.binder
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.app.WindowConfiguration
+import android.content.BroadcastReceiver
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.database.ContentObserver
+import android.graphics.Color
+import android.graphics.Outline
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.View
+import android.view.ViewOutlineProvider
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
@@ -56,12 +63,17 @@ import com.android.systemui.statusbar.phone.ui.StatusBarIconController
 import com.android.systemui.statusbar.policy.Clock
 import com.android.systemui.plugins.DarkIconDispatcher
 import com.android.systemui.statusbar.policy.ConfigurationController
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import lineageos.providers.LineageSettings
 
 /**
@@ -153,6 +165,21 @@ constructor(
                             visibilityModel = VisibilityModel(View.GONE, true),
                         )
                     )
+
+                val wallpaperRefreshEpoch = MutableStateFlow(0)
+                val wallpaperChipLoadJob = AtomicReference<Job?>(null)
+                val appContext = context.applicationContext
+                val wallpaperChangedReceiver =
+                    object : BroadcastReceiver() {
+                        override fun onReceive(c: Context?, intent: Intent?) {
+                            wallpaperRefreshEpoch.update { it + 1 }
+                        }
+                    }
+                appContext.registerReceiver(
+                    wallpaperChangedReceiver,
+                    IntentFilter(Intent.ACTION_WALLPAPER_CHANGED),
+                    Context.RECEIVER_NOT_EXPORTED,
+                )
 
                 val clockAutoHideUri: Uri =
                     LineageSettings.System.getUriFor(
@@ -255,6 +282,10 @@ constructor(
                         context.contentResolver.unregisterContentObserver(contentObserver)
                         TaskStackChangeListeners.getInstance()
                             .unregisterTaskStackListener(taskStackListener)
+                        runCatching {
+                            appContext.unregisterReceiver(wallpaperChangedReceiver)
+                        }
+                        wallpaperChipLoadJob.get()?.cancel()
                     }
                 }
                 listener?.let { listener ->
@@ -357,11 +388,16 @@ constructor(
                         var lastChipStyle: Int? = null
                         var lastClockPosition: Int? = null
                         var lastChipAppearanceGeneration = 0
+                        var lastWallpaperEpoch = -1
 
-                        combine(clockState, chipAppearanceGeneration) { state, generation ->
-                                state to generation
+                        combine(
+                                clockState,
+                                chipAppearanceGeneration,
+                                wallpaperRefreshEpoch,
+                            ) { state, generation, wpEpoch ->
+                                Triple(state, generation, wpEpoch)
                             }
-                            .collect { (state, generation) ->
+                            .collect { (state, generation, wpEpoch) ->
                             // We only want to hide left clock for HUN
                             val hunBlocksClock =
                                 state.position == CLOCK_POSITION_LEFT && state.hideForHun
@@ -398,13 +434,18 @@ constructor(
                             // Show only the active one
                             activeClock?.adjustVisibility(finalVisibility)
 
-                            // Only touch chip UI when style, position, theme, or density changes
+                            // Only touch chip UI when style, position, theme, density, or
+                            // wallpaper (style 13) changes
                             val chipNeedsUpdate =
                                 lastChipStyle != state.chipStyle ||
                                     lastClockPosition != state.position ||
-                                    lastChipAppearanceGeneration != generation
+                                    lastChipAppearanceGeneration != generation ||
+                                    (state.chipStyle == CHIP_STYLE_WALLPAPER_THUMBNAIL &&
+                                        lastWallpaperEpoch != wpEpoch)
                             if (chipNeedsUpdate) {
                                 applyClockChip(
+                                    coroutineScope = this,
+                                    wallpaperChipLoadJob = wallpaperChipLoadJob,
                                     context = context,
                                     chipStyle = state.chipStyle,
                                     activeClock = activeClock,
@@ -418,6 +459,7 @@ constructor(
                                 lastChipStyle = state.chipStyle
                                 lastClockPosition = state.position
                                 lastChipAppearanceGeneration = generation
+                                lastWallpaperEpoch = wpEpoch
                             }
                         }
                     }
@@ -577,7 +619,41 @@ constructor(
 
     private fun View.capturePadding() = Padding(paddingStart, paddingTop, paddingEnd, paddingBottom)
 
+    /**
+     * Same rounded-rect silhouette as [R.drawable.sb_date_bg] (uses [R.dimen.chip_corner_radius]).
+     * A full stadium (`min(w,h)/2`) becomes a **circle** when the view is square — e.g. square
+     * wallpaper thumbnails — so we cap corners to match the XML chips.
+     */
+    private fun applyCapsuleOutlineToClockChip(clock: Clock) {
+        val cornerPx = clock.context.resources.getDimension(R.dimen.chip_corner_radius)
+        clock.clipToOutline = true
+        clock.outlineProvider =
+            object : ViewOutlineProvider() {
+                override fun getOutline(view: View, outline: Outline) {
+                    val w = view.width
+                    val h = view.height
+                    if (w <= 0 || h <= 0) {
+                        outline.setEmpty()
+                        return
+                    }
+                    val maxR = minOf(w, h) / 2f
+                    val r = minOf(cornerPx, maxR)
+                    outline.setRoundRect(0, 0, w, h, r)
+                }
+            }
+        clock.invalidateOutline()
+        clock.post { clock.invalidateOutline() }
+    }
+
+    private fun clearCapsuleOutlineFromClockChip(clock: Clock) {
+        clock.clipToOutline = false
+        clock.outlineProvider = null
+        clock.invalidateOutline()
+    }
+
     private fun applyClockChip(
+        coroutineScope: CoroutineScope,
+        wallpaperChipLoadJob: AtomicReference<Job?>,
         context: Context,
         chipStyle: Int,
         activeClock: Clock?,
@@ -588,8 +664,12 @@ constructor(
         centerPaddingInit: Padding?,
         rightPaddingInit: Padding?
     ) {
+        wallpaperChipLoadJob.get()?.cancel()
+        wallpaperChipLoadJob.set(null)
+
         fun reset(clock: Clock?, padding: Padding?) {
             if (clock == null || padding == null) return
+            clearCapsuleOutlineFromClockChip(clock)
             clock.setBackgroundResource(0)
             clock.setPaddingRelative(padding.start, padding.top, padding.end, padding.bottom)
             clock.setChipTextColorOverride(null)
@@ -654,6 +734,7 @@ constructor(
                 // so the clock gets the correct color without needing lock/unlock.
                 darkIconDispatcher.applyDark(clock)
             }
+            applyCapsuleOutlineToClockChip(clock)
         }
 
         // Always reset first so the previous active clock loses chip when position changes
@@ -662,6 +743,47 @@ constructor(
         reset(rightClock, rightPaddingInit)
 
         if (chipStyle == 0) return
+
+        if (chipStyle == CHIP_STYLE_WALLPAPER_THUMBNAIL) {
+            val clock = activeClock ?: return
+            clock.setShouldApplyPadding(false)
+            val chipTopBottomPadding =
+                context.resources.getDimensionPixelSize(R.dimen.status_bar_clock_chip_tb_padding)
+            val chipLeftRightPadding =
+                context.resources.getDimensionPixelSize(R.dimen.status_bar_clock_chip_lr_padding)
+            clock.setPaddingRelative(
+                chipLeftRightPadding,
+                chipTopBottomPadding,
+                chipLeftRightPadding,
+                chipTopBottomPadding,
+            )
+            clock.setTextAlignment(View.TEXT_ALIGNMENT_CENTER)
+            // Placeholder until IO load completes; chip outline from [applyCapsuleOutlineToClockChip].
+            clock.background = ColorDrawable(Color.BLACK)
+            clock.setStaticColor(true)
+            val placeholderTextColor =
+                BatteryColors.textColorOnBackground(context, Color.BLACK)
+            clock.setTextColor(placeholderTextColor)
+            clock.setChipTextColorOverride(placeholderTextColor)
+            applyCapsuleOutlineToClockChip(clock)
+
+            val job =
+                coroutineScope.launch {
+                    val chip =
+                        withContext(Dispatchers.IO) {
+                            ClockChipWallpaperThumbnailHelper.loadChipBackground(context)
+                        }
+                    ensureActive()
+                    clock.background = chip.drawable
+                    val textColor =
+                        BatteryColors.textColorOnBackground(context, chip.contrastSampleArgb)
+                    clock.setTextColor(textColor)
+                    clock.setChipTextColorOverride(textColor)
+                    applyCapsuleOutlineToClockChip(clock)
+                }
+            wallpaperChipLoadJob.set(job)
+            return
+        }
 
         activeClock?.let { apply(it, chipStyle) }
     }
@@ -846,6 +968,8 @@ constructor(
         private const val CLOCK_POSITION_RIGHT = 0
         private const val CLOCK_POSITION_CENTER = 1
         private const val CLOCK_POSITION_LEFT = 2
+        /** Matches [Settings.System.STATUSBAR_CLOCK_CHIP] — home wallpaper thumbnail (live WP → black). */
+        private const val CHIP_STYLE_WALLPAPER_THUMBNAIL = 13
 
         /** Animation durations for status bar. Used to be defined in the fragment */
         const val FADE_IN_DURATION = 320

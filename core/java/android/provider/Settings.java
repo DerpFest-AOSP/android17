@@ -6981,6 +6981,7 @@ public final class Settings {
          * Status bar clock chip style.
          * 0 - off (default)
          * 1-12 - {@code sb_date_bg1} through {@code sb_date_bg12}
+         * 13 - home wallpaper thumbnail (live wallpapers fall back to black)
          * @hide
          */
         public static final String STATUSBAR_CLOCK_CHIP = "statusbar_clock_chip";
