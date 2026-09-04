@@ -50,6 +50,11 @@ constructor(
             initialValue = qsColumnsRepository.defaultClassicColumns
         )
 
+    val classicRows by
+        qsPaginatedRowsInteractor.classicRows.hydratedStateOf(
+            initialValue = qsPaginatedRowsInteractor.defaultClassicRows
+        )
+
     val showArrowsInPagerDots by
         pointerDeviceInteractor.isAnyPointerDeviceConnected.hydratedStateOf(initialValue = false)
 

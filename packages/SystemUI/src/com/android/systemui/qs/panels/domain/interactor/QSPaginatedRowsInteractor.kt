@@ -20,4 +20,9 @@ class QSPaginatedRowsInteractor
 constructor(@Application private val scope: CoroutineScope, repo: QSPaginatedRowsRepository) {
     val rows: StateFlow<Int> =
         repo.rows.stateIn(scope, SharingStarted.WhileSubscribed(), repo.defaultRows)
+
+    val classicRows: StateFlow<Int> =
+        repo.classicRows.stateIn(scope, SharingStarted.WhileSubscribed(), repo.defaultClassicRows)
+
+    val defaultClassicRows: Int = repo.defaultClassicRows
 }

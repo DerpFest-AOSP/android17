@@ -16,7 +16,6 @@
 
 package com.android.systemui.qs.panels.ui.viewmodel
 
-import android.content.res.mainResources
 import com.android.systemui.haptics.msdl.tileHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
 import com.android.systemui.qs.panels.data.repository.qsColumnsRepository
@@ -36,7 +35,6 @@ val Kosmos.quickQuickSettingsViewModelFactory by
                     iconTilesViewModel,
                     tileHapticsViewModelFactory,
                     qsColumnsRepository,
-                    mainResources,
                 )
             }
         }

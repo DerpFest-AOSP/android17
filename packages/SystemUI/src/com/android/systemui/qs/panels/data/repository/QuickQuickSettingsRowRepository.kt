@@ -45,12 +45,7 @@ constructor(
     @ShadeDisplayAware private val resources: Resources,
     @ShadeDisplayAware private val configurationRepository: ConfigurationRepository,
 ) {
-    private fun settingsChanges(): Flow<Unit> = callbackFlow {
-        val uris: List<Uri> =
-            listOf(
-                Settings.System.getUriFor(Settings.System.QQS_LAYOUT_ROWS),
-                Settings.System.getUriFor(Settings.System.QQS_LAYOUT_ROWS_LANDSCAPE),
-            )
+    private fun settingsChanges(vararg keys: String): Flow<Unit> = callbackFlow {
         val observer =
             object : ContentObserver(/* handler */ null) {
                 override fun onChange(selfChange: Boolean, uri: Uri?) {
@@ -58,9 +53,9 @@ constructor(
                 }
             }
         val cr = context.contentResolver
-        uris.forEach {
+        keys.forEach {
             cr.registerContentObserver(
-                it,
+                Settings.System.getUriFor(it),
                 /* notifyForDescendants */ false,
                 observer,
                 UserHandle.USER_ALL,
@@ -85,10 +80,62 @@ constructor(
     }
 
     val rows: Flow<Int> =
-        merge(configurationRepository.onConfigurationChange, settingsChanges())
+        merge(
+                configurationRepository.onConfigurationChange,
+                settingsChanges(
+                    Settings.System.QQS_LAYOUT_ROWS,
+                    Settings.System.QQS_LAYOUT_ROWS_LANDSCAPE,
+                ),
+            )
             .emitOnStart()
             .mapDirect { readRows() }
             .distinctUntilChanged()
 
     val defaultRows: Int = resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows)
+
+    /**
+     * Row count for QQS when using classic circular tiles (`qqs_layout_rows_classic` /
+     * `qqs_layout_rows_landscape_classic`).
+     */
+    val classicQqsRows: Flow<Int> =
+        merge(
+                configurationRepository.onConfigurationChange,
+                settingsChanges(
+                    Settings.System.QQS_LAYOUT_ROWS_CLASSIC,
+                    Settings.System.QQS_LAYOUT_ROWS_LANDSCAPE_CLASSIC,
+                ),
+            )
+            .emitOnStart()
+            .mapDirect { readClassicQqsRows() }
+            .distinctUntilChanged()
+
+    val defaultClassicQqsRows: Int
+        get() = resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows)
+
+    private fun readClassicQqsRows(): Int {
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val portraitValue =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.QQS_LAYOUT_ROWS_CLASSIC,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        val landscapeValue =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.QQS_LAYOUT_ROWS_LANDSCAPE_CLASSIC,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        val value =
+            if (isLandscape && landscapeValue > 0) {
+                landscapeValue
+            } else if (portraitValue > 0) {
+                portraitValue
+            } else {
+                defaultClassicQqsRows
+            }
+        return value.coerceAtLeast(1)
+    }
 }

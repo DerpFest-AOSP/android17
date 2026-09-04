@@ -16,7 +16,6 @@
 
 package com.android.systemui.qs.panels.ui.viewmodel
 
-import android.content.res.Resources
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -31,8 +30,6 @@ import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.shared.model.splitInRowsSequence
 import com.android.systemui.qs.pipeline.domain.interactor.CurrentTilesInteractor
 import com.android.systemui.qs.pipeline.shared.TileSpec
-import com.android.systemui.res.R
-import com.android.systemui.shade.ShadeDisplayAware
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
@@ -49,7 +46,6 @@ constructor(
     iconTilesViewModel: IconTilesViewModel,
     val tileHapticsViewModelFactory: TileHapticsViewModel.Factory,
     qsColumnsRepository: QSColumnsRepository,
-    @ShadeDisplayAware private val resources: Resources,
 ) : HydratedActivatable() {
 
     private val qsColumnsViewModel = qsColumnsViewModelFactory.create(LOCATION_QQS, mediaUiBehavior)
@@ -88,18 +84,21 @@ constructor(
     val classicQqsColumns: Int
         get() = classicQqsColumnsValue
 
-    /**
-     * Row count for classic QQS from resources only (does not use `qqs_layout_rows`). Media-in-row
-     * doubling matches card behavior.
-     */
-    private val classicQqsRowsResource: Int
-        get() {
-            val base = resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows)
-            return if (mediaInRowViewModel.shouldMediaShowInRow) base * 2 else base
-        }
+    private val classicQqsRowsWithoutMedia by
+        quickQuickSettingsRowInteractor.classicQqsRows.hydratedStateOf(
+            initialValue = quickQuickSettingsRowInteractor.defaultClassicQqsRows
+        )
 
-    /** Max tiles in QQS for classic: classic columns × resource row count. */
-    val classicQqsMaxTiles by derivedStateOf { classicQqsColumnsValue * classicQqsRowsResource }
+    private val classicQqsRowsCount: Int
+        get() =
+            if (mediaInRowViewModel.shouldMediaShowInRow) {
+                classicQqsRowsWithoutMedia * 2
+            } else {
+                classicQqsRowsWithoutMedia
+            }
+
+    /** Max tiles in QQS for classic: classic columns × classic row count (including media doubling). */
+    val classicQqsMaxTiles by derivedStateOf { classicQqsColumnsValue * classicQqsRowsCount }
 
     val allTileViewModels by derivedStateOf {
         currentTiles.map { TileViewModel(it.tile, it.spec, it.expandable) }

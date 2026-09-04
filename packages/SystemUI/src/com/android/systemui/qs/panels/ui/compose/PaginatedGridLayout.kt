@@ -79,9 +79,9 @@ constructor(
                 delegateGridLayout.viewModelFactory.create()
             }
 
-        val rows = viewModel.rows
         val classicStyle = rememberQSPanelStyle()
         val classicColumns = viewModel.classicColumns
+        val rows = if (classicStyle) viewModel.classicRows else viewModel.rows
         val pages =
             remember(tiles, rows, classicStyle, classicColumns, *delegateGridViewModel.pageKeys) {
                 delegateGridViewModel.splitIntoPages(
