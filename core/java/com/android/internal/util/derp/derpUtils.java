@@ -43,6 +43,7 @@ import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.Vibrator;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.IWindowManager;
 import android.view.KeyCharacterMap;
@@ -62,6 +63,8 @@ import java.util.ArrayList;
  */
 public class derpUtils {
 
+    private static final String TAG = "derpUtils";
+
     /**
      * @hide
      */
@@ -74,6 +77,11 @@ public class derpUtils {
     public static void switchScreenOff(Context ctx) {
         PowerManager pm = (PowerManager) ctx.getSystemService(Context.POWER_SERVICE);
         if (pm!= null) {
+            try {
+                WindowManagerGlobal.getWindowManagerService().lockNow(null /* options */);
+            } catch (RemoteException e) {
+                Log.e(TAG, "Failed to lock the device on sleep gesture", e);
+            }
             pm.goToSleep(SystemClock.uptimeMillis());
         }
     }
