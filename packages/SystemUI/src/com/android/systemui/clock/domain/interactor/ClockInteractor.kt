@@ -106,6 +106,28 @@ constructor(
                 )
         }
 
+    /** [StateFlow] that emits whether hour and minute should be separated by a period. */
+    val usePeriodHourMinuteSeparator: StateFlow<Boolean> =
+        if (!Flags.clockModernization()) {
+            MutableStateFlow(false)
+        } else {
+            conflatedCallbackFlow {
+                    val tunable =
+                        TunerService.Tunable { key, newValue ->
+                            if (key == STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY) {
+                                trySend(TunerService.parseIntegerSwitch(newValue, false))
+                            }
+                        }
+                    tunerService.addTunable(tunable, STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY)
+                    awaitClose { tunerService.removeTunable(tunable) }
+                }
+                .stateIn(
+                    scope = applicationScope,
+                    started = SharingStarted.WhileSubscribed(),
+                    initialValue = false,
+                )
+        }
+
     /**
      * [StateFlow] that emits the current `Date`.
      *
@@ -221,5 +243,9 @@ constructor(
 
     companion object {
         @VisibleForTesting const val CLOCK_SECONDS_TUNER_KEY = "clock_seconds"
+
+        @VisibleForTesting
+        const val STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY =
+            "system:" + Settings.System.STATUS_BAR_CLOCK_PERIOD_SEPARATOR
     }
 }

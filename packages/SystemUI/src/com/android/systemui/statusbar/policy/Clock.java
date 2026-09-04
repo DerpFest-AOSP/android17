@@ -91,6 +91,8 @@ public class Clock extends TextView implements
             "system:" + Settings.System.STATUS_BAR_CLOCK_DATE_POSITION;
     public static final String STATUS_BAR_CLOCK_DATE_FORMAT =
             "system:" + Settings.System.STATUS_BAR_CLOCK_DATE_FORMAT;
+    public static final String STATUS_BAR_CLOCK_PERIOD_SEPARATOR =
+            "system:" + Settings.System.STATUS_BAR_CLOCK_PERIOD_SEPARATOR;
 
     private final UserTracker mUserTracker;
     private int mCurrentUserId;
@@ -127,6 +129,7 @@ public class Clock extends TextView implements
     private int mClockDateStyle = CLOCK_DATE_STYLE_REGULAR;
     private int mClockDatePosition;
     private String mClockDateFormat = null;
+    private boolean mPeriodHourMinuteSeparator;
 
     private boolean mIsStatusBar;
     private boolean useStaticColor = false;
@@ -248,7 +251,8 @@ public class Clock extends TextView implements
                     STATUS_BAR_CLOCK_DATE_DISPLAY,
                     STATUS_BAR_CLOCK_DATE_STYLE,
                     STATUS_BAR_CLOCK_DATE_POSITION,
-                    STATUS_BAR_CLOCK_DATE_FORMAT);
+                    STATUS_BAR_CLOCK_DATE_FORMAT,
+                    STATUS_BAR_CLOCK_PERIOD_SEPARATOR);
             mContext.getContentResolver().registerContentObserver(
                     LineageSettings.System.getUriFor(LineageSettings.System.STATUS_BAR_AM_PM),
                     false, mContentObserver);
@@ -332,7 +336,8 @@ public class Clock extends TextView implements
         if (forceTextUpdate || !TextUtils.equals(smallTime, getText())) {
             setText(smallTime);
         }
-        setContentDescription(mContentDescriptionFormat.format(mCalendar.getTime()));
+        setContentDescription(applyPeriodToFormattedTimeIfNeeded(
+                mContentDescriptionFormat.format(mCalendar.getTime())));
     }
 
     final void updateClock() {
@@ -355,6 +360,8 @@ public class Clock extends TextView implements
                     TunerService.parseInteger(newValue, STYLE_DATE_LEFT);
         } else if (STATUS_BAR_CLOCK_DATE_FORMAT.equals(key)) {
             mClockDateFormat = newValue;
+        } else if (STATUS_BAR_CLOCK_PERIOD_SEPARATOR.equals(key)) {
+            mPeriodHourMinuteSeparator = TunerService.parseIntegerSwitch(newValue, false);
         }
         // Force refresh of dependent variables.
         mContentDescriptionFormatString = "";
@@ -532,7 +539,8 @@ public class Clock extends TextView implements
         CharSequence dateString = null;
 
         String result = "";
-        String timeResult = mClockFormat.format(mCalendar.getTime());
+        String timeResult = applyPeriodToFormattedTimeIfNeeded(
+                mClockFormat.format(mCalendar.getTime()));
         String dateResult = "";
 
         if (mIsStatusBar && mClockDateDisplay != CLOCK_DATE_DISPLAY_GONE) {
@@ -600,6 +608,29 @@ public class Clock extends TextView implements
         return formatted;
     }
 
+    private String applyPeriodToFormattedTimeIfNeeded(String formatted) {
+        if (!mPeriodHourMinuteSeparator) {
+            return formatted;
+        }
+        return replaceHourMinuteSeparatorWithPeriod(formatted);
+    }
+
+    /**
+     * Replaces the first time separator between hour and minute (typically {@code ':'} or the
+     * fullwidth variant) with a period, leaving any following separators (e.g. before seconds)
+     * unchanged.
+     */
+    private static String replaceHourMinuteSeparatorWithPeriod(String time) {
+        int i = time.indexOf(':');
+        if (i < 0) {
+            i = time.indexOf('\uFF1A');
+        }
+        if (i >= 0) {
+            return time.substring(0, i) + '.' + time.substring(i + 1);
+        }
+        return time;
+    }
+
     private boolean mDemoMode;
 
     @Override
@@ -621,7 +652,8 @@ public class Clock extends TextView implements
             mCalendar.set(Calendar.MINUTE, mm);
         }
         setText(getSmallTime());
-        setContentDescription(mContentDescriptionFormat.format(mCalendar.getTime()));
+        setContentDescription(applyPeriodToFormattedTimeIfNeeded(
+                mContentDescriptionFormat.format(mCalendar.getTime())));
     }
 
     @Override

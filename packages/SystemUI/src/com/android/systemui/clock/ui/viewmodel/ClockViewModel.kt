@@ -57,10 +57,13 @@ constructor(
         }
 
     private val _contentDescriptionText: Flow<String> =
-        combine(contentDescriptionFormat, clockInteractor.currentTime) {
+        combine(
             contentDescriptionFormat,
-            time ->
-            contentDescriptionFormat.format(time)
+            clockInteractor.currentTime,
+            clockInteractor.usePeriodHourMinuteSeparator,
+        ) { contentDescriptionFormat, time, usePeriod ->
+            val raw = contentDescriptionFormat.format(time)
+            if (usePeriod) replaceHourMinuteSeparatorWithPeriod(raw) else raw
         }
 
     val contentDescriptionText: String by
@@ -69,8 +72,12 @@ constructor(
         )
 
     private val clockTextFormat: Flow<SimpleDateFormat> =
-        combine(clockInteractor.onTimeFormatChange, clockInteractor.showSeconds) { _, showSeconds ->
-            getSimpleDateFormat(getClockTextFormatString(showSeconds))
+        combine(
+            clockInteractor.onTimeFormatChange,
+            clockInteractor.showSeconds,
+            clockInteractor.usePeriodHourMinuteSeparator,
+        ) { _, showSeconds, usePeriod ->
+            getSimpleDateFormat(getClockTextFormatString(showSeconds, usePeriod))
         }
 
     private val _clockText: Flow<String> =
@@ -101,12 +108,16 @@ constructor(
         return dateTimePatternGenerator.getBestPattern(formatSkeleton)
     }
 
-    private fun getClockTextFormatString(showSeconds: Boolean): String {
+    private fun getClockTextFormatString(
+        showSeconds: Boolean,
+        usePeriodHourMinuteSeparator: Boolean,
+    ): String {
+        val hmSep = if (usePeriodHourMinuteSeparator) "." else ":"
         var formatString =
             if (dateFormatUtil.is24HourFormat) {
-                "H:mm"
+                "H${hmSep}mm"
             } else {
-                "h:mm"
+                "h${hmSep}mm"
             }
 
         if (showSeconds) {
@@ -124,5 +135,17 @@ constructor(
 
     private fun getSimpleDateFormat(formatString: String): SimpleDateFormat {
         return SimpleDateFormat(formatString, Locale.getDefault())
+    }
+
+    private fun replaceHourMinuteSeparatorWithPeriod(time: String): String {
+        var i = time.indexOf(':')
+        if (i < 0) {
+            i = time.indexOf('\uFF1A')
+        }
+        return if (i >= 0) {
+            time.substring(0, i) + '.' + time.substring(i + 1)
+        } else {
+            time
+        }
     }
 }

@@ -49,6 +49,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -234,6 +235,31 @@ class ClockViewModelTest : SysuiTestCase() {
         }
 
     @Test
+    @EnableFlags(ClockModernization.FLAG_NAME)
+    fun periodSeparator_is24HourFormatTrue_updatesClockText() =
+        kosmos.runTest {
+            fakeSystemClock.setCurrentTimeMillis(CURRENT_TIME_MILLIS)
+            whenever(dateFormatUtil.is24HourFormat).thenReturn(true)
+            underTest.activateIn(testScope)
+
+            assertThat(underTest.clockText).isEqualTo("23:12")
+            assertThat(underTest.contentDescriptionText).isEqualTo("23:12")
+
+            val captor = argumentCaptor<Tunable>()
+            verify(tunerService, times(2)).addTunable(captor.capture(), any())
+            captor.allValues.forEach {
+                it.onTuningChanged(
+                    ClockInteractor.STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY,
+                    "1",
+                )
+            }
+            runCurrent()
+
+            assertThat(underTest.clockText).isEqualTo("23.12")
+            assertThat(underTest.contentDescriptionText).isEqualTo("23.12")
+        }
+
+    @Test
     fun clockText_updatesWhenConfigurationChanged_12To24() =
         kosmos.runTest {
             fakeSystemClock.setCurrentTimeMillis(CURRENT_TIME_MILLIS)
@@ -330,7 +356,7 @@ class ClockViewModelTest : SysuiTestCase() {
 
     private fun Kosmos.getTunable(): Tunable {
         val tunableCaptor = argumentCaptor<Tunable>()
-        verify(tunerService).addTunable(tunableCaptor.capture(), any())
+        verify(tunerService, times(2)).addTunable(tunableCaptor.capture(), any())
         return tunableCaptor.firstValue
     }
 
