@@ -133,6 +133,9 @@ private val TileViewModel.traceName
 /** [Settings.Secure] key selecting card tiles (0) or classic circular tiles (1). */
 private const val QS_PANEL_STYLE = "qs_panel_style"
 
+/** [Settings.Secure] key hiding the label underneath classic circular tiles. */
+private const val QS_TILE_LABEL_HIDE = "qs_tile_label_hide"
+
 /**
  * This composable function is responsible for rendering a tile based on the provided
  * [TileViewModel]. It handles different states of the tile (e.g., available, unavailable),
@@ -200,7 +203,8 @@ fun ContentScope.Tile(
         }
 
         val classicStyle = rememberQSPanelStyle()
-        val tileHeight = if (classicStyle) TileHeight + 8.dp else TileHeight
+        val labelHide = classicStyle && rememberQSTileLabelHide()
+        val tileHeight = if (classicStyle && !labelHide) TileHeight + 8.dp else TileHeight
 
         val shapeMode = rememberTileShapeMode()
         val wantCircle = shapeMode == 3 && iconOnly
@@ -391,6 +395,7 @@ fun ContentScope.Tile(
                                     label = uiState.label,
                                     iconProvider = iconProvider,
                                     colors = colors,
+                                    labelHide = labelHide,
                                     modifier =
                                         Modifier.align(Alignment.Center).bounceScale {
                                             currentBounceableInfo.bounceable.iconBounceScale
@@ -734,6 +739,53 @@ fun rememberQSPanelStyle(): Boolean {
     }
 
     return classicStyleEnabled
+}
+
+/**
+ * Reads and observes [Settings.Secure] `qs_tile_label_hide`, which drops the label underneath
+ * classic circular tiles so they render as bare icons.
+ */
+@Composable
+fun rememberQSTileLabelHide(): Boolean {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readLabelHideEnabled(): Boolean {
+        return try {
+            Settings.Secure.getIntForUser(
+                contentResolver,
+                QS_TILE_LABEL_HIDE,
+                0,
+                UserHandle.USER_CURRENT,
+            ) != 0
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    var labelHideEnabled by remember { mutableStateOf(readLabelHideEnabled()) }
+
+    DisposableEffect(contentResolver) {
+        // Scene-container QS can compose before Settings is ready; re-read on subscribe.
+        labelHideEnabled = readLabelHideEnabled()
+        val observer =
+            object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    context.mainExecutor.execute { labelHideEnabled = readLabelHideEnabled() }
+                }
+            }
+
+        contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(QS_TILE_LABEL_HIDE),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+
+    return labelHideEnabled
 }
 
 @Composable

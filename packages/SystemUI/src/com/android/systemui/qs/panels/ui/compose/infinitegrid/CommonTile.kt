@@ -126,11 +126,24 @@ fun ClassicTileContent(
     label: String,
     iconProvider: Context.() -> Icon,
     colors: TileColors,
+    labelHide: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
 
-    val tileHeight = CommonTileDefaults.TileHeight - 8.dp
+    val tileHeight =
+        if (labelHide) {
+            CommonTileDefaults.TileHeight
+        } else {
+            CommonTileDefaults.TileHeight - 8.dp
+        }
+
+    val iconSize =
+        if (labelHide) {
+            CommonTileDefaults.SmallTileIconSize
+        } else {
+            CommonTileDefaults.LargeTileIconSize
+        }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -151,25 +164,27 @@ fun ClassicTileContent(
             SmallTileContent(
                 iconProvider = iconProvider,
                 color = colors.icon,
-                size = { CommonTileDefaults.LargeTileIconSize },
+                size = { iconSize },
                 modifier = Modifier.align(Alignment.Center),
             )
         }
 
-        val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-        BasicText(
-            text = label,
-            style =
-                TextStyle(
-                    fontSize = CommonTileDefaults.ClassicLabelSize,
-                    textAlign = TextAlign.Center,
-                    hyphens = Hyphens.Auto,
-                ),
-            color = { labelColor },
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
-        )
+        if (!labelHide) {
+            val labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+            BasicText(
+                text = label,
+                style =
+                    TextStyle(
+                        fontSize = CommonTileDefaults.ClassicLabelSize,
+                        textAlign = TextAlign.Center,
+                        hyphens = Hyphens.Auto,
+                    ),
+                color = { labelColor },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 4.dp).fillMaxWidth(),
+            )
+        }
     }
 }
 
