@@ -22,6 +22,7 @@ import android.graphics.Path
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
+import android.service.quicksettings.Tile.STATE_ACTIVE
 import android.text.TextUtils
 import android.util.PathParser
 import androidx.annotation.VisibleForTesting
@@ -123,7 +124,19 @@ private const val TEST_TAG_TOGGLE = "qs_tile_toggle_target"
 private const val TEST_TAG_SMALL = "qs_tile_small"
 private const val TEST_TAG_LARGE = "qs_tile_large"
 
-/** Classic tile content: a circular icon badge with the tile label underneath. */
+/**
+ * Classic tile content: a circular icon badge with the tile label underneath.
+ *
+ * [QSTileIconShapes.classicUsesDarkOutlineBackdrop] (`outline_style_dark`) uses a low-alpha QS
+ * gradient wash inside the clip when gradient is enabled
+ * ([CommonTileDefaults.ClassicOutlineDarkGradientWashAlpha]); otherwise a solid surface disc.
+ * **Active** tiles keep that wash/disc and a primary ring with an
+ * [androidx.compose.material3.ColorScheme.onSurface] icon.
+ * **Inactive** / unavailable tiles use a greyed ring
+ * ([CommonTileDefaults.ClassicOutlineDarkInactiveRingAlpha] on
+ * [androidx.compose.material3.ColorScheme.onSurfaceVariant]) with **no** inner wash/solid fill
+ * (panel shows through).
+ */
 @Composable
 fun ClassicTileContent(
     label: String,
@@ -131,9 +144,11 @@ fun ClassicTileContent(
     iconShapeKey: String,
     colors: TileColors,
     labelHide: Boolean,
+    tileState: Int,
     modifier: Modifier = Modifier,
 ) {
     val isNoBackground = iconShapeKey in QSTileIconShapes.NO_BACKGROUND_KEYS
+    val darkOutlineBackdrop = QSTileIconShapes.classicUsesDarkOutlineBackdrop(iconShapeKey)
     val iconShape = remember(iconShapeKey) { QSTileIconShapes.shapeForKey(iconShapeKey) }
 
     val overlayPathData = remember(iconShapeKey) { QSTileIconShapes.OVERLAY_BY_KEY[iconShapeKey] }
@@ -149,7 +164,29 @@ fun ClassicTileContent(
         }
 
     val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
-    val animatedOutlineColor by animateColorAsState(colors.outline, label = "QSTileOutlineColor")
+    val outlineColorTarget =
+        when {
+            darkOutlineBackdrop && tileState == STATE_ACTIVE -> MaterialTheme.colorScheme.primary
+            darkOutlineBackdrop ->
+                MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                    alpha = CommonTileDefaults.ClassicOutlineDarkInactiveRingAlpha
+                )
+            else -> colors.outline
+        }
+    val animatedOutlineColor by animateColorAsState(outlineColorTarget, label = "QSTileOutlineColor")
+    val darkBackdropColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val iconColor =
+        when {
+            darkOutlineBackdrop && tileState == STATE_ACTIVE -> MaterialTheme.colorScheme.onSurface
+            !isNoBackground -> colors.icon
+            else -> animatedOutlineColor
+        }
+    val shouldFill =
+        when {
+            darkOutlineBackdrop && tileState == STATE_ACTIVE -> true
+            darkOutlineBackdrop -> false
+            else -> !isNoBackground
+        }
 
     val tileHeight =
         if (labelHide) {
@@ -173,10 +210,20 @@ fun ClassicTileContent(
         Box(
             modifier =
                 Modifier.size(tileHeight)
-                    .thenIf(!isNoBackground) {
+                    .thenIf(shouldFill) {
                         Modifier.clip(iconShape).drawBehind {
                             val brush = colors.backgroundBrush
-                            if (brush != null) {
+                            if (darkOutlineBackdrop) {
+                                if (brush != null) {
+                                    drawRect(
+                                        brush = brush,
+                                        alpha =
+                                            CommonTileDefaults.ClassicOutlineDarkGradientWashAlpha,
+                                    )
+                                } else {
+                                    drawRect(color = darkBackdropColor)
+                                }
+                            } else if (brush != null) {
                                 drawRect(brush = brush)
                             } else {
                                 drawRect(color = animatedColor)
@@ -201,7 +248,7 @@ fun ClassicTileContent(
         ) {
             SmallTileContent(
                 iconProvider = iconProvider,
-                color = if (!isNoBackground) colors.icon else animatedOutlineColor,
+                color = iconColor,
                 size = { iconSize },
                 modifier = Modifier.align(Alignment.Center),
             )
@@ -608,6 +655,18 @@ object CommonTileDefaults {
     val ClassicLabelSize = 10.sp
     const val TILE_MARQUEE_ITERATIONS = 1
     const val TILE_INITIAL_DELAY_MILLIS = 2000
+
+    /**
+     * Opacity for the QS tile gradient inside `outline_style_dark` (panel shows through; matches
+     * the subtle wash look of transparent classic tiles).
+     */
+    const val ClassicOutlineDarkGradientWashAlpha = 0.22f
+
+    /**
+     * Inactive / unavailable `outline_style_dark` ring: greyed
+     * [androidx.compose.material3.ColorScheme.onSurfaceVariant] (disabled-style outline).
+     */
+    const val ClassicOutlineDarkInactiveRingAlpha = 0.52f
 
     @Composable
     fun longPressLabelSettings() = stringResource(id = R.string.accessibility_long_click_tile)

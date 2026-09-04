@@ -401,6 +401,7 @@ fun ContentScope.Tile(
                                     iconShapeKey = iconShapeKey,
                                     colors = colors,
                                     labelHide = labelHide,
+                                    tileState = uiState.visualState,
                                     modifier =
                                         Modifier.align(Alignment.Center).bounceScale {
                                             currentBounceableInfo.bounceable.iconBounceScale
