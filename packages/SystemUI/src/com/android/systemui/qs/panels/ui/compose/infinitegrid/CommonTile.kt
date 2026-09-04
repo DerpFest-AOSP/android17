@@ -17,10 +17,13 @@
 package com.android.systemui.qs.panels.ui.compose.infinitegrid
 
 import android.content.Context
+import android.graphics.Matrix
+import android.graphics.Path
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.graphics.drawable.Drawable
 import android.text.TextUtils
+import android.util.PathParser
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.graphics.res.animatedVectorResource
@@ -65,6 +68,7 @@ import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.ColorProducer
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.DefaultAlpha
@@ -129,9 +133,23 @@ fun ClassicTileContent(
     labelHide: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val isNoBackground = iconShapeKey in QSTileIconShapes.NO_BACKGROUND_KEYS
     val iconShape = remember(iconShapeKey) { QSTileIconShapes.shapeForKey(iconShapeKey) }
 
+    val overlayPathData = remember(iconShapeKey) { QSTileIconShapes.OVERLAY_BY_KEY[iconShapeKey] }
+    val overlayPath =
+        remember(overlayPathData) {
+            overlayPathData?.let { pathData ->
+                try {
+                    PathParser.createPathFromPathData(pathData)
+                } catch (_: RuntimeException) {
+                    null
+                }
+            }
+        }
+
     val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
+    val animatedOutlineColor by animateColorAsState(colors.outline, label = "QSTileOutlineColor")
 
     val tileHeight =
         if (labelHide) {
@@ -154,18 +172,36 @@ fun ClassicTileContent(
     ) {
         Box(
             modifier =
-                Modifier.size(tileHeight).clip(iconShape).drawBehind {
-                    val brush = colors.backgroundBrush
-                    if (brush != null) {
-                        drawRect(brush = brush)
-                    } else {
-                        drawRect(color = animatedColor)
+                Modifier.size(tileHeight)
+                    .thenIf(!isNoBackground) {
+                        Modifier.clip(iconShape).drawBehind {
+                            val brush = colors.backgroundBrush
+                            if (brush != null) {
+                                drawRect(brush = brush)
+                            } else {
+                                drawRect(color = animatedColor)
+                            }
+                        }
                     }
-                }
+                    .thenIf(overlayPath != null) {
+                        Modifier.drawWithContent {
+                            drawContent()
+                            overlayPath?.let { path ->
+                                val scaledPath = Path(path)
+                                val matrix = Matrix()
+                                matrix.setScale(size.width / 100f, size.height / 100f)
+                                scaledPath.transform(matrix)
+                                drawPath(
+                                    path = scaledPath.asComposePath(),
+                                    color = animatedOutlineColor,
+                                )
+                            }
+                        }
+                    }
         ) {
             SmallTileContent(
                 iconProvider = iconProvider,
-                color = colors.icon,
+                color = if (!isNoBackground) colors.icon else animatedOutlineColor,
                 size = { iconSize },
                 modifier = Modifier.align(Alignment.Center),
             )

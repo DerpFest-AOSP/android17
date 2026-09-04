@@ -641,6 +641,7 @@ data class TileColors(
     val icon: Color,
     val backgroundBrush: Brush? = null,
     val iconBackgroundBrush: Brush? = null,
+    val outline: Color,
 )
 
 @VisibleForTesting
@@ -893,6 +894,7 @@ private object TileDefaults {
             icon = MaterialTheme.colorScheme.onPrimary,
             backgroundBrush = gradient,
             iconBackgroundBrush = gradient,
+            outline = MaterialTheme.colorScheme.primary,
         )
     }
 
@@ -907,6 +909,7 @@ private object TileDefaults {
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onPrimary,
             iconBackgroundBrush = gradient,
+            outline = MaterialTheme.colorScheme.primary,
         )
     }
 
@@ -919,6 +922,7 @@ private object TileDefaults {
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
+            outline = MaterialTheme.colorScheme.onSurface,
         )
 
     @Composable
@@ -930,6 +934,7 @@ private object TileDefaults {
             label = MaterialTheme.colorScheme.onSurface,
             secondaryLabel = MaterialTheme.colorScheme.onSurface,
             icon = MaterialTheme.colorScheme.onSurface,
+            outline = MaterialTheme.colorScheme.onSurface,
         )
 
     @Composable
@@ -943,6 +948,7 @@ private object TileDefaults {
             label = onSurfaceVariantColor,
             secondaryLabel = onSurfaceVariantColor,
             icon = onSurfaceVariantColor,
+            outline = onSurfaceVariantColor,
         )
     }
 
