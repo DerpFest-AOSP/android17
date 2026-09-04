@@ -293,7 +293,7 @@ fun ContentScope.Tile(
                         }
                         .sysuiResTag("tile_expandable")
                         .fillMaxWidth()
-                        .tileToggleAnimation(uiState.state, tileAnimationStyle)
+                        .tileToggleAnimation(uiState.visualState, tileAnimationStyle)
                         // Pin height for circle/classic; otherwise QQS max-height stretches rows.
                         .thenIf(classicStyle || wantCircle) { Modifier.height(tileHeight) }
                         .bounceable(
