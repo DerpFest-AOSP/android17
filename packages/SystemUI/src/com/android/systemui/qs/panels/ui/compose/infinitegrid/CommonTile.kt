@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -125,10 +124,13 @@ private const val TEST_TAG_LARGE = "qs_tile_large"
 fun ClassicTileContent(
     label: String,
     iconProvider: Context.() -> Icon,
+    iconShapeKey: String,
     colors: TileColors,
     labelHide: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val iconShape = remember(iconShapeKey) { QSTileIconShapes.shapeForKey(iconShapeKey) }
+
     val animatedColor by animateColorAsState(colors.background, label = "QSTileCircleBgColor")
 
     val tileHeight =
@@ -152,7 +154,7 @@ fun ClassicTileContent(
     ) {
         Box(
             modifier =
-                Modifier.size(tileHeight).clip(CircleShape).drawBehind {
+                Modifier.size(tileHeight).clip(iconShape).drawBehind {
                     val brush = colors.backgroundBrush
                     if (brush != null) {
                         drawRect(brush = brush)

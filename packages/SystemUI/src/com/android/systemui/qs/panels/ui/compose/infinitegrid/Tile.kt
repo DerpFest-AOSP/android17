@@ -136,6 +136,9 @@ private const val QS_PANEL_STYLE = "qs_panel_style"
 /** [Settings.Secure] key hiding the label underneath classic circular tiles. */
 private const val QS_TILE_LABEL_HIDE = "qs_tile_label_hide"
 
+/** [Settings.Secure] key naming the [QSTileIconShapes] shape used by classic tiles. */
+private const val QS_TILE_ICON_SHAPE = "qs_tile_icon_shape"
+
 /**
  * This composable function is responsible for rendering a tile based on the provided
  * [TileViewModel]. It handles different states of the tile (e.g., available, unavailable),
@@ -203,6 +206,7 @@ fun ContentScope.Tile(
         }
 
         val classicStyle = rememberQSPanelStyle()
+        val iconShapeKey = rememberQSTileIconShapeKey()
         val labelHide = classicStyle && rememberQSTileLabelHide()
         val tileHeight = if (classicStyle && !labelHide) TileHeight + 8.dp else TileHeight
 
@@ -394,6 +398,7 @@ fun ContentScope.Tile(
                                 ClassicTileContent(
                                     label = uiState.label,
                                     iconProvider = iconProvider,
+                                    iconShapeKey = iconShapeKey,
                                     colors = colors,
                                     labelHide = labelHide,
                                     modifier =
@@ -786,6 +791,53 @@ fun rememberQSTileLabelHide(): Boolean {
     }
 
     return labelHideEnabled
+}
+
+/**
+ * Reads and observes [Settings.Secure] `qs_tile_icon_shape`, naming the [QSTileIconShapes] shape
+ * that classic tiles clip their icon badge to. Unknown values fall back to the default shape.
+ */
+@Composable
+fun rememberQSTileIconShapeKey(): String {
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
+
+    fun readIconShapeKey(): String {
+        return try {
+            Settings.Secure.getStringForUser(
+                    contentResolver,
+                    QS_TILE_ICON_SHAPE,
+                    UserHandle.USER_CURRENT,
+                )
+                ?.takeIf { QSTileIconShapes.isKnownKey(it) } ?: QSTileIconShapes.DEFAULT_KEY
+        } catch (_: Throwable) {
+            QSTileIconShapes.DEFAULT_KEY
+        }
+    }
+
+    var iconShapeKey by remember { mutableStateOf(readIconShapeKey()) }
+
+    DisposableEffect(contentResolver) {
+        // Scene-container QS can compose before Settings is ready; re-read on subscribe.
+        iconShapeKey = readIconShapeKey()
+        val observer =
+            object : ContentObserver(null) {
+                override fun onChange(selfChange: Boolean) {
+                    context.mainExecutor.execute { iconShapeKey = readIconShapeKey() }
+                }
+            }
+
+        contentResolver.registerContentObserver(
+            Settings.Secure.getUriFor(QS_TILE_ICON_SHAPE),
+            false,
+            observer,
+            UserHandle.USER_ALL,
+        )
+
+        onDispose { contentResolver.unregisterContentObserver(observer) }
+    }
+
+    return iconShapeKey
 }
 
 @Composable
