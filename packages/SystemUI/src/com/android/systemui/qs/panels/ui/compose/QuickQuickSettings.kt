@@ -30,6 +30,7 @@ import com.android.compose.animation.scene.ContentScope
 import com.android.systemui.compose.modifiers.sysuiResTag
 import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.qs.composefragment.ui.GridAnchor
+import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.Tile
 import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
 import com.android.systemui.qs.panels.ui.viewmodel.BounceableTileViewModel
@@ -43,12 +44,19 @@ fun ContentScope.QuickQuickSettings(
     modifier: Modifier = Modifier,
     listening: () -> Boolean,
 ) {
-    val columns = viewModel.columns
-    val sizedTiles = viewModel.tileViewModels
+    val classicStyle = rememberQSPanelStyle()
+    val columns = if (classicStyle) viewModel.classicQqsColumns else viewModel.columns
+    val sizedTiles =
+        if (classicStyle) {
+            viewModel.allTileViewModels
+                .take(viewModel.classicQqsMaxTiles)
+                .fastMap { SizedTileImpl(it, 1) }
+        } else {
+            viewModel.tileViewModels
+        }
     val tiles = sizedTiles.fastMap { it.tile }
     val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    val classicStyle = rememberQSPanelStyle()
 
     Box(modifier = modifier) {
         GridAnchor()

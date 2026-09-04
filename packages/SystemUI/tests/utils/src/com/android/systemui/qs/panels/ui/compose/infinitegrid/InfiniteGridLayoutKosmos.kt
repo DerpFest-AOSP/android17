@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import com.android.systemui.brightness.ui.viewmodel.brightnessSliderViewModelFactory
 import com.android.systemui.haptics.msdl.tileHapticsViewModelFactory
 import com.android.systemui.kosmos.Kosmos
+import com.android.systemui.qs.panels.data.repository.qsColumnsRepository
 import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsVolumeSliderVisibilityInteractor
@@ -126,5 +127,6 @@ val Kosmos.infiniteGridLayout by
             shadeModeInteractor,
             brightnessSliderViewModelFactory,
             audioStreamSliderViewModelFactory,
+            qsColumnsRepository,
         )
     }

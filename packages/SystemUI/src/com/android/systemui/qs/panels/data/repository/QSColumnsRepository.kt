@@ -35,6 +35,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 
 @SysUISingleton
@@ -45,12 +46,7 @@ constructor(
     @ShadeDisplayAware private val resources: Resources,
     @ShadeDisplayAware private val configurationRepository: ConfigurationRepository,
 ) {
-    private fun settingsChanges(): Flow<Unit> = callbackFlow {
-        val uris: List<Uri> =
-            listOf(
-                Settings.System.getUriFor(Settings.System.QS_LAYOUT_COLUMNS),
-                Settings.System.getUriFor(Settings.System.QS_LAYOUT_COLUMNS_LANDSCAPE),
-            )
+    private fun settingsChanges(vararg keys: String): Flow<Unit> = callbackFlow {
         val observer =
             object : ContentObserver(null) {
                 override fun onChange(selfChange: Boolean, uri: Uri?) {
@@ -58,9 +54,9 @@ constructor(
                 }
             }
         val cr = context.contentResolver
-        uris.forEach {
+        keys.forEach {
             cr.registerContentObserver(
-                it,
+                Settings.System.getUriFor(it),
                 /* notifyForDescendants */ false,
                 observer,
                 UserHandle.USER_ALL,
@@ -85,7 +81,13 @@ constructor(
     }
 
     private fun reactiveColumns(@IntegerRes defaultResId: Int): Flow<Int> =
-        merge(configurationRepository.onConfigurationChange, settingsChanges())
+        merge(
+                configurationRepository.onConfigurationChange,
+                settingsChanges(
+                    Settings.System.QS_LAYOUT_COLUMNS,
+                    Settings.System.QS_LAYOUT_COLUMNS_LANDSCAPE,
+                ),
+            )
             .emitOnStart()
             .mapDirect { readColumnsWithDefault(defaultResId) }
 
@@ -106,4 +108,70 @@ constructor(
 
     val defaultColumns: Int =
         resources.getInteger(R.integer.quick_settings_infinite_grid_num_columns)
+
+    /**
+     * Column count for classic circular QS (`qs_panel_style` = 1), with fallbacks to
+     * [R.integer.quick_settings_num_columns_classic] /
+     * [R.integer.quick_settings_num_columns_classic_landscape].
+     */
+    val classicColumns: Flow<Int> =
+        classicColumnsFlow(
+            Settings.System.QS_LAYOUT_COLUMNS_CLASSIC,
+            Settings.System.QS_LAYOUT_COLUMNS_LANDSCAPE_CLASSIC,
+        )
+
+    /**
+     * Column count for QQS when using classic circular tiles (separate from expanded QS columns).
+     */
+    val classicQqsColumns: Flow<Int> =
+        classicColumnsFlow(
+            Settings.System.QQS_LAYOUT_COLUMNS_CLASSIC,
+            Settings.System.QQS_LAYOUT_COLUMNS_LANDSCAPE_CLASSIC,
+        )
+
+    val defaultClassicColumns: Int
+        get() =
+            resources.getInteger(
+                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    R.integer.quick_settings_num_columns_classic_landscape
+                } else {
+                    R.integer.quick_settings_num_columns_classic
+                }
+            )
+
+    private fun classicColumnsFlow(portraitKey: String, landscapeKey: String): Flow<Int> =
+        merge(
+                configurationRepository.onConfigurationChange,
+                settingsChanges(portraitKey, landscapeKey),
+            )
+            .emitOnStart()
+            .mapDirect { readClassicColumns(portraitKey, landscapeKey) }
+            .distinctUntilChanged()
+
+    private fun readClassicColumns(portraitKey: String, landscapeKey: String): Int {
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val portraitValue =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                portraitKey,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        val landscapeValue =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                landscapeKey,
+                0,
+                UserHandle.USER_CURRENT,
+            )
+        val value =
+            if (isLandscape && landscapeValue > 0) {
+                landscapeValue
+            } else if (portraitValue > 0) {
+                portraitValue
+            } else {
+                defaultClassicColumns
+            }
+        return value.coerceAtLeast(1)
+    }
 }

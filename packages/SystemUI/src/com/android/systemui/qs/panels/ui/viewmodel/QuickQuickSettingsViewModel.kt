@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.ui.viewmodel
 
+import android.content.res.Resources
 import androidx.annotation.VisibleForTesting
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -24,11 +25,14 @@ import com.android.systemui.lifecycle.HydratedActivatable
 import com.android.systemui.media.controls.ui.controller.MediaHierarchyManager.Companion.LOCATION_QQS
 import com.android.systemui.media.remedia.ui.compose.MediaUiBehavior
 import com.android.systemui.media.remedia.ui.viewmodel.MediaCarouselVisibility
+import com.android.systemui.qs.panels.data.repository.QSColumnsRepository
 import com.android.systemui.qs.panels.domain.interactor.QuickQuickSettingsRowInteractor
 import com.android.systemui.qs.panels.shared.model.SizedTileImpl
 import com.android.systemui.qs.panels.shared.model.splitInRowsSequence
 import com.android.systemui.qs.pipeline.domain.interactor.CurrentTilesInteractor
 import com.android.systemui.qs.pipeline.shared.TileSpec
+import com.android.systemui.res.R
+import com.android.systemui.shade.ShadeDisplayAware
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.coroutineScope
@@ -44,6 +48,8 @@ constructor(
     val squishinessViewModel: TileSquishinessViewModel,
     iconTilesViewModel: IconTilesViewModel,
     val tileHapticsViewModelFactory: TileHapticsViewModel.Factory,
+    qsColumnsRepository: QSColumnsRepository,
+    @ShadeDisplayAware private val resources: Resources,
 ) : HydratedActivatable() {
 
     private val qsColumnsViewModel = qsColumnsViewModelFactory.create(LOCATION_QQS, mediaUiBehavior)
@@ -72,6 +78,32 @@ constructor(
         get() = qsColumnsViewModel.largeSpan
 
     private val currentTiles by tilesInteractor.currentTiles.hydratedStateOf()
+
+    private val classicQqsColumnsValue by
+        qsColumnsRepository.classicQqsColumns.hydratedStateOf(
+            initialValue = qsColumnsRepository.defaultClassicColumns
+        )
+
+    /** Columns for QQS when classic circular style is active (independent from card QQS columns). */
+    val classicQqsColumns: Int
+        get() = classicQqsColumnsValue
+
+    /**
+     * Row count for classic QQS from resources only (does not use `qqs_layout_rows`). Media-in-row
+     * doubling matches card behavior.
+     */
+    private val classicQqsRowsResource: Int
+        get() {
+            val base = resources.getInteger(R.integer.quick_qs_paginated_grid_num_rows)
+            return if (mediaInRowViewModel.shouldMediaShowInRow) base * 2 else base
+        }
+
+    /** Max tiles in QQS for classic: classic columns × resource row count. */
+    val classicQqsMaxTiles by derivedStateOf { classicQqsColumnsValue * classicQqsRowsResource }
+
+    val allTileViewModels by derivedStateOf {
+        currentTiles.map { TileViewModel(it.tile, it.spec, it.expandable) }
+    }
 
     val tileViewModels by derivedStateOf {
         currentTiles

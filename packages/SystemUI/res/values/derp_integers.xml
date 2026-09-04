@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: DerpFest AOSP
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <!-- Classic circular QS defaults when layout settings are unset (0) -->
+    <integer name="quick_settings_num_columns_classic">4</integer>
+    <integer name="quick_settings_num_columns_classic_landscape">6</integer>
+</resources>

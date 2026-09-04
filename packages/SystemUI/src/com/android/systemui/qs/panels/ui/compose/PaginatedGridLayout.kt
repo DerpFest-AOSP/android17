@@ -49,6 +49,7 @@ import com.android.systemui.qs.footer.ui.viewmodel.FooterActionsDataUsageViewMod
 import com.android.systemui.qs.panels.dagger.PaginatedBaseLayoutType
 import com.android.systemui.qs.panels.ui.compose.Dimensions.FooterHeight
 import com.android.systemui.qs.panels.ui.compose.Dimensions.InterPageSpacing
+import com.android.systemui.qs.panels.ui.compose.infinitegrid.rememberQSPanelStyle
 import com.android.systemui.qs.panels.ui.compose.toolbar.EditModeButton
 import com.android.systemui.qs.panels.ui.viewmodel.PaginatedGridViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TileViewModel
@@ -79,9 +80,16 @@ constructor(
             }
 
         val rows = viewModel.rows
+        val classicStyle = rememberQSPanelStyle()
+        val classicColumns = viewModel.classicColumns
         val pages =
-            remember(tiles, rows, *delegateGridViewModel.pageKeys) {
-                delegateGridViewModel.splitIntoPages(tiles, rows)
+            remember(tiles, rows, classicStyle, classicColumns, *delegateGridViewModel.pageKeys) {
+                delegateGridViewModel.splitIntoPages(
+                    tiles,
+                    rows,
+                    columnsOverride = if (classicStyle) classicColumns else null,
+                    classicStyle = classicStyle,
+                )
             }
 
         val pagerState = rememberPagerState(0) { pages.size }

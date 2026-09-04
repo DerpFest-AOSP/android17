@@ -53,6 +53,7 @@ import com.android.systemui.kosmos.runTest
 import com.android.systemui.kosmos.useUnconfinedTestDispatcher
 import com.android.systemui.qs.composefragment.dagger.usingMediaInComposeFragment
 import com.android.systemui.qs.flags.QsSplitInternetTile
+import com.android.systemui.qs.panels.data.repository.qsColumnsRepository
 import com.android.systemui.qs.panels.domain.interactor.iconTilesInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.qsPreferencesInteractor
@@ -113,6 +114,7 @@ class InfiniteGridLayoutEditTileGridTest : SysuiTestCase() {
                 shadeModeInteractor = shadeModeInteractor,
                 brightnessSliderViewModelFactory = brightnessSliderViewModelFactory,
                 audioStreamSliderViewModelFactory = audioStreamSliderViewModelFactory,
+                qsColumnsRepository = qsColumnsRepository,
             )
         }
 

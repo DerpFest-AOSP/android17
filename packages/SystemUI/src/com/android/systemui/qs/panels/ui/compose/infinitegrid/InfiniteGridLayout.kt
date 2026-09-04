@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.android.compose.animation.scene.ContentScope
@@ -45,6 +46,7 @@ import com.android.systemui.grid.ui.compose.VerticalSpannedGrid
 import com.android.systemui.haptics.msdl.qs.TileHapticsViewModel
 import com.android.systemui.lifecycle.rememberViewModel
 import com.android.systemui.qs.flags.QsLayoutMode
+import com.android.systemui.qs.panels.data.repository.QSColumnsRepository
 import com.android.systemui.qs.panels.domain.interactor.QSPreferencesInteractor
 import com.android.systemui.qs.panels.domain.interactor.QsBrightnessSliderVisibilityInteractor
 import com.android.systemui.qs.panels.domain.interactor.QsVolumeSliderVisibilityInteractor
@@ -92,6 +94,7 @@ constructor(
     private val shadeModeInteractor: ShadeModeInteractor,
     private val brightnessSliderViewModelFactory: BrightnessSliderViewModel.Factory,
     private val audioStreamSliderViewModelFactory: AudioStreamSliderViewModel.Factory,
+    private val qsColumnsRepository: QSColumnsRepository,
 ) : PaginatableGridLayout {
 
     @Composable
@@ -112,20 +115,28 @@ constructor(
                 textFeedbackContentViewModelFactory.create(context)
             }
 
-        val columns = viewModel.columnsWithMediaViewModel.columns
-        val largeTilesSpan = viewModel.columnsWithMediaViewModel.largeSpan
+        val classicStyle = rememberQSPanelStyle()
+        val classicColumns by
+            qsColumnsRepository.classicColumns.collectAsStateWithLifecycle(
+                initialValue = integerResource(R.integer.quick_settings_num_columns_classic)
+            )
+        val baseColumns = viewModel.columnsWithMediaViewModel.columns
+        val columns = if (classicStyle) classicColumns else baseColumns
+        val largeTilesSpan = if (classicStyle) 1 else viewModel.columnsWithMediaViewModel.largeSpan
         val largeTiles by viewModel.iconTilesViewModel.largeTilesState
         // Tiles or largeTiles may be updated while this is composed, so listen to any changes
         val sizedTiles =
-            remember(tiles, largeTiles, largeTilesSpan) {
+            remember(tiles, largeTiles, largeTilesSpan, classicStyle) {
                 tiles.map {
-                    SizedTileImpl(it, if (largeTiles.contains(it.spec)) largeTilesSpan else 1)
+                    SizedTileImpl(
+                        it,
+                        if (classicStyle) 1
+                        else if (largeTiles.contains(it.spec)) largeTilesSpan else 1,
+                    )
                 }
             }
         val squishiness by viewModel.squishinessViewModel.squishiness.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
-
-        val classicStyle = rememberQSPanelStyle()
 
         val bounceables =
             remember(sizedTiles) { List(sizedTiles.size) { BounceableTileViewModel() } }
@@ -213,13 +224,18 @@ constructor(
             remember(topBarActionsViewModel, showDualShadeSetting) {
                 topBarActionsViewModel.actions(showDualShadeSetting).toMutableStateList()
             }
-        val columns = columnsViewModel.columns
-        val largeTilesSpan = columnsViewModel.largeSpan
+        val classicStyle = rememberQSPanelStyle()
+        val classicEditColumns by
+            qsColumnsRepository.classicColumns.collectAsStateWithLifecycle(
+                initialValue = integerResource(R.integer.quick_settings_num_columns_classic)
+            )
+        val columns = if (classicStyle) classicEditColumns else columnsViewModel.columns
+        val largeTilesSpan = if (classicStyle) 1 else columnsViewModel.largeSpan
         val largeTiles by viewModel.iconTilesViewModel.largeTilesState
 
         val currentTiles by rememberUpdatedState(tiles.filter { it.isCurrent })
         val listState =
-            remember(columns, largeTilesSpan) {
+            remember(columns, largeTilesSpan, classicStyle) {
                 EditTileListState(
                     currentTiles,
                     largeTiles,
