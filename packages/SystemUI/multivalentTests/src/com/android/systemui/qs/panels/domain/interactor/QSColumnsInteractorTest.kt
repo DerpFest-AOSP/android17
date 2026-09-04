@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.domain.interactor
 
+import android.content.applicationContext
 import android.content.res.mainResources
 import android.platform.test.annotations.DisableFlags
 import android.platform.test.annotations.EnableFlags
@@ -59,7 +60,8 @@ class QSColumnsInteractorTest : SysuiTestCase() {
                 R.integer.quick_settings_split_shade_num_columns,
                 3,
             )
-            qsColumnsRepository = QSColumnsRepository(mainResources, configurationRepository)
+            qsColumnsRepository =
+                QSColumnsRepository(applicationContext, mainResources, configurationRepository)
         }
     private lateinit var underTest: QSColumnsInteractor
 

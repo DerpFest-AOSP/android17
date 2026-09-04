@@ -22,6 +22,7 @@ import com.android.systemui.classifier.domain.interactor.FalsingInteractor
 import com.android.systemui.development.ui.viewmodel.BuildNumberViewModel
 import com.android.systemui.inputdevice.domain.interactor.PointerDeviceInteractor
 import com.android.systemui.lifecycle.HydratedActivatable
+import com.android.systemui.qs.panels.domain.interactor.QSPaginatedRowsInteractor
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.EditModeButtonViewModel
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -35,9 +36,12 @@ constructor(
     val editModeButtonViewModelFactory: EditModeButtonViewModel.Factory,
     private val falsingInteractor: FalsingInteractor,
     pointerDeviceInteractor: PointerDeviceInteractor,
+    qsPaginatedRowsInteractor: QSPaginatedRowsInteractor,
 ) : IconTilesViewModel by iconTilesViewModel, HydratedActivatable() {
 
     var inFirstPage by inFirstPageViewModel::inFirstPage
+
+    val rows by qsPaginatedRowsInteractor.rows.hydratedStateOf()
 
     val showArrowsInPagerDots by
         pointerDeviceInteractor.isAnyPointerDeviceConnected.hydratedStateOf(initialValue = false)

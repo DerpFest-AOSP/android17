@@ -16,9 +16,12 @@
 
 package com.android.systemui.qs.panels.data.repository
 
+import android.content.applicationContext
 import android.content.res.mainResources
 import com.android.systemui.common.ui.data.repository.configurationRepository
 import com.android.systemui.kosmos.Kosmos
 
 var Kosmos.qsColumnsRepository by
-    Kosmos.Fixture { QSColumnsRepository(mainResources, configurationRepository) }
+    Kosmos.Fixture {
+        QSColumnsRepository(applicationContext, mainResources, configurationRepository)
+    }

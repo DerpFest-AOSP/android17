@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.ui.viewmodel
 
+import android.content.applicationContext
 import android.content.res.Configuration
 import android.content.res.mainResources
 import android.platform.test.annotations.DisableFlags
@@ -74,7 +75,8 @@ class QSColumnsViewModelTest : SysuiTestCase() {
                 R.integer.quick_settings_infinite_grid_tile_max_width,
                 4,
             )
-            qsColumnsRepository = QSColumnsRepository(mainResources, configurationRepository)
+            qsColumnsRepository =
+                QSColumnsRepository(applicationContext, mainResources, configurationRepository)
         }
 
     @Test
