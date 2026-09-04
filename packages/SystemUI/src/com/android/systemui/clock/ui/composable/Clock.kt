@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import com.android.systemui.clock.ui.viewmodel.ClockViewModel
 
 /** Composable for the clock UI that is shown on the top left of the status bar and the shade. */
@@ -39,7 +40,12 @@ fun Clock(
     Text(
         text = clockViewModel.clockText,
         color = textColor,
-        style = textStyle,
+        style =
+            if (clockViewModel.useBoldClock) {
+                textStyle.copy(fontWeight = FontWeight.Bold)
+            } else {
+                textStyle
+            },
         modifier = modifier.semantics { contentDescription = clockViewModel.contentDescriptionText },
     )
 }

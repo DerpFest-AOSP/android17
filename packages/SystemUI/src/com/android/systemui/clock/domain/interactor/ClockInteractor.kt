@@ -128,6 +128,28 @@ constructor(
                 )
         }
 
+    /** [StateFlow] that emits whether the status bar clock should use bold text. */
+    val useBoldStatusBarClock: StateFlow<Boolean> =
+        if (!Flags.clockModernization()) {
+            MutableStateFlow(false)
+        } else {
+            conflatedCallbackFlow {
+                    val tunable =
+                        TunerService.Tunable { key, newValue ->
+                            if (key == STATUS_BAR_CLOCK_BOLD_TUNER_KEY) {
+                                trySend(TunerService.parseIntegerSwitch(newValue, false))
+                            }
+                        }
+                    tunerService.addTunable(tunable, STATUS_BAR_CLOCK_BOLD_TUNER_KEY)
+                    awaitClose { tunerService.removeTunable(tunable) }
+                }
+                .stateIn(
+                    scope = applicationScope,
+                    started = SharingStarted.WhileSubscribed(),
+                    initialValue = false,
+                )
+        }
+
     /**
      * [StateFlow] that emits the current `Date`.
      *
@@ -247,5 +269,9 @@ constructor(
         @VisibleForTesting
         const val STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY =
             "system:" + Settings.System.STATUS_BAR_CLOCK_PERIOD_SEPARATOR
+
+        @VisibleForTesting
+        const val STATUS_BAR_CLOCK_BOLD_TUNER_KEY =
+            "system:" + Settings.System.STATUS_BAR_CLOCK_BOLD
     }
 }

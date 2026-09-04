@@ -246,7 +246,7 @@ class ClockViewModelTest : SysuiTestCase() {
             assertThat(underTest.contentDescriptionText).isEqualTo("23:12")
 
             val captor = argumentCaptor<Tunable>()
-            verify(tunerService, times(2)).addTunable(captor.capture(), any())
+            verify(tunerService, times(3)).addTunable(captor.capture(), any())
             captor.allValues.forEach {
                 it.onTuningChanged(
                     ClockInteractor.STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY,
@@ -356,7 +356,7 @@ class ClockViewModelTest : SysuiTestCase() {
 
     private fun Kosmos.getTunable(): Tunable {
         val tunableCaptor = argumentCaptor<Tunable>()
-        verify(tunerService, times(2)).addTunable(tunableCaptor.capture(), any())
+        verify(tunerService, times(3)).addTunable(tunableCaptor.capture(), any())
         return tunableCaptor.firstValue
     }
 

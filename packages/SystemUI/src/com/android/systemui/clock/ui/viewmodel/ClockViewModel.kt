@@ -88,6 +88,9 @@ constructor(
     val clockText: String by
         _clockText.hydratedStateOf(initialValue = clockInteractor.currentTime.value.toString())
 
+    val useBoldClock: Boolean by
+        clockInteractor.useBoldStatusBarClock.hydratedStateOf(initialValue = false)
+
     val longerDateText: String by clockInteractor.longerDateText.hydratedStateOf(initialValue = "")
 
     val shorterDateText: String by clockInteractor.shorterDateText.hydratedStateOf(initialValue = "")

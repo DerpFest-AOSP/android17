@@ -6986,6 +6986,12 @@ public final class Settings {
                 "status_bar_clock_period_separator";
 
         /**
+         * When non-zero, use bold typeface for the status bar clock.
+         * @hide
+         */
+        public static final String STATUS_BAR_CLOCK_BOLD = "status_bar_clock_bold";
+
+        /**
          * Status bar clock chip style.
          * 0 - off (default)
          * 1-12 - {@code sb_date_bg1} through {@code sb_date_bg12}
