@@ -20,6 +20,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.android.systemui.lifecycle.rememberViewModel
+import com.android.systemui.res.R
 import com.android.systemui.statusbar.phone.domain.interactor.IsAreaDark
 import com.android.systemui.statusbar.pipeline.battery.ui.viewmodel.BatteryViewModel
 
@@ -46,9 +48,13 @@ fun BatteryWithEstimate(
     val viewModel =
         rememberViewModel(traceName = "BatteryWithEstimate") { viewModelFactory.create() }
 
+    val ctx = LocalContext.current
+    val themedIconHeightPx =
+        ctx.resources.getDimensionPixelSize(R.dimen.config_batterymeterIconHeight)
     val batteryHeight =
         with(LocalDensity.current) {
-            BatteryViewModel.getStatusBarBatteryHeight(LocalContext.current).toDp()
+            if (themedIconHeightPx > 0) themedIconHeightPx.toDp()
+            else BatteryViewModel.getStatusBarBatteryHeight(ctx).toDp()
         }
 
     Row(
@@ -60,7 +66,10 @@ fun BatteryWithEstimate(
             UnifiedBattery(
                 viewModel = viewModel,
                 isDarkProvider = isDarkProvider,
-                modifier = Modifier.height(batteryHeight).align(Alignment.CenterVertically),
+                modifier =
+                    Modifier.height(batteryHeight)
+                        .wrapContentWidth()
+                        .align(Alignment.CenterVertically),
                 useAccentTintInContext = useAccentTintInContext,
             )
         }

@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.ColorUtils
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
@@ -498,6 +499,7 @@ fun ContentScope.OverlayShadeHeader(
                         showIcon = true,
                         useExpandedFormat = false,
                         chipHighlightModel = quickSettingsHighlight,
+                        textColor = quickSettingsHighlight.foregroundColor,
                     )
                 }
                 if (!groupedPrivacyChip() && viewModel.isPrivacyChipVisible) {
@@ -733,13 +735,21 @@ private fun BatteryInfo(
     // `viewModel.isShadeAreaDark` does not account for when the shade is pulled down and scrim is
     // applied behind the battery. Use `isSystemInDarkTheme` for sufficient contrast against the
     // shade.
+    //
+    // On a [ShadeHighlightChip], follow the same signal as status icons: [foregroundColor].
+    // Light foreground ⇒ dark effective backdrop ⇒ dark battery profile (white fills). Never key
+    // off [backgroundColor] — Weak chips use translucent white, whose RGB luminance looks "light"
+    // and previously forced black battery icons onto the dark notification shade.
     val isDarkProvider: IsAreaDark =
-        when (chipHighlightModel) {
+        when (val highlight = chipHighlightModel) {
             // null means directly on top of the shade scrim.
             null -> IsAreaDark { isQuickSettingsDarkTheme }
             ChipHighlightModel.Transparent -> viewModel.isShadeAreaDark
-            ChipHighlightModel.Strong -> IsAreaDark { !isQuickSettingsDarkTheme }
-            ChipHighlightModel.Weak -> IsAreaDark { isQuickSettingsDarkTheme }
+            else -> {
+                val lightForeground =
+                    ColorUtils.calculateLuminance(highlight.foregroundColor.toArgb()) > 0.5
+                IsAreaDark { lightForeground }
+            }
         }
     BatteryWithEstimate(
         viewModelFactory = viewModel.batteryViewModelFactory,

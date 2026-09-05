@@ -123,7 +123,11 @@ private fun PathBatteryBody(
         drawable.charging = isCharging
         drawable.powerSaveEnabled = attr is BatteryGlyph.Plus
         drawable.showPercent = showLevel
-        drawable.setColors(colors.fill.toArgb(), colors.backgroundWithGlyph.toArgb(), colors.fill.toArgb())
+        // Prefer lower-alpha [backgroundOnly] when there is no in-icon glyph/percent so dual-tone
+        // shapes (iOS/OneUI pills) do not read as a solid colored chip on dual-shade headers.
+        val bg =
+            if (showLevel || attr != null) colors.backgroundWithGlyph else colors.backgroundOnly
+        drawable.setColors(colors.fill.toArgb(), bg.toArgb(), colors.fill.toArgb())
         drawable.setGlyphColor(colors.glyph.toArgb())
 
         val iw = drawable.intrinsicWidth.toFloat()
