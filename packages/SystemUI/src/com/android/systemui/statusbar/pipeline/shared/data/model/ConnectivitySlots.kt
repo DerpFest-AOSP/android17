@@ -32,7 +32,9 @@ class ConnectivitySlots @Inject constructor(context: Context) {
     private val ethernetSlot: String = context.getString(R.string.status_bar_ethernet)
     private val roamingSlot: String = "roaming"
     private val hdCallingSlot: String = "hd_calling"
-    private val voWifiSlot: String = "vowifi"
+    private val voWifiSlot: String = context.getString(R.string.status_bar_vowifi)
+    private val voLteSlot: String = context.getString(R.string.status_bar_volte)
+    private val voNrSlot: String = context.getString(R.string.status_bar_vonr)
 
     private val slotByName: Map<String, ConnectivitySlot> = mapOf(
         airplaneSlot to ConnectivitySlot.AIRPLANE,
@@ -41,7 +43,9 @@ class ConnectivitySlots @Inject constructor(context: Context) {
         ethernetSlot to ConnectivitySlot.ETHERNET,
         roamingSlot to ConnectivitySlot.ROAMING,
         hdCallingSlot to ConnectivitySlot.HD_CALLING,
-        voWifiSlot to ConnectivitySlot.VOWIFI
+        voWifiSlot to ConnectivitySlot.VOWIFI,
+        voLteSlot to ConnectivitySlot.VOLTE,
+        voNrSlot to ConnectivitySlot.VONR,
     )
 
     /**
@@ -60,6 +64,8 @@ enum class ConnectivitySlot {
     HD_CALLING,
     MOBILE,
     ROAMING,
+    VOLTE,
+    VONR,
     VOWIFI,
     WIFI,
 }

@@ -29,6 +29,8 @@ import com.android.systemui.statusbar.pipeline.ims.data.repository.CommonImsRepo
 import com.android.systemui.statusbar.pipeline.ims.data.repository.DedicatedImsStyleRepository
 import com.android.systemui.statusbar.pipeline.mobile.data.model.SubscriptionModel
 import com.android.systemui.statusbar.pipeline.mobile.domain.interactor.MobileIconsInteractor
+import com.android.systemui.statusbar.pipeline.shared.data.model.ConnectivitySlot
+import com.android.systemui.statusbar.pipeline.shared.data.repository.ConnectivityRepository
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,12 +53,14 @@ constructor(
     interactor: MobileIconsInteractor,
     commonImsRepository: CommonImsRepository,
     dedicatedImsStyleRepository: DedicatedImsStyleRepository,
+    connectivityRepository: ConnectivityRepository,
     @Application scope: CoroutineScope,
 ) :
     BaseImsStatusBarIconViewModel(
         interactor = interactor,
         commonImsRepository = commonImsRepository,
         dedicatedImsStyleRepository = dedicatedImsStyleRepository,
+        connectivityRepository = connectivityRepository,
         scope = scope,
         iconSet =
             ImsIconSet(
@@ -66,6 +70,7 @@ constructor(
                 dual = R.drawable.ic_nk_volte12,
             ),
         contentDescriptionRes = R.string.accessibility_status_bar_volte,
+        forceHiddenSlot = ConnectivitySlot.VOLTE,
         slotPredicate = { it.voLte },
     )
 
@@ -76,12 +81,14 @@ constructor(
     interactor: MobileIconsInteractor,
     commonImsRepository: CommonImsRepository,
     dedicatedImsStyleRepository: DedicatedImsStyleRepository,
+    connectivityRepository: ConnectivityRepository,
     @Application scope: CoroutineScope,
 ) :
     BaseImsStatusBarIconViewModel(
         interactor = interactor,
         commonImsRepository = commonImsRepository,
         dedicatedImsStyleRepository = dedicatedImsStyleRepository,
+        connectivityRepository = connectivityRepository,
         scope = scope,
         iconSet =
             ImsIconSet(
@@ -91,6 +98,7 @@ constructor(
                 dual = R.drawable.ic_nk_vowifi12,
             ),
         contentDescriptionRes = R.string.accessibility_status_bar_vowifi_dedicated,
+        forceHiddenSlot = ConnectivitySlot.VOWIFI,
         slotPredicate = { it.voWifi },
     )
 
@@ -101,12 +109,14 @@ constructor(
     interactor: MobileIconsInteractor,
     commonImsRepository: CommonImsRepository,
     dedicatedImsStyleRepository: DedicatedImsStyleRepository,
+    connectivityRepository: ConnectivityRepository,
     @Application scope: CoroutineScope,
 ) :
     BaseImsStatusBarIconViewModel(
         interactor = interactor,
         commonImsRepository = commonImsRepository,
         dedicatedImsStyleRepository = dedicatedImsStyleRepository,
+        connectivityRepository = connectivityRepository,
         scope = scope,
         iconSet =
             ImsIconSet(
@@ -116,6 +126,7 @@ constructor(
                 dual = R.drawable.ic_nk_vonr12,
             ),
         contentDescriptionRes = R.string.accessibility_status_bar_vonr,
+        forceHiddenSlot = ConnectivitySlot.VONR,
         slotPredicate = { it.voNr },
     )
 
@@ -123,11 +134,16 @@ abstract class BaseImsStatusBarIconViewModel(
     interactor: MobileIconsInteractor,
     private val commonImsRepository: CommonImsRepository,
     private val dedicatedImsStyleRepository: DedicatedImsStyleRepository,
+    connectivityRepository: ConnectivityRepository,
     scope: CoroutineScope,
     private val iconSet: ImsIconSet,
     @StringRes private val contentDescriptionRes: Int,
+    private val forceHiddenSlot: ConnectivitySlot,
     private val slotPredicate: (DedicatedImsSlotAvailability) -> Boolean,
 ) : ImsStatusBarIconViewModel {
+
+    private val isForceHidden =
+        connectivityRepository.forceHiddenSlots.map { it.contains(forceHiddenSlot) }
 
     override val icon: StateFlow<Icon?> =
         combine(
@@ -167,8 +183,9 @@ abstract class BaseImsStatusBarIconViewModel(
                         }
                     },
                 dedicatedImsStyleRepository.isDedicatedImsIconStyle,
-            ) { maybeIcon, dedicated ->
-                if (dedicated) maybeIcon else null
+                isForceHidden,
+            ) { maybeIcon, dedicated, forceHidden ->
+                if (dedicated && !forceHidden) maybeIcon else null
             }
             .distinctUntilChanged()
             .stateIn(scope, SharingStarted.WhileSubscribed(), null)
