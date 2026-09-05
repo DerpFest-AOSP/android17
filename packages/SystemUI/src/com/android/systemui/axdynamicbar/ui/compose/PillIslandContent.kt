@@ -1379,7 +1379,7 @@ private fun MediaText(event: IslandEvent.Media, modifier: Modifier, overrideColo
     val text =
         sanitizeCollapsedMediaTrack(event.track)
             ?: event.track.ifEmpty { stringResource(R.string.ax_dynamic_bar_music) }
-    MarqueeLabel(text, color, modifier.widthIn(max = 66.dp))
+    MarqueeLabel(text, color, modifier.widthIn(max = 90.dp))
 }
 
 private fun sanitizeCollapsedMediaTrack(raw: String?): String? {
