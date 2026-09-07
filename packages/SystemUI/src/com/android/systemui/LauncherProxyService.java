@@ -978,12 +978,12 @@ public class LauncherProxyService implements CallbackController<LauncherProxyLis
                 .setFlag(SYSUI_STATE_BOUNCER_SHOWING, bouncerShowing)
                 .setFlag(SYSUI_STATE_DEVICE_DOZING, isDozing)
                 .setFlag(SYSUI_STATE_DEVICE_DREAMING, isDreaming)
-                .setFlag(SYSUI_STATE_COMMUNAL_HUB_SHOWING, communalShowing)
-                .commitUpdate(mContext.getDisplayId());
+                .setFlag(SYSUI_STATE_COMMUNAL_HUB_SHOWING, communalShowing);
         if (SceneContainerFlag.isEnabled()) {
             mDefaultDisplaySysUIState.setFlag(SYSUI_STATE_NOTIFICATION_PANEL_EXPANDED,
                     panelExpanded);
         }
+        mDefaultDisplaySysUIState.commitUpdate(mContext.getDisplayId());
     }
 
     /**
