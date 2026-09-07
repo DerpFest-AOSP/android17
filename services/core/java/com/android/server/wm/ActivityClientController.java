@@ -570,7 +570,6 @@ class ActivityClientController extends IActivityClientController.Stub {
             final long origId = Binder.clearCallingIdentity();
             Trace.traceBegin(TRACE_TAG_WINDOW_MANAGER, "finishActivity");
             try {
-                r.releaseActivityBoost();
                 final boolean res;
                 mTaskSupervisor.getBackgroundActivityLaunchController()
                         .onActivityRequestedFinishing(r);

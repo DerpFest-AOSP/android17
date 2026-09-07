@@ -35,8 +35,6 @@ import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Environment;
-import android.os.SystemProperties;
-import android.util.DisplayMetrics;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.SystemClock;
@@ -922,19 +920,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
      * @hide
      */
     public static final String METADATA_PRELOADED_FONTS = "preloaded_fonts";
-
-    /**
-     * Boolean indicating whether the resolution of the SurfaceView associated
-     * with this appplication can be overriden.
-     * {@hide}
-     */
-    public int overrideRes = 0;
-
-    /**
-     * In case, app needs different density than device density, set this value.
-     * {@hide}
-     */
-    public int overrideDensity = 0;
 
     /**
      * The required smallest screen width the application can run on.  If 0,
@@ -2089,8 +2074,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         flags = orig.flags;
         privateFlags = orig.privateFlags;
         privateFlagsExt = orig.privateFlagsExt;
-        overrideRes = orig.overrideRes;
-        overrideDensity = orig.overrideDensity;
         requiresSmallestWidthDp = orig.requiresSmallestWidthDp;
         compatibleWidthLimitDp = orig.compatibleWidthLimitDp;
         largestWidthLimitDp = orig.largestWidthLimitDp;
@@ -2182,8 +2165,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         dest.writeInt(flags);
         dest.writeInt(privateFlags);
         dest.writeInt(privateFlagsExt);
-        dest.writeInt(overrideRes);
-        dest.writeInt(overrideDensity);
         dest.writeInt(requiresSmallestWidthDp);
         dest.writeInt(compatibleWidthLimitDp);
         dest.writeInt(largestWidthLimitDp);
@@ -2292,8 +2273,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         flags = source.readInt();
         privateFlags = source.readInt();
         privateFlagsExt = source.readInt();
-        overrideRes = source.readInt();
-        overrideDensity = source.readInt();
         requiresSmallestWidthDp = source.readInt();
         compatibleWidthLimitDp = source.readInt();
         largestWidthLimitDp = source.readInt();
@@ -2910,11 +2889,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
         return output.toArray(new String[output.size()]);
     }
 
-    /** @hide */
-    public int getOverrideDensity() {
-        return overrideDensity;
-    }
-
     /** @hide */ public void setCodePath(String codePath) { scanSourceDir = codePath; }
     /** @hide */ public void setBaseCodePath(String baseCodePath) { sourceDir = baseCodePath; }
     /** @hide */ public void setSplitCodePaths(String[] splitCodePaths) { splitSourceDirs = splitCodePaths; }
@@ -2930,7 +2904,6 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
     public void setRequestRawExternalStorageAccess(@Nullable Boolean value) {
         requestRawExternalStorageAccess = value;
     }
-    /** {@hide} */ public void setOverrideRes(int overrideResolution) { overrideRes = overrideResolution; }
 
     /** @hide */
     public void setPageSizeAppCompatFlags(@PageSizeAppCompatFlags int value) {
@@ -2971,6 +2944,7 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
     public int getMemtagMode() {
         return memtagMode;
     }
+
     /**
      * Returns whether the application has requested automatic zero-initialization of native heap
      * memory allocations to be enabled or disabled.
@@ -3087,6 +3061,4 @@ public class ApplicationInfo extends PackageItemInfo implements Parcelable {
             privateFlagsExt &= ~PRIVATE_FLAG_EXT_ENABLE_ON_BACK_INVOKED_CALLBACK;
         }
     }
-
-    /** {@hide} */ public int canOverrideRes() { return overrideRes; }
 }

@@ -85,13 +85,13 @@ class SystemGesturesPointerEventListener implements PointerEventListener {
     int screenWidth;
     private int mDownPointers;
     private boolean mSwipeFireable;
+    private boolean mScrollFireable;
     private boolean mDebugFireable;
     private boolean mMouseHoveringAtLeft;
     private boolean mMouseHoveringAtTop;
     private boolean mMouseHoveringAtRight;
     private boolean mMouseHoveringAtBottom;
     private long mLastFlingTime;
-    private boolean mScrollFired;
 
     SystemGesturesPointerEventListener(Context context, Handler handler, Callbacks callbacks) {
         mContext = checkNull("context", context);
@@ -185,7 +185,7 @@ class SystemGesturesPointerEventListener implements PointerEventListener {
             case MotionEvent.ACTION_DOWN:
                 mSwipeFireable = true;
                 mDebugFireable = true;
-                mScrollFired = false;
+                mScrollFireable = true;
                 mDownPointers = 0;
                 captureDown(event, 0);
                 if (mMouseHoveringAtLeft) {
@@ -292,9 +292,7 @@ class SystemGesturesPointerEventListener implements PointerEventListener {
             case MotionEvent.ACTION_CANCEL:
                 mSwipeFireable = false;
                 mDebugFireable = false;
-                if (mScrollFired)
-                    mCallbacks.onScroll(false);
-                mScrollFired = false;
+                mScrollFireable = false;
                 mCallbacks.onUpOrCancel();
                 break;
             default:
@@ -436,6 +434,21 @@ class SystemGesturesPointerEventListener implements PointerEventListener {
             }
             return true;
         }
+
+        @Override
+        public boolean onScroll(MotionEvent down, MotionEvent up,
+                                   float velocityX, float velocityY) {
+            int duration = mOverscroller.getDuration();
+            if (duration > MAX_FLING_TIME_MILLIS) {
+                duration = MAX_FLING_TIME_MILLIS;
+            }
+            if (mScrollFireable) {
+                mCallbacks.onFling(duration + 160);
+                mScrollFireable = false;
+            }
+            return true;
+        }
+
         @Override
         public boolean onFling(MotionEvent down, MotionEvent up,
                 float velocityX, float velocityY) {
@@ -451,24 +464,9 @@ class SystemGesturesPointerEventListener implements PointerEventListener {
             if (duration > MAX_FLING_TIME_MILLIS) {
                 duration = MAX_FLING_TIME_MILLIS;
             }
-            if(Math.abs(velocityY) >= Math.abs(velocityX))
-                mCallbacks.onVerticalFling(duration);
-            else
-                mCallbacks.onHorizontalFling(duration);
-
             mLastFlingTime = now;
-            mCallbacks.onFling(duration);
+            mCallbacks.onFling(duration + 160);
             return true;
-        }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2,
-                                   float distanceX, float distanceY) {
-           if (!mScrollFired) {
-               mCallbacks.onScroll(true);
-               mScrollFired = true;
-           }
-           return true;
         }
     }
 
@@ -478,9 +476,6 @@ class SystemGesturesPointerEventListener implements PointerEventListener {
         void onSwipeFromRight();
         void onSwipeFromLeft();
         void onFling(int durationMs);
-        void onVerticalFling(int durationMs);
-        void onHorizontalFling(int durationMs);
-        void onScroll(boolean started);
         void onDown();
         void onUpOrCancel();
         void onMouseHoverAtLeft();

@@ -228,40 +228,6 @@ void android_os_Process_setThreadGroupAndCpuset(JNIEnv* env, jobject clazz, int 
     }
 }
 
-void android_os_Process_setThreadAffinity(JNIEnv* env, jobject clazz, int tid, jint grp) {
-    cpu_set_t target_cpu_set;
-    CPU_ZERO(&target_cpu_set);
-
-    std::vector<int32_t> small_cores = {0, 1, 2, 3};
-    std::vector<int32_t> big_cores = {4, 5, 6, 7};
-
-    if (grp == 1) {
-        for (int core : small_cores) {
-            CPU_SET(core, &target_cpu_set);
-        }
-    }
-    else if (grp == 0) {
-        for (int core : big_cores) {
-            CPU_SET(core, &target_cpu_set);
-        }
-    }
-    else if (grp == 2) {
-        int max_cpus = sysconf(_SC_NPROCESSORS_ONLN);
-        for (int i = 0; i < max_cpus; i++) {
-            CPU_SET(i, &target_cpu_set);
-        }
-    }
-    else {
-        return;
-    }
-
-    if (sched_setaffinity(tid, sizeof(cpu_set_t), &target_cpu_set) == -1) {
-        ALOGI("Failed to set CPU affinity for thread %d", tid);
-    } else {
-        ALOGI("Successfully set affinity for thread %d", tid);
-    }
-}
-
 // Look up the user ID of a process in /proc/${pid}/status. The Uid: line is present in
 // /proc/${pid}/status since at least kernel v2.5.
 static int uid_from_pid(int pid)
@@ -337,81 +303,6 @@ void android_os_Process_setProcessGroup(JNIEnv* env, jobject clazz, int pid, jin
     }
     if (!SetProcessProfilesCached(uid, pid, {get_cpuset_policy_profile_name((SchedPolicy)grp)}))
         signalExceptionForGroupError(env, errno ? errno : EPERM, pid);
-}
-
-void android_os_Process_setCgroupProcsProcessGroup(JNIEnv* env, jobject clazz, int uid, int pid, jint grp, jboolean dex2oat_only)
-{
-    int fd;
-    char pathV1[255], pathV2[255];
-    static bool isCgroupV2 = false;
-    if ((grp == SP_FOREGROUND) || (grp > SP_MAX)) {
-        signalExceptionForGroupError(env, EINVAL, pid);
-        return;
-    }
-
-    //set process group for current process
-    android_os_Process_setProcessGroup(env, clazz, pid, grp);
-
-    //find processes in the same cgroup.procs of current uid and pid
-    snprintf(pathV1, sizeof(pathV1), "/acct/uid_%d/pid_%d/cgroup.procs", uid, pid);
-    snprintf(pathV2, sizeof(pathV2), "/sys/fs/cgroup/uid_%d/pid_%d/cgroup.procs", uid, pid);
-    if (isCgroupV2) {
-        // read from V2 only
-        fd = open(pathV2, O_RDONLY);
-    } else {
-        // first try V1
-        fd = open(pathV1, O_RDONLY);
-        if (fd < 0) {
-            fd = open(pathV2, O_RDONLY);
-            if (fd >= 0) {
-                isCgroupV2 = true;
-            }
-        }
-    }
-    if (fd >= 0) {
-        char buffer[256];
-        char ch;
-        int numRead;
-        size_t len=0;
-        for (;;) {
-            numRead=read(fd, &ch, 1);
-            if (numRead <= 0)
-                break;
-            if (ch != '\n') {
-                buffer[len++] = ch;
-            } else {
-                int temp_pid = atoi(buffer);
-                len=0;
-                if (temp_pid == pid)
-                    continue;
-                if (dex2oat_only) {
-                    // check if cmdline of temp_pid is dex2oat
-                    char cmdline[64];
-                    snprintf(cmdline, sizeof(cmdline), "/proc/%d/cmdline", temp_pid);
-                    int cmdline_fd = open(cmdline, O_RDONLY);
-                    if (cmdline_fd >= 0) {
-                        size_t read_size = read(cmdline_fd, buffer, 255);
-                        close(cmdline_fd);
-                        buffer[read_size]='\0';
-                        const char *dex2oat_name1 = "dex2oat"; //for plugins compiler
-                        const char *dex2oat_name2 = "/system/bin/dex2oat"; //for installer
-                        const char *dex2oat_name3 = "/apex/com.android.runtime/bin/dex2oat"; //for installer
-                        if (strncmp(buffer, dex2oat_name1, strlen(dex2oat_name1)) != 0
-                                && strncmp(buffer, dex2oat_name2, strlen(dex2oat_name2)) != 0
-                                && strncmp(buffer, dex2oat_name3, strlen(dex2oat_name3)) != 0) {
-                            continue;
-                        }
-                    } else {
-                        //ALOGE("read %s failed", cmdline);
-                        continue;
-                    }
-                }
-                //set cgroup of temp_pid follow pid
-                android_os_Process_setProcessGroup(env, clazz, temp_pid, grp);
-            }
-        }
-        close(fd);
-    }
 }
 
 void android_os_Process_setProcessFrozen(
@@ -522,21 +413,8 @@ static void get_cpuset_cores_for_policy(SchedPolicy policy, cpu_set_t *cpu_set)
             }
             break;
         case SP_FOREGROUND:
-            if (!CgroupGetAttributePath("HighCapacityCPUs", &filename)) {
-                return;
-            }
-            break;
         case SP_AUDIO_APP:
         case SP_AUDIO_SYS:
-            if (!CgroupGetAttributePath("AudioAppCapacityCPUs", &filename)) {
-                return;
-            }
-            if (access(filename.c_str(), F_OK) != 0) {
-                if (!CgroupGetAttributePath("HighCapacityCPUs", &filename)) {
-                    return;
-                }
-            }
-            break;
         case SP_RT_APP:
             if (!CgroupGetAttributePath("HighCapacityCPUs", &filename)) {
                 return;
@@ -1489,8 +1367,6 @@ static const JNINativeMethod methods[] = {
         {"getThreadScheduler", "(I)I", (void*)android_os_Process_getThreadScheduler},
         {"setThreadGroup", "(II)V", (void*)android_os_Process_setThreadGroup},
         {"setThreadGroupAndCpuset", "(II)V", (void*)android_os_Process_setThreadGroupAndCpuset},
-        {"setThreadAffinity", "(II)V", (void*)android_os_Process_setThreadAffinity},
-        {"setCgroupProcsProcessGroup", "(IIIZ)V", (void*)android_os_Process_setCgroupProcsProcessGroup},
         {"setProcessGroup", "(II)V", (void*)android_os_Process_setProcessGroup},
         {"getProcessGroup", "(I)I", (void*)android_os_Process_getProcessGroup},
         {"createProcessGroup", "(II)I", (void*)android_os_Process_createProcessGroup},

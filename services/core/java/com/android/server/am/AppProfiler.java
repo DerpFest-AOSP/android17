@@ -1324,11 +1324,6 @@ public class AppProfiler {
     }
 
     @GuardedBy("mService")
-    boolean allowLowerMemLevelLocked() {
-        return mAllowLowerMemLevel;
-    }
-
-    @GuardedBy("mService")
     void setMemFactorOverrideLocked(@MemFactor int factor) {
         mMemFactorOverride = factor;
         mService.mProcessStateController.setIsLastMemoryLevelNormal(isLastMemoryLevelNormal());

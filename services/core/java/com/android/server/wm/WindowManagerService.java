@@ -247,7 +247,6 @@ import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.util.AtomicFile;
 import android.util.AtomicFileOutputStream;
-import android.util.BoostFramework;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.IntArray;
@@ -413,9 +412,6 @@ public class WindowManagerService extends IWindowManager.Stub
 
     static final int LAYOUT_REPEAT_THRESHOLD = 4;
 
-    static WindowState mFocusingWindow;
-    String mFocusingActivity;
-
     /** The maximum length we will accept for a loaded animation duration:
      * this is 10 seconds.
      */
@@ -489,8 +485,6 @@ public class WindowManagerService extends IWindowManager.Stub
     final TransitionTracer mTransitionTracer;
 
     private final DisplayAreaPolicy.Provider mDisplayAreaPolicyProvider;
-
-    private BoostFramework mPerf = null;
 
     final private KeyguardDisableHandler mKeyguardDisableHandler;
 
@@ -3972,14 +3966,6 @@ public class WindowManagerService extends IWindowManager.Stub
 
     // Called by window manager policy.  Not exposed externally.
     @Override
-    public void reboot(boolean confirm, String reason) {
-        // Pass in the UI context, since ShutdownThread requires it (to show UI).
-        ShutdownThread.rebootCustom(ActivityThread.currentActivityThread().getSystemUiContext(),
-                reason, confirm);
-    }
-
-    // Called by window manager policy.  Not exposed externally.
-    @Override
     public void shutdown(boolean confirm) {
         // Pass in the UI context, since ShutdownThread requires it (to show UI).
         ShutdownThread.shutdown(ActivityThread.currentActivityThread().getSystemUiContext(),
@@ -3992,6 +3978,14 @@ public class WindowManagerService extends IWindowManager.Stub
         // Pass in the UI context, since ShutdownThread requires it (to show UI).
         ShutdownThread.reboot(ActivityThread.currentActivityThread().getSystemUiContext(),
                 PowerManager.SHUTDOWN_USER_REQUESTED, confirm);
+    }
+
+    // Called by window manager policy.  Not exposed externally.
+    @Override
+    public void reboot(boolean confirm, String reason) {
+        // Pass in the UI context, since ShutdownThread requires it (to show UI).
+        ShutdownThread.rebootCustom(ActivityThread.currentActivityThread().getSystemUiContext(),
+                reason, confirm);
     }
 
     // Called by window manager policy.  Not exposed externally.

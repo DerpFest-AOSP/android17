@@ -38,7 +38,6 @@ import android.view.InsetsState;
 import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.util.Log;
 
 import com.android.internal.util.ArrayUtils;
 
@@ -247,24 +246,13 @@ public class CompatibilityInfo implements Parcelable {
                 // Let the user decide.
                 compatFlags |= NEEDS_SCREEN_COMPAT;
             }
-            int density = appInfo.getOverrideDensity();
-            if(density != 0) {
-                applicationDensity = density;
-                applicationScale = DisplayMetrics.DENSITY_DEVICE  / (float) applicationDensity;
-                applicationInvertedScale = 1.0f / applicationScale;
-                // Fixme
-                applicationDensityScale = scaleFactor;
-                applicationDensityInvertedScale = 1f / scaleFactor;
-                compatFlags |= SCALING_REQUIRED;
-            } else {
-                // Modern apps always support densities.
-                applicationDensity = DisplayMetrics.DENSITY_DEVICE;
-                applicationScale = 1.0f;
-                applicationInvertedScale = 1.0f;
-                applicationDensityScale = 1.0f;
-                applicationDensityInvertedScale = 1.0f;
-            }
 
+            // Modern apps always support densities.
+            applicationDensity = DisplayMetrics.DENSITY_DEVICE;
+            applicationScale = 1.0f;
+            applicationInvertedScale = 1.0f;
+            applicationDensityScale = 1.0f;
+            applicationDensityInvertedScale = 1.0f;
         } else {
             /**
              * Has the application said that its UI is expandable?  Based on the
@@ -350,8 +338,13 @@ public class CompatibilityInfo implements Parcelable {
                 compatFlags |= NEVER_NEEDS_COMPAT;
             }
 
-            int density = appInfo.getOverrideDensity();
-            if ((appInfo.flags & ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES) == 0) {
+            if ((appInfo.flags & ApplicationInfo.FLAG_SUPPORTS_SCREEN_DENSITIES) != 0) {
+                applicationDensity = DisplayMetrics.DENSITY_DEVICE;
+                applicationScale = 1.0f;
+                applicationInvertedScale = 1.0f;
+                applicationDensityScale = 1.0f;
+                applicationDensityInvertedScale = 1.0f;
+            } else {
                 applicationDensity = DisplayMetrics.DENSITY_DEFAULT;
                 applicationScale = DisplayMetrics.DENSITY_DEVICE
                         / (float) DisplayMetrics.DENSITY_DEFAULT;
@@ -360,29 +353,10 @@ public class CompatibilityInfo implements Parcelable {
                         / (float) DisplayMetrics.DENSITY_DEFAULT;
                 applicationDensityInvertedScale = 1f / applicationDensityScale;
                 compatFlags |= SCALING_REQUIRED;
-            } else if((density != 0) || (scaleFactor != 1.0f)) {
-                applicationScale = scaleFactor;
-                applicationInvertedScale = 1.0f / scaleFactor;
-                applicationDensity = (int) ((DisplayMetrics.DENSITY_DEVICE_STABLE
-                        * applicationInvertedScale) + .5f);
-                // Fixme
-                applicationDensityScale = scaleFactor;
-                applicationDensityInvertedScale = 1f / scaleFactor;
-                compatFlags |= HAS_OVERRIDE_SCALING;
-            } else {
-                applicationDensity = DisplayMetrics.DENSITY_DEVICE;
-                applicationScale = 1.0f;
-                applicationInvertedScale = 1.0f;
-                applicationDensityScale = 1.0f;
-                applicationDensityInvertedScale = 1.0f;
             }
         }
 
         mCompatibilityFlags = compatFlags;
-
-        Log.d(TAG, "mCompatibilityFlags - " + Integer.toHexString(mCompatibilityFlags));
-        Log.d(TAG, "applicationDensity - " + applicationDensity);
-        Log.d(TAG, "applicationScale - " + applicationScale);
     }
 
     private CompatibilityInfo(int compFlags,
