@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.ui.compose.toolbar
 
+import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedVisibility
@@ -77,6 +78,7 @@ import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.PowerMenuToggleButtonUiState
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.ToolbarViewModel
 import com.android.systemui.qs.ui.compose.borderOnFocus
+import com.android.systemui.qs.ui.compose.rememberQsSystemBoolSetting
 import com.android.systemui.res.R
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -87,6 +89,9 @@ fun Toolbar(
     dataUsageViewModel: FooterActionsDataUsageViewModel? = null,
     modifier: Modifier = Modifier,
 ) {
+    val showPowerMenuIcon =
+        rememberQsSystemBoolSetting(Settings.System.QS_SHOW_POWER_MENU_ICON, true)
+
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         val securityInfoCollapsed = viewModel.securityInfoShowCollapsed
 
@@ -116,24 +121,26 @@ fun Toolbar(
             }
         }
 
-        if (viewModel.useInlinePowerMenu) {
-            Box {
-                PowerMenuToggleButton(
-                    viewModel = viewModel.powerMenuToggleButtonUiState,
+        if (showPowerMenuIcon) {
+            if (viewModel.useInlinePowerMenu) {
+                Box {
+                    PowerMenuToggleButton(
+                        viewModel = viewModel.powerMenuToggleButtonUiState,
+                        modifier = Modifier.sysuiResTag("pm_lite"),
+                    )
+                    if (viewModel.isInlinePowerMenuVisible) {
+                        PowerMenu(
+                            viewModelFactory = viewModel.powerMenuViewModelFactory,
+                            onDismiss = viewModel::onPowerMenuDismissed,
+                        )
+                    }
+                }
+            } else {
+                IconButton(
+                    model = viewModel.powerButtonViewModel,
                     modifier = Modifier.sysuiResTag("pm_lite"),
                 )
-                if (viewModel.isInlinePowerMenuVisible) {
-                    PowerMenu(
-                        viewModelFactory = viewModel.powerMenuViewModelFactory,
-                        onDismiss = viewModel::onPowerMenuDismissed,
-                    )
-                }
             }
-        } else {
-            IconButton(
-                model = viewModel.powerButtonViewModel,
-                modifier = Modifier.sysuiResTag("pm_lite"),
-            )
         }
     }
 }
@@ -146,6 +153,9 @@ private fun SharedTransitionScope.StandardToolbarLayout(
     isFullyVisible: () -> Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val showSettingsIcon =
+        rememberQsSystemBoolSetting(Settings.System.QS_SHOW_SETTINGS_ICON, true)
+
     Row(modifier) {
         // User switcher button
         IconButton(
@@ -161,10 +171,12 @@ private fun SharedTransitionScope.StandardToolbarLayout(
         EditModeButton(editModeButtonViewModel, isVisible = isFullyVisible())
 
         // Settings button
-        IconButton(
-            model = viewModel.settingsButtonViewModel,
-            modifier = Modifier.sysuiResTag("settings_button_container"),
-        )
+        if (showSettingsIcon) {
+            IconButton(
+                model = viewModel.settingsButtonViewModel,
+                modifier = Modifier.sysuiResTag("settings_button_container"),
+            )
+        }
 
         // Security info button
         SecurityInfo(

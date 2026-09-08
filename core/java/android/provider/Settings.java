@@ -7722,6 +7722,18 @@ public final class Settings {
         public static final String QS_SHOW_LUNAR_CALENDAR = "qs_show_lunar_calendar";
 
         /**
+         * Whether to show the settings icon in quick settings footer.
+         * @hide
+         */
+        public static final String QS_SHOW_SETTINGS_ICON = "qs_show_settings_icon";
+
+        /**
+         * Whether to show the power menu icon in quick settings footer.
+         * @hide
+         */
+        public static final String QS_SHOW_POWER_MENU_ICON = "qs_show_power_menu_icon";
+
+        /**
          * Whether to show Chinese lunar calendar on the lockscreen Smartspace date.
          * @hide
          */

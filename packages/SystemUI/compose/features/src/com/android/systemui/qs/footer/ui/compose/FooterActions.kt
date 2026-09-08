@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.footer.ui.compose
 
+import android.provider.Settings
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -106,6 +107,7 @@ import com.android.systemui.qs.panels.ui.viewmodel.TextFeedbackViewModel
 import com.android.systemui.qs.shared.ui.QuickSettings
 import com.android.systemui.qs.ui.composable.QuickSettingsTheme
 import com.android.systemui.qs.ui.compose.borderOnFocus
+import com.android.systemui.qs.ui.compose.rememberQsSystemBoolSetting
 import com.android.systemui.res.R
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
@@ -145,6 +147,10 @@ fun ContentScope.FooterActionsWithAnimatedVisibility(
 @Composable
 fun FooterActions(viewModel: FooterActionsViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val showSettingsIcon =
+        rememberQsSystemBoolSetting(Settings.System.QS_SHOW_SETTINGS_ICON, true)
+    val showPowerMenuIcon =
+        rememberQsSystemBoolSetting(Settings.System.QS_SHOW_POWER_MENU_ICON, true)
 
     // Collect alphas as soon as we are composed, even when not visible.
     val alpha by viewModel.alpha.collectAsStateWithLifecycle()
@@ -254,16 +260,22 @@ fun FooterActions(viewModel: FooterActionsViewModel, modifier: Modifier = Modifi
                 useModifierBasedExpandable,
                 Modifier.sysuiResTag("multi_user_switch"),
             )
-            IconButton(
-                { settings },
-                useModifierBasedExpandable,
-                Modifier.sysuiResTag("settings_button_container"),
-            )
-            IconButton(
-                { viewModel.power },
-                useModifierBasedExpandable,
-                Modifier.sysuiResTag("pm_lite"),
-            )
+
+            if (showSettingsIcon) {
+                IconButton(
+                    { settings },
+                    useModifierBasedExpandable,
+                    Modifier.sysuiResTag("settings_button_container"),
+                )
+            }
+
+            if (showPowerMenuIcon) {
+                IconButton(
+                    { viewModel.power },
+                    useModifierBasedExpandable,
+                    Modifier.sysuiResTag("pm_lite"),
+                )
+            }
         }
     }
 }
