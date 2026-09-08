@@ -69,6 +69,11 @@
         <item>1</item>
     </string-array>
 
+    <!-- Status bar tuner: system icon packs -->
+    <string name="status_bar_icon_packs_category_title">Icon packs</string>
+    <string name="status_bar_icon_packs_title">System icon packs</string>
+    <string name="status_bar_icon_packs_summary">Replace system icons in Settings, System UI, and the launcher</string>
+
     <!-- Status bar tuner: network icons -->
     <string name="status_bar_network_icons_category_title">Network icons</string>
     <string name="custom_system_theme_title">Network icon themes</string>
