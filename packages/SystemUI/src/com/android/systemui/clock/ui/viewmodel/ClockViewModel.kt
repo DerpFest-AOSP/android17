@@ -63,7 +63,7 @@ constructor(
             clockInteractor.usePeriodHourMinuteSeparator,
         ) { contentDescriptionFormat, time, usePeriod ->
             val raw = contentDescriptionFormat.format(time)
-            if (usePeriod) replaceHourMinuteSeparatorWithPeriod(raw) else raw
+            if (usePeriod) replaceTimeSeparatorsWithPeriod(raw) else raw
         }
 
     val contentDescriptionText: String by
@@ -124,7 +124,7 @@ constructor(
             }
 
         if (showSeconds) {
-            formatString += ":ss"
+            formatString += "${hmSep}ss"
         }
 
         if (amPmStyle == AmPmStyle.Shown && !dateFormatUtil.is24HourFormat) {
@@ -140,15 +140,7 @@ constructor(
         return SimpleDateFormat(formatString, Locale.getDefault())
     }
 
-    private fun replaceHourMinuteSeparatorWithPeriod(time: String): String {
-        var i = time.indexOf(':')
-        if (i < 0) {
-            i = time.indexOf('\uFF1A')
-        }
-        return if (i >= 0) {
-            time.substring(0, i) + '.' + time.substring(i + 1)
-        } else {
-            time
-        }
+    private fun replaceTimeSeparatorsWithPeriod(time: String): String {
+        return time.replace(':', '.').replace('\uFF1A', '.').replace('\u2236', '.')
     }
 }

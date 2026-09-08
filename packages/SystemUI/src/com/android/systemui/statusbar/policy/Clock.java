@@ -647,19 +647,11 @@ public class Clock extends TextView implements
     }
 
     /**
-     * Replaces the first time separator between hour and minute (typically {@code ':'} or the
-     * fullwidth variant) with a period, leaving any following separators (e.g. before seconds)
-     * unchanged.
+     * Replaces time separators between hour, minute, and seconds (typically {@code ':'}, the
+     * fullwidth variant, or the ratio character) with a period.
      */
     private static String replaceHourMinuteSeparatorWithPeriod(String time) {
-        int i = time.indexOf(':');
-        if (i < 0) {
-            i = time.indexOf('\uFF1A');
-        }
-        if (i >= 0) {
-            return time.substring(0, i) + '.' + time.substring(i + 1);
-        }
-        return time;
+        return time.replace(':', '.').replace('\uFF1A', '.').replace('\u2236', '.');
     }
 
     private boolean mDemoMode;

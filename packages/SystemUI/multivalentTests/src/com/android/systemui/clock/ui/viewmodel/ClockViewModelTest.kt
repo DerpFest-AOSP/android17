@@ -260,6 +260,32 @@ class ClockViewModelTest : SysuiTestCase() {
         }
 
     @Test
+    @EnableFlags(ClockModernization.FLAG_NAME)
+    fun periodSeparator_withSeconds_is24HourFormatTrue_updatesClockText() =
+        kosmos.runTest {
+            fakeSystemClock.setCurrentTimeMillis(CURRENT_TIME_MILLIS)
+            whenever(dateFormatUtil.is24HourFormat).thenReturn(true)
+            underTest.activateIn(testScope)
+
+            assertThat(underTest.clockText).isEqualTo("23:12")
+            assertThat(underTest.contentDescriptionText).isEqualTo("23:12")
+
+            val captor = argumentCaptor<Tunable>()
+            verify(tunerService, times(3)).addTunable(captor.capture(), any())
+            captor.allValues.forEach {
+                it.onTuningChanged(ClockInteractor.CLOCK_SECONDS_TUNER_KEY, "1")
+                it.onTuningChanged(
+                    ClockInteractor.STATUS_BAR_CLOCK_PERIOD_SEPARATOR_TUNER_KEY,
+                    "1",
+                )
+            }
+            runCurrent()
+
+            assertThat(underTest.clockText).isEqualTo("23.12.19")
+            assertThat(underTest.contentDescriptionText).isEqualTo("23.12.19")
+        }
+
+    @Test
     fun clockText_updatesWhenConfigurationChanged_12To24() =
         kosmos.runTest {
             fakeSystemClock.setCurrentTimeMillis(CURRENT_TIME_MILLIS)

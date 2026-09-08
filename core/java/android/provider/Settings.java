@@ -7012,8 +7012,8 @@ public final class Settings {
         public static final String STATUS_BAR_CLOCK_DATE_FORMAT = "status_bar_clock_date_format";
 
         /**
-         * When non-zero, show a period (.) between hour and minute in the status bar clock instead
-         * of the default separator (typically a colon).
+         * When non-zero, show a period (.) between hour, minute, and seconds in the status bar
+         * clock instead of the default separator (typically a colon).
          * @hide
          */
         public static final String STATUS_BAR_CLOCK_PERIOD_SEPARATOR =
