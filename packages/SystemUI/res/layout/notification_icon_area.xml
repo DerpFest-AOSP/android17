@@ -23,7 +23,8 @@
     <com.android.systemui.statusbar.phone.ui.CombinedNotificationCounter
         android:id="@+id/combined_notification_counter"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:paddingStart="@dimen/combined_notification_counter_padding_start">
         
         <include layout="@layout/combined_notification_counter" />
         

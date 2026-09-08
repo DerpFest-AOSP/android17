@@ -76,6 +76,9 @@
     <dimen name="qs_header_image_height">142dp</dimen>
     <dimen name="qs_header_image_fade_size">80dp</dimen>
 
+    <!-- Combined notification counter: extra gap from the status bar clock -->
+    <dimen name="combined_notification_counter_padding_start">3.5dp</dimen>
+
     <!-- Statusbar clock chip -->
     <dimen name="chip_corner_radius">28dp</dimen>
     <dimen name="chip_corner_radius_inset_2">26dp</dimen>
