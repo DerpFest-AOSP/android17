@@ -16,14 +16,12 @@
 
 package com.android.systemui.statusbar.notification.row
 
+import android.os.SystemProperties
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SmallTest
 import com.android.systemui.SysuiTestCase
-import com.android.systemui.display.data.repository.createFakeDisplaySubcomponent
-import com.android.systemui.display.data.repository.displaySubcomponentPerDisplayRepository
-import com.android.systemui.statusbar.data.repository.FakeStatusBarModePerDisplayRepository
-import com.android.systemui.testKosmos
 import com.google.common.truth.Truth.assertThat
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -31,59 +29,41 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class HeadsUpStyleProviderImplTest : SysuiTestCase() {
 
-    private val primaryDisplayId = 0
-    private val secondaryDisplayId = 1
+    private val headsUpStyleProvider = HeadsUpStyleProviderImpl()
 
-    private val defaultDisplayRepository = FakeStatusBarModePerDisplayRepository()
-    private val secondaryDisplayRepository = FakeStatusBarModePerDisplayRepository()
-    private val kosmos =
-        testKosmos().apply {
-            displaySubcomponentPerDisplayRepository.add(
-                primaryDisplayId,
-                createFakeDisplaySubcomponent(statusBarModeRepo = { defaultDisplayRepository }),
-            )
-            displaySubcomponentPerDisplayRepository.add(
-                secondaryDisplayId,
-                createFakeDisplaySubcomponent(statusBarModeRepo = { secondaryDisplayRepository }),
-            )
-        }
-
-    private val headsUpStyleProvider =
-        HeadsUpStyleProviderImpl(kosmos.displaySubcomponentPerDisplayRepository)
-
-    @Test
-    fun shouldApplyCompactStyle_primaryDisplayInImmersiveMode_returnsTrue() {
-        defaultDisplayRepository.isInFullscreenMode.value = true
-
-        val result = headsUpStyleProvider.shouldApplyCompactStyle(primaryDisplayId)
-
-        assertThat(result).isTrue()
+    @After
+    fun tearDown() {
+        SystemProperties.set(ALWAYS_SHOW_COMPACT_HUN_PROPERTY, "")
     }
 
     @Test
-    fun shouldApplyCompactStyle_primaryDisplayNotInImmersiveMode_returnsFalse() {
-        defaultDisplayRepository.isInFullscreenMode.value = false
-
-        val result = headsUpStyleProvider.shouldApplyCompactStyle(primaryDisplayId)
+    fun shouldApplyCompactStyle_default_returnsFalse() {
+        val result = headsUpStyleProvider.shouldApplyCompactStyle(DISPLAY_ID)
 
         assertThat(result).isFalse()
     }
 
     @Test
-    fun shouldApplyCompactStyle_secondaryDisplayInImmersiveMode_returnsTrue() {
-        secondaryDisplayRepository.isInFullscreenMode.value = true
+    fun shouldApplyCompactStyle_propertyDisabled_returnsFalse() {
+        SystemProperties.set(ALWAYS_SHOW_COMPACT_HUN_PROPERTY, "false")
 
-        val result = headsUpStyleProvider.shouldApplyCompactStyle(secondaryDisplayId)
+        val result = headsUpStyleProvider.shouldApplyCompactStyle(DISPLAY_ID)
+
+        assertThat(result).isFalse()
+    }
+
+    @Test
+    fun shouldApplyCompactStyle_propertyEnabled_returnsTrue() {
+        SystemProperties.set(ALWAYS_SHOW_COMPACT_HUN_PROPERTY, "true")
+
+        val result = headsUpStyleProvider.shouldApplyCompactStyle(DISPLAY_ID)
 
         assertThat(result).isTrue()
     }
 
-    @Test
-    fun shouldApplyCompactStyle_secondaryDisplayNotInImmersiveMode_returnsFalse() {
-        secondaryDisplayRepository.isInFullscreenMode.value = false
-
-        val result = headsUpStyleProvider.shouldApplyCompactStyle(secondaryDisplayId)
-
-        assertThat(result).isFalse()
+    companion object {
+        private const val DISPLAY_ID = 0
+        private const val ALWAYS_SHOW_COMPACT_HUN_PROPERTY =
+            "persist.sys.compact_heads_up_notification.always_show"
     }
 }

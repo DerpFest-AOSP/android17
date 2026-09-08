@@ -17,35 +17,26 @@
 package com.android.systemui.statusbar.notification.row
 
 import android.os.SystemProperties
-import android.view.Display
-import com.android.app.displaylib.PerDisplayRepository
-import com.android.systemui.display.dagger.SystemUIDisplaySubcomponent
 import javax.inject.Inject
 
 /**
- * A class managing the heads up style to be applied based on user settings, immersive mode and
- * other factors.
+ * A class managing the heads up style to be applied based on user settings.
  */
 interface HeadsUpStyleProvider {
     fun shouldApplyCompactStyle(displayId: Int): Boolean
 }
 
-class HeadsUpStyleProviderImpl
-@Inject
-constructor(
-    private val displaySubcomponentRepo: PerDisplayRepository<SystemUIDisplaySubcomponent>
-) : HeadsUpStyleProvider {
+class HeadsUpStyleProviderImpl @Inject constructor() : HeadsUpStyleProvider {
 
     override fun shouldApplyCompactStyle(displayId: Int): Boolean {
-        return android.app.Flags.alwaysShowMinimalHun() || isInImmersiveMode(displayId) || alwaysShow()
-    }
-
-    private fun isInImmersiveMode(displayId: Int): Boolean {
-        val displaySubcomponent =
-            displaySubcomponentRepo[displayId] ?: displaySubcomponentRepo[Display.DEFAULT_DISPLAY]!!
-        return displaySubcomponent.statusBarModeRepo.isInFullscreenMode.value
+        return alwaysShow()
     }
 
     private fun alwaysShow() =
-        SystemProperties.getBoolean("persist.sys.compact_heads_up_notification.always_show", false)
+        SystemProperties.getBoolean(ALWAYS_SHOW_COMPACT_HUN_PROPERTY, /* default= */ false)
+
+    companion object {
+        private const val ALWAYS_SHOW_COMPACT_HUN_PROPERTY =
+            "persist.sys.compact_heads_up_notification.always_show"
+    }
 }
