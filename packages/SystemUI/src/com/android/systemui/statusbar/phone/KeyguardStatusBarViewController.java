@@ -183,6 +183,13 @@ public class KeyguardStatusBarViewController extends ViewController<KeyguardStat
                 }
 
                 @Override
+                public void onUiModeChanged() {
+                    // Night-mode toggles may not fire onThemeChanged. Refresh icon/battery tint
+                    // so accent/custom colors stay applied on the keyguard status bar.
+                    KeyguardStatusBarViewController.this.onThemeChanged();
+                }
+
+                @Override
                 public void onConfigChanged(Configuration newConfig) {
                     updateUserSwitcher();
                 }

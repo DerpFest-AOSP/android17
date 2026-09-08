@@ -53,6 +53,24 @@ val ConfigurationController.onThemeChanged: Flow<Unit>
     }
 
 /**
+ * A [Flow] that emits whenever the UI night mode has changed (light/dark theme toggle).
+ *
+ * Overlay asset path changes fire [onThemeChanged]; a night-mode-only toggle often fires only
+ * [ConfigurationController.ConfigurationListener.onUiModeChanged].
+ */
+val ConfigurationController.onUiModeChanged: Flow<Unit>
+    get() = conflatedCallbackFlow {
+        val listener =
+            object : ConfigurationController.ConfigurationListener {
+                override fun onUiModeChanged() {
+                    trySend(Unit)
+                }
+            }
+        addCallback(listener)
+        awaitClose { removeCallback(listener) }
+    }
+
+/**
  * A [Flow] that emits whenever the configuration has changed.
  *
  * @see ConfigurationController.ConfigurationListener.onConfigChanged

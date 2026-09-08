@@ -22,6 +22,7 @@ import com.android.systemui.dagger.qualifiers.Main
 import com.android.systemui.statusbar.pipeline.battery.data.repository.BatteryRepository
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.onThemeChanged
+import com.android.systemui.statusbar.policy.onUiModeChanged
 import com.android.systemui.util.kotlin.emitOnStart
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -97,9 +99,17 @@ class BatteryInteractor @Inject constructor(
     /** @see [BatteryRepository.statusBarIconTintCustomColorArgb] */
     val statusBarIconTintCustomColorArgb: StateFlow<Int> = repo.statusBarIconTintCustomColorArgb
 
-    /** Flow that emits whenever the theme changes. Emits on first collect so battery color
-     * profile uses current tint setting immediately (e.g. after reboot). */
-    val themeChanged: Flow<Unit> = configurationController.onThemeChanged.emitOnStart()
+    /**
+     * Emits whenever theme overlays or light/dark night mode change. Also emits on first collect
+     * so the battery color profile uses the current tint setting immediately (e.g. after reboot).
+     *
+     * Night-mode toggles typically fire [ConfigurationController.ConfigurationListener.onUiModeChanged]
+     * rather than [ConfigurationController.ConfigurationListener.onThemeChanged], and accent/custom
+     * tint must be re-read in that case so the icon stays aligned with other status bar icons.
+     */
+    val themeChanged: Flow<Unit> =
+        merge(configurationController.onThemeChanged, configurationController.onUiModeChanged)
+            .emitOnStart()
 
     // Mode == 1
     val showPercentInsideIcon: StateFlow<Boolean> =

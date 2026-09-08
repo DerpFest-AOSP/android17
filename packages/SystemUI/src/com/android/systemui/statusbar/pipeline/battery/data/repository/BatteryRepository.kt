@@ -34,6 +34,7 @@ import com.android.systemui.statusbar.pipeline.dagger.BatteryTableLog
 import com.android.systemui.statusbar.policy.BatteryController
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.onThemeChanged
+import com.android.systemui.statusbar.policy.onUiModeChanged
 import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.time.Duration.Companion.minutes
@@ -341,6 +342,7 @@ constructor(
         merge(
             batteryStyleSettingsFlow,
             configurationController.onThemeChanged.map { readBatteryIconStyle(context) },
+            configurationController.onUiModeChanged.map { readBatteryIconStyle(context) },
         )
             .distinctUntilChanged()
             .flowOn(bgDispatcher)

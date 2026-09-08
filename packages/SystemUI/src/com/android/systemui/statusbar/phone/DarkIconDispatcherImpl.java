@@ -258,6 +258,13 @@ public class DarkIconDispatcherImpl implements SysuiDarkIconDispatcher,
     }
 
     @Override
+    public void onUiModeChanged() {
+        // Light/dark toggles often skip onThemeChanged (no CONFIG_ASSETS_PATHS). Re-read
+        // accent/custom tint so status bar icons stay on the customization color.
+        applyDarkIntensity(mDarkIntensity);
+    }
+
+    @Override
     public void dump(PrintWriter pw, String[] args) {
         pw.println("DarkIconDispatcher: ");
         pw.println("  mIconTint: 0x" + Integer.toHexString(mIconTint));

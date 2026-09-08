@@ -745,6 +745,41 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
         mUnifiedBattery.setColors(mUnifiedBatteryColors);
     }
 
+    /**
+     * Re-apply accent/custom status bar tint after a theme or night-mode change. System (default)
+     * coloring is left to the next {@link #onDarkChanged} from {@link DarkIconDispatcher}.
+     */
+    public void refreshTintFromSettings() {
+        if (mIsStaticColor) {
+            return;
+        }
+        setColorsFromContext(getContext());
+        int tintMode = StatusBarIconTintHelper.getMode(getContext());
+        if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {
+            int accentColor = Utils.getColorAccentDefaultColor(getContext());
+            if (useUnifiedBatteryIcon()) {
+                if (mUnifiedBattery == null) {
+                    return;
+                }
+                mUnifiedBatteryColors = BatteryColors.createAccentColors(accentColor);
+                mUnifiedBattery.setColors(mUnifiedBatteryColors);
+            } else {
+                updateColors(accentColor, accentColor, accentColor);
+            }
+        } else if (tintMode == StatusBarIconTintHelper.MODE_CUSTOM) {
+            int custom = StatusBarIconTintHelper.getCustomColorArgb(getContext());
+            if (useUnifiedBatteryIcon()) {
+                if (mUnifiedBattery == null) {
+                    return;
+                }
+                mUnifiedBatteryColors = BatteryColors.createAccentColors(custom);
+                mUnifiedBattery.setColors(mUnifiedBatteryColors);
+            } else {
+                updateColors(custom, custom, custom);
+            }
+        }
+    }
+
     private void onDarkChangedLegacy(ArrayList<Rect> areas, float darkIntensity, int tint) {
         int tintMode = StatusBarIconTintHelper.getMode(getContext());
         if (tintMode == StatusBarIconTintHelper.MODE_ACCENT) {

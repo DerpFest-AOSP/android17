@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -59,11 +60,12 @@ fun ThemedBatteryBody(
     contentDescription: String = "",
 ) {
     val context = LocalContext.current
+    val uiMode = LocalConfiguration.current.uiMode
     val themeVersion by ThemeIconController.themeVersion.collectAsStateWithLifecycle()
-    val isPillStyle = remember(context, themeVersion) {
+    val isPillStyle = remember(context, themeVersion, uiMode) {
         context.resources.getBoolean(R.bool.config_themedBatteryPillStyle)
     }
-    val drawable = remember(context, themeVersion) { ThemedBatteryDrawable(context, 0) }
+    val drawable = remember(context, themeVersion, uiMode) { ThemedBatteryDrawable(context, 0) }
     val tw = drawable.getTightIntrinsicWidth().toFloat().coerceAtLeast(1f)
     val th = drawable.intrinsicHeight.toFloat().coerceAtLeast(1f)
     val modifier = Modifier.layoutId(BatteryMeasurePolicy.LayoutId.FrameThemed(tw, th))
@@ -78,7 +80,7 @@ fun ThemedBatteryBody(
             contentDescription = contentDescription,
         )
     } else {
-        val drawOffsetY = remember(context, themeVersion) {
+        val drawOffsetY = remember(context, themeVersion, uiMode) {
             context.resources.getDimension(R.dimen.config_batteryMeterThemedComposeDrawOffsetY)
         }
         PathBatteryBody(
