@@ -7734,6 +7734,12 @@ public final class Settings {
         public static final String QS_SHOW_POWER_MENU_ICON = "qs_show_power_menu_icon";
 
         /**
+         * Whether to show the edit button in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_EDIT_BUTTON = "qs_show_edit_button";
+
+        /**
          * Whether to show Chinese lunar calendar on the lockscreen Smartspace date.
          * @hide
          */

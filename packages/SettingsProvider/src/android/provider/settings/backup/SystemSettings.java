@@ -136,6 +136,7 @@ public class SystemSettings {
                 Settings.System.QS_SHOW_LUNAR_CALENDAR,
                 Settings.System.QS_SHOW_SETTINGS_ICON,
                 Settings.System.QS_SHOW_POWER_MENU_ICON,
+                Settings.System.QS_SHOW_EDIT_BUTTON,
                 Settings.System.LOCKSCREEN_SHOW_LUNAR_CALENDAR,
                 Settings.System.BOUNCER_USER_SWITCHER_ENABLED,
                 Settings.System.QS_TILE_GRADIENT_ENABLED,

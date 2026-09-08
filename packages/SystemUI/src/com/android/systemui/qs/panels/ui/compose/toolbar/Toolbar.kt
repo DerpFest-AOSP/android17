@@ -155,6 +155,8 @@ private fun SharedTransitionScope.StandardToolbarLayout(
 ) {
     val showSettingsIcon =
         rememberQsSystemBoolSetting(Settings.System.QS_SHOW_SETTINGS_ICON, true)
+    val showEditButton =
+        rememberQsSystemBoolSetting(Settings.System.QS_SHOW_EDIT_BUTTON, true)
 
     Row(modifier) {
         // User switcher button
@@ -166,9 +168,11 @@ private fun SharedTransitionScope.StandardToolbarLayout(
         )
 
         // Edit mode button
-        val editModeButtonViewModel =
-            rememberViewModel("Toolbar") { viewModel.editModeButtonViewModelFactory.create() }
-        EditModeButton(editModeButtonViewModel, isVisible = isFullyVisible())
+        if (showEditButton) {
+            val editModeButtonViewModel =
+                rememberViewModel("Toolbar") { viewModel.editModeButtonViewModelFactory.create() }
+            EditModeButton(editModeButtonViewModel, isVisible = isFullyVisible())
+        }
 
         // Settings button
         if (showSettingsIcon) {

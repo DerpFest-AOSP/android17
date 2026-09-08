@@ -16,6 +16,7 @@
 
 package com.android.systemui.qs.panels.ui.compose
 
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -54,6 +55,7 @@ import com.android.systemui.qs.panels.ui.compose.toolbar.EditModeButton
 import com.android.systemui.qs.panels.ui.viewmodel.PaginatedGridViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.TileViewModel
 import com.android.systemui.qs.panels.ui.viewmodel.toolbar.EditModeButtonViewModel
+import com.android.systemui.qs.ui.compose.rememberQsSystemBoolSetting
 import javax.inject.Inject
 
 class PaginatedGridLayout
@@ -182,10 +184,8 @@ private fun FooterBar(
     dataUsageViewModel: FooterActionsDataUsageViewModel? = null,
     isVisible: () -> Boolean = { true },
 ) {
-    val editButtonViewModel =
-        rememberViewModel(traceName = "PaginatedGridLayout-editButtonViewModel") {
-            editButtonViewModelFactory.create()
-        }
+    val showEditButton =
+        rememberQsSystemBoolSetting(Settings.System.QS_SHOW_EDIT_BUTTON, true)
 
     // Use requiredHeight so it won't be squished if the view doesn't quite fit. As this is
     // expected to be inside a scrollable container, this should not be an issue.
@@ -217,7 +217,13 @@ private fun FooterBar(
         )
         Row(Modifier.weight(1f)) {
             Spacer(modifier = Modifier.weight(1f))
-            EditModeButton(viewModel = editButtonViewModel, isVisible = isVisible())
+            if (showEditButton) {
+                val editButtonViewModel =
+                    rememberViewModel(traceName = "PaginatedGridLayout-editButtonViewModel") {
+                        editButtonViewModelFactory.create()
+                    }
+                EditModeButton(viewModel = editButtonViewModel, isVisible = isVisible())
+            }
         }
     }
 }
