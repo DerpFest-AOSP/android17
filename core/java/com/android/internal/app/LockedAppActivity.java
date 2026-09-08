@@ -459,6 +459,14 @@ public final class LockedAppActivity extends Activity {
             Slog.d(TAG, "onResume: " + (isInterceptMode() ? "intercept" : "locked task") + " mode");
         }
 
+        if (mPackageName == null) {
+            return;
+        }
+
+        if (!mIsUninstall && finishIfUnlocked(mPackageName, mUserId)) {
+            return;
+        }
+
         if (!isInterceptMode() && !mIsUninstall) {
             if (mIsCredentialActivityShowing) {
                 return;
