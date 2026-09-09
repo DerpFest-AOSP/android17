@@ -19,6 +19,11 @@
 package com.android.compose.theme
 
 import android.content.Context
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import android.os.UserHandle
+import android.provider.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -28,7 +33,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.android.app.tracing.TraceUtils
@@ -75,18 +85,74 @@ fun PlatformTheme(isDarkTheme: Boolean = isSystemInDarkTheme(), content: @Compos
             )
         }
     val windowSizeClass = calculateWindowSizeClass()
+    val isBouncyMotionEnabled = rememberBouncyMotionMechanicsEnabled(context)
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = typography,
-        motionScheme = ExpressiveMotionScheme,
+        motionScheme = if (isBouncyMotionEnabled) ExpressiveMotionScheme else StandardMotionScheme,
     ) {
         CompositionLocalProvider(
             LocalAndroidColorScheme provides androidColorScheme,
             LocalWindowSizeClass provides windowSizeClass,
+            LocalBouncyMotionMechanicsEnabled provides isBouncyMotionEnabled,
             content = content,
         )
     }
+}
+
+val LocalBouncyMotionMechanicsEnabled = compositionLocalOf { true }
+
+val StandardMotionScheme = MotionScheme.standard()
+val ExpressiveMotionScheme = MotionScheme.expressive()
+
+@Composable
+private fun rememberBouncyMotionMechanicsEnabled(context: Context): Boolean {
+    val contentResolver = context.contentResolver
+
+    fun readSetting(): Boolean {
+        return try {
+            Settings.System.getIntForUser(
+                contentResolver,
+                Settings.System.QS_BOUNCY_MOTION_MECHANICS,
+                1,
+                UserHandle.USER_CURRENT,
+            ) == 1
+        } catch (_: Throwable) {
+            true
+        }
+    }
+
+    var enabled by remember(contentResolver) { mutableStateOf(readSetting()) }
+
+    DisposableEffect(contentResolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                context.mainExecutor.execute {
+                    enabled = readSetting()
+                }
+            }
+        }
+
+        try {
+            contentResolver.registerContentObserver(
+                Settings.System.getUriFor(Settings.System.QS_BOUNCY_MOTION_MECHANICS),
+                false,
+                observer,
+                UserHandle.USER_ALL,
+            )
+        } catch (_: Throwable) {
+        }
+
+        onDispose {
+            try {
+                contentResolver.unregisterContentObserver(observer)
+            } catch (_: Throwable) {
+            }
+        }
+    }
+
+    return enabled
 }
 
 private fun platformColorScheme(isDarkTheme: Boolean, context: Context): ColorScheme {
@@ -114,5 +180,3 @@ private fun platformColorScheme(isDarkTheme: Boolean, context: Context): ColorSc
             )
     }
 }
-
-private val ExpressiveMotionScheme = MotionScheme.expressive()
