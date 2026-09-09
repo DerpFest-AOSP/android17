@@ -18,8 +18,8 @@ package com.android.systemui.volume.dialog.ringer.ui.viewmodel
 
 import android.content.Context
 import com.android.internal.R as internalR
-import com.android.settingslib.Utils
 import com.android.systemui.res.R
+import com.android.systemui.statusbar.pipeline.battery.shared.ui.BatteryColors
 
 /** Models the UI state of ringer button */
 data class RingerButtonUiModel(
@@ -27,6 +27,8 @@ data class RingerButtonUiModel(
     val tintColor: Int,
     val backgroundColor: Int,
     val cornerRadius: Int,
+    /** When set, the selected background is a two-stop gradient ending at [backgroundColor]. */
+    val gradientStartColor: Int? = null,
 ) {
     companion object {
         fun getUnselectedButton(context: Context): RingerButtonUiModel {
@@ -39,13 +41,29 @@ data class RingerButtonUiModel(
             )
         }
 
-        fun getSelectedButton(context: Context): RingerButtonUiModel {
-            return RingerButtonUiModel(
-                tintColor = context.getColor(internalR.color.materialColorOnPrimary),
-                backgroundColor = context.getColor(internalR.color.materialColorPrimary),
-                cornerRadius = context.resources.getDimensionPixelSize(
-                    R.dimen.volume_dialog_ringer_selected_button_background_radius),
-            )
+        fun getSelectedButton(
+            context: Context,
+            gradientColors: Pair<Int, Int>? = null,
+        ): RingerButtonUiModel {
+            val cornerRadius =
+                context.resources.getDimensionPixelSize(
+                    R.dimen.volume_dialog_ringer_selected_button_background_radius
+                )
+            return if (gradientColors != null) {
+                RingerButtonUiModel(
+                    tintColor =
+                        BatteryColors.textColorOnBackground(context, gradientColors.second),
+                    backgroundColor = gradientColors.second,
+                    cornerRadius = cornerRadius,
+                    gradientStartColor = gradientColors.first,
+                )
+            } else {
+                RingerButtonUiModel(
+                    tintColor = context.getColor(internalR.color.materialColorOnPrimary),
+                    backgroundColor = context.getColor(internalR.color.materialColorPrimary),
+                    cornerRadius = cornerRadius,
+                )
+            }
         }
     }
 }

@@ -440,7 +440,10 @@ constructor(
                 ) {
                     launchTraced("VDRVB#selectedButtonAnimation") {
                         selectedButton.animateTo(
-                            selectedButtonUiModel,
+                            RingerButtonUiModel.getSelectedButton(
+                                context,
+                                gradientColorsForRinger,
+                            ),
                             if (uiModel.currentButtonIndex == count - 1) {
                                 onProgressChanged
                             } else {
@@ -475,7 +478,6 @@ constructor(
                         viewModel,
                         uiModel,
                         onAnimationEnd,
-                        isAnimated = true,
                         gradientColorsForRinger,
                         onSelectedButtonBound,
                     )
@@ -496,7 +498,6 @@ constructor(
         viewModel: VolumeDialogRingerDrawerViewModel,
         uiModel: RingerViewModel,
         onAnimationEnd: Runnable? = null,
-        isAnimated: Boolean = false,
         gradientColorsForRinger: Pair<Int, Int>? = null,
         onSelectedButtonBound: (ImageButton?) -> Unit = {},
     ) {
@@ -511,12 +512,11 @@ constructor(
                     viewModel,
                     isOpen,
                     isSelected = true,
-                    isAnimated = isAnimated,
                     gradientColorsForRinger = gradientColorsForRinger,
                     onSelectedButtonBound = { onSelectedButtonBound(view) },
                 )
             } else {
-                view.bindDrawerButton(ringerButton, viewModel, isOpen, isAnimated = isAnimated)
+                view.bindDrawerButton(ringerButton, viewModel, isOpen)
             }
         }
         onAnimationEnd?.run()
@@ -527,7 +527,6 @@ constructor(
         viewModel: VolumeDialogRingerDrawerViewModel,
         isOpen: Boolean,
         isSelected: Boolean = false,
-        isAnimated: Boolean = false,
         gradientColorsForRinger: Pair<Int, Int>? = null,
         onSelectedButtonBound: (() -> Unit)? = null,
     ) {
@@ -547,7 +546,7 @@ constructor(
         if (isSelected) {
             onSelectedButtonBound?.invoke()
             applySelectedAppearance(gradientColorsForRinger)
-        } else if (!isAnimated) {
+        } else {
             applyUnselectedAppearance()
         }
         setOnClickListener {
@@ -594,7 +593,10 @@ constructor(
         background = background.mutate()
         val shape = backgroundShape() ?: return
         val startIconColor = currentIconColor() ?: ringerButtonUiModel.tintColor
-        val startBgColor = shape.solidOrEndColor() ?: ringerButtonUiModel.backgroundColor
+        val startColors = shape.gradientOrSolidColors()
+        val targetStart =
+            ringerButtonUiModel.gradientStartColor ?: ringerButtonUiModel.backgroundColor
+        val targetEnd = ringerButtonUiModel.backgroundColor
         val roundnessAnimation =
             SpringAnimation(FloatValueHolder(0F), 1F).setSpring(roundnessSpringForce)
         val colorAnimation = SpringAnimation(FloatValueHolder(0F), 1F).setSpring(colorSpringForce)
@@ -613,14 +615,11 @@ constructor(
                             startIconColor,
                             ringerButtonUiModel.tintColor,
                         ) as Int
-                    val currentBgColor =
-                        rgbEvaluator.evaluate(
-                            fraction,
-                            startBgColor,
-                            ringerButtonUiModel.backgroundColor,
-                        ) as Int
-
-                    shape.setColor(currentBgColor)
+                    val currentStart =
+                        rgbEvaluator.evaluate(fraction, startColors.first, targetStart) as Int
+                    val currentEnd =
+                        rgbEvaluator.evaluate(fraction, startColors.second, targetEnd) as Int
+                    shape.setFillColors(currentStart, currentEnd)
                     background.invalidateSelf()
                     setIconTint(currentIconColor)
                 }
@@ -666,7 +665,9 @@ constructor(
 
     private fun ImageButton.applySelectedAppearance(gradientColors: Pair<Int, Int>?) {
         if (gradientColors != null) {
-            applyGradientSelectionBackground(gradientColors)
+            if (!hasGradientSelectionBackground(gradientColors)) {
+                applyGradientSelectionBackground(gradientColors)
+            }
             setIconTint(BatteryColors.textColorOnBackground(context, gradientColors.second))
         } else {
             setBackgroundResource(R.drawable.volume_drawer_selection_bg)
@@ -679,6 +680,14 @@ constructor(
         setBackgroundResource(R.drawable.volume_ringer_item_bg)
         background = background.mutate()
         setIconTint(context.getColor(internalR.color.materialColorOnSurface))
+    }
+
+    private fun ImageButton.hasGradientSelectionBackground(gradientColors: Pair<Int, Int>): Boolean {
+        if (background !is InsetDrawable) return false
+        val colors = backgroundShape()?.colors ?: return false
+        return colors.size >= 2 &&
+            colors.first() == gradientColors.first &&
+            colors.last() == gradientColors.second
     }
 
     /** Sets the selected ringer button background to a gradient, matching the volume slider. */
@@ -718,11 +727,23 @@ private fun ImageButton.backgroundShape(): GradientDrawable? {
     }
 }
 
-/** Solid fill, or the gradient end color when the button is using a two-stop gradient. */
-private fun GradientDrawable.solidOrEndColor(): Int? {
+/** Solid fill, or the first and last stops when the button is using a gradient. */
+private fun GradientDrawable.gradientOrSolidColors(): Pair<Int, Int> {
     color?.defaultColor?.let {
-        return it
+        return it to it
     }
-    val colors = colors ?: return null
-    return colors.getOrNull(1) ?: colors.getOrNull(0)
+    val colors = colors
+    if (colors != null && colors.isNotEmpty()) {
+        return colors.first() to colors.last()
+    }
+    return 0 to 0
+}
+
+private fun GradientDrawable.setFillColors(startColor: Int, endColor: Int) {
+    if (startColor == endColor) {
+        setColor(startColor)
+    } else {
+        orientation = GradientDrawable.Orientation.TOP_BOTTOM
+        colors = intArrayOf(startColor, endColor)
+    }
 }
