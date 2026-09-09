@@ -20,6 +20,7 @@ package com.android.compose.animation.scene
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
+import com.android.compose.theme.StandardMotionScheme
 import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.DecayAnimationSpec
 import androidx.compose.foundation.gestures.Orientation
@@ -462,7 +463,9 @@ internal class SwipeAnimation<T : ContentKey>(
                     targetOffset,
                     initialVelocity,
                     decayAnimationSpec,
-                    spec ?: layoutState.motionScheme.slowSpatialSpec(),
+                    spec
+                        ?: (if (layoutState.motionScheme == StandardMotionScheme) contentTransition.transformationSpec.progressSpec else null)
+                        ?: layoutState.motionScheme.slowSpatialSpec(),
                 )
 
             val consumed = initialVelocity - animationResult.endState.velocity

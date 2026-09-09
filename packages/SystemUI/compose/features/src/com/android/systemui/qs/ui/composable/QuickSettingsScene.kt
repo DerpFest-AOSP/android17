@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.overscroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.android.compose.theme.LocalBouncyMotionMechanicsEnabled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -420,10 +421,20 @@ private fun ContentScope.QuickSettingsContent(
                 null
             }
 
+        val isBouncyMotionEnabled = LocalBouncyMotionMechanicsEnabled.current
+        val overscrollModifier =
+            if (isBouncyMotionEnabled) {
+                Modifier.overscroll(verticalOverscrollEffect)
+            } else {
+                Modifier
+            }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier =
-                Modifier.fillMaxSize().overscroll(verticalOverscrollEffect).padding(navBarInsets),
+                Modifier.fillMaxSize()
+                    .then(overscrollModifier)
+                    .padding(navBarInsets),
         ) {
             Box(modifier = Modifier.fillMaxSize().weight(1f)) {
                 Column(

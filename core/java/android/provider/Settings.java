@@ -7740,6 +7740,14 @@ public final class Settings {
         public static final String QS_SHOW_EDIT_BUTTON = "qs_show_edit_button";
 
         /**
+         * Whether to enable bouncy motion mechanics when expanding Quick Settings.
+         * 0 = disabled (smooth / standard)
+         * 1 = enabled (bouncy / expressive)
+         * @hide
+         */
+        public static final String QS_BOUNCY_MOTION_MECHANICS = "qs_bouncy_motion_mechanics";
+
+        /**
          * Whether to show Chinese lunar calendar on the lockscreen Smartspace date.
          * @hide
          */
